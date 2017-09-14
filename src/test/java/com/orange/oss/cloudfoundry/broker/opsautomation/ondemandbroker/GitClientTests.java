@@ -1,4 +1,4 @@
-package com.orange.oss.cloudfoundry.broker.opsautomation.OpsAutomationServiceBroker;
+package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker;
 
 import java.io.IOException;
 
@@ -10,6 +10,8 @@ import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
+
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.GitClient;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest

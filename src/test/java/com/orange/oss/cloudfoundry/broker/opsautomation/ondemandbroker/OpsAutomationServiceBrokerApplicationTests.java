@@ -1,4 +1,4 @@
-package com.orange.oss.cloudfoundry.broker.opsautomation.OpsAutomationServiceBroker;
+package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;

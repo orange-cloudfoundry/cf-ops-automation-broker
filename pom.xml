@@ -22,6 +22,7 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 		<java.version>1.8</java.version>
+		<springCloudServiceBrokerVersion>1.0.0.RELEASE</springCloudServiceBrokerVersion>		
 	</properties>
 
 	<dependencies>
@@ -55,6 +56,13 @@
 		  <artifactId>org.eclipse.jgit</artifactId>
 		  <version>4.2.0.201601211800-r</version>
 		</dependency>
+		
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-cloudfoundry-service-broker</artifactId>
+            <version>${springCloudServiceBrokerVersion}</version>
+        </dependency>
+		
 
 		<dependency>
 			<groupId>org.springframework.boot</groupId>

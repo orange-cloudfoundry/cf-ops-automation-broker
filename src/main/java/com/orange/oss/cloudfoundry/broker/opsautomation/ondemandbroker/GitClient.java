@@ -1,4 +1,4 @@
-package com.orange.oss.cloudfoundry.broker.opsautomation.OpsAutomationServiceBroker;
+package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker;
 
 import java.io.IOException;
 import java.nio.file.FileVisitResult;
@@ -6,6 +6,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.List;
 
 import org.eclipse.jgit.api.AddCommand;
 import org.eclipse.jgit.api.CloneCommand;
@@ -18,14 +19,20 @@ import org.eclipse.jgit.api.errors.TransportException;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 
 public class GitClient {
 
 	private static Logger logger = LoggerFactory.getLogger(GitClient.class);
 	private String gitBaseUrl;
-
 	private UsernamePasswordCredentialsProvider cred;
 
+	@Autowired
+	List<DeploymentTemplate> templates;
+	
+	
+	
+	
 	public GitClient(String gitBaseUrl, UsernamePasswordCredentialsProvider cred) {
 		this.gitBaseUrl = gitBaseUrl;
 		this.cred = cred;
@@ -52,7 +59,15 @@ public class GitClient {
 			git.submoduleUpdate().call();
 
 			logger.info("git repo is ready, on branch {}", branch);
+			
+			logger.info("Start templating");
+			
+			//invoke all Deployment Template beans
+			for (DeploymentTemplate template:this.templates){
+				template.createDeploymentTemplate();
+			}
 
+			logger.info("Stop templating");
 			AddCommand addC = git.add().addFilepattern(".");
 			addC.call();
 			logger.info("added files");

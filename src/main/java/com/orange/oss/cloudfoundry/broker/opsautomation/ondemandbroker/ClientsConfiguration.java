@@ -1,4 +1,4 @@
-package com.orange.oss.cloudfoundry.broker.opsautomation.OpsAutomationServiceBroker;
+package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker;
 
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -24,4 +24,11 @@ public class ClientsConfiguration {
 	GitClient gitClient(UsernamePasswordCredentialsProvider usernamePasswordCredentialsProvider,ConfigProps props ){
 		return new GitClient(props.getGitBaseUrl(),usernamePasswordCredentialsProvider);
 	}	
+	
+	@Bean
+	DeploymentTemplate boshManifestTemplatingStrategy(){
+		return new BoshManifestTemplatingStrategy();
+	}
+	
+	
 }

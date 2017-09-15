@@ -4,12 +4,12 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<groupId>com.orange.oss.cloudfoundry.broker.opsautomation</groupId>
-	<artifactId>OpsAutomationServiceBroker</artifactId>
+	<artifactId>cf-ops-automation-broker</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<packaging>jar</packaging>
 
-	<name>OpsAutomationServiceBroker</name>
-	<description>Demo project for Spring Boot</description>
+	<name>cf-ops-automation-broker</name>
+	<description>Open Service API Broker for Orange  cf-ops-automation on demand pipeline provisionning</description>
 
 	<parent>
 		<groupId>org.springframework.boot</groupId>
@@ -62,6 +62,26 @@
             <artifactId>spring-cloud-cloudfoundry-service-broker</artifactId>
             <version>${springCloudServiceBrokerVersion}</version>
         </dependency>
+        
+		<!-- for bosh manifest yml parsing -->
+		<dependency>
+		    <groupId>com.fasterxml.jackson.dataformat</groupId>
+		    <artifactId>jackson-dataformat-yaml</artifactId>
+		</dependency>		
+        
+		
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+
+		<dependency>
+		    <groupId>org.easytesting</groupId>
+		    <artifactId>fest-assert</artifactId>
+		    <version>1.4</version>
+		    <scope>test</scope>
+		</dependency>
 		
 
 		<dependency>

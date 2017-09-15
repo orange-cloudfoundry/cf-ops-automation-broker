@@ -1,6 +1,7 @@
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker;
 
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -11,21 +12,25 @@ public class ClientsConfiguration {
 
 	
 	@Bean
+	@ConditionalOnMissingBean	
 	ConcourseClient concourseClient(ConfigProps props){
 		return new ConcourseClient();
 	}
 	
 	@Bean
+	@ConditionalOnMissingBean	
 	UsernamePasswordCredentialsProvider usernamePasswordCredentialsProvider(ConfigProps props){
 		return new UsernamePasswordCredentialsProvider(props.getGitUser(),props.getGitPassword());
 	}
 	
 	@Bean
+	@ConditionalOnMissingBean	
 	GitClient gitClient(UsernamePasswordCredentialsProvider usernamePasswordCredentialsProvider,ConfigProps props ){
 		return new GitClient(props.getGitBaseUrl(),usernamePasswordCredentialsProvider);
 	}	
 	
 	@Bean
+	@ConditionalOnMissingBean	
 	DeploymentTemplate boshManifestTemplatingStrategy(){
 		return new BoshManifestTemplatingStrategy();
 	}

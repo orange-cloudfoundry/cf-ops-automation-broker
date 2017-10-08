@@ -1,8 +1,8 @@
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.mediations;
 
 public interface BrokerMediationSink  {
-	public void create();
-	public void bind();
-	public void delete();
-	public void unBind();
+	public void create(Context ctx);
+	public void bind(Context ctx);
+	public void delete(Context ctx);
+	public void unBind(Context ctx);
 }

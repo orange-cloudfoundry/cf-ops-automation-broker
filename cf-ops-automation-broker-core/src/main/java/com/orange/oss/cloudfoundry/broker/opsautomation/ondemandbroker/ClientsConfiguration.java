@@ -23,11 +23,6 @@ public class ClientsConfiguration {
 		return new UsernamePasswordCredentialsProvider(props.getGitUser(),props.getGitPassword());
 	}
 	
-	@Bean
-	@ConditionalOnMissingBean	
-	GitClient gitClient(UsernamePasswordCredentialsProvider usernamePasswordCredentialsProvider,ConfigProps props ){
-		return new GitClient(props.getGitBaseUrl(),usernamePasswordCredentialsProvider);
-	}	
 	
 	@Bean
 	@ConditionalOnMissingBean	

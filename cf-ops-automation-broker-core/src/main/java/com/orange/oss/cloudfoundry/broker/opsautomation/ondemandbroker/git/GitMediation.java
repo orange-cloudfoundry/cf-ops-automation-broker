@@ -13,17 +13,18 @@ import org.eclipse.jgit.api.CommitCommand;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.PushCommand;
 import org.eclipse.jgit.api.errors.GitAPIException;
-import org.eclipse.jgit.api.errors.InvalidRemoteException;
 import org.eclipse.jgit.api.errors.NoFilepatternException;
-import org.eclipse.jgit.api.errors.TransportException;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.GitClient;
+
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.mediations.Context;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.mediations.DefaultBrokerMediation;
 
 public class GitMediation extends DefaultBrokerMediation {
+
+
 
 	private static Logger logger = LoggerFactory.getLogger(GitMediation.class.getName());
 
@@ -31,7 +32,6 @@ public class GitMediation extends DefaultBrokerMediation {
 	private String gitPassword;
 	private String gitUrl;
 
-	private GitClient gitClient;
 
 	private Git git;
 	private UsernamePasswordCredentialsProvider cred;
@@ -44,63 +44,47 @@ public class GitMediation extends DefaultBrokerMediation {
 	}
 
 	@Override
-	public void preCreate() {
-		this.cloneRepo();
+	public void preCreate(Context ctx) {
+		this.cloneRepo(ctx);
 	}
 
 	@Override
-	public void postCreate() {
+	public void postCreate(Context ctx) {
 		this.commitPushRepo();
 	}
 
 	@Override
-	public void preBind() {
-		// TODO Auto-generated method stub
-		super.preBind();
-	}
+	public void preBind(Context ctx) {
+		this.cloneRepo(ctx);	}
 
 	@Override
-	public void postBind() {
-		// TODO Auto-generated method stub
-		super.postBind();
-	}
+	public void postBind(Context ctx) {
+		this.commitPushRepo();	}
 
 	@Override
-	public void preDelete() {
-		// TODO Auto-generated method stub
-		super.preDelete();
-	}
+	public void preDelete(Context ctx) {
+		this.cloneRepo(ctx);	}
 
 	@Override
-	public void postDelete() {
-		// TODO Auto-generated method stub
-		super.postDelete();
-	}
+	public void postDelete(Context ctx) {
+		this.commitPushRepo();	}
 
 	@Override
-	public void preUnBind() {
-		// TODO Auto-generated method stub
-		super.preUnBind();
-	}
+	public void preUnBind(Context ctx) {
+		this.cloneRepo(ctx);	}
 
 	@Override
-	public void postUnBind() {
-		// TODO Auto-generated method stub
-		super.postUnBind();
-	}
+	public void postUnBind(Context ctx) {
+		this.commitPushRepo();	}
 
 	/**
 	 * local clone a repo
-	 * 
-	 * @throws IOException
-	 * @throws GitAPIException
-	 * @throws TransportException
-	 * @throws InvalidRemoteException
+	 * @param ctx. exposing the workDir Path in context
 	 */
-	private void cloneRepo() {
+	private void cloneRepo(Context ctx) {
 		try {
 			this.cred = new UsernamePasswordCredentialsProvider(this.gitUser, this.gitPassword);
-			this.gitClient = new GitClient(this.gitUrl, cred);
+		
 
 			String prefix = "broker-";
 
@@ -109,7 +93,7 @@ public class GitMediation extends DefaultBrokerMediation {
 			CloneCommand cc = new CloneCommand().setCredentialsProvider(cred).setDirectory(workDir.toFile())
 					.setTimeout(15).setURI(this.gitUrl);
 
-			Git git = cc.call();
+			this.git = cc.call();
 
 			String branch = "master";
 			git.checkout().setName(branch).call();
@@ -117,6 +101,8 @@ public class GitMediation extends DefaultBrokerMediation {
 			git.submoduleUpdate().call();
 
 			logger.info("git repo is ready, on branch {}", branch);
+			//push the work dir in invokation context
+			ctx.contextKeys.put(GitMediationContext.workDir.toString(),workDir);
 		} catch (Exception e) {
 			throw new IllegalArgumentException(e);
 

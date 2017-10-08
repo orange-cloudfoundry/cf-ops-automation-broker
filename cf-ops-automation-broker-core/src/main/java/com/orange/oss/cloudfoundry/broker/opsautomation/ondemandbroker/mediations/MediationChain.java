@@ -20,53 +20,57 @@ public class MediationChain {
 	}
 
 	public void create() {
+		Context ctx=new Context();
 		for (BrokerMediation m:mediations) {
-			m.preCreate();
+			m.preCreate(ctx);
 		}
-		sink.create();
+		sink.create(ctx);
 		
 		for (int i=mediations.size()-1;i>=0;i--) {
 			BrokerMediation m=mediations.get(i);
-			m.postCreate();			
+			m.postCreate(ctx);			
 		}
 
 	}
 
 	public void bind() {
+		Context ctx=new Context();		
 		for (BrokerMediation m:mediations) {
-			m.preBind();
+			m.preBind(ctx);
 		}
-		sink.bind();
+		sink.bind(ctx);
 		
 		for (int i=mediations.size()-1;i>=0;i--) {
 			BrokerMediation m=mediations.get(i);
-			m.postBind();			
+			m.postBind(ctx);			
 		}
 		
 	}
 	
 	public void unBind() {
+		Context ctx=new Context();		
 		for (BrokerMediation m:mediations) {
-			m.preUnBind();
+			m.preUnBind(ctx);
 		}
-		sink.unBind();
+		sink.unBind(ctx);
 		
 		for (int i=mediations.size()-1;i>=0;i--) {
 			BrokerMediation m=mediations.get(i);
-			m.postUnBind();			
+			m.postUnBind(ctx);			
 		}
 		
 	}
 	
 	public void delete() {
+		Context ctx=new Context();		
 		for (BrokerMediation m:mediations) {
-			m.preDelete();
+			m.preDelete(ctx);
 		}
-		sink.delete();
+		sink.delete(ctx);
 		
 		for (int i=mediations.size()-1;i>=0;i--) {
 			BrokerMediation m=mediations.get(i);
-			m.postDelete();			
+			m.postDelete(ctx);			
 		}
 		
 	}

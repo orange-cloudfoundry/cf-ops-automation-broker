@@ -20,45 +20,45 @@ public class MediationChainTest {
 		mediations.add(new BrokerMediation() {
 			
 			@Override
-			public void preCreate() {
+			public void preCreate(Context ctx) {
 				logger.info("preCreate 1");
 			}
 			
 			@Override
-			public void preBind() {
+			public void preBind(Context ctx) {
 				logger.info("preBind 1");
 			}
 			
 			@Override
-			public void postCreate() {
+			public void postCreate(Context ctx) {
 				logger.info("post Create 1");
 			}
 			
 			@Override
-			public void postBind() {
+			public void postBind(Context ctx) {
 				logger.info("post Bind 1");
 			}
 
 			@Override
-			public void preDelete() {
+			public void preDelete(Context ctx) {
 				logger.info("pre delete 1");
 				
 			}
 
 			@Override
-			public void postDelete() {
+			public void postDelete(Context ctx) {
 				logger.info("post delete 1");
 				
 			}
 
 			@Override
-			public void preUnBind() {
+			public void preUnBind(Context ctx) {
 				logger.info("post unbind 1");
 				
 			}
 
 			@Override
-			public void postUnBind() {
+			public void postUnBind(Context ctx) {
 				logger.info("post unbind 1");
 				
 			}
@@ -67,45 +67,45 @@ public class MediationChainTest {
 		mediations.add(new BrokerMediation() {
 			
 			@Override
-			public void preCreate() {
+			public void preCreate(Context ctx) {
 				logger.info("preCreate 2");
 			}
 			
 			@Override
-			public void preBind() {
+			public void preBind(Context ctx) {
 				logger.info("preBind 2");
 			}
 			
 			@Override
-			public void postCreate() {
+			public void postCreate(Context ctx) {
 				logger.info("post Create 2");
 			}
 			
 			@Override
-			public void postBind() {
+			public void postBind(Context ctx) {
 				logger.info("post Bind 2");
 			}
 
 			@Override
-			public void preDelete() {
+			public void preDelete(Context ctx) {
 				logger.info("pre delete 2");
 				
 			}
 
 			@Override
-			public void postDelete() {
+			public void postDelete(Context ctx) {
 				logger.info("post delete 2");
 				
 			}
 
 			@Override
-			public void preUnBind() {
+			public void preUnBind(Context ctx) {
 				logger.info("pre unbind 2");
 				
 			}
 
 			@Override
-			public void postUnBind() {
+			public void postUnBind(Context ctx) {
 				logger.info("post unbind 2");
 				
 			}

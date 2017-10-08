@@ -2,17 +2,17 @@ package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.mediatio
 
 public interface BrokerMediation {
 
-	public void preCreate();
-	public void postCreate();
-	public void preBind();
-	public void postBind();
+	public void preCreate(Context ctx);
+	public void postCreate(Context ctx);
+	public void preBind(Context ctx);
+	public void postBind(Context ctx);
 	
 	
-	public void preDelete();
-	public void postDelete();
+	public void preDelete(Context ctx);
+	public void postDelete(Context ctx);
 	
-	public void preUnBind();
-	public void postUnBind();
+	public void preUnBind(Context ctx);
+	public void postUnBind(Context ctx);
 
 	
 }

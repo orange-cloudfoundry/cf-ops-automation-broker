@@ -4,18 +4,19 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.context.annotation.PropertySource;
+import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.mediations.BrokerMediation;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.mediations.DefaultBrokerMediationSink;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.mediations.MediationChain;
 
-//@RunWith(SpringRunner.class)
-@PropertySource("classpath:/git.properties")
+@RunWith(SpringJUnit4ClassRunner.class)
 @SpringBootTest
+@TestPropertySource("classpath:git.properties")
 public class GitTest {
 
 	@Autowired

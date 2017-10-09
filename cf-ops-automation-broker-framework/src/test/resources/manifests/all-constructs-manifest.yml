@@ -1,0 +1,60 @@
+---
+name: name
+director_uuid: director_uuid 
+
+releases:
+  - {name: release1, version: latest }
+  - {name: release2, version: latest}
+
+update:
+  canaries: 0
+  canary_watch_time: 30000-240000
+  update_watch_time:  30000-240000
+  max_in_flight: 1
+  serial: false
+
+
+stemcells:
+- alias: trusty
+  os: ubuntu-trusty
+  version: latest
+
+instance_groups:
+- name: test-errand
+  instances: 1
+  lifecycle: errand
+  vm_type: default
+  stemcell: trusty
+  azs: [z1]
+  networks: [{name: net1}]
+  jobs:
+  - name: template1
+    release: release1
+#  properties:
+#    prop1: valueprop1
+#    prop2:
+#      prop2_1: value_prop2_1
+#      prop2_2: value_prop2_2
+    
+
+  #bosh 1.0 syntax
+  jobs:
+  - name: job
+    release: release3
+    consumes:
+      peers: {}
+    provides:
+      peers: {} #{from: hazelcast-cluster}
+    
+    properties:
+      prop1: valueprop1
+      prop2:
+        prop2_1: value_prop2_1
+        prop2_2: value_prop2_2
+
+properties:
+  prop1: valueprop1
+  prop2:
+    prop2_1: value_prop2_1
+    prop2_2: value_prop2_2
+

@@ -3,12 +3,12 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
-	<artifactId>cf-ops-automation-broker-core</artifactId>
+	<artifactId>cf-ops-automation-broker-framework</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<packaging>jar</packaging>
 
-	<name>cf-ops-automation-broker-core</name>
-	<description>Open Service API Broker for Orange  cf-ops-automation on demand pipeline provisionning</description>
+	<name>cf-ops-automation-broker-framework</name>
+	<description>base framework for OSB API broker mediations</description>
 
 	<parent>
 		<groupId>com.orange.oss.cloudfoundry.broker.opsautomation</groupId>
@@ -50,13 +50,6 @@
 		</dependency>
 		
 		<!-- project depl -->
-		
-		<dependency>
-		  <groupId>com.orange.oss.cloudfoundry.broker.opsautomation</groupId>
-		  <artifactId>cf-ops-automation-broker-framework</artifactId>
-		</dependency>
-		
-		
 		<dependency>
 		  <groupId>org.eclipse.jgit</groupId>
 		  <artifactId>org.eclipse.jgit</artifactId>
@@ -106,15 +99,6 @@
 	  </repositories>
 
 	
-
-	<build>
-		<plugins>
-			<plugin>
-				<groupId>org.springframework.boot</groupId>
-				<artifactId>spring-boot-maven-plugin</artifactId>
-			</plugin>
-		</plugins>
-	</build>
 
 
 </project>

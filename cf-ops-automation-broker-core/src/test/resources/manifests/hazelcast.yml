@@ -1,0 +1,123 @@
+---
+name: hazelcast
+director_uuid: xxxxx
+
+releases:
+  - {name: hazelcast, version: latest }
+  - {name: consul, version: latest}
+  - {name: logsearch-shipper, version: latest }
+  - {name: route-registrar, version: latest}
+  
+
+update:
+  canaries: 0
+  canary_watch_time: 30000-240000
+  update_watch_time:  30000-240000
+  max_in_flight: 1 #<-- important to limit max in flight, for consul update, and for hazelcast cluster smooth mem migration
+  serial: false
+
+
+stemcells:
+- alias: trusty
+  os: ubuntu-trusty
+  version: latest
+
+instance_groups:
+
+- name: hazelcast-management
+  instances: 1
+  vm_type: default
+  stemcell: trusty
+  azs: [z1]
+  networks: [{name: net-hazelcast}]
+  jobs:
+  - name: broker
+    release: hazelcast
+    
+  - name: hazelcast_mancenter
+    release: hazelcast
+
+  - name: route-registrar
+    release: route-registrar
+    properties:
+      # this is a route to expose management center  via cf routers
+      route_registrar:
+        external_host: "elpaaso-hz-mancenter.cw-vdr-api.redacted-domain.org"
+        port: 9000
+        message_bus_servers:
+        - host:  192.168.131.6:4222 # <-- cf nats, cant use dns cause cf is in bosh-ops powerdns, not bosh-master
+          user: nats
+          password: wwwwww  #nats
+        health_checker:
+          interval: 10
+          name: healthchk
+
+- name: consul-servers
+  instances: 3
+  vm_type: default
+  stemcell: trusty
+  azs: [z1]
+  networks: [{name: net-hazelcast}]
+  persistent_disk_type: small_disk  
+  jobs:
+  - name: consul
+    release: consul
+    properties:
+      consul: 
+        #size: 3 # Expected size of consul server cluster being built. Leader election delayed until all server nodes available.
+        #join_host: *discovery_static_ip  # Hostname/IP for initial cluster node for other consul servers to join.
+        join_hosts:
+        - 192.168.171.39
+        - 192.168.171.40
+        - 192.168.171.41
+        default_recursor: 185.23.94.244 # DNS recursor to use if BOSH not provising DNS
+        domain: consul # All DNS queries for this domain will be handled by consul.
+        server: true # Should the agent run in server or client mode
+        user: vcap # User that consul is ran under
+      networks: 
+        apps: net-hazelcast # Deployment's internal name for the network interface to discover own IP      
+
+
+- name: hazelcast-cluster
+  instances: 2
+  vm_type: default
+  stemcell: trusty
+  azs: [z1]
+  networks: [{name: net-hazelcast}]
+  persistent_disk_type: small_disk
+  
+  jobs:
+  - name: consul
+    release: consul
+    properties:
+      consul:
+        join_hosts:
+        - 192.168.172.39
+        - 192.168.171.40
+        - 192.168.171.41
+        server: false # Should the agent run in server or client mode
+        user: vcap # User that consul is ran under
+      networks:
+        apps: net-hazelcast # Deployment's internal name for the network interface to discover own IP
+    
+  - name: hazelcast_node
+    release: hazelcast
+    consumes:
+      peers: {}
+    provides:
+      peers: {} #{from: hazelcast-cluster}
+    properties:
+      hazelcast:
+        jvm:
+          memoryMo: 3000
+        group:
+          name: hz-group
+          password: wwwwwwwwwwwwwww 
+
+
+properties:
+  #logsearch-shipper config, collect all monit job logs and send to remote logsearch
+  logsearch:
+    logs:
+      server: "logsearch-dfy:5514" # <-- logsearch ingestor ip
+

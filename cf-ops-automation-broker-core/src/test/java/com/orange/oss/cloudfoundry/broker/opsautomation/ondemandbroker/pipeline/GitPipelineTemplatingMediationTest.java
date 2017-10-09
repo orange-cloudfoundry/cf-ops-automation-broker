@@ -6,7 +6,9 @@ import java.util.List;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.core.io.Resource;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
@@ -20,7 +22,10 @@ import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.mediation
 @SpringBootTest
 @TestPropertySource("classpath:git.properties")
 
-public class GitPipelineTemplatingTest {
+public class GitPipelineTemplatingMediationTest {
+
+	@Value("classpath:/manifests/hazelcast.yml")
+    private Resource manifestResource;
 
 	
 	@Autowired
@@ -32,7 +37,7 @@ public class GitPipelineTemplatingTest {
 		GitMediation mediation=new GitMediation(gitProperties.getGitUser(), gitProperties.getGitPassword(), gitProperties.getGitUrl());
 		List<BrokerMediation> mediations=new ArrayList<BrokerMediation>();
 		mediations.add(mediation);
-		mediations.add(new GitPipelineTemplating());
+		mediations.add(new GitPipelineTemplatingMediation("on-demand-depl",this.manifestResource));
 		MediationChain chain=new MediationChain(mediations, new DefaultBrokerMediationSink());
 		
 		chain.create();

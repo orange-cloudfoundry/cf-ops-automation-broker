@@ -1,0 +1,53 @@
+director_uuid: "7375394c-83e2-407e-ba85-9471c3624971"
+name: "composed-hazelcast"
+releases:
+- name: "hazelcast"
+  version: "latest"
+update:
+  canaries: 1
+  canary_watch_time: "30000-240000"
+  update_watch_time: "30000-240000"
+  max_in_flight: 1
+  serial: true
+stemcells:
+- alias: "trusty"
+  os: "ubuntu-trusty"
+  version: "latest"
+instance_groups:
+- name: "hazelcast-instances"
+  instances: 2
+  vm_type: "default"
+  stemcell: "trusty"
+  azs:
+  - "z1"
+  networks:
+  - name: "net-bosh-ondemand"
+  jobs:
+  - name: "hazelcast_node"
+    release: "hazelcast"
+    consumes: {}
+    provides: {}
+    properties: {}
+  properties:
+    hazelcast:
+      jvm:
+        memoryMo: "3000"
+      group:
+        password: "eentepAxHo"
+        name: "hz-group"
+- name: "manager"
+  instances: 1
+  vm_type: "default"
+  stemcell: "trusty"
+  azs:
+  - "z1"
+  networks:
+  - name: "net-bosh-ondemand"
+  jobs:
+  - name: "hazelcast_mancenter"
+    release: "hazelcast"
+    consumes: {}
+    provides: {}
+    properties: {}
+  properties: {}
+properties: {}

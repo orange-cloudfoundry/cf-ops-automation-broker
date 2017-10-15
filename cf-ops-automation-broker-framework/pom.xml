@@ -25,42 +25,15 @@
 	</properties>
 
 	<dependencies>
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-actuator</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-security</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-web</artifactId>
-		</dependency>
 
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-test</artifactId>
 			<scope>test</scope>
 		</dependency>
-		<dependency>
-			<groupId>org.springframework.security</groupId>
-			<artifactId>spring-security-test</artifactId>
-			<scope>test</scope>
-		</dependency>
 		
 		<!-- project depl -->
-		<dependency>
-		  <groupId>org.eclipse.jgit</groupId>
-		  <artifactId>org.eclipse.jgit</artifactId>
-		  <version>4.2.0.201601211800-r</version>
-		</dependency>
 		
-        <dependency>
-            <groupId>org.springframework.cloud</groupId>
-            <artifactId>spring-cloud-cloudfoundry-service-broker</artifactId>
-            <version>${springCloudServiceBrokerVersion}</version>
-        </dependency>
         
 		<!-- for bosh manifest yml parsing -->
 		<dependency>

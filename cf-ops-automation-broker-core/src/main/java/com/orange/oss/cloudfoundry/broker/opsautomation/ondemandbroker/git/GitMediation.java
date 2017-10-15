@@ -15,10 +15,8 @@ import org.eclipse.jgit.api.PushCommand;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.NoFilepatternException;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.mediations.Context;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.mediations.DefaultBrokerMediation;

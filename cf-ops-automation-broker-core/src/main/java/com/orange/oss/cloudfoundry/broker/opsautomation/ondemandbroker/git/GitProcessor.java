@@ -18,8 +18,8 @@ import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.mediations.Context;
-import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.mediations.DefaultBrokerMediation;
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.Context;
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.DefaultBrokerProcessor;
 
 
 /**
@@ -30,11 +30,11 @@ import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.mediation
  * @author poblin-orange
  *
  */
-public class GitMediation extends DefaultBrokerMediation {
+public class GitProcessor extends DefaultBrokerProcessor {
 
 
 
-	private static Logger logger = LoggerFactory.getLogger(GitMediation.class.getName());
+	private static Logger logger = LoggerFactory.getLogger(GitProcessor.class.getName());
 
 	private String gitUser;
 	private String gitPassword;
@@ -45,7 +45,7 @@ public class GitMediation extends DefaultBrokerMediation {
 	private UsernamePasswordCredentialsProvider cred;
 	private Path workDir;
 
-	public GitMediation(String gitUser, String gitPassword, String gitUrl) {
+	public GitProcessor(String gitUser, String gitPassword, String gitUrl) {
 		this.gitUser = gitUser;
 		this.gitPassword = gitPassword;
 		this.gitUrl = gitUrl;
@@ -116,7 +116,7 @@ public class GitMediation extends DefaultBrokerMediation {
 
 			logger.info("git repo is ready, on branch {}", branch);
 			//push the work dir in invokation context
-			ctx.contextKeys.put(GitMediationContext.workDir.toString(),workDir);
+			ctx.contextKeys.put(GitProcessorContext.workDir.toString(),workDir);
 			
 			
 		} catch (Exception e) {

@@ -14,12 +14,12 @@ import org.springframework.credhub.support.password.PasswordParametersRequest;
 import org.springframework.http.client.ClientHttpRequestFactory;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 
-import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.mediations.Context;
-import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.mediations.DefaultBrokerMediation;
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.Context;
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.DefaultBrokerProcessor;
 
-public class PasswordGenMediation extends DefaultBrokerMediation {
+public class PasswordGenProcessor extends DefaultBrokerProcessor {
 
-	private static Logger logger=LoggerFactory.getLogger(PasswordGenMediation.class.getName());
+	private static Logger logger=LoggerFactory.getLogger(PasswordGenProcessor.class.getName());
 	
 	private String instanceGroupName;
 	private String propertyName;
@@ -31,7 +31,7 @@ public class PasswordGenMediation extends DefaultBrokerMediation {
 	 * @param instanceGroupName(à
 	 * @param propertyName
 	 */
-	public PasswordGenMediation(String apiUriBase,String instanceGroupName,String propertyName) {
+	public PasswordGenProcessor(String apiUriBase, String instanceGroupName, String propertyName) {
 		this.apiUriBase=apiUriBase;
 		this.instanceGroupName=instanceGroupName;
 		this.propertyName=propertyName;

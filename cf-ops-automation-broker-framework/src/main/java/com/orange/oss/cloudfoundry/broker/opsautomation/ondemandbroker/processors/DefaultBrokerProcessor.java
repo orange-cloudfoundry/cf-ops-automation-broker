@@ -1,4 +1,4 @@
-package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.mediations;
+package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors;
 
 
 import org.slf4j.Logger;
@@ -10,9 +10,9 @@ import org.slf4j.LoggerFactory;
  * @author root
  *
  */
-public class DefaultBrokerMediation implements BrokerMediation {
+public class DefaultBrokerProcessor implements BrokerProcessor {
 
-	private static Logger logger=LoggerFactory.getLogger(DefaultBrokerMediation.class.getName());
+	private static Logger logger=LoggerFactory.getLogger(DefaultBrokerProcessor.class.getName());
 
 	@Override
 	public void preCreate(Context ctx) {

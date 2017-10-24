@@ -18,7 +18,7 @@ import org.springframework.stereotype.Service;
 public class BrokerServiceInstanceService implements ServiceInstanceService {
 	private static final Logger LOGGER = LoggerFactory.getLogger(BrokerServiceInstanceService.class.getName());
 	
-	//FIXME: autowire broker mediation chain
+	//FIXME: autowire broker processor chain
 
 	public BrokerServiceInstanceService(){
 	}

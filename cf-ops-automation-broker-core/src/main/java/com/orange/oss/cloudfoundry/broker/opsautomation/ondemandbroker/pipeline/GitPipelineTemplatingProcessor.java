@@ -6,24 +6,24 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.DefaultBrokerProcessor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.Resource;
 
 import com.orange.oss.bosh.deployer.manifest.ManifestMapping;
 import com.orange.oss.bosh.deployer.manifest.ManifestParser;
-import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.GitMediationContext;
-import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.mediations.Context;
-import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.mediations.DefaultBrokerMediation;
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.GitProcessorContext;
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.Context;
 
 /**
  * Mediation relative to cf-ops-automation pipeline file generation
  * @author poblin-orange
  *
  */
-public class GitPipelineTemplatingMediation extends DefaultBrokerMediation {
+public class GitPipelineTemplatingProcessor extends DefaultBrokerProcessor {
 
-	private static Logger logger=LoggerFactory.getLogger(GitPipelineTemplatingMediation.class.getName());
+	private static Logger logger=LoggerFactory.getLogger(GitPipelineTemplatingProcessor.class.getName());
 
 	private String baseDir;
     private Resource manifestResource;
@@ -33,7 +33,7 @@ public class GitPipelineTemplatingMediation extends DefaultBrokerMediation {
      * @param baseDir: base directory inside the git repo to generate the manifest (cf-ops-automation naming convention, maps to bosh director)
      * @param manifestTemplateResource: a resource for a yaml bosh manifest template
      */
-	public GitPipelineTemplatingMediation(String baseDir,Resource manifestTemplateResource) {
+	public GitPipelineTemplatingProcessor(String baseDir, Resource manifestTemplateResource) {
 		super();
 		this.manifestResource=manifestTemplateResource;
 		this.baseDir=baseDir;
@@ -44,7 +44,7 @@ public class GitPipelineTemplatingMediation extends DefaultBrokerMediation {
 	@Override
 	public void preCreate(Context ctx) {
 		//generate pipeline files. need to retrieve context.
-		Path workDir= (Path) ctx.contextKeys.get(GitMediationContext.workDir.toString());
+		Path workDir= (Path) ctx.contextKeys.get(GitProcessorContext.workDir.toString());
 		
 		//TODO generate the manifest
 		logger.info("generating files for pipelines");

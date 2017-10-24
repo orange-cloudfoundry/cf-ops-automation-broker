@@ -1,6 +1,6 @@
-package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.mediations;
+package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors;
 
-public interface BrokerMediation {
+public interface BrokerProcessor {
 
 	public void preCreate(Context ctx);
 	public void postCreate(Context ctx);

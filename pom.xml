@@ -27,6 +27,7 @@
 	
 	<modules>
 		<module>cf-ops-automation-broker-core</module>
+		<module>cf-ops-automation-broker-framework</module>
 	</modules>
 
 	<dependencies>
@@ -89,9 +90,16 @@
 			<optional>true</optional>
 		</dependency>
 	</dependencies>
-
 	
-
+	<dependencyManagement>
+		<dependencies>
+			<dependency>
+			<groupId>com.orange.oss.cloudfoundry.broker.opsautomation</groupId>
+			<artifactId>cf-ops-automation-broker-framework</artifactId>
+			<version>0.0.1-SNAPSHOT</version>
+		</dependency>
+	</dependencies>
+	</dependencyManagement>
 
 
 	 <repositories>

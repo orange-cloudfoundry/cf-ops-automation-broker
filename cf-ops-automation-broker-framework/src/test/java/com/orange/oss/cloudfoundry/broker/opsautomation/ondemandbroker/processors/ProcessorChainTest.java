@@ -1,4 +1,4 @@
-package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.mediations;
+package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -10,14 +10,14 @@ import org.springframework.boot.test.context.SpringBootTest;
 
 
 @SpringBootTest
-public class MediationChainTest {
+public class ProcessorChainTest {
 
-	private static Logger logger=LoggerFactory.getLogger(MediationChainTest.class.getName());
+	private static Logger logger=LoggerFactory.getLogger(ProcessorChainTest.class.getName());
 
 	@Test
 	public void testInvocationChain() {
-		List<BrokerMediation> mediations=new ArrayList<BrokerMediation>();
-		mediations.add(new BrokerMediation() {
+		List<BrokerProcessor> processors=new ArrayList<BrokerProcessor>();
+		processors.add(new BrokerProcessor() {
 			
 			@Override
 			public void preCreate(Context ctx) {
@@ -64,7 +64,7 @@ public class MediationChainTest {
 			}
 		});
 		
-		mediations.add(new BrokerMediation() {
+		processors.add(new BrokerProcessor() {
 			
 			@Override
 			public void preCreate(Context ctx) {
@@ -112,8 +112,8 @@ public class MediationChainTest {
 		});
 
 		
-		DefaultBrokerMediationSink sink=new DefaultBrokerMediationSink();
-		MediationChain chain=new MediationChain(mediations, sink);
+		DefaultBrokerSink sink=new DefaultBrokerSink();
+		ProcessorChain chain=new ProcessorChain(processors, sink);
 		chain.create();
 		chain.bind();
 		chain.unBind();

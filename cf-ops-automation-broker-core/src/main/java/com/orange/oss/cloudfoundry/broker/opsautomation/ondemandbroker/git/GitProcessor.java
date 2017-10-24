@@ -18,15 +18,23 @@ import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-
-import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.mediations.Context;
-import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.mediations.DefaultBrokerMediation;
-
-public class GitMediation extends DefaultBrokerMediation {
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.Context;
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.DefaultBrokerProcessor;
 
 
+/**
+ * Git Mediation :
+ * clones repo
+ * adds modified files
+ * commit, rebase then push 
+ * @author poblin-orange
+ *
+ */
+public class GitProcessor extends DefaultBrokerProcessor {
 
-	private static Logger logger = LoggerFactory.getLogger(GitMediation.class.getName());
+
+
+	private static Logger logger = LoggerFactory.getLogger(GitProcessor.class.getName());
 
 	private String gitUser;
 	private String gitPassword;
@@ -37,7 +45,7 @@ public class GitMediation extends DefaultBrokerMediation {
 	private UsernamePasswordCredentialsProvider cred;
 	private Path workDir;
 
-	public GitMediation(String gitUser, String gitPassword, String gitUrl) {
+	public GitProcessor(String gitUser, String gitPassword, String gitUrl) {
 		this.gitUser = gitUser;
 		this.gitPassword = gitPassword;
 		this.gitUrl = gitUrl;
@@ -50,7 +58,7 @@ public class GitMediation extends DefaultBrokerMediation {
 
 	@Override
 	public void postCreate(Context ctx) {
-		this.commitPushRepo();
+		this.commitPushRepo(ctx);
 	}
 
 	@Override
@@ -59,7 +67,7 @@ public class GitMediation extends DefaultBrokerMediation {
 
 	@Override
 	public void postBind(Context ctx) {
-		this.commitPushRepo();	}
+		this.commitPushRepo(ctx);	}
 
 	@Override
 	public void preDelete(Context ctx) {
@@ -67,7 +75,7 @@ public class GitMediation extends DefaultBrokerMediation {
 
 	@Override
 	public void postDelete(Context ctx) {
-		this.commitPushRepo();	}
+		this.commitPushRepo(ctx);	}
 
 	@Override
 	public void preUnBind(Context ctx) {
@@ -75,7 +83,7 @@ public class GitMediation extends DefaultBrokerMediation {
 
 	@Override
 	public void postUnBind(Context ctx) {
-		this.commitPushRepo();	}
+		this.commitPushRepo(ctx);	}
 
 	/**
 	 * local clone a repo
@@ -83,6 +91,8 @@ public class GitMediation extends DefaultBrokerMediation {
 	 */
 	private void cloneRepo(Context ctx) {
 		try {
+			
+			logger.info("cloning repo");
 			this.cred = new UsernamePasswordCredentialsProvider(this.gitUser, this.gitPassword);
 		
 
@@ -90,8 +100,12 @@ public class GitMediation extends DefaultBrokerMediation {
 
 			workDir = Files.createTempDirectory(prefix);
 
-			CloneCommand cc = new CloneCommand().setCredentialsProvider(cred).setDirectory(workDir.toFile())
-					.setTimeout(15).setURI(this.gitUrl);
+			int timeoutSeconds = 60; //git timeout
+			CloneCommand cc = new CloneCommand()
+					.setCredentialsProvider(cred)
+					.setDirectory(workDir.toFile())
+					.setTimeout(timeoutSeconds)
+					.setURI(this.gitUrl);
 
 			this.git = cc.call();
 
@@ -102,7 +116,9 @@ public class GitMediation extends DefaultBrokerMediation {
 
 			logger.info("git repo is ready, on branch {}", branch);
 			//push the work dir in invokation context
-			ctx.contextKeys.put(GitMediationContext.workDir.toString(),workDir);
+			ctx.contextKeys.put(GitProcessorContext.workDir.toString(),workDir);
+			
+			
 		} catch (Exception e) {
 			throw new IllegalArgumentException(e);
 
@@ -117,9 +133,9 @@ public class GitMediation extends DefaultBrokerMediation {
 	 * @throws NoFilepatternException
 	 * @throws IOException
 	 */
-	private void commitPushRepo() {
+	private void commitPushRepo(Context ctx) {
 		try {
-			logger.info("Stop templating");
+			logger.info("commit push");
 			AddCommand addC = git.add().addFilepattern(".");
 			addC.call();
 			logger.info("added files");
@@ -128,6 +144,8 @@ public class GitMediation extends DefaultBrokerMediation {
 			commitC.call();
 			logger.info("commited files");
 
+			//TODO: rebase
+			
 			logger.info("pushing ...");
 			PushCommand pushCommand = git.push().setCredentialsProvider(cred);
 			pushCommand.call();

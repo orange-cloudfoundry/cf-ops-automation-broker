@@ -1,16 +1,16 @@
-package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.mediations;
+package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Sink of broker mediation
+ * Sink of broker processors
  * Terminal point, typically output to a foreign broker or a backend
  * @author poblin-orange
  *
  */
-public class DefaultBrokerMediationSink  implements BrokerMediationSink {
-	private static Logger logger=LoggerFactory.getLogger(DefaultBrokerMediation.class.getName());
+public class DefaultBrokerSink implements BrokerSink {
+	private static Logger logger=LoggerFactory.getLogger(DefaultBrokerProcessor.class.getName());
 
 	@Override
 	public void create(Context ctx) {

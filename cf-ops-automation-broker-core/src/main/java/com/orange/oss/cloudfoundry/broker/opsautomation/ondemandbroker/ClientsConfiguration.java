@@ -24,11 +24,4 @@ public class ClientsConfiguration {
 	}
 	
 	
-	@Bean
-	@ConditionalOnMissingBean	
-	DeploymentTemplate boshManifestTemplatingStrategy(){
-		return new BoshManifestTemplatingStrategy();
-	}
-	
-	
 }

@@ -1,4 +1,4 @@
-package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.mediations;
+package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors;
 
 import java.util.HashMap;
 import java.util.Map;

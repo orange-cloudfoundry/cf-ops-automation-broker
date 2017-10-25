@@ -1,4 +1,4 @@
-# cf-ops-automation-broker
+# cf-ops-automation-broker [![CI](https://circleci.com/gh/orange-cloudfoundry/cf-ops-automation-broker.svg?style=shield&circle-token=:circle-token)](https://circleci.com/gh/orange-cloudfoundry/cf-ops-automation-broker)
 Open Service Broker API for Orange cf-ops-automation pipelines generation
 
 Status:

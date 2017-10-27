@@ -54,7 +54,13 @@ public class TerraformModuleProcessorTest {
 
     @Test
     public void writes_terraform_module_invocation() {
+        TerraformRepository  terraformRepository = Mockito.mock(TerraformRepository.class);
 
+        //When a new module is requested to be added
+        TerraformModule requestedModule = new TerraformModule();
+
+        //It is saved
+        terraformRepository.save(requestedModule);
     }
 
     @Test

@@ -10,11 +10,6 @@ import static org.fest.assertions.Assertions.assertThat;
 public class CloudFlareProcessorTest {
 
 
-
-    @Test
-    public void config_includes_suffix() {
-    }
-
     @Test
     public void requires_config() {
         String routeSuffix = "-cdn-cw-vdr-pprod-apps.elpaaso.net";
@@ -30,6 +25,11 @@ public class CloudFlareProcessorTest {
 
         //Given an invalid route
         cloudFlareProcessor.validateRequestedRoute("", "route");
+    }
+
+    @Test
+    public void rejects_duplicate_route_request() {
+
     }
 
     private CloudFlareConfig aConfig() {

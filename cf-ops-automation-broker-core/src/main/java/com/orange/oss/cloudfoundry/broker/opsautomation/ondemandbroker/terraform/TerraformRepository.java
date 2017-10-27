@@ -8,4 +8,6 @@ import java.util.List;
 public interface TerraformRepository {
 
     TerraformModule getByModuleName(String moduleName);
+
+    TerraformModule save(TerraformModule module);
 }

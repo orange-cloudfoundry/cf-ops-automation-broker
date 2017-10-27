@@ -1,4 +1,4 @@
-package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.terraform;
+package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.terraform.cloudflare;
 
 import org.apache.commons.validator.routines.DomainValidator;
 

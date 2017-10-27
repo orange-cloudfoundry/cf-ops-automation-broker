@@ -37,14 +37,11 @@ public class TerraformModuleProcessorTest {
 
     }
 
-    @Test
-    public void validates_service_instance_inputs() {
 
-    }
 
     @Test
     public void check_service_instance_conflicting_state() {
-
+        TerraformRepository terraformRepository;
     }
 
     @Test

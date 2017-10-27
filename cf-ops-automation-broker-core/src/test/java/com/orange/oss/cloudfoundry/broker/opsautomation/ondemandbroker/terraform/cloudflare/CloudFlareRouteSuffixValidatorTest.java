@@ -1,9 +1,7 @@
-package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.terraform;
+package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.terraform.cloudflare;
 
 import org.fest.assertions.Assertions;
 import org.junit.Test;
-
-import static org.junit.Assert.*;
 
 /**
  *

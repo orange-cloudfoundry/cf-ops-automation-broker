@@ -1,10 +1,4 @@
-package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker;
-
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.sample;
 
 import org.springframework.cloud.servicebroker.model.Catalog;
 import org.springframework.cloud.servicebroker.model.Plan;
@@ -12,13 +6,15 @@ import org.springframework.cloud.servicebroker.model.ServiceDefinition;
 import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Service;
 
+import java.util.*;
+
 @Service
 public class BrokerCatalogConfig {
 	@Bean
 	public Catalog catalog() {
 		return new Catalog(Collections.singletonList(
 				new ServiceDefinition(
-						"ondemand-service-broker",
+						"ondemand-service",
 						"ondemand",
 						"A simple ondemand service broker implementation",
 						true,

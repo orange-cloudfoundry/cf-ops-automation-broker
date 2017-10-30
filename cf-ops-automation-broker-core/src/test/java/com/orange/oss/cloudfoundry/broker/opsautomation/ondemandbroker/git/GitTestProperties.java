@@ -3,7 +3,7 @@ package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-@Service
+//@Service
 public class GitTestProperties {
 
 	@Value("${gitUser}")	

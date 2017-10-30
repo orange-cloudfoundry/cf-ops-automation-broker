@@ -30,7 +30,7 @@ public class DeploymentSpecFactoryTest {
 		DeploymentSpecFactory factory=new DeploymentSpecFactory();
 		DeploymentSpec spec=factory.spec();
 		
-		ManifestComposer composer=new ManifestComposer();
+		ManifestComposer composer=new ManifestComposer(new ManifestParser());
 		
 		Manifest manifest=composer.composeBoshManifest(spec);
 		

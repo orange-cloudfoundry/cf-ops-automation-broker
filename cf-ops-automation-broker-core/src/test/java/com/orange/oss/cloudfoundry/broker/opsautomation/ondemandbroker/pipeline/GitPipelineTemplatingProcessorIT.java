@@ -21,8 +21,7 @@ import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processor
 @RunWith(SpringJUnit4ClassRunner.class)
 @SpringBootTest
 @TestPropertySource("classpath:git.properties")
-
-public class GitPipelineTemplatingProcessorTest {
+public class GitPipelineTemplatingProcessorIT {
 
 	@Value("classpath:/manifests/hazelcast.yml")
     private Resource manifestResource;

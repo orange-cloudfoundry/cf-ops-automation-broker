@@ -44,10 +44,12 @@ public class ManifestComposer {
 	private static final String stemcellOs = "ubuntu-trusty";
 	private static final String stemcellAlias = "trusty";
 
-	
-	@Autowired
-	ManifestParser manifestParser;
-	
+	private ManifestParser manifestParser;
+
+	public ManifestComposer(ManifestParser manifestParser) {
+		this.manifestParser = manifestParser;
+	}
+
 	
 	public Manifest composeBoshManifest(DeploymentSpec spec){
 		

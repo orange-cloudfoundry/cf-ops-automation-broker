@@ -5,7 +5,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.credhub.configuration.CredHubConfiguration;
 
 @Configuration
-@Import(CredHubConfiguration.class)
+//@Import(CredHubConfiguration.class)
 public class CredhubConfiguration {
 
 }

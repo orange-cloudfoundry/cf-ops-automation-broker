@@ -14,7 +14,6 @@ import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processor
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @SpringBootTest
-
 public class PasswordGenProcessorTest {
 
 	

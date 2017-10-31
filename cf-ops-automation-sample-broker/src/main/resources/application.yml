@@ -1,0 +1,27 @@
+security:
+  user:
+    password: secret
+
+servicebroker:
+  catalog:
+    services:
+    - id: ondemand-service
+      name: ondemand
+      description: A simple ondemand service broker implementation
+      bindable: true
+      plans:
+        - id: ondemand-plan
+          name: default
+          description: This is a default ondemand plan.  All services are created equally.
+      tags:
+        -ondemand
+        -document
+      metadata:
+        displayName: ondemand
+        imageUrl: https://orange.com/image.png
+        longDescription: ondemand Service
+        providerDisplayName: Orange
+        documentationUrl: https://orange.com/doc
+        supportUrl: https://orange.com/support
+
+

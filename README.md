@@ -33,8 +33,7 @@ Maven example:
 
 The framework requires the broker to just provide an implementation of a [`ProcessorChain` bean](cf-ops-automation-broker-framework/src/main/java/com/orange/oss/cloudfoundry/broker/opsautomation/ondemandbroker/processors/ProcessorChain.java).
 
-    @ComponentScan
-    @EnableAutoConfiguration
+    @SpringBootApplication
     public class Application {
     
         public static void main(String[] args) {
@@ -50,5 +49,69 @@ The framework requires the broker to just provide an implementation of a [`Proce
             return chain;
         }
     }
+
+## Configuring the service broker catalog
+
+The framework requires the broker to just provide an implementation of a [`Catalog` bean](https://github.com/spring-cloud/spring-cloud-cloudfoundry-service-broker/blob/master/src/main/java/org/springframework/cloud/servicebroker/model/Catalog.java).
+
+### Using @Configuration and @Bean to inject a Catalog bean
+
+There is an example of this approach in the [sample broker](cf-ops-automation-sample-broker/src/main/java/com/orange/oss/cloudfoundry/broker/opsautomation/ondemandbroker/sample/BrokerCatalogConfig.java).
+
+    @Configuration
+    public class BrokerCatalogConfig {
+    	@Bean
+    	public Catalog catalog() {
+    		return new Catalog(Collections.singletonList(
+    				new ServiceDefinition(
+    						"ondemand-service",
+    						"ondemand",
+    						"A simple ondemand service broker implementation",
+    						true,
+    						false,
+    						Collections.singletonList(
+    								new Plan("ondemand-plan",
+    										"default",
+    										"This is a default ondemand plan.  All services are created equally.",
+    										getPlanMetadata())),
+    						Arrays.asList("ondemand", "document"),
+    						getServiceDefinitionMetadata(),
+    						null,
+    						null)));
+    	}
+    }
+
+### Using spring-boot-starter-servicebroker-catalog to configure your service broker catalog
+
+[spring-boot-starter-servicebroker-catalog](spring-boot-starter-servicebroker-catalog) provides an opinionated spring boot 'starter' to simplify your catalog configuration.
+
+To benefit from the starter , add it to your POM:
+
+        <dependency>
+            <groupId>com.orange.oss.cloudfoundry.broker.opsautomation</groupId>
+            <artifactId>spring-boot-starter-servicebroker-catalog</artifactId>
+            <version>last_version</version>
+        </dependency>
+        
+You can then configure the [`Catalog`](https://github.com/spring-cloud/spring-cloud-cloudfoundry-service-broker/blob/master/src/main/java/org/springframework/cloud/servicebroker/model/Catalog.java)
+using properties files, YAML files, environment variables or command-line arguments.
+There is an example of this approach in the [sample broker](cf-ops-automation-sample-broker/src/main/resources/application.yml).
+
+Please, notice that you can also use `CATALOG_YML` environment variable to set catalog config in a YAML format.
+
+```shell
+#export catalog.yml file content as an env variable
+export CATALOG_YML="$(cat catalog.yml)"
+
+```
+
+See [catalog.yml](cf-ops-automation-sample-broker/catalog.yml) for details.
+
+
+
+
  
-For catalog management, the framework provides a default implementation that requires the broker to just provide an implementation of a [`Catalog` bean](https://github.com/spring-cloud/spring-cloud-cloudfoundry-service-broker/blob/master/src/main/java/org/springframework/cloud/servicebroker/model/Catalog.java). There is an example of this approach in the [sample broker](cf-ops-automation-sample-broker/src/main/java/com/orange/oss/cloudfoundry/broker/opsautomation/ondemandbroker/sample/BrokerCatalogConfig.java).
+
+
+
+

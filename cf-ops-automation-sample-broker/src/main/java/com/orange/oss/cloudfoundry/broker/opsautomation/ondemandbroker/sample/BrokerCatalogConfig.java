@@ -4,11 +4,12 @@ import org.springframework.cloud.servicebroker.model.Catalog;
 import org.springframework.cloud.servicebroker.model.Plan;
 import org.springframework.cloud.servicebroker.model.ServiceDefinition;
 import org.springframework.context.annotation.Bean;
-import org.springframework.stereotype.Service;
+import org.springframework.context.annotation.Configuration;
 
 import java.util.*;
 
-@Service
+//Uncomment to override catalog configuration provided by spring-boot-starter-servicebroker-catalog
+//@Configuration
 public class BrokerCatalogConfig {
 	@Bean
 	public Catalog catalog() {

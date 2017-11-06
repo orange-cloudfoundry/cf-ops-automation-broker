@@ -3,6 +3,7 @@ package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.terrafor
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.GitProcessorContext;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.Context;
 import org.junit.Test;
+import org.mockito.Mockito;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -38,18 +39,28 @@ public class TerraformModuleProcessorTest {
     }
 
     @Test
-    public void validates_service_instance_inputs() {
+    public void rejects_request_with_conflicting_module_name() {
+        TerraformRepository terraformRepository = Mockito.mock(TerraformRepository.class);
+        //Given a list of current modules
 
-    }
 
-    @Test
-    public void check_service_instance_conflicting_state() {
+        //When a new module is requested to be added
+        TerraformModule requestedModule = new TerraformModule();
+        requestedModule.moduleName = "module1";
 
+        //Then it checks if a conflicting module exists, and rejects the request
+        TerraformModule existing = terraformRepository.getByModuleName(requestedModule.moduleName);
     }
 
     @Test
     public void writes_terraform_module_invocation() {
+        TerraformRepository  terraformRepository = Mockito.mock(TerraformRepository.class);
 
+        //When a new module is requested to be added
+        TerraformModule requestedModule = new TerraformModule();
+
+        //It is saved
+        terraformRepository.save(requestedModule);
     }
 
     @Test

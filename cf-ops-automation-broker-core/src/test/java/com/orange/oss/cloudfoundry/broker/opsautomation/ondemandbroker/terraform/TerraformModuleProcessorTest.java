@@ -2,26 +2,32 @@ package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.terrafor
 
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.GitProcessorContext;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.Context;
-import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.terraform.cloudflare.CloudFlareProcessorTest;
 import com.orange.oss.ondemandbroker.ProcessorChainServiceInstanceService;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
 import org.mockito.Mockito;
+import org.mockito.runners.MockitoJUnitRunner;
 import org.springframework.cloud.servicebroker.model.CreateServiceInstanceRequest;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.HashMap;
-import java.util.Map;
 
 import static org.fest.assertions.Assertions.assertThat;
+import static org.mockito.Mockito.when;
 
 /**
  *
  */
+@RunWith(MockitoJUnitRunner.class)
 public class TerraformModuleProcessorTest {
 
-    TerraformModuleProcessor terraformModuleProcessor = new TerraformModuleProcessor();
+    @Mock
+    TerraformRepository terraformRepository;
+    @InjectMocks
+    TerraformModuleProcessor terraformModuleProcessor;
 
     @Test
     public void receives_tf_module_creation_requests() {
@@ -29,8 +35,8 @@ public class TerraformModuleProcessorTest {
         Context context = aContextWithCreateRequest();
 
         //and a previous processor in the chain that inserted a tf module in the context
-        ImmutableTerraformModule injectedModule = aTerraformModule();
-        context.contextKeys.put(TerraformModuleProcessor.ADD_TF_MODULE_WITH_ID,
+        ImmutableTerraformModule injectedModule = aTfModule();
+        context.contextKeys.put(TerraformModuleProcessor.ADD_TF_MODULE,
                 injectedModule);
 
         //when
@@ -42,12 +48,23 @@ public class TerraformModuleProcessorTest {
         assertThat(module).isEqualTo(expectedTerraformModule);
     }
 
-    public ImmutableTerraformModule aTerraformModule() {
-        return ImmutableTerraformModule.builder()
-                    .moduleName("module-name")
-                    .source("path/to/module")
-                    .putProperties("route-prefix", "avalidroute")
-                    .build();
+    @Test(expected = RuntimeException.class)
+    public void rejects_request_with_conflicting_module_name() {
+        //given a repository populated with an existing module
+        TerraformRepository terraformRepository = Mockito.mock(TerraformRepository.class);
+        terraformModuleProcessor = new TerraformModuleProcessor(terraformRepository);
+        
+        when(terraformRepository.getByModuleId("service-instance-guid")).thenReturn(aTfModule());
+
+        //Given a list of current modules
+
+        //When a new module is requested to be added
+        TerraformModule requestedModule = ImmutableTerraformModule.builder().from(aTfModule())
+                .id("service-instance-guid")
+                .build();
+
+        //Then it checks if a conflicting module exists, and rejects the request
+        terraformModuleProcessor.checkForConflictingModule(requestedModule);
     }
 
     @Test
@@ -68,21 +85,10 @@ public class TerraformModuleProcessorTest {
     }
 
 
-    @Test
-    public void rejects_request_with_conflicting_module_name() {
-        TerraformRepository terraformRepository = Mockito.mock(TerraformRepository.class);
-        //Given a list of current modules
-
-
-        //When a new module is requested to be added
-        TerraformModule requestedModule = aTfModule();
-
-        //Then it checks if a conflicting module exists, and rejects the request
-        TerraformModule existing = terraformRepository.getByModuleName(requestedModule.getModuleName());
-    }
-
     private ImmutableTerraformModule aTfModule() {
-        return ImmutableTerraformModule.builder().moduleName("module1").source("path/to/module").build();
+        return ImmutableTerraformModule.builder()
+                .moduleName("module1")
+                .source("path/to/module").build();
     }
 
     @Test

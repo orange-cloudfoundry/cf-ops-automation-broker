@@ -3,6 +3,8 @@ package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.terrafor
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.Context;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.DefaultBrokerProcessor;
 import com.orange.oss.ondemandbroker.ProcessorChainServiceInstanceService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.cloud.servicebroker.model.CreateServiceInstanceRequest;
 
 /**
@@ -10,9 +12,14 @@ import org.springframework.cloud.servicebroker.model.CreateServiceInstanceReques
  */
 public class TerraformModuleProcessor extends DefaultBrokerProcessor{
 
-    public static final String ADD_TF_MODULE_WITH_ID = "AddTfModuleWithId";
+    private static Logger logger = LoggerFactory.getLogger(TerraformModuleProcessor.class.getName());
 
-    public TerraformModuleProcessor() {
+
+    public static final String ADD_TF_MODULE = "AddTfModuleWithId";
+    private TerraformRepository terraformRepository;
+
+    public TerraformModuleProcessor(TerraformRepository terraformRepository) {
+        this.terraformRepository = terraformRepository;
     }
 
     @Override
@@ -20,12 +27,23 @@ public class TerraformModuleProcessor extends DefaultBrokerProcessor{
 
     }
 
-    public TerraformModule getRequestedTerraformModule(Context context) {
+    TerraformModule getRequestedTerraformModule(Context context) {
         CreateServiceInstanceRequest request= (CreateServiceInstanceRequest) context.contextKeys.get(ProcessorChainServiceInstanceService.CREATE_SERVICE_INSTANCE_REQUEST);
-        TerraformModule requestedTerraformModule = (TerraformModule) context.contextKeys.get(TerraformModuleProcessor.ADD_TF_MODULE_WITH_ID);
+        TerraformModule requestedTerraformModule = (TerraformModule) context.contextKeys.get(TerraformModuleProcessor.ADD_TF_MODULE);
 
         return ImmutableTerraformModule.builder().from(requestedTerraformModule)
                 .id(request.getServiceInstanceId()).build();
 
+    }
+
+    public void checkForConflictingModule(TerraformModule requestedModule) {
+        String requestedModuleId = requestedModule.getId();
+        TerraformModule existing = terraformRepository.getByModuleId(requestedModuleId);
+        if (existing != null) {
+            logger.warn("unexpected conflicting terraform module with id=" + requestedModuleId + ". A module with same id already exists:" + existing);
+            //Don't return details on the existing module to the end user
+            //as this may have confidential data
+            throw new RuntimeException("unexpected conflicting terraform module with id=" + requestedModuleId + ". A module with same id already exists.");
+        }
     }
 }

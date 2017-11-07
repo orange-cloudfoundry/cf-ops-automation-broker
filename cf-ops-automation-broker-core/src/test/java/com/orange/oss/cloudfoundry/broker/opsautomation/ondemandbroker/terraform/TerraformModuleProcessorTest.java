@@ -16,6 +16,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 import static org.fest.assertions.Assertions.assertThat;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
@@ -30,14 +32,29 @@ public class TerraformModuleProcessorTest {
     TerraformModuleProcessor terraformModuleProcessor;
 
     @Test
+    public void responds_to_tf_module_creation_requests() {
+        //given a service instance request comes in
+        Context context = aContextWithCreateRequest();
+
+        //and a previous processor in the chain that inserted a tf module in the context
+        ImmutableTerraformModule injectedModule = aTfModule();
+        context.contextKeys.put(TerraformModuleProcessor.ADD_TF_MODULE, injectedModule);
+
+        //when
+        terraformModuleProcessor.preCreate(context);
+
+        //then it persists the new module
+        verify(terraformRepository).save(any(TerraformModule.class));
+    }
+
+    @Test
     public void receives_tf_module_creation_requests() {
         //given a service instance request comes in
         Context context = aContextWithCreateRequest();
 
         //and a previous processor in the chain that inserted a tf module in the context
         ImmutableTerraformModule injectedModule = aTfModule();
-        context.contextKeys.put(TerraformModuleProcessor.ADD_TF_MODULE,
-                injectedModule);
+        context.contextKeys.put(TerraformModuleProcessor.ADD_TF_MODULE, injectedModule);
 
         //when
         TerraformModule module = terraformModuleProcessor.getRequestedTerraformModule(context);
@@ -64,6 +81,7 @@ public class TerraformModuleProcessorTest {
                 .build();
 
         //Then it checks if a conflicting module exists, and rejects the request
+        //when
         terraformModuleProcessor.checkForConflictingModule(requestedModule);
     }
 

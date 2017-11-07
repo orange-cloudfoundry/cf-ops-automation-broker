@@ -16,15 +16,17 @@ public class TerraformModuleProcessor extends DefaultBrokerProcessor{
 
 
     public static final String ADD_TF_MODULE = "AddTfModuleWithId";
-    private TerraformRepository terraformRepository;
+    private TerraformRepository repository;
 
-    public TerraformModuleProcessor(TerraformRepository terraformRepository) {
-        this.terraformRepository = terraformRepository;
+    public TerraformModuleProcessor(TerraformRepository repository) {
+        this.repository = repository;
     }
 
     @Override
     public void preCreate(Context ctx) {
-
+        TerraformModule requestedTerraformModule = getRequestedTerraformModule(ctx);
+        checkForConflictingModule(requestedTerraformModule);
+        repository.save(requestedTerraformModule);
     }
 
     TerraformModule getRequestedTerraformModule(Context context) {
@@ -38,7 +40,7 @@ public class TerraformModuleProcessor extends DefaultBrokerProcessor{
 
     public void checkForConflictingModule(TerraformModule requestedModule) {
         String requestedModuleId = requestedModule.getId();
-        TerraformModule existing = terraformRepository.getByModuleId(requestedModuleId);
+        TerraformModule existing = repository.getByModuleId(requestedModuleId);
         if (existing != null) {
             logger.warn("unexpected conflicting terraform module with id=" + requestedModuleId + ". A module with same id already exists:" + existing);
             //Don't return details on the existing module to the end user

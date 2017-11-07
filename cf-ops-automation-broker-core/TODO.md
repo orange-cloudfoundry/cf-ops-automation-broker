@@ -1,6 +1,9 @@
 
 # Next cloudflare
 
+- CloudFlareConfig as immutable + builder
+- 
+- Spring injection of Validation
 - SpringData import
 - SpringData file impl https://github.com/spring-projects/spring-data-keyvalue ?
 
@@ -17,10 +20,7 @@
 => Id is for now service instance id.
 
 - use TF module in core logic and refine the contract
-    - encapsulate fields & make immutable
-    - add builders
     - reconsider jackson ?
-    - use immutable lib ?
 
 ---------------
 # Needs discussions

@@ -7,7 +7,8 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- *
+ * Custom Gson adapter.
+ * TODO: study whether immutables can simplify things https://immutables.github.io/json.html
  */
 public class TerraformModuleGsonAdapter implements JsonDeserializer<TerraformModule>, JsonSerializer<TerraformModule> {
 

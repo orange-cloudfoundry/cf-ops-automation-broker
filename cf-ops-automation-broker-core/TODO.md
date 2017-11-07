@@ -1,7 +1,6 @@
 
 # Next cloudflare
 
-- TerraformModule builder
 - SpringData import
 - SpringData file impl https://github.com/spring-projects/spring-data-keyvalue ?
 

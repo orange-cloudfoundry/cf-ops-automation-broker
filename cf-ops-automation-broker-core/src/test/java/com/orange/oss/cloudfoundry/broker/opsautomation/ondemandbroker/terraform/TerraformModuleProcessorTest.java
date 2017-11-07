@@ -29,11 +29,7 @@ public class TerraformModuleProcessorTest {
         Context context = aContextWithCreateRequest();
 
         //and a previous processor in the chain that inserted a tf module in the context
-        ImmutableTerraformModule injectedModule = ImmutableTerraformModule.builder()
-                .moduleName("module-name")
-                .source("path/to/module")
-                .putProperties("route-prefix", "avalidroute")
-                .build();
+        ImmutableTerraformModule injectedModule = aTerraformModule();
         context.contextKeys.put(TerraformModuleProcessor.ADD_TF_MODULE_WITH_ID,
                 injectedModule);
 
@@ -44,6 +40,14 @@ public class TerraformModuleProcessorTest {
         ImmutableTerraformModule expectedTerraformModule = ImmutableTerraformModule.builder().from(injectedModule)
                 .id("service-instance-guid").build();
         assertThat(module).isEqualTo(expectedTerraformModule);
+    }
+
+    public ImmutableTerraformModule aTerraformModule() {
+        return ImmutableTerraformModule.builder()
+                    .moduleName("module-name")
+                    .source("path/to/module")
+                    .putProperties("route-prefix", "avalidroute")
+                    .build();
     }
 
     @Test
@@ -100,11 +104,7 @@ public class TerraformModuleProcessorTest {
 
     Context aContextWithCreateRequest() {
 
-        CreateServiceInstanceRequest request = new CreateServiceInstanceRequest("service_definition_id",
-                "plan_id",
-                "org_id",
-                "space_id"
-        );
+        CreateServiceInstanceRequest request = new CreateServiceInstanceRequest();
         request.withServiceInstanceId("service-instance-guid");
 
         //and the context being injected to a cloudflare processor

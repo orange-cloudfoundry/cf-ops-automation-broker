@@ -21,16 +21,20 @@ public class ProcessorChain {
 
 	public void create() {
 		Context ctx=new Context();
+		create(ctx);
+
+	}
+
+	public void create(Context ctx) {
 		for (BrokerProcessor m: processors) {
 			m.preCreate(ctx);
 		}
 		sink.create(ctx);
-		
+
 		for (int i = processors.size()-1; i>=0; i--) {
 			BrokerProcessor m= processors.get(i);
-			m.postCreate(ctx);			
+			m.postCreate(ctx);
 		}
-
 	}
 
 	public void bind() {

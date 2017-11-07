@@ -81,7 +81,7 @@ public class CloudFlareProcessorTest {
                 .moduleName(request.getServiceInstanceId())
                 .putProperties("org_guid", "org_id")
                 .putProperties("route-prefix", "avalidroute")
-                .putProperties("service_instance_guid", "3456")
+                .putProperties("service_instance_guid", "serviceinstance_guid")
                 .putProperties("space_guid", "space_id")
                 .build();
 
@@ -104,6 +104,7 @@ public class CloudFlareProcessorTest {
                 "space_id",
                 parameters
         );
+        request.withServiceInstanceId("service-instance-guid");
 
         //and the context being injected to a cloudflare processor
         Context context = new Context();

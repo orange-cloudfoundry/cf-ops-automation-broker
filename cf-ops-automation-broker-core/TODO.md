@@ -25,9 +25,6 @@
 
 
 core framework:
-- throw runtime exceptions in preCreate() ? Message goes to end user ?
-
-sb binding
-arbitrary params
+- context key as immutable object
 
 

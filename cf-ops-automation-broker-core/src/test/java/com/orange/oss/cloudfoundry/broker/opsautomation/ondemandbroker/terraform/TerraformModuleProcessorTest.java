@@ -33,10 +33,6 @@ public class TerraformModuleProcessorTest {
 
     }
 
-    @Test
-    public void receives_service_instance_creation_inputs() {
-
-    }
 
     @Test
     public void rejects_request_with_conflicting_module_name() {

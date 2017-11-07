@@ -2,6 +2,8 @@ package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.terrafor
 
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.Context;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.DefaultBrokerProcessor;
+import com.orange.oss.ondemandbroker.ProcessorChainServiceInstanceService;
+import org.springframework.cloud.servicebroker.model.CreateServiceInstanceRequest;
 
 /**
  *
@@ -11,16 +13,26 @@ public class CloudFlareProcessor extends DefaultBrokerProcessor {
     private CloudFlareRouteSuffixValidator cloudFlareRouteSuffixValidator;
 
     public CloudFlareProcessor(CloudFlareConfig cloudFlareConfig) {
+        this(cloudFlareConfig, new CloudFlareRouteSuffixValidator(cloudFlareConfig.getRouteSuffix()));
 
+    }
+
+    public CloudFlareProcessor(CloudFlareConfig cloudFlareConfig, CloudFlareRouteSuffixValidator cloudFlareRouteSuffixValidator) {
         this.cloudFlareConfig = cloudFlareConfig;
-        cloudFlareRouteSuffixValidator = new CloudFlareRouteSuffixValidator(cloudFlareConfig.getRouteSuffix());
-
+        this.cloudFlareRouteSuffixValidator = cloudFlareRouteSuffixValidator;
     }
 
     @Override
     public void preCreate(Context ctx) {
         //Fetch requested route and param name from Service Instance
-        validateRequestedRoute("arequestedroute", "route");
+        String paramName = "route";
+        String arequestedroute = getRequestedRoute(ctx, paramName);
+        validateRequestedRoute(arequestedroute, paramName);
+    }
+
+    String getRequestedRoute(Context ctx, String paramName) {
+        CreateServiceInstanceRequest request= (CreateServiceInstanceRequest) ctx.contextKeys.get(ProcessorChainServiceInstanceService.CREATE_SERVICE_INSTANCE_REQUEST);
+        return (String) request.getParameters().get(paramName);
     }
 
     public void validateRequestedRoute(String route, String paramName) {

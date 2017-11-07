@@ -4,10 +4,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.junit.Test;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.Reader;
 
 import static org.fest.assertions.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
@@ -20,11 +17,10 @@ public class TerraformModuleTest {
     @Test
     public void parses_and_serializes_terraform_module_json_file() throws IOException {
         //given a reference format
-        String referenceJsonFormat = "terraform/cloudflare-serviceinstanceguid3456-route5.tf.json";
+        String referenceJsonFormat = "/terraform/cloudflare-serviceinstanceguid3456-route5.tf.json";
 
         //when parsing
-        Gson gson = new GsonBuilder().registerTypeAdapter(ImmutableTerraformModule.class, new TerraformModuleGsonAdapter()).create();
-        TerraformModule deserialized = gson.fromJson(getTestDataFileReader(referenceJsonFormat), ImmutableTerraformModule.class);
+        TerraformModule deserialized = TerraformModuleHelper.getTerraformModuleFromClasspath(referenceJsonFormat);
 
         //then it extracts properly fields
         ImmutableTerraformModule expectedModule = ImmutableTerraformModule.builder()
@@ -42,10 +38,11 @@ public class TerraformModuleTest {
 
 
         //when it reserializes
+        Gson gson = new GsonBuilder().registerTypeAdapter(ImmutableTerraformModule.class, new TerraformModuleGsonAdapter()).create();
         String serialized = gson.toJson(deserialized);
         //System.err.println(serialized);
 
-        TerraformModule parsed = gson.fromJson(serialized, ImmutableTerraformModule.class);
+        TerraformModule parsed = TerraformModuleHelper.getGson().fromJson(serialized, ImmutableTerraformModule.class);
 
         //then it properly extracts fields
         assertEquals(parsed, deserialized);
@@ -53,8 +50,4 @@ public class TerraformModuleTest {
 
     }
 
-    @SuppressWarnings("SameParameterValue")
-    static Reader getTestDataFileReader(String fileName) {
-        return new BufferedReader(new InputStreamReader(TerraformModuleTest.class.getResourceAsStream("/" + fileName)));
-    }
 }

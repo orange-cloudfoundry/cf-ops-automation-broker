@@ -32,7 +32,7 @@ public class TerraformModuleProcessorTest {
     TerraformModuleProcessor terraformModuleProcessor;
 
     @Test
-    public void responds_to_tf_module_creation_requests() {
+    public void preCreate_responds_to_tf_module_creation_requests() {
         //given a service instance request comes in
         Context context = aContextWithCreateRequest();
 
@@ -53,14 +53,14 @@ public class TerraformModuleProcessorTest {
         Context context = aContextWithCreateRequest();
 
         //and a previous processor in the chain that inserted a tf module in the context
-        ImmutableTerraformModule injectedModule = aTfModule();
-        context.contextKeys.put(TerraformModuleProcessor.ADD_TF_MODULE, injectedModule);
+        ImmutableTerraformModule requestedModule = aTfModule();
+        context.contextKeys.put(TerraformModuleProcessor.ADD_TF_MODULE, requestedModule);
 
         //when
         TerraformModule module = terraformModuleProcessor.getRequestedTerraformModule(context);
 
         //then it assigns the module id from service instance guid
-        ImmutableTerraformModule expectedTerraformModule = ImmutableTerraformModule.builder().from(injectedModule)
+        ImmutableTerraformModule expectedTerraformModule = ImmutableTerraformModule.builder().from(requestedModule)
                 .id("service-instance-guid").build();
         assertThat(module).isEqualTo(expectedTerraformModule);
     }
@@ -69,20 +69,23 @@ public class TerraformModuleProcessorTest {
     public void rejects_request_with_conflicting_module_name() {
         //given a repository populated with an existing module
         TerraformRepository terraformRepository = Mockito.mock(TerraformRepository.class);
-        terraformModuleProcessor = new TerraformModuleProcessor(terraformRepository);
-        
         when(terraformRepository.getByModuleId("service-instance-guid")).thenReturn(aTfModule());
+        terraformModuleProcessor = new TerraformModuleProcessor(terraformRepository);
 
-        //Given a list of current modules
+        //given a service instance request comes in
+        Context context = aContextWithCreateRequest();
 
         //When a new module is requested to be added
+        // by a previous processor in the chain that inserted a tf module in the context
         TerraformModule requestedModule = ImmutableTerraformModule.builder().from(aTfModule())
                 .id("service-instance-guid")
                 .build();
+        context.contextKeys.put(TerraformModuleProcessor.ADD_TF_MODULE, requestedModule);
+
 
         //Then it checks if a conflicting module exists, and rejects the request
         //when
-        terraformModuleProcessor.checkForConflictingModule(requestedModule);
+        terraformModuleProcessor.preCreate(context);
     }
 
     @Test
@@ -107,17 +110,6 @@ public class TerraformModuleProcessorTest {
         return ImmutableTerraformModule.builder()
                 .moduleName("module1")
                 .source("path/to/module").build();
-    }
-
-    @Test
-    public void writes_terraform_module_invocation() {
-        TerraformRepository  terraformRepository = Mockito.mock(TerraformRepository.class);
-
-        //When a new module is requested to be added
-        TerraformModule requestedModule = aTfModule();
-
-        //It is saved
-        terraformRepository.save(requestedModule);
     }
 
     @Test

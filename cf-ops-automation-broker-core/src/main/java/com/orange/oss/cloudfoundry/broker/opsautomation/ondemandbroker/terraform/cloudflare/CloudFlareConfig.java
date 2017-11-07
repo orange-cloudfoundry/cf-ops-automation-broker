@@ -1,18 +1,15 @@
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.terraform.cloudflare;
 
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.terraform.TerraformModule;
+import org.immutables.value.Value;
 
 /**
  *
  */
-public class CloudFlareConfig {
-    private String routeSuffix;
+@Value.Immutable
+public abstract class CloudFlareConfig {
 
-    public CloudFlareConfig(String routeSuffix, TerraformModule template) {
-        this.routeSuffix = routeSuffix;
-    }
+    public abstract String getRouteSuffix();
 
-    public String getRouteSuffix() {
-        return routeSuffix;
-    }
+    public abstract TerraformModule getTemplate();
 }

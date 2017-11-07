@@ -1,8 +1,6 @@
 
 # Next cloudflare
 
-- CloudFlareConfig as immutable + builder
-- 
 - Spring injection of Validation
 - SpringData import
 - SpringData file impl https://github.com/spring-projects/spring-data-keyvalue ?

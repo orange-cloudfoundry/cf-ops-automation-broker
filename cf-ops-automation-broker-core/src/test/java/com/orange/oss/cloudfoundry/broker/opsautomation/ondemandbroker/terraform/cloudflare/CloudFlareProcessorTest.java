@@ -51,7 +51,10 @@ public class CloudFlareProcessorTest {
     public void injects_tf_module_into_context() {
         //given a tf module template available in the classpath
         TerraformModule deserialized = TerraformModuleHelper.getTerraformModuleFromClasspath("/terraform/cloudflare-module-template.tf.json");
-        cloudFlareProcessor = new CloudFlareProcessor(new CloudFlareConfig("-cdn-cw-vdr-pprod-apps.redacted-domain.org", deserialized));
+        ImmutableCloudFlareConfig cloudFlareConfig = ImmutableCloudFlareConfig.builder()
+                .routeSuffix("-cdn-cw-vdr-pprod-apps.redacted-domain.org")
+                .template(deserialized).build();
+        cloudFlareProcessor = new CloudFlareProcessor(cloudFlareConfig);
 
         //given a user request with a route
         Map<String, Object> parameters = new HashMap<>();
@@ -109,8 +112,10 @@ public class CloudFlareProcessorTest {
     }
 
     private CloudFlareConfig aConfig() {
-        String routeSuffix = "-cdn-cw-vdr-pprod-apps.redacted-domain.org";
-        return new CloudFlareConfig(routeSuffix, null);
+        TerraformModule template = TerraformModuleHelper.getTerraformModuleFromClasspath("/terraform/cloudflare-module-template.tf.json");
+        return ImmutableCloudFlareConfig.builder()
+                .template(template)
+                .routeSuffix("-cdn-cw-vdr-pprod-apps.redacted-domain.org").build();
     }
 
 

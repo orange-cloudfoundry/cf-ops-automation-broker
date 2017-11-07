@@ -21,17 +21,15 @@ public class CloudFlareProcessorTest {
 
 
     @Test
-    public void receives_service_instance_creation_inputs() {
+    public void accepts_correct_requested_routes() {
         //given a user performing
-        //cf cs cloudflare -c '{route="arequestedroute"}'
-        Context context = aContextWithCreateRequest("route", "arequestedroute");
+        //cf cs cloudflare -c '{route="a-valid-route"}'
+        Context context = aContextWithCreateRequest("route", "a-valid-route");
 
         //when the processor is invoked
-        String requestedRoute = cloudFlareProcessor.getRequestedRoute(context, "route");
+        cloudFlareProcessor.preCreate(context);
 
-        //then
-        assertThat(requestedRoute).isEqualTo("arequestedroute");
-
+        //then no exception is thrown
     }
 
     @Test
@@ -53,10 +51,10 @@ public class CloudFlareProcessorTest {
     public void injects_tf_module_into_context() {
         //given a tf module template available in the classpath
         TerraformModule deserialized = TerraformModuleHelper.getTerraformModuleFromClasspath("/terraform/cloudflare-module-template.tf.json");
-        //TODO: inject into config
+        cloudFlareProcessor = new CloudFlareProcessor(new CloudFlareConfig("-cdn-cw-vdr-pprod-apps.redacted-domain.org", deserialized));
 
         //given a user request with a route
-        Map<String, Object> parameters = new HashMap<String, Object>();
+        Map<String, Object> parameters = new HashMap<>();
         parameters.put("route", "avalidroute");
         CreateServiceInstanceRequest request = new CreateServiceInstanceRequest("service_definition_id",
                 "plan_id",
@@ -93,8 +91,9 @@ public class CloudFlareProcessorTest {
 
     }
 
+    @SuppressWarnings("SameParameterValue")
     Context aContextWithCreateRequest(String key, String value) {
-        Map<String, Object> parameters = new HashMap<String, Object>();
+        Map<String, Object> parameters = new HashMap<>();
         parameters.put(key, value);
         CreateServiceInstanceRequest request = new CreateServiceInstanceRequest("service_definition_id",
                 "plan_id",
@@ -111,7 +110,7 @@ public class CloudFlareProcessorTest {
 
     private CloudFlareConfig aConfig() {
         String routeSuffix = "-cdn-cw-vdr-pprod-apps.redacted-domain.org";
-        return new CloudFlareConfig(routeSuffix);
+        return new CloudFlareConfig(routeSuffix, null);
     }
 
 

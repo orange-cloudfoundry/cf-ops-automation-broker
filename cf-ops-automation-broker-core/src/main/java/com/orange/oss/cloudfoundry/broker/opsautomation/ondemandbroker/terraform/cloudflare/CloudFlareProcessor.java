@@ -26,13 +26,12 @@ public class CloudFlareProcessor extends DefaultBrokerProcessor {
     public void preCreate(Context ctx) {
         //Fetch requested route and param name from Service Instance
         String paramName = "route";
-        String arequestedroute = getRequestedRoute(ctx, paramName);
-        validateRequestedRoute(arequestedroute, paramName);
-    }
-
-    String getRequestedRoute(Context ctx, String paramName) {
         CreateServiceInstanceRequest request= (CreateServiceInstanceRequest) ctx.contextKeys.get(ProcessorChainServiceInstanceService.CREATE_SERVICE_INSTANCE_REQUEST);
-        return (String) request.getParameters().get(paramName);
+        String arequestedroute = (String) request.getParameters().get(paramName);
+        validateRequestedRoute(arequestedroute, paramName);
+
+
+
     }
 
     public void validateRequestedRoute(String route, String paramName) {

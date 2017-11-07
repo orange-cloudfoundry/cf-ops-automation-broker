@@ -7,7 +7,8 @@ import java.util.List;
  */
 public interface TerraformRepository {
 
-    TerraformModule getByModuleName(String moduleName);
+    TerraformModule getByModuleId(String moduleId);
 
+    @SuppressWarnings("UnusedReturnValue")
     TerraformModule save(TerraformModule module);
 }

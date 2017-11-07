@@ -75,7 +75,7 @@ public class CloudFlareProcessorTest {
         cloudFlareProcessor.preCreate(context);
 
         //then it injects a terraform module into the context
-        TerraformModule terraformModule = (TerraformModule) context.contextKeys.get(TerraformModuleProcessor.ADD_TF_MODULE_WITH_ID);
+        TerraformModule terraformModule = (TerraformModule) context.contextKeys.get(TerraformModuleProcessor.ADD_TF_MODULE);
 
         ImmutableTerraformModule expectedModule = ImmutableTerraformModule.builder().from(deserialized)
                 .moduleName(request.getServiceInstanceId())

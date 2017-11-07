@@ -25,7 +25,9 @@
 
 
 core framework:
+- typing of exceptions throw by processors: RuntimeException ?
 - spaces vs tabs indentation reported by intellij
 - context key as immutable object
+- upgrade to mockito 2 https://github.com/mockito/mockito/wiki/What%27s-new-in-Mockito-2 
 
 

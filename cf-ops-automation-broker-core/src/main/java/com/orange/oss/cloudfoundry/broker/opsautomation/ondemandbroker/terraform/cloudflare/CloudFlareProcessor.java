@@ -47,7 +47,7 @@ public class CloudFlareProcessor extends DefaultBrokerProcessor {
                 .putProperties("space_guid", request.getSpaceGuid())
                 .build();
 
-        contextKeys.put(TerraformModuleProcessor.ADD_TF_MODULE_WITH_ID, terraformModule);
+        contextKeys.put(TerraformModuleProcessor.ADD_TF_MODULE, terraformModule);
 
     }
 

@@ -15,5 +15,15 @@ public abstract class TerraformModule {
 
 	public abstract String getSource();
 
+	/**
+	 * The Id is used as the module file name and needs to be unique and portable
+	 * (i.e. not too long and without too special characters)
+	 * Typically a service instance guid.
+	 */
+	@Value.Default
+	public String getId() {
+		return "0"; //a default value to allow factorization of assigning Id into TerraformModuleProcessor
+	}
+
 	public abstract Map<String, String> getProperties();
 }

@@ -2,12 +2,19 @@ package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.terrafor
 
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.GitProcessorContext;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.Context;
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.terraform.cloudflare.CloudFlareProcessorTest;
+import com.orange.oss.ondemandbroker.ProcessorChainServiceInstanceService;
 import org.junit.Test;
 import org.mockito.Mockito;
+import org.springframework.cloud.servicebroker.model.CreateServiceInstanceRequest;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.HashMap;
+import java.util.Map;
+
+import static org.fest.assertions.Assertions.assertThat;
 
 /**
  *
@@ -15,6 +22,29 @@ import java.nio.file.Path;
 public class TerraformModuleProcessorTest {
 
     TerraformModuleProcessor terraformModuleProcessor = new TerraformModuleProcessor();
+
+    @Test
+    public void receives_tf_module_creation_requests() {
+        //given a service instance request comes in
+        Context context = aContextWithCreateRequest();
+
+        //and a previous processor in the chain that inserted a tf module in the context
+        ImmutableTerraformModule injectedModule = ImmutableTerraformModule.builder()
+                .moduleName("module-name")
+                .source("path/to/module")
+                .putProperties("route-prefix", "avalidroute")
+                .build();
+        context.contextKeys.put(TerraformModuleProcessor.ADD_TF_MODULE_WITH_ID,
+                injectedModule);
+
+        //when
+        TerraformModule module = terraformModuleProcessor.getRequestedTerraformModule(context);
+
+        //then it assigns the module id from service instance guid
+        ImmutableTerraformModule expectedTerraformModule = ImmutableTerraformModule.builder().from(injectedModule)
+                .id("service-instance-guid").build();
+        assertThat(module).isEqualTo(expectedTerraformModule);
+    }
 
     @Test
     public void looks_up_paas_secrets_git_local_checkout() throws IOException {
@@ -65,6 +95,22 @@ public class TerraformModuleProcessorTest {
     @Test
     public void reads_terraform_state_for_completion() {
 
+    }
+
+
+    Context aContextWithCreateRequest() {
+
+        CreateServiceInstanceRequest request = new CreateServiceInstanceRequest("service_definition_id",
+                "plan_id",
+                "org_id",
+                "space_id"
+        );
+        request.withServiceInstanceId("service-instance-guid");
+
+        //and the context being injected to a cloudflare processor
+        Context context = new Context();
+        context.contextKeys.put(ProcessorChainServiceInstanceService.CREATE_SERVICE_INSTANCE_REQUEST, request);
+        return context;
     }
 
 }

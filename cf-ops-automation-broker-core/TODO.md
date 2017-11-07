@@ -25,6 +25,7 @@
 
 
 core framework:
+- spaces vs tabs indentation reported by intellij
 - context key as immutable object
 
 

@@ -45,11 +45,14 @@ public class TerraformModuleProcessorTest {
 
 
         //When a new module is requested to be added
-        TerraformModule requestedModule = new TerraformModule();
-        requestedModule.moduleName = "module1";
+        TerraformModule requestedModule = aTfModule();
 
         //Then it checks if a conflicting module exists, and rejects the request
-        TerraformModule existing = terraformRepository.getByModuleName(requestedModule.moduleName);
+        TerraformModule existing = terraformRepository.getByModuleName(requestedModule.getModuleName());
+    }
+
+    private ImmutableTerraformModule aTfModule() {
+        return ImmutableTerraformModule.builder().moduleName("module1").source("path/to/module").build();
     }
 
     @Test
@@ -57,7 +60,7 @@ public class TerraformModuleProcessorTest {
         TerraformRepository  terraformRepository = Mockito.mock(TerraformRepository.class);
 
         //When a new module is requested to be added
-        TerraformModule requestedModule = new TerraformModule();
+        TerraformModule requestedModule = aTfModule();
 
         //It is saved
         terraformRepository.save(requestedModule);

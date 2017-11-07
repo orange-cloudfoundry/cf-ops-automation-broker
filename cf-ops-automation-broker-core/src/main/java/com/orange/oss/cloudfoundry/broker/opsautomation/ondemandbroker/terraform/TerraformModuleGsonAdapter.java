@@ -15,14 +15,14 @@ public class TerraformModuleGsonAdapter implements JsonDeserializer<TerraformMod
     public TerraformModule deserialize(JsonElement json, Type type,
                                  JsonDeserializationContext jsonDeserializationContext) throws JsonParseException {
 
-        TerraformModule terraformModule = new TerraformModule();
 
+        ImmutableTerraformModule.Builder terraformModuleBuilder = ImmutableTerraformModule.builder();
 
         JsonObject jsonObject = json.getAsJsonObject();
         JsonObject module = jsonObject.getAsJsonObject("module");
         Map.Entry<String, JsonElement> singleEntry = module.entrySet().iterator().next();
         String moduleName = singleEntry.getKey();
-        terraformModule.moduleName = moduleName;
+        terraformModuleBuilder.moduleName(moduleName);
 
         JsonObject moduleProperties = singleEntry.getValue().getAsJsonObject();
         Set<Map.Entry<String, JsonElement>> entries = moduleProperties.entrySet();
@@ -31,25 +31,25 @@ public class TerraformModuleGsonAdapter implements JsonDeserializer<TerraformMod
             String value = entry.getValue().getAsString();
 
             if ("source".equals(key)) {
-                terraformModule.source=value;
+                terraformModuleBuilder.source(value);
             } else {
-                terraformModule.addProperty(key, value);
+                terraformModuleBuilder.putProperties(key, value);
             }
         }
 
-        return terraformModule;
+        return terraformModuleBuilder.build();
     }
 
     public JsonElement serialize(TerraformModule src, Type typeOfSrc, JsonSerializationContext context) {
         JsonObject moduleInvocation = new JsonObject();
-        Set<Map.Entry<String, String>> entries = src.properties.entrySet();
+        Set<Map.Entry<String, String>> entries = src.getProperties().entrySet();
         for (Map.Entry<String, String> entry : entries) {
             moduleInvocation.addProperty(entry.getKey(), entry.getValue());
         }
-        moduleInvocation.addProperty("source", src.source);
+        moduleInvocation.addProperty("source", src.getSource());
 
         JsonObject jsonObject = new JsonObject();
-        jsonObject.add(src.moduleName, moduleInvocation);
+        jsonObject.add(src.getModuleName(), moduleInvocation);
 
         JsonObject envelope = new JsonObject();
         envelope.add("module", jsonObject);

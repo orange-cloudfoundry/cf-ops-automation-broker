@@ -1,21 +1,46 @@
 
 # Next cloudflare
 
-- return Asynchronous service instance creation response
-- BrokerProcessor: preGetLastCreateOperation + postGetLastCreateOperation
-- TerraformModuleProcessor reads TFState output variables to confirm last operation completion
-   - prototype sample module with output variable and import associated tf state json  
+- Async create:
+   - prototype sample module with output variable and import associated tf state json
+     - check partial TF module failure behavior & impact on module outputs: do we need explicit dependencies ?
+   - read tf state output variables into Pojo
+
+   - return Asynchronous service instance creation response
+   - CloudFlareBrokerProcessor: preGetLastCreateOperation + postGetLastCreateOperation
+     - TerraformModuleProcessor reads TFState output variables to confirm last operation completion
+
+
+- Consider bean composition instead of module chain
+   - unique route validation
+   - cloudflare delete support: DeleteModuleWithId in context
+      TF module delete support
+
+
+- Integration test: 
+   - @Service or @Bean in application.
+   - explicit application maven module
+   - git.properties injected as env vars
+
+
+- catalog: not bindeable
 
 Implement Repository
-- Spring injection of Validation
+- Spring injection of Validation: constructor injection.
 - SpringData import
 - SpringData file impl https://github.com/spring-projects/spring-data-keyvalue ?
 
-Integration test
 
-cloudflare delete support: DeleteModuleWithId in context
-TF module delete support
 
+ 
+
+# Next core framework
+
+- delete request in context key 
+- inline ProcessorChain.create() + pass in context to other
+- context key: encapsulate with methods + as immutable object ?
+ 
+ 
 ---------------
 # Needs discussions
 

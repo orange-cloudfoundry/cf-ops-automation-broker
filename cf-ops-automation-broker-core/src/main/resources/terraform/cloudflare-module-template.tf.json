@@ -4,11 +4,11 @@
       "cloudflare_internet_domain": "${var.cloudflare_internet_domain}",
       "cloudflare_root_domain": "${var.cloudflare_root_domain}",
       "cloudflare_route_suffix": "${var.cloudflare_route_suffix}",
-      "org_guid": "${data.cloudfoundry_organization.org_on_demand_internet_route.id}",
-      "route-prefix": "ondemandroute5",
-      "service_instance_guid": "3456",
       "source": "modules/cloudflare",
-      "space_guid": "${data.cloudfoundry_space.space_on_demand_internet_route.id}"
+      "org_guid": "<<1245>>",
+      "route-prefix": "<<ondemandroute5>>",
+      "service_instance_guid": "<<3456>>",
+      "space_guid": "<<12435>>"
     }
   }
 }

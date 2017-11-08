@@ -31,10 +31,7 @@ public class ProcessorChainServiceInstanceServiceTest {
     @Test
     public void should_chain_create_processors_on_service_instance_creation() throws Exception {
         //given
-        CreateServiceInstanceRequest request = new CreateServiceInstanceRequest("service_definition_id",
-                "plan_id",
-                "org_id",
-                "space_id");
+        CreateServiceInstanceRequest request = new CreateServiceInstanceRequest();
 
         //when
         CreateServiceInstanceResponse response = processorChainServiceInstanceService.createServiceInstance(request);
@@ -51,10 +48,7 @@ public class ProcessorChainServiceInstanceServiceTest {
 
     @Test
     public void should_use_create_response_from_context_when_set() {
-        CreateServiceInstanceRequest request = new CreateServiceInstanceRequest("service_definition_id",
-                "plan_id",
-                "org_id",
-                "space_id");
+        CreateServiceInstanceRequest request = new CreateServiceInstanceRequest();
 
         //given a processor that generates a response into the context
         final CreateServiceInstanceResponse customResponse = new CreateServiceInstanceResponse()
@@ -80,10 +74,7 @@ public class ProcessorChainServiceInstanceServiceTest {
     @Test
     public void should_chain_getLastCreateOperation_processors() throws Exception {
         //given
-        GetLastServiceOperationRequest request = new GetLastServiceOperationRequest("service_definition_id",
-                "plan_id",
-                "org_id",
-                "space_id");
+        GetLastServiceOperationRequest request = new GetLastServiceOperationRequest("instanceId");
 
         //when
         GetLastServiceOperationResponse response = processorChainServiceInstanceService.getLastOperation(request);
@@ -97,10 +88,7 @@ public class ProcessorChainServiceInstanceServiceTest {
     @Test
     public void should_use__last_create_response_from_context_when_set() {
         //given
-        GetLastServiceOperationRequest request = new GetLastServiceOperationRequest("service_definition_id",
-                "plan_id",
-                "org_id",
-                "space_id");
+        GetLastServiceOperationRequest request = new GetLastServiceOperationRequest("instanceId");
 
         //given a processor that generates a response into the context
         final GetLastServiceOperationResponse customResponse = new GetLastServiceOperationResponse()

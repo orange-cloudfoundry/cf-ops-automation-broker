@@ -18,11 +18,17 @@ public class DefaultBrokerSink implements BrokerSink {
 		
 	}
 
+    @Override
+    public void getLastCreateOperation(Context ctx) {
+		logger.debug("noop default getLastCreateOperation");
 
-	@Override
+	}
+
+
+    @Override
 	public void bind(Context ctx) {
 		logger.debug("noop default Bind");
-		
+
 	}
 
 

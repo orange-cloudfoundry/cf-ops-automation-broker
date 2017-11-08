@@ -79,10 +79,14 @@ public class ProcessorChainServiceInstanceServiceTest {
         //when
         GetLastServiceOperationResponse response = processorChainServiceInstanceService.getLastOperation(request);
 
-        //then
+        //then call is properly chained
+        ArgumentCaptor<Context> argument = ArgumentCaptor.forClass(Context.class);
         Assertions.assertThat(response).isEqualTo(new GetLastServiceOperationResponse());
-        Mockito.verify(processorChain).getLastCreateOperation(any(Context.class));
+        Mockito.verify(processorChain).getLastCreateOperation(argument.capture());
 
+        //and context is populated with the request
+        Context ctx=argument.getValue();
+        assertThat(ctx.contextKeys.get(ProcessorChainServiceInstanceService.GET_LAST_SERVICE_OPERATION_REQUEST)).isEqualTo(request);
     }
 
     @Test
@@ -127,12 +131,11 @@ public class ProcessorChainServiceInstanceServiceTest {
     }
 
     public ProcessorChain aProcessorChain(BrokerProcessor processor) {
-        List<BrokerProcessor> processors=new ArrayList<BrokerProcessor>();
+        List<BrokerProcessor> processors= new ArrayList<>();
         processors.add(new DefaultBrokerProcessor());
         processors.add(processor);
         DefaultBrokerSink sink=new DefaultBrokerSink();
-        ProcessorChain chain=new ProcessorChain(processors, sink);
-        return chain;
+        return new ProcessorChain(processors, sink);
     }
 
 

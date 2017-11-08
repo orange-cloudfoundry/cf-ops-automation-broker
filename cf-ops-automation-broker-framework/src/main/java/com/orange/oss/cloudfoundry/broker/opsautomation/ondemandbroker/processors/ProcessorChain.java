@@ -37,49 +37,63 @@ public class ProcessorChain {
 		}
 	}
 
+	public void getLastCreateOperation() {
+		Context ctx=new Context();
+		getLastCreateOperation(ctx);
+	}
+
+	public void getLastCreateOperation(Context ctx) {
+		for (BrokerProcessor m: processors) {
+			m.preGetLastCreateOperation(ctx);
+		}
+		sink.getLastCreateOperation(ctx);
+
+		for (int i = processors.size()-1; i>=0; i--) {
+			BrokerProcessor m= processors.get(i);
+			m.postGetLastCreateOperation(ctx);
+		}
+	}
+
 	public void bind() {
-		Context ctx=new Context();		
+		Context ctx=new Context();
 		for (BrokerProcessor m: processors) {
 			m.preBind(ctx);
 		}
 		sink.bind(ctx);
-		
+
 		for (int i = processors.size()-1; i>=0; i--) {
 			BrokerProcessor m= processors.get(i);
-			m.postBind(ctx);			
+			m.postBind(ctx);
 		}
-		
+
 	}
-	
+
+
 	public void unBind() {
-		Context ctx=new Context();		
+		Context ctx=new Context();
 		for (BrokerProcessor m: processors) {
 			m.preUnBind(ctx);
 		}
 		sink.unBind(ctx);
-		
+
 		for (int i = processors.size()-1; i>=0; i--) {
 			BrokerProcessor m= processors.get(i);
-			m.postUnBind(ctx);			
+			m.postUnBind(ctx);
 		}
-		
+
 	}
-	
+
 	public void delete() {
-		Context ctx=new Context();		
+		Context ctx=new Context();
 		for (BrokerProcessor m: processors) {
 			m.preDelete(ctx);
 		}
 		sink.delete(ctx);
-		
+
 		for (int i = processors.size()-1; i>=0; i--) {
 			BrokerProcessor m= processors.get(i);
-			m.postDelete(ctx);			
+			m.postDelete(ctx);
 		}
-		
+
 	}
-	
-	
-	
-	
 }

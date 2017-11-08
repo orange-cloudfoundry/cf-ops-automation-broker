@@ -3,7 +3,11 @@ package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processo
 public interface BrokerProcessor {
 
 	public void preCreate(Context ctx);
+	public void preGetLastCreateOperation(Context ctx);
+	public void postGetLastCreateOperation(Context ctx);
 	public void postCreate(Context ctx);
+
+
 	public void preBind(Context ctx);
 	public void postBind(Context ctx);
 	

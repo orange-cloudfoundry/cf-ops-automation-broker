@@ -46,20 +46,6 @@ public class ProcessorChainServiceInstanceServiceTest {
     }
 
     @Test
-    public void should_chain_delete_processors_on_service_instance_deletion() throws Exception {
-        DeleteServiceInstanceRequest request = new DeleteServiceInstanceRequest("instance_id",
-                "service_id",
-                "plan_id",
-                new ServiceDefinition(),
-                true);
-
-        DeleteServiceInstanceResponse response = processorChainServiceInstanceService.deleteServiceInstance(request);
-
-        Assertions.assertThat(response).isEqualTo(new DeleteServiceInstanceResponse());
-        Mockito.verify(processorChain).delete();
-    }
-
-    @Test
     public void should_set_context_key_for_request() {
         //Given
         CreateServiceInstanceRequest request = new CreateServiceInstanceRequest("service_definition_id",
@@ -106,6 +92,37 @@ public class ProcessorChainServiceInstanceServiceTest {
 
         //then
         Assertions.assertThat(response).isEqualTo(customResponse);
+    }
+
+    @Test
+    public void should_chain_getLastCreateOperation_processors() throws Exception {
+        //given
+        GetLastServiceOperationRequest request = new GetLastServiceOperationRequest("service_definition_id",
+                "plan_id",
+                "org_id",
+                "space_id");
+
+        //when
+        GetLastServiceOperationResponse response = processorChainServiceInstanceService.getLastOperation(request);
+
+        //then
+        Assertions.assertThat(response).isEqualTo(new GetLastServiceOperationResponse());
+        Mockito.verify(processorChain).getLastCreateOperation(any(Context.class));
+
+    }
+
+    @Test
+    public void should_chain_delete_processors_on_service_instance_deletion() throws Exception {
+        DeleteServiceInstanceRequest request = new DeleteServiceInstanceRequest("instance_id",
+                "service_id",
+                "plan_id",
+                new ServiceDefinition(),
+                true);
+
+        DeleteServiceInstanceResponse response = processorChainServiceInstanceService.deleteServiceInstance(request);
+
+        Assertions.assertThat(response).isEqualTo(new DeleteServiceInstanceResponse());
+        Mockito.verify(processorChain).delete();
     }
 
     public ProcessorChain aProcessorChain(BrokerProcessor processor) {

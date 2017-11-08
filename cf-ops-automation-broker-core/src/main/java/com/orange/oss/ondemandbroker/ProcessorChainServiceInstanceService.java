@@ -16,6 +16,8 @@ public class ProcessorChainServiceInstanceService implements ServiceInstanceServ
 
     public static final String CREATE_SERVICE_INSTANCE_REQUEST = "CreateServiceInstanceRequest";
     public static final String CREATE_SERVICE_INSTANCE_RESPONSE = "CreateServiceInstanceResponse";
+    private static final String GET_LAST_SERVICE_OPERATION_REQUEST = "GetLastServiceOperationRequest";
+    private static final String GET_LAST_SERVICE_OPERATION_RESPONSE = "GetLastServiceOperationResponse";
 
     private ProcessorChain processorChain;
 
@@ -29,13 +31,13 @@ public class ProcessorChainServiceInstanceService implements ServiceInstanceServ
         ctx.contextKeys.put(CREATE_SERVICE_INSTANCE_REQUEST, request);
         processorChain.create(ctx);
 
-        CreateServiceInstanceResponse createServiceInstanceResponse;
+        CreateServiceInstanceResponse response;
         if (ctx.contextKeys.get(CREATE_SERVICE_INSTANCE_RESPONSE) instanceof CreateServiceInstanceResponse) {
-            createServiceInstanceResponse = (CreateServiceInstanceResponse) ctx.contextKeys.get(CREATE_SERVICE_INSTANCE_RESPONSE);
+            response = (CreateServiceInstanceResponse) ctx.contextKeys.get(CREATE_SERVICE_INSTANCE_RESPONSE);
         } else {
-            createServiceInstanceResponse = new CreateServiceInstanceResponse();
+            response = new CreateServiceInstanceResponse();
         }
-        return createServiceInstanceResponse;
+        return response;
     }
 
     @Override
@@ -51,7 +53,17 @@ public class ProcessorChainServiceInstanceService implements ServiceInstanceServ
 
     @Override
     public GetLastServiceOperationResponse getLastOperation(GetLastServiceOperationRequest request) {
-        throw new UnsupportedOperationException("not yet implemented");
+        Context ctx = new Context();
+        ctx.contextKeys.put(GET_LAST_SERVICE_OPERATION_REQUEST, request);
+        processorChain.getLastCreateOperation(ctx);
+
+        GetLastServiceOperationResponse response;
+        if (ctx.contextKeys.get(GET_LAST_SERVICE_OPERATION_RESPONSE) instanceof CreateServiceInstanceResponse) {
+            response = (GetLastServiceOperationResponse) ctx.contextKeys.get(GET_LAST_SERVICE_OPERATION_RESPONSE);
+        } else {
+            response = new GetLastServiceOperationResponse();
+        }
+        return response;
     }
 
 }

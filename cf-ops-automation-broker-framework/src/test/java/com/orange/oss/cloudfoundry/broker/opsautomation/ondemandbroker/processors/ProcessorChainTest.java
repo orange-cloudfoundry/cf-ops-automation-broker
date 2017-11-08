@@ -28,12 +28,18 @@ public class ProcessorChainTest {
 			public void preBind(Context ctx) {
 				logger.info("preBind 1");
 			}
-			
+
+			@Override
+			public void preGetLastCreateOperation(Context ctx) { logger.info("preGetLastCreateOperation 1"); }
+
 			@Override
 			public void postCreate(Context ctx) {
 				logger.info("post Create 1");
 			}
-			
+
+			@Override
+			public void postGetLastCreateOperation(Context ctx) { logger.info("preGetLastCreateOperation 1"); }
+
 			@Override
 			public void postBind(Context ctx) {
 				logger.info("post Bind 1");
@@ -70,17 +76,24 @@ public class ProcessorChainTest {
 			public void preCreate(Context ctx) {
 				logger.info("preCreate 2");
 			}
-			
+
+			@Override
+			public void preGetLastCreateOperation(Context ctx) { logger.info("preGetLastCreateOperation 2"); }
+
 			@Override
 			public void preBind(Context ctx) {
 				logger.info("preBind 2");
 			}
-			
+
+
 			@Override
 			public void postCreate(Context ctx) {
 				logger.info("post Create 2");
 			}
-			
+
+			@Override
+			public void postGetLastCreateOperation(Context ctx) { logger.info("preGetLastCreateOperation 2"); }
+
 			@Override
 			public void postBind(Context ctx) {
 				logger.info("post Bind 2");
@@ -115,6 +128,7 @@ public class ProcessorChainTest {
 		DefaultBrokerSink sink=new DefaultBrokerSink();
 		ProcessorChain chain=new ProcessorChain(processors, sink);
 		chain.create();
+		chain.getLastCreateOperation();
 		chain.bind();
 		chain.unBind();
 		chain.delete();

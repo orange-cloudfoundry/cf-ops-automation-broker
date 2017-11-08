@@ -39,35 +39,18 @@ public class ProcessorChainServiceInstanceServiceTest {
         //when
         CreateServiceInstanceResponse response = processorChainServiceInstanceService.createServiceInstance(request);
 
-        //then
-        Assertions.assertThat(response).isEqualTo(new CreateServiceInstanceResponse());
-        Mockito.verify(processorChain).create(any(Context.class));
-
-    }
-
-    @Test
-    public void should_set_context_key_for_request() {
-        //Given
-        CreateServiceInstanceRequest request = new CreateServiceInstanceRequest("service_definition_id",
-                "plan_id",
-                "org_id",
-                "space_id");
-
-        //when
-        CreateServiceInstanceResponse response = processorChainServiceInstanceService.createServiceInstance(request);
-
-        //then
-
+        //then call is properly chained
         ArgumentCaptor<Context> argument = ArgumentCaptor.forClass(Context.class);
+        Assertions.assertThat(response).isEqualTo(new CreateServiceInstanceResponse());
         Mockito.verify(processorChain).create(argument.capture());
 
+        //and context is populated with the request
         Context ctx=argument.getValue();
-
         assertThat(ctx.contextKeys.get(ProcessorChainServiceInstanceService.CREATE_SERVICE_INSTANCE_REQUEST)).isEqualTo(request);
     }
 
     @Test
-    public void should_use_response_from_context_when_set() {
+    public void should_use_create_response_from_context_when_set() {
         CreateServiceInstanceRequest request = new CreateServiceInstanceRequest("service_definition_id",
                 "plan_id",
                 "org_id",

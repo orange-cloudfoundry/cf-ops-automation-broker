@@ -16,8 +16,8 @@ public class ProcessorChainServiceInstanceService implements ServiceInstanceServ
 
     public static final String CREATE_SERVICE_INSTANCE_REQUEST = "CreateServiceInstanceRequest";
     public static final String CREATE_SERVICE_INSTANCE_RESPONSE = "CreateServiceInstanceResponse";
-    private static final String GET_LAST_SERVICE_OPERATION_REQUEST = "GetLastServiceOperationRequest";
-    private static final String GET_LAST_SERVICE_OPERATION_RESPONSE = "GetLastServiceOperationResponse";
+    public static final String GET_LAST_SERVICE_OPERATION_REQUEST = "GetLastServiceOperationRequest";
+    public static final String GET_LAST_SERVICE_OPERATION_RESPONSE = "GetLastServiceOperationResponse";
 
     private ProcessorChain processorChain;
 
@@ -58,7 +58,7 @@ public class ProcessorChainServiceInstanceService implements ServiceInstanceServ
         processorChain.getLastCreateOperation(ctx);
 
         GetLastServiceOperationResponse response;
-        if (ctx.contextKeys.get(GET_LAST_SERVICE_OPERATION_RESPONSE) instanceof CreateServiceInstanceResponse) {
+        if (ctx.contextKeys.get(GET_LAST_SERVICE_OPERATION_RESPONSE) instanceof GetLastServiceOperationResponse) {
             response = (GetLastServiceOperationResponse) ctx.contextKeys.get(GET_LAST_SERVICE_OPERATION_RESPONSE);
         } else {
             response = new GetLastServiceOperationResponse();

@@ -95,6 +95,36 @@ public class ProcessorChainServiceInstanceServiceTest {
     }
 
     @Test
+    public void should_use__last_create_response_from_context_when_set() {
+        //given
+        GetLastServiceOperationRequest request = new GetLastServiceOperationRequest("service_definition_id",
+                "plan_id",
+                "org_id",
+                "space_id");
+
+        //given a processor that generates a response into the context
+        final GetLastServiceOperationResponse customResponse = new GetLastServiceOperationResponse()
+                .withDescription("progress 5%");
+
+        BrokerProcessor processor = new DefaultBrokerProcessor() {
+            @Override
+            public void preGetLastCreateOperation(Context ctx) {
+                ctx.contextKeys.put(ProcessorChainServiceInstanceService.GET_LAST_SERVICE_OPERATION_RESPONSE, customResponse);
+            }
+        };
+        processorChain = aProcessorChain(processor);
+        processorChainServiceInstanceService = new ProcessorChainServiceInstanceService(processorChain);
+
+
+        //when
+        GetLastServiceOperationResponse response = processorChainServiceInstanceService.getLastOperation(request);
+
+        //then
+        Assertions.assertThat(response).isEqualTo(customResponse);
+    }
+
+
+    @Test
     public void should_chain_delete_processors_on_service_instance_deletion() throws Exception {
         DeleteServiceInstanceRequest request = new DeleteServiceInstanceRequest("instance_id",
                 "service_id",

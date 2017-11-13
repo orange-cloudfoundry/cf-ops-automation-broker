@@ -1,10 +1,13 @@
 
 # Next cloudflare
 
-- Async create:
-   - prototype sample module with output variable and import associated tf state json
-     - check partial TF module failure behavior & impact on module outputs: do we need explicit dependencies ?
-   - read tf state output variables into Pojo
+- Async create completion
+             
+             
+         
+   - output variable and import associated tf state json:
+     - model output along with module invocation 
+     - assign root outputs according to template in CloudFlareBrokerProcessor
 
    - return Asynchronous service instance creation response
    - CloudFlareBrokerProcessor: preGetLastCreateOperation + postGetLastCreateOperation

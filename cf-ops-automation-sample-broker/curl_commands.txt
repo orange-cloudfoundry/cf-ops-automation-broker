@@ -24,3 +24,5 @@ curl http://user:secret@localhost:8080/v2/service_instances/111/service_bindings
     "parameter2-name-here": "parameter2-value-here"
   }
 }' -X PUT -H "Content-Type: application/json"
+
+curl http://user:secret@localhost:8080/v2/catalog -H "Content-Type: application/json"

@@ -25,6 +25,8 @@ public class TerraformStateGsonAdapter implements JsonDeserializer<TerraformStat
             JsonArray pathElements = module.getAsJsonArray("path");
             if (pathElements.size() !=1) {
                 continue; //only parse root module
+                //note that tfstate might still contain leaked module outputs
+                //see https://github.com/hashicorp/terraform/issues/13555
             }
 
             JsonObject outputEntryObject = module.getAsJsonObject("outputs");

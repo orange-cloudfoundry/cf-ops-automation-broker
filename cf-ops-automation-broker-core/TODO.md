@@ -24,7 +24,7 @@
 
 
 - catalog: not bindeable
-
+                                                            
 Implement Repository
 - Spring injection of Validation: constructor injection.
 - SpringData import

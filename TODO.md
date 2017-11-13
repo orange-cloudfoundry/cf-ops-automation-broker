@@ -29,6 +29,11 @@ Implement Repository
 - Spring injection of Validation: constructor injection.
 - SpringData import
 - SpringData file impl https://github.com/spring-projects/spring-data-keyvalue ?
+    - https://github.com/spring-projects/spring-data-keyvalue/blob/master/src/main/asciidoc/key-value-repositories.adoc
+    - https://github.com/hazelcast/spring-data-hazelcast/blob/master/src/main/java/org/springframework/data/hazelcast/HazelcastKeyValueAdapter.java
+    - https://github.com/spring-projects/spring-data-keyvalue-examples/blob/master/retwisj/src/main/java/org/springframework/data/redis/samples/retwisj/redis/RetwisRepository.java
+    - https://paulcwarren.github.io/spring-content/refs/release/fs-index.html
+    - 
 
 
 

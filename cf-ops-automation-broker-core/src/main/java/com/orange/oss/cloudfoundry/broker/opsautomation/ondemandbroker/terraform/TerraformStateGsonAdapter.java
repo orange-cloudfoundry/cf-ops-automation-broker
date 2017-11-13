@@ -24,7 +24,10 @@ public class TerraformStateGsonAdapter implements JsonDeserializer<TerraformStat
             ImmutableModule.Builder builder = ImmutableModule.builder();
             JsonObject module = (JsonObject) element;
             JsonArray pathElements = module.getAsJsonArray("path");
-            builder.modulePath(getModulePath(pathElements));
+            String modulePath = getModulePath(pathElements);
+            if (! "root".equals(modulePath)) {
+                continue; //only parse root module
+            }
 
             JsonObject outputEntryObject = module.getAsJsonObject("outputs");
             Set<Map.Entry<String, JsonElement>> outputEntries = outputEntryObject.entrySet();

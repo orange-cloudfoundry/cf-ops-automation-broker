@@ -25,27 +25,15 @@ public class TerraformStateTest {
 
         //then it extracts properly fields
         ImmutableTerraformState.Builder builder = ImmutableTerraformState.builder();
-        ImmutableModule rootModuleOutputs = ImmutableModule.builder()
-                .modulePath("root")
+        ImmutableModule rootModule = ImmutableModule.builder()
                 .putOutputs("3456",
                         ImmutableOutput.builder()
                                 .type("string")
                                 .value("success")
                                 .build())
                 .build();
-        builder.addModules(rootModuleOutputs);
-        ImmutableModule myModuleOutputs = ImmutableModule.builder()
-                .modulePath("root/my-module")
-                .putOutputs("status",
-                        ImmutableOutput.builder()
-                                .type("string")
-                                .value("success")
-                                .build())
-                .build();
-        builder.addModules(myModuleOutputs);
-
-
-        assertThat(deserialized).isEqualTo(builder.build());
+        builder.addModules(rootModule);
+        assertThat(deserialized.getRootModule()).isEqualTo(rootModule);
 
     }
 

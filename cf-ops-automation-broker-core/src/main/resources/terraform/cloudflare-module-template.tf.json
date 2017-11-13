@@ -1,6 +1,6 @@
 {
   "module": {
-    "cloudflare-route-ondemandroute5": {
+    "<<cloudflare-route-ondemandroute5>>": {
       "cloudflare_internet_domain": "${var.cloudflare_internet_domain}",
       "cloudflare_root_domain": "${var.cloudflare_root_domain}",
       "cloudflare_route_suffix": "${var.cloudflare_route_suffix}",
@@ -9,6 +9,14 @@
       "route-prefix": "<<ondemandroute5>>",
       "service_instance_guid": "<<3456>>",
       "space_guid": "<<12435>>"
+    }
+  },
+  "output": {
+    "<<3456>>.started": {
+      "value": "${module.<<cloudflare-route-ondemandroute5>>.started}"
+    },
+    "<<3456>>.completed": {
+      "value": "${module.<<cloudflare-route-ondemandroute5>>.completed}"
     }
   }
 }

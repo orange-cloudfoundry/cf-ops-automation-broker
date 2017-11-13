@@ -10,5 +10,14 @@
       "source": "modules/cloudflare",
       "space_guid": "${data.cloudfoundry_space.space_on_demand_internet_route.id}"
     }
+  },
+  "output": {
+    "3456.started": {
+      "value": "${module.cloudflare-route-ondemandroute5.started}"
+    },
+    "3456.completed": {
+      "value": "${module.cloudflare-route-ondemandroute5.completed}"
+    }
   }
 }
+

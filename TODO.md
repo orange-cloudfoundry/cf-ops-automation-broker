@@ -2,11 +2,8 @@
 # Next cloudflare
 
 - Async create completion
-             
-             
-         
+
    - output variable and import associated tf state json:
-     - model output along with module invocation 
      - assign root outputs according to template in CloudFlareBrokerProcessor
 
    - return Asynchronous service instance creation response

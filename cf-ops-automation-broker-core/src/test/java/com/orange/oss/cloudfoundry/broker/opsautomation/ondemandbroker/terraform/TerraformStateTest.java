@@ -7,7 +7,6 @@ import org.junit.Test;
 import java.io.IOException;
 
 import static org.fest.assertions.Assertions.assertThat;
-import static org.junit.Assert.assertEquals;
 
 /**
  *
@@ -24,16 +23,13 @@ public class TerraformStateTest {
         TerraformState deserialized = gson.fromJson(TerraformModuleHelper.getDataFileReader(tfStateFile), TerraformState.class);
 
         //then it extracts properly fields
-        ImmutableTerraformState.Builder builder = ImmutableTerraformState.builder();
-        ImmutableModule rootModule = ImmutableModule.builder()
+        ImmutableTerraformState terraformState = ImmutableTerraformState.builder()
                 .putOutputs("3456",
                         ImmutableOutput.builder()
                                 .type("string")
                                 .value("success")
-                                .build())
-                .build();
-        builder.addModules(rootModule);
-        assertThat(deserialized.getRootModule()).isEqualTo(rootModule);
+                                .build()).build();
+        assertThat(deserialized).isEqualTo(terraformState);
 
     }
 

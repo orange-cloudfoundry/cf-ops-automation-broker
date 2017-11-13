@@ -21,11 +21,9 @@ public class TerraformStateGsonAdapter implements JsonDeserializer<TerraformStat
         JsonObject jsonObject = json.getAsJsonObject();
         JsonArray modules = jsonObject.getAsJsonArray("modules");
         for (JsonElement element : modules) {
-            ImmutableModule.Builder builder = ImmutableModule.builder();
             JsonObject module = (JsonObject) element;
             JsonArray pathElements = module.getAsJsonArray("path");
-            String modulePath = getModulePath(pathElements);
-            if (! "root".equals(modulePath)) {
+            if (pathElements.size() !=1) {
                 continue; //only parse root module
             }
 
@@ -38,20 +36,11 @@ public class TerraformStateGsonAdapter implements JsonDeserializer<TerraformStat
                         .value(jsonVariable.get("value").getAsString())
                         .type(jsonVariable.get("type").getAsString())
                         .build();
-                builder.putOutputs(varName, variable);
-                outputsBuilder.addModules(builder.build());
+                outputsBuilder.putOutputs(varName, variable);
             }
         }
         return outputsBuilder.build();
     }
 
-    public String getModulePath(JsonArray pathElements) {
-        String modulePath = "";
-        for (JsonElement pathElement : pathElements) {
-            modulePath = modulePath.isEmpty() ? pathElement.getAsString()
-                    : modulePath + "/" + pathElement.getAsString();
-        }
-        return modulePath;
-    }
-
+ 
 }

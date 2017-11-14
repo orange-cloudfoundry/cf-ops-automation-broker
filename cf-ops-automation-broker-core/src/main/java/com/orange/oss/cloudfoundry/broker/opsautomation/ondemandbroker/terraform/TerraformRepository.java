@@ -11,4 +11,6 @@ public interface TerraformRepository {
 
     @SuppressWarnings("UnusedReturnValue")
     TerraformModule save(TerraformModule module);
+
+    TerraformModule getByModuleName(String moduleName);
 }

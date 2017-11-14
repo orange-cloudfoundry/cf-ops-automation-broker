@@ -78,11 +78,18 @@ public class CloudFlareProcessorTest {
         TerraformModule terraformModule = (TerraformModule) context.contextKeys.get(TerraformModuleProcessor.ADD_TF_MODULE);
 
         ImmutableTerraformModule expectedModule = ImmutableTerraformModule.builder().from(deserialized)
-                .moduleName(request.getServiceInstanceId())
+                .moduleName("serviceinstance_guid")
                 .putProperties("org_guid", "org_id")
                 .putProperties("route-prefix", "avalidroute")
                 .putProperties("service_instance_guid", "serviceinstance_guid")
                 .putProperties("space_guid", "space_id")
+                .putOutputs(
+                        "serviceinstance_guid.started",
+                        ImmutableOutputConfig.builder().value("${module.serviceinstance_guid.started}").build())
+                .putOutputs(
+                        "serviceinstance_guid.completed",
+                        ImmutableOutputConfig.builder().value("${module.serviceinstance_guid.completed}").build())
+
                 .build();
 
         assertThat(terraformModule).isEqualTo(expectedModule);

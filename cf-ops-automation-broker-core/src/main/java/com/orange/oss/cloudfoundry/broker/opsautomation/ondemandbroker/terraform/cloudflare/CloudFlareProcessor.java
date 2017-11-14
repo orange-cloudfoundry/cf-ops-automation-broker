@@ -2,6 +2,7 @@ package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.terrafor
 
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.Context;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.DefaultBrokerProcessor;
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.terraform.ImmutableOutputConfig;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.terraform.ImmutableTerraformModule;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.terraform.TerraformModuleProcessor;
 import com.orange.oss.ondemandbroker.ProcessorChainServiceInstanceService;
@@ -45,6 +46,14 @@ public class CloudFlareProcessor extends DefaultBrokerProcessor {
                 .putProperties("route-prefix", requestedRoute)
                 .putProperties("service_instance_guid", request.getServiceInstanceId())
                 .putProperties("space_guid", request.getSpaceGuid())
+                .putOutputs(
+                        request.getServiceInstanceId() + ".started",
+                        ImmutableOutputConfig.builder().value("${module."+ request.getServiceInstanceId() + ".started}").build())
+                .putOutputs(
+                        request.getServiceInstanceId() + ".completed",
+                        ImmutableOutputConfig.builder().value("${module." + request.getServiceInstanceId() + ".completed}").build())
+
+
                 .build();
 
         contextKeys.put(TerraformModuleProcessor.ADD_TF_MODULE, terraformModule);

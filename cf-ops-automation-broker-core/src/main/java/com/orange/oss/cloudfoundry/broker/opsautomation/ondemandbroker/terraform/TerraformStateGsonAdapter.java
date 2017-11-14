@@ -17,7 +17,7 @@ public class TerraformStateGsonAdapter implements JsonDeserializer<TerraformStat
                                       JsonDeserializationContext jsonDeserializationContext) throws JsonParseException {
 
 
-        ImmutableTerraformState.Builder outputsBuilder = ImmutableTerraformState.builder();
+        ImmutableTerraformState.Builder builder = ImmutableTerraformState.builder();
         JsonObject jsonObject = json.getAsJsonObject();
         JsonArray modules = jsonObject.getAsJsonArray("modules");
         for (JsonElement element : modules) {
@@ -38,10 +38,11 @@ public class TerraformStateGsonAdapter implements JsonDeserializer<TerraformStat
                         .value(jsonVariable.get("value").getAsString())
                         .type(jsonVariable.get("type").getAsString())
                         .build();
-                outputsBuilder.putOutputs(varName, variable);
+                builder.putOutputs(varName, variable);
             }
+            break; //only process a single root module, as an optimization ignore the other modules
         }
-        return outputsBuilder.build();
+        return builder.build();
     }
 
  

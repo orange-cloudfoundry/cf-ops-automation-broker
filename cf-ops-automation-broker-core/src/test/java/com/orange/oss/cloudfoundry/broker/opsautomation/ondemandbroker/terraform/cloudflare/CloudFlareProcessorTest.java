@@ -13,6 +13,7 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.springframework.cloud.servicebroker.model.CreateServiceInstanceRequest;
+import org.springframework.cloud.servicebroker.model.CreateServiceInstanceResponse;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -151,7 +152,7 @@ public class CloudFlareProcessorTest {
 
 
     @Test
-    public void creates_tf_module_and_persists_into_repository() {
+    public void creates_tf_module() {
         //given a tf module template available in the classpath
         TerraformModule deserialized = TerraformModuleHelper.getTerraformModuleFromClasspath("/terraform/cloudflare-module-template.tf.json");
         ImmutableCloudFlareConfig cloudFlareConfig = ImmutableCloudFlareConfig.builder()
@@ -170,18 +171,10 @@ public class CloudFlareProcessorTest {
         );
         request.withServiceInstanceId("serviceinstance_guid");
 
-        //and the context being injected to a cloudflare processor
-        Context context = new Context();
-        context.contextKeys.put(ProcessorChainServiceInstanceService.CREATE_SERVICE_INSTANCE_REQUEST, request);
-
         //when
-        cloudFlareProcessor.preCreate(context);
+        ImmutableTerraformModule terraformModule = cloudFlareProcessor.constructModule(request);
 
-        ArgumentCaptor<TerraformModule> argument = ArgumentCaptor.forClass(TerraformModule.class);
-
-        //then it injects a terraform module into the repository
-        verify(terraformRepository).save(argument.capture());
-
+        //then module is properly formed
         ImmutableTerraformModule expectedModule = ImmutableTerraformModule.builder().from(deserialized)
                 .id("serviceinstance_guid")
                 .moduleName("serviceinstance_guid")
@@ -198,8 +191,43 @@ public class CloudFlareProcessorTest {
 
                 .build();
 
-        assertThat(argument.getValue()).isEqualTo(expectedModule);
+        assertThat(terraformModule).isEqualTo(expectedModule);
     }
+   @Test
+    public void creates_tf_module_and_persists_into_repository_and_returns_resp() {
+       //given a tf module template available in the classpath
+       TerraformModule deserialized = TerraformModuleHelper.getTerraformModuleFromClasspath("/terraform/cloudflare-module-template.tf.json");
+       ImmutableCloudFlareConfig cloudFlareConfig = ImmutableCloudFlareConfig.builder()
+               .routeSuffix("-cdn-cw-vdr-pprod-apps.redacted-domain.org")
+               .template(deserialized).build();
+       cloudFlareProcessor = new CloudFlareProcessor(cloudFlareConfig, terraformRepository);
+
+       //given a user request with a route
+       Map<String, Object> parameters = new HashMap<>();
+       parameters.put("route", "avalidroute");
+       CreateServiceInstanceRequest request = new CreateServiceInstanceRequest("service_definition_id",
+               "plan_id",
+               "org_id",
+               "space_id",
+               parameters
+       );
+       request.withServiceInstanceId("serviceinstance_guid");
+
+       //and the context being injected to a cloudflare processor
+       Context context = new Context();
+       context.contextKeys.put(ProcessorChainServiceInstanceService.CREATE_SERVICE_INSTANCE_REQUEST, request);
+
+       //when
+       cloudFlareProcessor.preCreate(context);
+
+       //then it injects a terraform module into the repository
+       verify(terraformRepository).save(any(TerraformModule.class));
+
+       //and populates a response into the context
+       CreateServiceInstanceResponse serviceInstanceResponse = (CreateServiceInstanceResponse) context.contextKeys.get(ProcessorChainServiceInstanceService.CREATE_SERVICE_INSTANCE_RESPONSE);
+       assertThat(serviceInstanceResponse.isAsync()).isTrue();
+   }
+
 
     Context aContextWithCreateRequest() {
         return aContextWithCreateRequest("route", "a-valid-route");

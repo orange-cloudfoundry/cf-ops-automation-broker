@@ -7,6 +7,7 @@ import com.orange.oss.ondemandbroker.ProcessorChainServiceInstanceService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cloud.servicebroker.model.CreateServiceInstanceRequest;
+import org.springframework.cloud.servicebroker.model.CreateServiceInstanceResponse;
 
 import java.util.Map;
 
@@ -52,6 +53,10 @@ public class CloudFlareProcessor extends DefaultBrokerProcessor {
         checkForConflictingProperty(terraformModule, ROUTE_PREFIX, route);
 
         repository.save(terraformModule);
+
+        CreateServiceInstanceResponse response = new CreateServiceInstanceResponse();
+        response.withAsync(true);
+        ctx.contextKeys.put(ProcessorChainServiceInstanceService.CREATE_SERVICE_INSTANCE_RESPONSE, response);
     }
 
     public ImmutableTerraformModule constructModule(CreateServiceInstanceRequest request) {

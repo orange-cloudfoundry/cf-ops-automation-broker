@@ -23,7 +23,7 @@ public abstract class TerraformModule {
 	 */
 	@Value.Default
 	public String getId() {
-		return "0"; //a default value to allow factorization of assigning Id into TerraformModuleProcessor
+		return "0"; //a default value enables reading from Json content without knowning the enclosing file name
 	}
 
 	public abstract Map<String, String> getProperties();

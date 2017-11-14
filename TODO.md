@@ -3,18 +3,10 @@
 
 - Async create completion
 
-   - output variable and import associated tf state json:
-     - assign root outputs according to template in CloudFlareBrokerProcessor
-
-   - return Asynchronous service instance creation response
-   - CloudFlareBrokerProcessor: preGetLastCreateOperation + postGetLastCreateOperation
-     - TerraformModuleProcessor reads TFState output variables to confirm last operation completion
+   - store timestamp into context and handle timeout for pending exec.
 
 
-- Consider bean composition instead of module chain
-   - unique route validation
-   - cloudflare delete support: DeleteModuleWithId in context
-      TF module delete support
+- cloudflare delete support
 
 
 - Integration test: 

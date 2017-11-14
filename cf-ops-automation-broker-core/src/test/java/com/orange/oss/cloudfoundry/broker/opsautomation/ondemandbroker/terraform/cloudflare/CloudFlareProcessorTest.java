@@ -14,6 +14,8 @@ import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.springframework.cloud.servicebroker.model.CreateServiceInstanceRequest;
 import org.springframework.cloud.servicebroker.model.CreateServiceInstanceResponse;
+import org.springframework.cloud.servicebroker.model.GetLastServiceOperationRequest;
+import org.springframework.cloud.servicebroker.model.GetLastServiceOperationResponse;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -25,6 +27,8 @@ import static org.fest.assertions.Assertions.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.cloud.servicebroker.model.OperationState.IN_PROGRESS;
+import static org.springframework.cloud.servicebroker.model.OperationState.SUCCEEDED;
 
 /**
  *
@@ -226,6 +230,35 @@ public class CloudFlareProcessorTest {
        //and populates a response into the context
        CreateServiceInstanceResponse serviceInstanceResponse = (CreateServiceInstanceResponse) context.contextKeys.get(ProcessorChainServiceInstanceService.CREATE_SERVICE_INSTANCE_RESPONSE);
        assertThat(serviceInstanceResponse.isAsync()).isTrue();
+   }
+
+   @Test
+   public void responds_to_get_last_create_service_operation() {
+        //Given a tracker bean handing tf state parsing
+       TerraformCompletionTracker tracker = Mockito.mock(TerraformCompletionTracker.class);
+       GetLastServiceOperationResponse expectedResponse = new GetLastServiceOperationResponse();
+       expectedResponse.withDescription("module exec in progress");
+       expectedResponse.withOperationState(IN_PROGRESS);
+       when(tracker.getModuleExecStatus("serviceinstance_guid")).thenReturn(expectedResponse);
+
+       cloudFlareProcessor = new CloudFlareProcessor(aConfig(), new CloudFlareRouteSuffixValidator(aConfig().getRouteSuffix()), terraformRepository, tracker);
+        //given an async polling from CC
+       GetLastServiceOperationRequest operationRequest = new GetLastServiceOperationRequest("serviceinstance_guid",
+               "service_definition_id",
+               "plan_id",
+               null);
+
+       //and the context being injected to a cloudflare processor
+       Context context = new Context();
+       context.contextKeys.put(ProcessorChainServiceInstanceService.GET_LAST_SERVICE_OPERATION_REQUEST, operationRequest);
+
+
+       //when
+       cloudFlareProcessor.preGetLastCreateOperation(context);
+
+       /*then mapped response from tracker is returned*/
+       GetLastServiceOperationResponse operationResponse = (GetLastServiceOperationResponse) context.contextKeys.get(ProcessorChainServiceInstanceService.GET_LAST_SERVICE_OPERATION_RESPONSE);
+       assertThat(operationResponse).isEqualTo(expectedResponse);
    }
 
 

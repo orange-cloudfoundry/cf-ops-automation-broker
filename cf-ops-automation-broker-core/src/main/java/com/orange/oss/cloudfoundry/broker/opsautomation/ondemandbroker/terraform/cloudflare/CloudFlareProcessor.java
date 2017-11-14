@@ -8,6 +8,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cloud.servicebroker.model.CreateServiceInstanceRequest;
 import org.springframework.cloud.servicebroker.model.CreateServiceInstanceResponse;
+import org.springframework.cloud.servicebroker.model.GetLastServiceOperationRequest;
+import org.springframework.cloud.servicebroker.model.GetLastServiceOperationResponse;
 
 import java.util.Map;
 
@@ -23,16 +25,18 @@ public class CloudFlareProcessor extends DefaultBrokerProcessor {
     private CloudFlareConfig cloudFlareConfig;
     private CloudFlareRouteSuffixValidator cloudFlareRouteSuffixValidator;
     private TerraformRepository repository;
+    private TerraformCompletionTracker completionTracker;
 
     public CloudFlareProcessor(CloudFlareConfig cloudFlareConfig, TerraformRepository repository) {
-        this(cloudFlareConfig, new CloudFlareRouteSuffixValidator(cloudFlareConfig.getRouteSuffix()), repository);
+        this(cloudFlareConfig, new CloudFlareRouteSuffixValidator(cloudFlareConfig.getRouteSuffix()), repository, null);
 
     }
 
-    public CloudFlareProcessor(CloudFlareConfig cloudFlareConfig, CloudFlareRouteSuffixValidator cloudFlareRouteSuffixValidator, TerraformRepository repository) {
+    public CloudFlareProcessor(CloudFlareConfig cloudFlareConfig, CloudFlareRouteSuffixValidator cloudFlareRouteSuffixValidator, TerraformRepository repository, TerraformCompletionTracker completionTracker) {
         this.cloudFlareConfig = cloudFlareConfig;
         this.cloudFlareRouteSuffixValidator = cloudFlareRouteSuffixValidator;
         this.repository = repository;
+        this.completionTracker = completionTracker;
     }
 
     @Override
@@ -57,6 +61,15 @@ public class CloudFlareProcessor extends DefaultBrokerProcessor {
         CreateServiceInstanceResponse response = new CreateServiceInstanceResponse();
         response.withAsync(true);
         ctx.contextKeys.put(ProcessorChainServiceInstanceService.CREATE_SERVICE_INSTANCE_RESPONSE, response);
+    }
+
+    @Override
+    public void preGetLastCreateOperation(Context ctx) {
+        GetLastServiceOperationRequest operationRequest = (GetLastServiceOperationRequest) ctx.contextKeys.get(ProcessorChainServiceInstanceService.GET_LAST_SERVICE_OPERATION_REQUEST);
+
+        GetLastServiceOperationResponse operationResponse = completionTracker.getModuleExecStatus(operationRequest.getServiceInstanceId());
+
+        ctx.contextKeys.put(ProcessorChainServiceInstanceService.GET_LAST_SERVICE_OPERATION_RESPONSE, operationResponse);
     }
 
     public ImmutableTerraformModule constructModule(CreateServiceInstanceRequest request) {

@@ -15,6 +15,7 @@ import java.util.Map;
  */
 public class CloudFlareProcessor extends DefaultBrokerProcessor {
 
+    private static final String ROUTE_PREFIX = "route-prefix";
     private static Logger logger = LoggerFactory.getLogger(CloudFlareProcessor.class.getName());
 
 
@@ -40,13 +41,15 @@ public class CloudFlareProcessor extends DefaultBrokerProcessor {
         CreateServiceInstanceRequest request= (CreateServiceInstanceRequest) contextKeys.get(ProcessorChainServiceInstanceService.CREATE_SERVICE_INSTANCE_REQUEST);
 
         //validate input params
-        validateRequestedRoute((String) request.getParameters().get("route"), "route");
+        String route = (String) request.getParameters().get("route");
+        validateRequestedRoute(route, "route");
 
 
         ImmutableTerraformModule terraformModule = constructModule(request);
 
         checkForConflictingModuleId(terraformModule);
         checkForConflictingModuleName(terraformModule);
+        checkForConflictingProperty(terraformModule, ROUTE_PREFIX, route);
 
         repository.save(terraformModule);
     }
@@ -57,7 +60,7 @@ public class CloudFlareProcessor extends DefaultBrokerProcessor {
                 .id(request.getServiceInstanceId())
                 .moduleName(request.getServiceInstanceId())
                 .putProperties("org_guid", request.getOrganizationGuid())
-                .putProperties("route-prefix", (String) request.getParameters().get("route"))
+                .putProperties(ROUTE_PREFIX, (String) request.getParameters().get("route"))
                 .putProperties("service_instance_guid", request.getServiceInstanceId())
                 .putProperties("space_guid", request.getSpaceGuid())
                 .putOutputs(
@@ -96,6 +99,16 @@ public class CloudFlareProcessor extends DefaultBrokerProcessor {
             //Don't return details on the existing module to the end user
             //as this may have confidential data
             throw new RuntimeException("unexpected conflicting terraform module with name=" + requestedModuleModuleName + ". A module with same name already exists.");
+        }
+    }
+    public void checkForConflictingProperty(TerraformModule requestedModule, String propertyName, String userFacingParam) {
+        String propertyValue = requestedModule.getProperties().get(propertyName);
+        TerraformModule existing = repository.getByModuleProperty(propertyName, propertyValue);
+        if (existing != null) {
+            logger.info("received conflicting parameter " + userFacingParam + " with value:" + propertyValue  + " A module with same property "  + propertyName + " already exists:" + existing);
+            //Don't return details on the existing module to the end user
+            //as this may have confidential data
+            throw new RuntimeException("Conflicting parameter " + userFacingParam + " with value:" + propertyValue  + " This value is already used by another service instance.");
         }
     }
 

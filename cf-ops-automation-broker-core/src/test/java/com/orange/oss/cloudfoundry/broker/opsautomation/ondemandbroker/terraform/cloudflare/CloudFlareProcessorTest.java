@@ -69,7 +69,27 @@ public class CloudFlareProcessorTest {
 
     @Test
     public void rejects_duplicate_route_request() {
+        //given a repository populated with an existing module
+        TerraformRepository terraformRepository = Mockito.mock(TerraformRepository.class);
+        when(terraformRepository.getByModuleProperty("route-prefix", "avalidroute")).thenReturn(aTfModule());
+        cloudFlareProcessor = new CloudFlareProcessor(aConfig(), terraformRepository);
 
+        //When a new module is requested to be added
+        TerraformModule requestedModule = ImmutableTerraformModule.builder().from(aTfModule())
+                .id("service-instance-guid")
+                .moduleName("cloudflare-route-ondemandroute5")
+                .putProperties("route-prefix", "avalidroute")
+                .build();
+
+
+        //Then it checks if a conflicting module exists, and rejects the request
+        try {
+            cloudFlareProcessor.checkForConflictingProperty(requestedModule, "route-prefix", "route");
+        } catch (RuntimeException e) {
+            //Message should indicate to end user the incorrect param name and value
+            assertThat(e.getMessage()).contains("route");
+            assertThat(e.getMessage()).contains("avalidroute");
+        }
     }
 
     @Test(expected = RuntimeException.class)

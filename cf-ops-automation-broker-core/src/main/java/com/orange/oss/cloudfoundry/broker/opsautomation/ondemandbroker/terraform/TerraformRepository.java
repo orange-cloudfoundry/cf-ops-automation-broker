@@ -13,4 +13,6 @@ public interface TerraformRepository {
     TerraformModule save(TerraformModule module);
 
     TerraformModule getByModuleName(String moduleName);
+
+    TerraformModule getByModuleProperty(String propertyName, String propertyValue);
 }

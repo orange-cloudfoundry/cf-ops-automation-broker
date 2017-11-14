@@ -7,7 +7,6 @@ import com.orange.oss.ondemandbroker.ProcessorChainServiceInstanceService;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
@@ -20,6 +19,9 @@ import org.springframework.cloud.servicebroker.model.GetLastServiceOperationResp
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneId;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -28,7 +30,6 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.cloud.servicebroker.model.OperationState.IN_PROGRESS;
-import static org.springframework.cloud.servicebroker.model.OperationState.SUCCEEDED;
 
 /**
  *
@@ -41,7 +42,6 @@ public class CloudFlareProcessorTest {
 
     @InjectMocks
     CloudFlareProcessor cloudFlareProcessor = new CloudFlareProcessor(aConfig(), terraformRepository);
-
 
     @Test
     public void accepts_correct_requested_routes() {
@@ -204,7 +204,9 @@ public class CloudFlareProcessorTest {
        ImmutableCloudFlareConfig cloudFlareConfig = ImmutableCloudFlareConfig.builder()
                .routeSuffix("-cdn-cw-vdr-pprod-apps.redacted-domain.org")
                .template(deserialized).build();
-       cloudFlareProcessor = new CloudFlareProcessor(cloudFlareConfig, terraformRepository);
+       Clock clock = Clock.fixed(Instant.ofEpochMilli(1510680248007L), ZoneId.of("Europe/Paris"));
+       cloudFlareProcessor = new CloudFlareProcessor(aConfig(), aSuffixValidator(), terraformRepository, Mockito.mock(TerraformCompletionTracker.class), clock);
+
 
        //given a user request with a route
        Map<String, Object> parameters = new HashMap<>();
@@ -229,10 +231,17 @@ public class CloudFlareProcessorTest {
 
        //and populates a response into the context
        CreateServiceInstanceResponse serviceInstanceResponse = (CreateServiceInstanceResponse) context.contextKeys.get(ProcessorChainServiceInstanceService.CREATE_SERVICE_INSTANCE_RESPONSE);
+       // specifying asynchronous creations
        assertThat(serviceInstanceResponse.isAsync()).isTrue();
+       // with a timestamp used to timeout on too long responses
+       assertThat(serviceInstanceResponse.getOperation()).isEqualTo("2017-11-14T17:24:08.007Z");
    }
 
-   @Test
+    public CloudFlareRouteSuffixValidator aSuffixValidator() {
+        return new CloudFlareRouteSuffixValidator(aConfig().getRouteSuffix());
+    }
+
+    @Test
    public void responds_to_get_last_create_service_operation() {
         //Given a tracker bean handing tf state parsing
        TerraformCompletionTracker tracker = Mockito.mock(TerraformCompletionTracker.class);
@@ -241,7 +250,7 @@ public class CloudFlareProcessorTest {
        expectedResponse.withOperationState(IN_PROGRESS);
        when(tracker.getModuleExecStatus("serviceinstance_guid")).thenReturn(expectedResponse);
 
-       cloudFlareProcessor = new CloudFlareProcessor(aConfig(), new CloudFlareRouteSuffixValidator(aConfig().getRouteSuffix()), terraformRepository, tracker);
+       cloudFlareProcessor = new CloudFlareProcessor(aConfig(), aSuffixValidator(), terraformRepository, tracker, Clock.systemDefaultZone());
         //given an async polling from CC
        GetLastServiceOperationRequest operationRequest = new GetLastServiceOperationRequest("serviceinstance_guid",
                "service_definition_id",
@@ -256,10 +265,20 @@ public class CloudFlareProcessorTest {
        //when
        cloudFlareProcessor.preGetLastCreateOperation(context);
 
-       /*then mapped response from tracker is returned*/
+       // then mapped response from tracker is returned
        GetLastServiceOperationResponse operationResponse = (GetLastServiceOperationResponse) context.contextKeys.get(ProcessorChainServiceInstanceService.GET_LAST_SERVICE_OPERATION_RESPONSE);
        assertThat(operationResponse).isEqualTo(expectedResponse);
    }
+
+    @Test
+    public void given_we_understand_date_format_and_parsing() {
+        Clock clock = Clock.fixed(Instant.ofEpochMilli(1510680248007L), ZoneId.of("Europe/Paris"));
+
+        Instant now = Instant.now(clock);
+        assertThat(now.toString()).isEqualTo("2017-11-14T17:24:08.007Z");
+
+        assertThat(Instant.parse(now.toString())).isEqualTo(now);
+    }
 
 
     Context aContextWithCreateRequest() {

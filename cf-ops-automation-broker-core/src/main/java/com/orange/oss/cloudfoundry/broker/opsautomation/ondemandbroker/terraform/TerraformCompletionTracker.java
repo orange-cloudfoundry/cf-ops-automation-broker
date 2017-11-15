@@ -9,6 +9,9 @@ import org.springframework.cloud.servicebroker.model.GetLastServiceOperationResp
 import org.springframework.cloud.servicebroker.model.OperationState;
 
 import java.io.*;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Map;
 
 /**
@@ -22,9 +25,11 @@ public class TerraformCompletionTracker {
     private Gson gson;
 
     private File tfStateFile;
+    private Clock clock;
 
-    public TerraformCompletionTracker(File tfStateFile) {
+    public TerraformCompletionTracker(File tfStateFile, Clock clock) {
         this.tfStateFile = tfStateFile;
+        this.clock = clock;
 
         gson = new GsonBuilder().registerTypeAdapter(TerraformState.class, new TerraformStateGsonAdapter()).create();
     }
@@ -63,5 +68,16 @@ public class TerraformCompletionTracker {
             response.withOperationState(OperationState.SUCCEEDED);
         }
         return response;
+    }
+
+    public String getCurrentDate() {
+        Instant now = Instant.now(clock);
+        return now.toString();
+    }
+
+    public long getElapsedTimeSecsSinceLastOperation(@SuppressWarnings("SameParameterValue") String lastOperationDate) {
+        Instant start = Instant.parse(lastOperationDate);
+        Instant now = Instant.now(clock);
+        return start.until(now, ChronoUnit.SECONDS);
     }
 }

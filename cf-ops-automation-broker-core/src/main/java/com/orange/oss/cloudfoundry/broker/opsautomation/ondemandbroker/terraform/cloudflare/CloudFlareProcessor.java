@@ -12,7 +12,6 @@ import org.springframework.cloud.servicebroker.model.GetLastServiceOperationRequ
 import org.springframework.cloud.servicebroker.model.GetLastServiceOperationResponse;
 
 import java.time.Clock;
-import java.time.Instant;
 import java.util.Map;
 
 /**
@@ -28,19 +27,17 @@ public class CloudFlareProcessor extends DefaultBrokerProcessor {
     private CloudFlareRouteSuffixValidator cloudFlareRouteSuffixValidator;
     private TerraformRepository repository;
     private TerraformCompletionTracker completionTracker;
-    private Clock clock;
 
     public CloudFlareProcessor(CloudFlareConfig cloudFlareConfig, TerraformRepository repository) {
-        this(cloudFlareConfig, new CloudFlareRouteSuffixValidator(cloudFlareConfig.getRouteSuffix()), repository, null, Clock.systemDefaultZone());
+        this(cloudFlareConfig, new CloudFlareRouteSuffixValidator(cloudFlareConfig.getRouteSuffix()), repository, null);
 
     }
 
-    public CloudFlareProcessor(CloudFlareConfig cloudFlareConfig, CloudFlareRouteSuffixValidator cloudFlareRouteSuffixValidator, TerraformRepository repository, TerraformCompletionTracker completionTracker, Clock clock) {
+    public CloudFlareProcessor(CloudFlareConfig cloudFlareConfig, CloudFlareRouteSuffixValidator cloudFlareRouteSuffixValidator, TerraformRepository repository, TerraformCompletionTracker completionTracker) {
         this.cloudFlareConfig = cloudFlareConfig;
         this.cloudFlareRouteSuffixValidator = cloudFlareRouteSuffixValidator;
         this.repository = repository;
         this.completionTracker = completionTracker;
-        this.clock = clock;
     }
 
     @Override
@@ -64,13 +61,8 @@ public class CloudFlareProcessor extends DefaultBrokerProcessor {
 
         CreateServiceInstanceResponse response = new CreateServiceInstanceResponse();
         response.withAsync(true);
-        response.withOperation(getCurrentDate());
+        response.withOperation(completionTracker.getCurrentDate());
         ctx.contextKeys.put(ProcessorChainServiceInstanceService.CREATE_SERVICE_INSTANCE_RESPONSE, response);
-    }
-
-    String getCurrentDate() {
-        Instant now = Instant.now(clock);
-        return now.toString();
     }
 
     @Override

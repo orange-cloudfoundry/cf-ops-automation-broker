@@ -204,8 +204,7 @@ public class CloudFlareProcessorTest {
        ImmutableCloudFlareConfig cloudFlareConfig = ImmutableCloudFlareConfig.builder()
                .routeSuffix("-cdn-cw-vdr-pprod-apps.redacted-domain.org")
                .template(deserialized).build();
-       Clock clock = Clock.fixed(Instant.ofEpochMilli(1510680248007L), ZoneId.of("Europe/Paris"));
-       cloudFlareProcessor = new CloudFlareProcessor(aConfig(), aSuffixValidator(), terraformRepository, Mockito.mock(TerraformCompletionTracker.class), clock);
+       cloudFlareProcessor = new CloudFlareProcessor(aConfig(), aSuffixValidator(), terraformRepository, Mockito.mock(TerraformCompletionTracker.class));
 
 
        //given a user request with a route
@@ -250,7 +249,7 @@ public class CloudFlareProcessorTest {
        expectedResponse.withOperationState(IN_PROGRESS);
        when(tracker.getModuleExecStatus("serviceinstance_guid")).thenReturn(expectedResponse);
 
-       cloudFlareProcessor = new CloudFlareProcessor(aConfig(), aSuffixValidator(), terraformRepository, tracker, Clock.systemDefaultZone());
+       cloudFlareProcessor = new CloudFlareProcessor(aConfig(), aSuffixValidator(), terraformRepository, tracker);
         //given an async polling from CC
        GetLastServiceOperationRequest operationRequest = new GetLastServiceOperationRequest("serviceinstance_guid",
                "service_definition_id",
@@ -270,15 +269,6 @@ public class CloudFlareProcessorTest {
        assertThat(operationResponse).isEqualTo(expectedResponse);
    }
 
-    @Test
-    public void given_we_understand_date_format_and_parsing() {
-        Clock clock = Clock.fixed(Instant.ofEpochMilli(1510680248007L), ZoneId.of("Europe/Paris"));
-
-        Instant now = Instant.now(clock);
-        assertThat(now.toString()).isEqualTo("2017-11-14T17:24:08.007Z");
-
-        assertThat(Instant.parse(now.toString())).isEqualTo(now);
-    }
 
 
     Context aContextWithCreateRequest() {

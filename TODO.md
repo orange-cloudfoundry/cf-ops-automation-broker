@@ -3,9 +3,8 @@
 
 - Async create completion
 
-   - store timestamp into context and handle timeout for pending exec.
-       - add timeout threashold into config
-       - refine CompletionTrakcer.getModuleExecStatus to evaluate timeout
+   - add timeout threshold into config
+   - refactor constructors
 
 
 - cloudflare delete support

@@ -11,7 +11,6 @@ import org.springframework.cloud.servicebroker.model.CreateServiceInstanceRespon
 import org.springframework.cloud.servicebroker.model.GetLastServiceOperationRequest;
 import org.springframework.cloud.servicebroker.model.GetLastServiceOperationResponse;
 
-import java.time.Clock;
 import java.util.Map;
 
 /**
@@ -69,7 +68,7 @@ public class CloudFlareProcessor extends DefaultBrokerProcessor {
     public void preGetLastCreateOperation(Context ctx) {
         GetLastServiceOperationRequest operationRequest = (GetLastServiceOperationRequest) ctx.contextKeys.get(ProcessorChainServiceInstanceService.GET_LAST_SERVICE_OPERATION_REQUEST);
 
-        GetLastServiceOperationResponse operationResponse = completionTracker.getModuleExecStatus(operationRequest.getServiceInstanceId());
+        GetLastServiceOperationResponse operationResponse = completionTracker.getModuleExecStatus(operationRequest.getServiceInstanceId(), operationRequest.getOperation());
 
         ctx.contextKeys.put(ProcessorChainServiceInstanceService.GET_LAST_SERVICE_OPERATION_RESPONSE, operationResponse);
     }

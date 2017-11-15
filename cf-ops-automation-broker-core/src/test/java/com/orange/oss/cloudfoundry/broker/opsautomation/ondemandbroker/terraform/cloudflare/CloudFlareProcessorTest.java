@@ -27,6 +27,7 @@ import java.util.Map;
 
 import static org.fest.assertions.Assertions.assertThat;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.cloud.servicebroker.model.OperationState.IN_PROGRESS;
@@ -45,7 +46,7 @@ public class CloudFlareProcessorTest {
 
     @Test
     public void accepts_correct_requested_routes() {
-        cloudFlareProcessor = new CloudFlareProcessor(aConfig(), terraformRepository);
+        cloudFlareProcessor = new CloudFlareProcessor(aConfig(), new CloudFlareRouteSuffixValidator(aConfig().getRouteSuffix()), terraformRepository, aTracker());
 
         //given a user performing
         //cf cs cloudflare -c '{route="a-valid-route"}'
@@ -204,7 +205,14 @@ public class CloudFlareProcessorTest {
        ImmutableCloudFlareConfig cloudFlareConfig = ImmutableCloudFlareConfig.builder()
                .routeSuffix("-cdn-cw-vdr-pprod-apps.redacted-domain.org")
                .template(deserialized).build();
-       cloudFlareProcessor = new CloudFlareProcessor(aConfig(), aSuffixValidator(), terraformRepository, Mockito.mock(TerraformCompletionTracker.class));
+
+       //given a tf state with no completed execution
+       String tfStateFileInClasspath = "/terraform/terraform-without-successfull-module-exec.tfstate";
+       //given a configured timeout
+       Clock clock = Clock.fixed(Instant.ofEpochMilli(1510680248007L), ZoneId.of("Europe/Paris"));
+       TerraformCompletionTracker tracker = new TerraformCompletionTracker(TerraformCompletionTrackerTest.getFileFromClasspath(tfStateFileInClasspath),clock, 120);
+
+       cloudFlareProcessor = new CloudFlareProcessor(aConfig(), aSuffixValidator(), terraformRepository, tracker);
 
 
        //given a user request with a route
@@ -236,6 +244,16 @@ public class CloudFlareProcessorTest {
        assertThat(serviceInstanceResponse.getOperation()).isEqualTo("2017-11-14T17:24:08.007Z");
    }
 
+    private TerraformCompletionTracker aTracker() {
+        GetLastServiceOperationResponse expectedResponse = new GetLastServiceOperationResponse();
+        expectedResponse.withDescription("module exec in progress");
+        expectedResponse.withOperationState(IN_PROGRESS);
+        TerraformCompletionTracker tracker = Mockito.mock(TerraformCompletionTracker.class);
+        when(tracker.getModuleExecStatus(anyString(), anyString())).thenReturn(expectedResponse);
+        when(tracker.getCurrentDate()).thenReturn("2017-11-14T17:24:08.007Z");
+        return tracker;
+    }
+
     public CloudFlareRouteSuffixValidator aSuffixValidator() {
         return new CloudFlareRouteSuffixValidator(aConfig().getRouteSuffix());
     }
@@ -247,14 +265,14 @@ public class CloudFlareProcessorTest {
        GetLastServiceOperationResponse expectedResponse = new GetLastServiceOperationResponse();
        expectedResponse.withDescription("module exec in progress");
        expectedResponse.withOperationState(IN_PROGRESS);
-       when(tracker.getModuleExecStatus("serviceinstance_guid")).thenReturn(expectedResponse);
+       when(tracker.getModuleExecStatus("serviceinstance_guid", "2017-11-14T17:24:08.007Z")).thenReturn(expectedResponse);
 
        cloudFlareProcessor = new CloudFlareProcessor(aConfig(), aSuffixValidator(), terraformRepository, tracker);
         //given an async polling from CC
        GetLastServiceOperationRequest operationRequest = new GetLastServiceOperationRequest("serviceinstance_guid",
                "service_definition_id",
                "plan_id",
-               null);
+               "2017-11-14T17:24:08.007Z");
 
        //and the context being injected to a cloudflare processor
        Context context = new Context();

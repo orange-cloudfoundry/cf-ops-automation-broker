@@ -187,10 +187,10 @@ public class CloudFlareProcessorTest {
    @Test
     public void creates_tf_module_and_persists_into_repository_and_returns_resp() {
        //given a tf module template available in the classpath
-       TerraformModule deserialized = TerraformModuleHelper.getTerraformModuleFromClasspath("/terraform/cloudflare-module-template.tf.json");
+       TerraformModule template = TerraformModuleHelper.getTerraformModuleFromClasspath("/terraform/cloudflare-module-template.tf.json");
        ImmutableCloudFlareConfig cloudFlareConfig = ImmutableCloudFlareConfig.builder()
                .routeSuffix("-cdn-cw-vdr-pprod-apps.redacted-domain.org")
-               .template(deserialized).build();
+               .template(template).build();
 
        //given a tf state with no completed execution
        String tfStateFileInClasspath = "/terraform/terraform-without-successfull-module-exec.tfstate";
@@ -198,7 +198,7 @@ public class CloudFlareProcessorTest {
        Clock clock = Clock.fixed(Instant.ofEpochMilli(1510680248007L), ZoneId.of("Europe/Paris"));
        TerraformCompletionTracker tracker = new TerraformCompletionTracker(TerraformCompletionTrackerTest.getFileFromClasspath(tfStateFileInClasspath),clock, 120);
 
-       cloudFlareProcessor = new CloudFlareProcessor(aConfig(), aSuffixValidator(), terraformRepository, tracker);
+       cloudFlareProcessor = new CloudFlareProcessor(cloudFlareConfig, aSuffixValidator(), terraformRepository, tracker);
 
 
        //given a user request with a route

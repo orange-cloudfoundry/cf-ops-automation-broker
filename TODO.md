@@ -1,24 +1,12 @@
 
 # Next cloudflare
 
-- Async create completion
-
-   - add timeout threshold into config 
-
-looks_up_paas_secrets_git_local_checkout
+- archive terraform config files used to prototype module outputs 
 
 - cloudflare delete support
 
-
-- Integration test: 
-   - @Service or @Bean in application.
-   - explicit application maven module
-   - git.properties injected as env vars
-
-
-- catalog: not bindeable
-                                                            
 Implement Repository
+- looks_up_paas_secrets_git_local_checkout
 - Spring injection of Validation: constructor injection.
 - SpringData import
 - SpringData file impl https://github.com/spring-projects/spring-data-keyvalue ?
@@ -27,6 +15,15 @@ Implement Repository
     - https://github.com/spring-projects/spring-data-keyvalue-examples/blob/master/retwisj/src/main/java/org/springframework/data/redis/samples/retwisj/redis/RetwisRepository.java
     - https://paulcwarren.github.io/spring-content/refs/release/fs-index.html
     - 
+
+
+- Integration test: 
+   - @Service or @Bean in application.
+   - explicit application maven module
+   - git.properties injected as env vars
+
+- catalog: not bindeable
+                                                            
 
 
 

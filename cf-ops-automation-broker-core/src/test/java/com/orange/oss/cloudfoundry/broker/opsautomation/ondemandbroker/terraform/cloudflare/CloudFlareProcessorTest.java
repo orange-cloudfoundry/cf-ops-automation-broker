@@ -7,7 +7,6 @@ import com.orange.oss.ondemandbroker.ProcessorChainServiceInstanceService;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
@@ -41,26 +40,12 @@ public class CloudFlareProcessorTest {
     @Mock
     TerraformRepository terraformRepository;
 
-    @InjectMocks
-    CloudFlareProcessor cloudFlareProcessor = new CloudFlareProcessor(aConfig(), terraformRepository);
-
-    @Test
-    public void accepts_correct_requested_routes() {
-        cloudFlareProcessor = new CloudFlareProcessor(aConfig(), new CloudFlareRouteSuffixValidator(aConfig().getRouteSuffix()), terraformRepository, aTracker());
-
-        //given a user performing
-        //cf cs cloudflare -c '{route="a-valid-route"}'
-        Context context = aContextWithCreateRequest("route", "a-valid-route");
-
-        //when the processor is invoked
-        cloudFlareProcessor.preCreate(context);
-
-        //then no exception is thrown
-    }
+    CloudFlareProcessor cloudFlareProcessor = new CloudFlareProcessor(aConfig(), aSuffixValidator(), terraformRepository, aTracker());
 
     @Test
     public void rejects_invalid_requested_routes() {
-        //Given an invalid route
+        //given a user performing
+        //cf cs cloudflare -c '{route="@"}'
         Context context = aContextWithCreateRequest("route", "@");
 
         try {
@@ -78,7 +63,8 @@ public class CloudFlareProcessorTest {
         //given a repository populated with an existing module
         TerraformRepository terraformRepository = Mockito.mock(TerraformRepository.class);
         when(terraformRepository.getByModuleProperty("route-prefix", "avalidroute")).thenReturn(aTfModule());
-        cloudFlareProcessor = new CloudFlareProcessor(aConfig(), terraformRepository);
+
+        cloudFlareProcessor = new CloudFlareProcessor(aConfig(), aSuffixValidator(), terraformRepository, aTracker());
 
         //When a new module is requested to be added
         TerraformModule requestedModule = ImmutableTerraformModule.builder().from(aTfModule())
@@ -103,7 +89,7 @@ public class CloudFlareProcessorTest {
         //given a repository populated with an existing module
         TerraformRepository terraformRepository = Mockito.mock(TerraformRepository.class);
         when(terraformRepository.getByModuleName("cloudflare-route-ondemandroute5")).thenReturn(aTfModule());
-        cloudFlareProcessor = new CloudFlareProcessor(aConfig(), terraformRepository);
+        cloudFlareProcessor = new CloudFlareProcessor(aConfig(), aSuffixValidator(), terraformRepository, null);
 
         //When a new module is requested to be added
         // by a previous processor in the chain that inserted a tf module in the context
@@ -123,7 +109,7 @@ public class CloudFlareProcessorTest {
         //given a repository populated with an existing module
         TerraformRepository terraformRepository = Mockito.mock(TerraformRepository.class);
         when(terraformRepository.getByModuleId("service-instance-guid")).thenReturn(aTfModule());
-        cloudFlareProcessor = new CloudFlareProcessor(aConfig(), terraformRepository);
+        cloudFlareProcessor = new CloudFlareProcessor(aConfig(), aSuffixValidator(), terraformRepository, aTracker());
 
         //When a new module is requested to be added
         // by a previous processor in the chain that inserted a tf module in the context
@@ -163,7 +149,7 @@ public class CloudFlareProcessorTest {
         ImmutableCloudFlareConfig cloudFlareConfig = ImmutableCloudFlareConfig.builder()
                 .routeSuffix("-cdn-cw-vdr-pprod-apps.redacted-domain.org")
                 .template(deserialized).build();
-        cloudFlareProcessor = new CloudFlareProcessor(cloudFlareConfig, terraformRepository);
+        cloudFlareProcessor = new CloudFlareProcessor(cloudFlareConfig, aSuffixValidator(), terraformRepository, aTracker());
 
         //given a user request with a route
         Map<String, Object> parameters = new HashMap<>();
@@ -244,7 +230,36 @@ public class CloudFlareProcessorTest {
        assertThat(serviceInstanceResponse.getOperation()).isEqualTo("2017-11-14T17:24:08.007Z");
    }
 
-    private TerraformCompletionTracker aTracker() {
+    @Test
+    public void responds_to_get_last_create_service_operation() {
+        //Given a tf state without completed module outputs
+        TerraformCompletionTracker tracker = Mockito.mock(TerraformCompletionTracker.class);
+        GetLastServiceOperationResponse expectedResponse = new GetLastServiceOperationResponse();
+        expectedResponse.withDescription("module exec in progress");
+        expectedResponse.withOperationState(IN_PROGRESS);
+        when(tracker.getModuleExecStatus("serviceinstance_guid", "2017-11-14T17:24:08.007Z")).thenReturn(expectedResponse);
+
+        cloudFlareProcessor = new CloudFlareProcessor(aConfig(), aSuffixValidator(), terraformRepository, tracker);
+        //given an async polling from CC
+        GetLastServiceOperationRequest operationRequest = new GetLastServiceOperationRequest("serviceinstance_guid",
+                "service_definition_id",
+                "plan_id",
+                "2017-11-14T17:24:08.007Z");
+
+        //and the context being injected to a cloudflare processor
+        Context context = new Context();
+        context.contextKeys.put(ProcessorChainServiceInstanceService.GET_LAST_SERVICE_OPERATION_REQUEST, operationRequest);
+
+
+        //when
+        cloudFlareProcessor.preGetLastCreateOperation(context);
+
+        // then mapped response from tracker is returned
+        GetLastServiceOperationResponse operationResponse = (GetLastServiceOperationResponse) context.contextKeys.get(ProcessorChainServiceInstanceService.GET_LAST_SERVICE_OPERATION_RESPONSE);
+        assertThat(operationResponse).isEqualTo(expectedResponse);
+    }
+
+    TerraformCompletionTracker aTracker() {
         GetLastServiceOperationResponse expectedResponse = new GetLastServiceOperationResponse();
         expectedResponse.withDescription("module exec in progress");
         expectedResponse.withOperationState(IN_PROGRESS);
@@ -254,43 +269,8 @@ public class CloudFlareProcessorTest {
         return tracker;
     }
 
-    public CloudFlareRouteSuffixValidator aSuffixValidator() {
+    CloudFlareRouteSuffixValidator aSuffixValidator() {
         return new CloudFlareRouteSuffixValidator(aConfig().getRouteSuffix());
-    }
-
-    @Test
-   public void responds_to_get_last_create_service_operation() {
-        //Given a tracker bean handing tf state parsing
-       TerraformCompletionTracker tracker = Mockito.mock(TerraformCompletionTracker.class);
-       GetLastServiceOperationResponse expectedResponse = new GetLastServiceOperationResponse();
-       expectedResponse.withDescription("module exec in progress");
-       expectedResponse.withOperationState(IN_PROGRESS);
-       when(tracker.getModuleExecStatus("serviceinstance_guid", "2017-11-14T17:24:08.007Z")).thenReturn(expectedResponse);
-
-       cloudFlareProcessor = new CloudFlareProcessor(aConfig(), aSuffixValidator(), terraformRepository, tracker);
-        //given an async polling from CC
-       GetLastServiceOperationRequest operationRequest = new GetLastServiceOperationRequest("serviceinstance_guid",
-               "service_definition_id",
-               "plan_id",
-               "2017-11-14T17:24:08.007Z");
-
-       //and the context being injected to a cloudflare processor
-       Context context = new Context();
-       context.contextKeys.put(ProcessorChainServiceInstanceService.GET_LAST_SERVICE_OPERATION_REQUEST, operationRequest);
-
-
-       //when
-       cloudFlareProcessor.preGetLastCreateOperation(context);
-
-       // then mapped response from tracker is returned
-       GetLastServiceOperationResponse operationResponse = (GetLastServiceOperationResponse) context.contextKeys.get(ProcessorChainServiceInstanceService.GET_LAST_SERVICE_OPERATION_RESPONSE);
-       assertThat(operationResponse).isEqualTo(expectedResponse);
-   }
-
-
-
-    Context aContextWithCreateRequest() {
-        return aContextWithCreateRequest("route", "a-valid-route");
     }
 
     @SuppressWarnings("SameParameterValue")
@@ -311,14 +291,14 @@ public class CloudFlareProcessorTest {
         return context;
     }
 
-    private CloudFlareConfig aConfig() {
+    CloudFlareConfig aConfig() {
         TerraformModule template = TerraformModuleHelper.getTerraformModuleFromClasspath("/terraform/cloudflare-module-template.tf.json");
         return ImmutableCloudFlareConfig.builder()
                 .template(template)
                 .routeSuffix("-cdn-cw-vdr-pprod-apps.redacted-domain.org").build();
     }
 
-    private ImmutableTerraformModule aTfModule() {
+    ImmutableTerraformModule aTfModule() {
         return ImmutableTerraformModule.builder()
                 .moduleName("module1")
                 .source("path/to/module").build();

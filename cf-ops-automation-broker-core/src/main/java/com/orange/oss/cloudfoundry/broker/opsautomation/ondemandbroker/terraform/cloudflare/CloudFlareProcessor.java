@@ -27,11 +27,6 @@ public class CloudFlareProcessor extends DefaultBrokerProcessor {
     private TerraformRepository repository;
     private TerraformCompletionTracker completionTracker;
 
-    public CloudFlareProcessor(CloudFlareConfig cloudFlareConfig, TerraformRepository repository) {
-        this(cloudFlareConfig, new CloudFlareRouteSuffixValidator(cloudFlareConfig.getRouteSuffix()), repository, null);
-
-    }
-
     public CloudFlareProcessor(CloudFlareConfig cloudFlareConfig, CloudFlareRouteSuffixValidator cloudFlareRouteSuffixValidator, TerraformRepository repository, TerraformCompletionTracker completionTracker) {
         this.cloudFlareConfig = cloudFlareConfig;
         this.cloudFlareRouteSuffixValidator = cloudFlareRouteSuffixValidator;

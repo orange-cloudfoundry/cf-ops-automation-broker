@@ -3,6 +3,7 @@ package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.credhub;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.Context;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.ProcessorChain;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -28,10 +29,12 @@ public class PasswordGenProcessorIT {
 
 		PasswordGenProcessor processor=new PasswordGenProcessor(url,instanceGroupName, propertyName);
 		
-		List<BrokerProcessor> processors=new ArrayList<BrokerProcessor>();
+		List<BrokerProcessor> processors= new ArrayList<>();
 		processors.add(processor);
 		ProcessorChain chain=new ProcessorChain(processors, new DefaultBrokerSink());
-		chain.create();
+		Context ctx=new Context();
+		chain.create(ctx);
+
 	}
 
 	

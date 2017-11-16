@@ -19,12 +19,6 @@ public class ProcessorChain {
 		this.sink=sink;
 	}
 
-	public void create() {
-		Context ctx=new Context();
-		create(ctx);
-
-	}
-
 	public void create(Context ctx) {
 		for (BrokerProcessor m: processors) {
 			m.preCreate(ctx);

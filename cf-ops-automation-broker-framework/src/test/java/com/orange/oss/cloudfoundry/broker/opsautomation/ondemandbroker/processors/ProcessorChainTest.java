@@ -127,7 +127,9 @@ public class ProcessorChainTest {
 		
 		DefaultBrokerSink sink=new DefaultBrokerSink();
 		ProcessorChain chain=new ProcessorChain(processors, sink);
-		chain.create();
+		Context ctx=new Context();
+		chain.create(ctx);
+
 		chain.getLastCreateOperation();
 		chain.bind();
 		chain.unBind();

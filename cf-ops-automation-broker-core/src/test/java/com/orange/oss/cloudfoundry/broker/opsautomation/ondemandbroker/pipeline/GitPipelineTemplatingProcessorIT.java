@@ -5,6 +5,7 @@ import java.util.List;
 
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.GitProcessor;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.BrokerProcessor;
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.Context;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,12 +35,14 @@ public class GitPipelineTemplatingProcessorIT {
 	public void testTemplatingProcessor() {
 		
 		GitProcessor processor=new GitProcessor(gitProperties.getGitUser(), gitProperties.getGitPassword(), gitProperties.getGitUrl());
-		List<BrokerProcessor> processors=new ArrayList<BrokerProcessor>();
+		List<BrokerProcessor> processors= new ArrayList<>();
 		processors.add(processor);
 		processors.add(new GitPipelineTemplatingProcessor("on-demand-depl",this.manifestResource));
 		ProcessorChain chain=new ProcessorChain(processors, new DefaultBrokerSink());
-		
-		chain.create();
+
+		Context ctx=new Context();
+		chain.create(ctx);
+
 	}
 
 }

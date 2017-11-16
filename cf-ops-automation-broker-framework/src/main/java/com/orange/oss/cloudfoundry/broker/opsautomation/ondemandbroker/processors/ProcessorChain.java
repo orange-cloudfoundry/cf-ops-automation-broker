@@ -31,11 +31,6 @@ public class ProcessorChain {
 		}
 	}
 
-	public void getLastCreateOperation() {
-		Context ctx=new Context();
-		getLastCreateOperation(ctx);
-	}
-
 	public void getLastCreateOperation(Context ctx) {
 		for (BrokerProcessor m: processors) {
 			m.preGetLastCreateOperation(ctx);

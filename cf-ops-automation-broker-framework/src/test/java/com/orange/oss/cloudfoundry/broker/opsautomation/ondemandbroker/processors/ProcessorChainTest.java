@@ -130,7 +130,8 @@ public class ProcessorChainTest {
 		Context ctx=new Context();
 		chain.create(ctx);
 
-		chain.getLastCreateOperation();
+		Context ctx1 =new Context();
+		chain.getLastCreateOperation(ctx1);
 		chain.bind();
 		chain.unBind();
 		chain.delete(new Context());

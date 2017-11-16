@@ -42,6 +42,12 @@ public class CloudFlareProcessorTest {
 
     CloudFlareProcessor cloudFlareProcessor = new CloudFlareProcessor(aConfig(), aSuffixValidator(), terraformRepository, aTracker());
 
+
+    @Test(expected = UnsupportedOperationException.class)
+    public void rejects_bind_calls() {
+        cloudFlareProcessor.preBind(new Context());
+    }
+
     @Test
     public void rejects_invalid_requested_routes() {
         //given a user performing
@@ -131,7 +137,7 @@ public class CloudFlareProcessorTest {
         Context ctx = new Context();
         Path workDir = Files.createTempDirectory("paas-secret-clone");
 
-        ctx.contextKeys.put(GitProcessorContext.workDir.toString(),workDir);
+        ctx.contextKeys.put(GitProcessorContext.workDir.toString(), workDir);
 
         //when
         //Path lookedUpWorkDir = terraformModuleProcessor.lookUpGitworkDir(ctx);
@@ -184,51 +190,52 @@ public class CloudFlareProcessorTest {
 
         assertThat(terraformModule).isEqualTo(expectedModule);
     }
-   @Test
+
+    @Test
     public void creates_tf_module_and_persists_into_repository_and_returns_resp() {
-       //given a tf module template available in the classpath
-       TerraformModule template = TerraformModuleHelper.getTerraformModuleFromClasspath("/terraform/cloudflare-module-template.tf.json");
-       ImmutableCloudFlareConfig cloudFlareConfig = ImmutableCloudFlareConfig.builder()
-               .routeSuffix("-cdn-cw-vdr-pprod-apps.redacted-domain.org")
-               .template(template).build();
+        //given a tf module template available in the classpath
+        TerraformModule template = TerraformModuleHelper.getTerraformModuleFromClasspath("/terraform/cloudflare-module-template.tf.json");
+        ImmutableCloudFlareConfig cloudFlareConfig = ImmutableCloudFlareConfig.builder()
+                .routeSuffix("-cdn-cw-vdr-pprod-apps.redacted-domain.org")
+                .template(template).build();
 
-       //given a tf state with no completed execution
-       String tfStateFileInClasspath = "/terraform/terraform-without-successfull-module-exec.tfstate";
-       //given a configured timeout
-       Clock clock = Clock.fixed(Instant.ofEpochMilli(1510680248007L), ZoneId.of("Europe/Paris"));
-       TerraformCompletionTracker tracker = new TerraformCompletionTracker(TerraformCompletionTrackerTest.getFileFromClasspath(tfStateFileInClasspath),clock, 120);
+        //given a tf state with no completed execution
+        String tfStateFileInClasspath = "/terraform/terraform-without-successfull-module-exec.tfstate";
+        //given a configured timeout
+        Clock clock = Clock.fixed(Instant.ofEpochMilli(1510680248007L), ZoneId.of("Europe/Paris"));
+        TerraformCompletionTracker tracker = new TerraformCompletionTracker(TerraformCompletionTrackerTest.getFileFromClasspath(tfStateFileInClasspath), clock, 120);
 
-       cloudFlareProcessor = new CloudFlareProcessor(cloudFlareConfig, aSuffixValidator(), terraformRepository, tracker);
+        cloudFlareProcessor = new CloudFlareProcessor(cloudFlareConfig, aSuffixValidator(), terraformRepository, tracker);
 
 
-       //given a user request with a route
-       Map<String, Object> parameters = new HashMap<>();
-       parameters.put("route", "avalidroute");
-       CreateServiceInstanceRequest request = new CreateServiceInstanceRequest("service_definition_id",
-               "plan_id",
-               "org_id",
-               "space_id",
-               parameters
-       );
-       request.withServiceInstanceId("serviceinstance_guid");
+        //given a user request with a route
+        Map<String, Object> parameters = new HashMap<>();
+        parameters.put("route", "avalidroute");
+        CreateServiceInstanceRequest request = new CreateServiceInstanceRequest("service_definition_id",
+                "plan_id",
+                "org_id",
+                "space_id",
+                parameters
+        );
+        request.withServiceInstanceId("serviceinstance_guid");
 
-       //and the context being injected to a cloudflare processor
-       Context context = new Context();
-       context.contextKeys.put(ProcessorChainServiceInstanceService.CREATE_SERVICE_INSTANCE_REQUEST, request);
+        //and the context being injected to a cloudflare processor
+        Context context = new Context();
+        context.contextKeys.put(ProcessorChainServiceInstanceService.CREATE_SERVICE_INSTANCE_REQUEST, request);
 
-       //when
-       cloudFlareProcessor.preCreate(context);
+        //when
+        cloudFlareProcessor.preCreate(context);
 
-       //then it injects a terraform module into the repository
-       verify(terraformRepository).save(any(TerraformModule.class));
+        //then it injects a terraform module into the repository
+        verify(terraformRepository).save(any(TerraformModule.class));
 
-       //and populates a response into the context
-       CreateServiceInstanceResponse serviceInstanceResponse = (CreateServiceInstanceResponse) context.contextKeys.get(ProcessorChainServiceInstanceService.CREATE_SERVICE_INSTANCE_RESPONSE);
-       // specifying asynchronous creations
-       assertThat(serviceInstanceResponse.isAsync()).isTrue();
-       // with a timestamp used to timeout on too long responses
-       assertThat(serviceInstanceResponse.getOperation()).isEqualTo("2017-11-14T17:24:08.007Z");
-   }
+        //and populates a response into the context
+        CreateServiceInstanceResponse serviceInstanceResponse = (CreateServiceInstanceResponse) context.contextKeys.get(ProcessorChainServiceInstanceService.CREATE_SERVICE_INSTANCE_RESPONSE);
+        // specifying asynchronous creations
+        assertThat(serviceInstanceResponse.isAsync()).isTrue();
+        // with a timestamp used to timeout on too long responses
+        assertThat(serviceInstanceResponse.getOperation()).isEqualTo("2017-11-14T17:24:08.007Z");
+    }
 
     @Test
     public void responds_to_get_last_create_service_operation() {

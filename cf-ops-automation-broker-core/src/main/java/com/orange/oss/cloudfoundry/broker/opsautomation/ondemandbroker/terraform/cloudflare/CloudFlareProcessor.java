@@ -35,6 +35,11 @@ public class CloudFlareProcessor extends DefaultBrokerProcessor {
     }
 
     @Override
+    public void preBind(Context ctx) {
+        throw new UnsupportedOperationException("Does not support bind requests");
+    }
+
+    @Override
     public void preCreate(Context ctx) {
         //Fetch requested route and param name from Service Instance
         Map<String, Object> contextKeys = ctx.contextKeys;

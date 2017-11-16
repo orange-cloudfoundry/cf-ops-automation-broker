@@ -22,9 +22,7 @@ Implement Repository
    - explicit application maven module
    - git.properties injected as env vars
 
-- catalog: not bindeable
-                                                            
-
+- catalog: not bindeable, not updeable
 
 
  
@@ -32,8 +30,8 @@ Implement Repository
 # Next core framework
 
 - delete request in context key 
-- inline ProcessorChain.create() + pass in context to other
 - context key: encapsulate with methods + as immutable object ?
+- update request in context key
  
  
 ---------------

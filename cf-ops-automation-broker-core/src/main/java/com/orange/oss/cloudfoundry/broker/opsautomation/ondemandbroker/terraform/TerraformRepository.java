@@ -15,4 +15,6 @@ public interface TerraformRepository {
     TerraformModule getByModuleName(String moduleName);
 
     TerraformModule getByModuleProperty(String propertyName, String propertyValue);
+
+    void delete(TerraformModule module);
 }

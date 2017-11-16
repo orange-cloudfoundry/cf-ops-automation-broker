@@ -6,10 +6,7 @@ import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.terraform
 import com.orange.oss.ondemandbroker.ProcessorChainServiceInstanceService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.cloud.servicebroker.model.CreateServiceInstanceRequest;
-import org.springframework.cloud.servicebroker.model.CreateServiceInstanceResponse;
-import org.springframework.cloud.servicebroker.model.GetLastServiceOperationRequest;
-import org.springframework.cloud.servicebroker.model.GetLastServiceOperationResponse;
+import org.springframework.cloud.servicebroker.model.*;
 
 import java.util.Map;
 
@@ -93,13 +90,29 @@ public class CloudFlareProcessor extends DefaultBrokerProcessor {
                 .build();
     }
 
-    public void validateRequestedRoute(String route, @SuppressWarnings("SameParameterValue") String paramName) {
+    @Override
+    public void preDelete(Context context) {
+        DeleteServiceInstanceRequest request = (DeleteServiceInstanceRequest) context.contextKeys.get(ProcessorChainServiceInstanceService.DELETE_SERVICE_INSTANCE_REQUEST);
+        String serviceInstanceId = request.getServiceInstanceId();
+        TerraformModule terraformModule = repository.getByModuleId(serviceInstanceId);
+
+        if (terraformModule == null) {
+            logger.warn("Asked to delete a service instance with id=" + serviceInstanceId + " without any associated module in the repository");
+        } else {
+            repository.delete(terraformModule);
+        }
+
+        DeleteServiceInstanceResponse response = new DeleteServiceInstanceResponse();
+        context.contextKeys.put(ProcessorChainServiceInstanceService.DELETE_SERVICE_INSTANCE_RESPONSE, response);
+    }
+
+    void validateRequestedRoute(String route, @SuppressWarnings("SameParameterValue") String paramName) {
         boolean valid = cloudFlareRouteSuffixValidator.isRouteValid(route);
         if (!valid) throw new RuntimeException("Invalid parameter " + paramName + " with value:" + route);
     }
 
 
-    public void checkForConflictingModuleId(TerraformModule requestedModule) {
+    void checkForConflictingModuleId(TerraformModule requestedModule) {
         String requestedModuleId = requestedModule.getId();
         TerraformModule existing = repository.getByModuleId(requestedModuleId);
         if (existing != null) {
@@ -110,7 +123,7 @@ public class CloudFlareProcessor extends DefaultBrokerProcessor {
         }
     }
 
-    public void checkForConflictingModuleName(TerraformModule requestedModule) {
+    void checkForConflictingModuleName(TerraformModule requestedModule) {
         String requestedModuleModuleName = requestedModule.getModuleName();
         TerraformModule existing = repository.getByModuleName(requestedModuleModuleName);
         if (existing != null) {
@@ -120,7 +133,7 @@ public class CloudFlareProcessor extends DefaultBrokerProcessor {
             throw new RuntimeException("unexpected conflicting terraform module with name=" + requestedModuleModuleName + ". A module with same name already exists.");
         }
     }
-    public void checkForConflictingProperty(TerraformModule requestedModule, String propertyName, String userFacingParam) {
+    void checkForConflictingProperty(TerraformModule requestedModule, String propertyName, String userFacingParam) {
         String propertyValue = requestedModule.getProperties().get(propertyName);
         TerraformModule existing = repository.getByModuleProperty(propertyName, propertyValue);
         if (existing != null) {

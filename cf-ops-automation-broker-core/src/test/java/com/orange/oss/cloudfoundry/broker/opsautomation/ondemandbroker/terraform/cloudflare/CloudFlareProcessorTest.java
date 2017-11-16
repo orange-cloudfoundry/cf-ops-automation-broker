@@ -10,10 +10,7 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
-import org.springframework.cloud.servicebroker.model.CreateServiceInstanceRequest;
-import org.springframework.cloud.servicebroker.model.CreateServiceInstanceResponse;
-import org.springframework.cloud.servicebroker.model.GetLastServiceOperationRequest;
-import org.springframework.cloud.servicebroker.model.GetLastServiceOperationResponse;
+import org.springframework.cloud.servicebroker.model.*;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -266,6 +263,36 @@ public class CloudFlareProcessorTest {
         assertThat(operationResponse).isEqualTo(expectedResponse);
     }
 
+    @Test
+    public void delete_modules_when_requested() {
+        //given a repository with an existing module
+        terraformRepository = Mockito.mock(TerraformRepository.class);
+        ImmutableTerraformModule aTfModule = aTfModule();
+        when(terraformRepository.getByModuleId("instance_id")).thenReturn(aTfModule);
+        cloudFlareProcessor = new CloudFlareProcessor(aConfig(), aSuffixValidator(), terraformRepository, aTracker());
+
+
+        //given an incoming delete request
+        DeleteServiceInstanceRequest request = new DeleteServiceInstanceRequest("instance_id",
+                "service_id",
+                "plan_id",
+                new ServiceDefinition(),
+                true);
+        Context context = new Context();
+        context.contextKeys.put(ProcessorChainServiceInstanceService.DELETE_SERVICE_INSTANCE_REQUEST, request);
+
+
+        //when
+        cloudFlareProcessor.preDelete(context);
+
+        //then it deletes the terraform module from the repository
+        verify(terraformRepository).delete(aTfModule);
+
+        /*and the delete response is returned*/
+        DeleteServiceInstanceResponse response = (DeleteServiceInstanceResponse) context.contextKeys.get(ProcessorChainServiceInstanceService.DELETE_SERVICE_INSTANCE_RESPONSE);
+        assertThat(response.isAsync()).isFalse();
+    }
+
     TerraformCompletionTracker aTracker() {
         GetLastServiceOperationResponse expectedResponse = new GetLastServiceOperationResponse();
         expectedResponse.withDescription("module exec in progress");
@@ -308,7 +335,9 @@ public class CloudFlareProcessorTest {
     ImmutableTerraformModule aTfModule() {
         return ImmutableTerraformModule.builder()
                 .moduleName("module1")
-                .source("path/to/module").build();
+                .source("path/to/module")
+                .id("instance_id")
+                .build();
     }
 
 

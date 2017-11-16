@@ -3,8 +3,6 @@
 
 - archive terraform config files used to prototype module outputs 
 
-- cloudflare delete support
-
 Implement Repository
 - looks_up_paas_secrets_git_local_checkout
 - Spring injection of Validation: constructor injection.
@@ -29,9 +27,8 @@ Implement Repository
 
 # Next core framework
 
-- delete request in context key 
 - context key: encapsulate with methods + as immutable object ?
-- update request in context key
+- update + bind/ubind request in context key
  
  
 ---------------

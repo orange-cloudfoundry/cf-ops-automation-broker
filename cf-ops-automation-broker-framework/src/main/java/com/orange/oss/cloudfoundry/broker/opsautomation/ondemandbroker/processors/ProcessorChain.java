@@ -83,8 +83,7 @@ public class ProcessorChain {
 
 	}
 
-	public void delete() {
-		Context ctx=new Context();
+	public void delete(Context ctx) {
 		for (BrokerProcessor m: processors) {
 			m.preDelete(ctx);
 		}

@@ -16,7 +16,7 @@ public class ProcessorChainTest {
 
 	@Test
 	public void testInvocationChain() {
-		List<BrokerProcessor> processors=new ArrayList<BrokerProcessor>();
+		List<BrokerProcessor> processors= new ArrayList<>();
 		processors.add(new BrokerProcessor() {
 			
 			@Override
@@ -131,7 +131,7 @@ public class ProcessorChainTest {
 		chain.getLastCreateOperation();
 		chain.bind();
 		chain.unBind();
-		chain.delete();
+		chain.delete(new Context());
 	
 	
 		

@@ -90,7 +90,7 @@ public class ProcessorChainServiceInstanceServiceTest {
     }
 
     @Test
-    public void should_use__last_create_response_from_context_when_set() {
+    public void should_use_last_create_response_from_context_when_set() {
         //given
         GetLastServiceOperationRequest request = new GetLastServiceOperationRequest("instanceId");
 
@@ -118,17 +118,59 @@ public class ProcessorChainServiceInstanceServiceTest {
 
     @Test
     public void should_chain_delete_processors_on_service_instance_deletion() throws Exception {
+        //given
         DeleteServiceInstanceRequest request = new DeleteServiceInstanceRequest("instance_id",
                 "service_id",
                 "plan_id",
                 new ServiceDefinition(),
                 true);
 
+        //when
         DeleteServiceInstanceResponse response = processorChainServiceInstanceService.deleteServiceInstance(request);
 
+        //then call is properly chained
+        ArgumentCaptor<Context> argument = ArgumentCaptor.forClass(Context.class);
         Assertions.assertThat(response).isEqualTo(new DeleteServiceInstanceResponse());
-        Mockito.verify(processorChain).delete();
+        Mockito.verify(processorChain).delete(argument.capture());
+
+        //and context is populated with the request
+        Context ctx=argument.getValue();
+        assertThat(ctx.contextKeys.get(ProcessorChainServiceInstanceService.DELETE_SERVICE_INSTANCE_REQUEST)).isEqualTo(request);
+
     }
+
+    @Test
+    public void should_use_delete_response_from_context_when_set() {
+        //given
+        DeleteServiceInstanceRequest request = new DeleteServiceInstanceRequest("instance_id",
+                "service_id",
+                "plan_id",
+                new ServiceDefinition(),
+                true);
+
+        //given a processor that generates a response into the context
+        final DeleteServiceInstanceResponse customResponse = new DeleteServiceInstanceResponse()
+                .withAsync(true)
+                .withOperation("state");
+
+        BrokerProcessor processor = new DefaultBrokerProcessor() {
+            @Override
+            public void preDelete(Context ctx) {
+                ctx.contextKeys.put(ProcessorChainServiceInstanceService.DELETE_SERVICE_INSTANCE_RESPONSE, customResponse);
+            }
+        };
+        processorChain = aProcessorChain(processor);
+        processorChainServiceInstanceService = new ProcessorChainServiceInstanceService(processorChain);
+
+
+        //when
+        DeleteServiceInstanceResponse response = processorChainServiceInstanceService.deleteServiceInstance(request);
+
+        //then
+        Assertions.assertThat(response).isEqualTo(customResponse);
+    }
+
+
 
     public ProcessorChain aProcessorChain(BrokerProcessor processor) {
         List<BrokerProcessor> processors= new ArrayList<>();

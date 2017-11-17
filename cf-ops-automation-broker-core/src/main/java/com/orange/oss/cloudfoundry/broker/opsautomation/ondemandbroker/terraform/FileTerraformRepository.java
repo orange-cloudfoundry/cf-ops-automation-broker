@@ -104,10 +104,7 @@ public class FileTerraformRepository implements TerraformRepository {
                 .filter(matcher::matches)
                 .map(path -> {
                     try (Reader reader = new FileReader(path.toFile())) {
-                        ImmutableTerraformModule module = gson.fromJson(reader, ImmutableTerraformModule.class);
-                        return ImmutableTerraformModule.builder()
-                                .from(module)
-                                .build();
+                        return gson.fromJson(reader, ImmutableTerraformModule.class);
                     } catch (IOException e) {
                         logger.error("unable to load module from " + path, e);
                         throw new RuntimeException("unable to load modules");

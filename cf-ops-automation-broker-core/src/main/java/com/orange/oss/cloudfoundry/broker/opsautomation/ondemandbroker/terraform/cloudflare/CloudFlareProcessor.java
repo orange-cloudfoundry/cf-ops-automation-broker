@@ -49,7 +49,6 @@ public class CloudFlareProcessor extends DefaultBrokerProcessor {
 
         ImmutableTerraformModule terraformModule = constructModule(request);
 
-        checkForConflictingModuleId(terraformModule);
         checkForConflictingModuleName(terraformModule);
         checkForConflictingProperty(terraformModule, ROUTE_PREFIX, route);
 
@@ -73,7 +72,6 @@ public class CloudFlareProcessor extends DefaultBrokerProcessor {
     public ImmutableTerraformModule constructModule(CreateServiceInstanceRequest request) {
         return ImmutableTerraformModule.builder()
                 .from(cloudFlareConfig.getTemplate())
-                .id(request.getServiceInstanceId())
                 .moduleName(request.getServiceInstanceId())
                 .putProperties("org_guid", request.getOrganizationGuid())
                 .putProperties(ROUTE_PREFIX, (String) request.getParameters().get("route"))
@@ -94,7 +92,7 @@ public class CloudFlareProcessor extends DefaultBrokerProcessor {
     public void preDelete(Context context) {
         DeleteServiceInstanceRequest request = (DeleteServiceInstanceRequest) context.contextKeys.get(ProcessorChainServiceInstanceService.DELETE_SERVICE_INSTANCE_REQUEST);
         String serviceInstanceId = request.getServiceInstanceId();
-        TerraformModule terraformModule = repository.getByModuleId(serviceInstanceId);
+        TerraformModule terraformModule = repository.getByModuleName(serviceInstanceId);
 
         if (terraformModule == null) {
             logger.warn("Asked to delete a service instance with id=" + serviceInstanceId + " without any associated module in the repository");
@@ -111,17 +109,6 @@ public class CloudFlareProcessor extends DefaultBrokerProcessor {
         if (!valid) throw new RuntimeException("Invalid parameter " + paramName + " with value:" + route);
     }
 
-
-    void checkForConflictingModuleId(TerraformModule requestedModule) {
-        String requestedModuleId = requestedModule.getId();
-        TerraformModule existing = repository.getByModuleId(requestedModuleId);
-        if (existing != null) {
-            logger.warn("unexpected conflicting terraform module with id=" + requestedModuleId + ". A module with same id already exists:" + existing);
-            //Don't return details on the existing module to the end user
-            //as this may have confidential data
-            throw new RuntimeException("unexpected conflicting terraform module with id=" + requestedModuleId + ". A module with same id already exists.");
-        }
-    }
 
     void checkForConflictingModuleName(TerraformModule requestedModule) {
         String requestedModuleModuleName = requestedModule.getModuleName();

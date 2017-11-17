@@ -11,7 +11,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.PathMatcher;
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -34,32 +33,14 @@ public class FileTerraformRepository implements TerraformRepository {
     }
 
     @Override
-    public TerraformModule getByModuleId(String moduleId) {
-        File file = buildFileForModule(moduleId);
-        if (! file.exists()) {
-            return null;
-        }
-
-        try (FileReader writer = new FileReader(file)) {
-            ImmutableTerraformModule immutableTerraformModule = gson.fromJson(writer, ImmutableTerraformModule.class);
-            return ImmutableTerraformModule.builder()
-                    .from(immutableTerraformModule)
-                    .id(moduleId)
-                    .build();
-        } catch (IOException e) {
-            throw new RuntimeException("unable to load tf module " + moduleId, e);
-        }
-    }
-
-    @Override
     public TerraformModule save(TerraformModule module) {
-        String moduleId = module.getId();
-        File file = buildFileForModule(moduleId);
+        String moduleName = module.getModuleName();
+        File file = buildFileForModule(moduleName);
         try (FileWriter writer = new FileWriter(file)) {
             gson.toJson(module, writer);
         } catch (IOException e) {
             logger.error("unable to save module " + module  + " into " + file, e);
-            throw new RuntimeException("unable to save tf module ", e);
+            throw new RuntimeException("unable to save tf module named: " + moduleName, e);
         }
         return module;
     }
@@ -76,7 +57,6 @@ public class FileTerraformRepository implements TerraformRepository {
                         ImmutableTerraformModule module = gson.fromJson(reader, ImmutableTerraformModule.class);
                         return ImmutableTerraformModule.builder()
                                 .from(module)
-                                .id(module.getModuleName())
                                 .build();
                     } catch (IOException e) {
                         logger.error("unable to load module from " + path, e);
@@ -88,13 +68,22 @@ public class FileTerraformRepository implements TerraformRepository {
     }
 
 
-    public File buildFileForModule(String id) {
-        return directory.resolve(filePrefix + id + ".tf").toFile();
+    public File buildFileForModule(String name) {
+        return directory.resolve(filePrefix + name + ".tf").toFile();
     }
 
     @Override
     public TerraformModule getByModuleName(String moduleName) {
-        return getByModuleId(moduleName);
+        File file = buildFileForModule(moduleName);
+        if (! file.exists()) {
+            return null;
+        }
+
+        try (FileReader writer = new FileReader(file)) {
+            return gson.fromJson(writer, ImmutableTerraformModule.class);
+        } catch (IOException e) {
+            throw new RuntimeException("unable to load tf module " + moduleName, e);
+        }
     }
 
     @Override
@@ -116,7 +105,7 @@ public class FileTerraformRepository implements TerraformRepository {
 
     @Override
     public void delete(TerraformModule module) {
-        File moduleFile = buildFileForModule(module.getId());
+        File moduleFile = buildFileForModule(module.getModuleName());
         if (moduleFile.exists()) {
             Path path = moduleFile.toPath();
             try {

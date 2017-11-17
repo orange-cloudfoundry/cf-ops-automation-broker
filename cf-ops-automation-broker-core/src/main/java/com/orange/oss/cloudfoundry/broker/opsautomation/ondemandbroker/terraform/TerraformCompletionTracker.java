@@ -40,7 +40,7 @@ public class TerraformCompletionTracker {
         return now.toString();
     }
 
-    public GetLastServiceOperationResponse getModuleExecStatus(String moduleId, String lastOperationState) {
+    public GetLastServiceOperationResponse getModuleExecStatus(String moduleName, String lastOperationState) {
 
         GetLastServiceOperationResponse response = new GetLastServiceOperationResponse();
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(tfStateFile)))) {
@@ -48,8 +48,8 @@ public class TerraformCompletionTracker {
 
             Map<String, TerraformState.Output> outputs = tfState.getOutputs();
 
-            TerraformState.Output started = outputs.get(moduleId + ".started");
-            TerraformState.Output completed = outputs.get(moduleId + ".completed");
+            TerraformState.Output started = outputs.get(moduleName + ".started");
+            TerraformState.Output completed = outputs.get(moduleName + ".completed");
 
             long elapsedTimeSecsSinceLastOperation = getElapsedTimeSecsSinceLastOperation(lastOperationState);
             return mapOutputToStatus(started, completed, elapsedTimeSecsSinceLastOperation);

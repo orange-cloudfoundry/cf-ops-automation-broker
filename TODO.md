@@ -1,11 +1,9 @@
 
 # Next cloudflare
 
-- reconsider module.id assignement for performance reasons?
-    file name = module name
-    remove module id
-    
-    => then refactory repository impl
+- add input validation to terraform module.name and outputs (from hashicorp hcl specs)
+- test presence of extra tf files in the repository directory
+- then refactor repository impl: extract duplicate code
 
 - exception handling in streams
 - optimize repository / caching ??

@@ -1,6 +1,6 @@
 {
   "module": {
-    "<<cloudflare-route-ondemandroute5>>": {
+    "<<3456>>": {
       "cloudflare_internet_domain": "${var.cloudflare_internet_domain}",
       "cloudflare_root_domain": "${var.cloudflare_root_domain}",
       "cloudflare_route_suffix": "${var.cloudflare_route_suffix}",

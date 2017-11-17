@@ -1,4 +1,27 @@
 
+### Terraform config file naming
+
+This section details the choice identifying terraform modules using their name as primary key.
+
+Assumptions:
+- a service instance maps to a single terraform module invocation, along with one or many outputs configs
+- module names need to be unique (constraint imposed by TF)
+
+Pros of this decision:
+- limits boilerplate and duplication between name and id
+- optimizes performance by reducing full scan on "cf cs" by one
+ 
+Implications/limitations from this decision: 
+
+- module names are also used as a unique id in the terraform repository.
+This implies having their name relatively short and without too many special characters that would need file system escapes.
+- The repository saves a single module config per file on disk. If multiple modules invocations are needed, wrap them in a single parent module call.
+- Only direct lookup by service instanceid is supported, other requires a full directory scan & load.
+
+Preserved use-cases:
+- mixing modules from different sources in the same repository
+
+
 ### Completion notification
 
    * Using git

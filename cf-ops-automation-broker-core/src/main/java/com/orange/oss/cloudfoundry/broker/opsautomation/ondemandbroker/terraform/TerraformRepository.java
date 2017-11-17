@@ -7,11 +7,6 @@ import java.util.List;
  */
 public interface TerraformRepository {
 
-    /**
-     * @return null if there is no matching module
-     */
-    TerraformModule getByModuleId(String moduleId);
-
     @SuppressWarnings("UnusedReturnValue")
     TerraformModule save(TerraformModule module);
 

@@ -71,8 +71,7 @@ public class CloudFlareProcessorTest {
 
         //When a new module is requested to be added
         TerraformModule requestedModule = ImmutableTerraformModule.builder().from(aTfModule())
-                .id("service-instance-guid")
-                .moduleName("cloudflare-route-ondemandroute5")
+                .moduleName("service-instance-guid")
                 .putProperties("route-prefix", "avalidroute")
                 .build();
 
@@ -87,45 +86,26 @@ public class CloudFlareProcessorTest {
         }
     }
 
-    @Test(expected = RuntimeException.class)
+    @Test
     public void prevents_modules_submission_with_conflicting_module_name() {
         //given a repository populated with an existing module
         TerraformRepository terraformRepository = Mockito.mock(TerraformRepository.class);
-        when(terraformRepository.getByModuleName("cloudflare-route-ondemandroute5")).thenReturn(aTfModule());
+        ImmutableTerraformModule aTfModule = ImmutableTerraformModule.builder()
+                .source("path/to/module")
+                .moduleName("service-instance-guid")
+                .build();
+        when(terraformRepository.getByModuleName("service-instance-guid")).thenReturn(aTfModule);
         cloudFlareProcessor = new CloudFlareProcessor(aConfig(), aSuffixValidator(), terraformRepository, null);
 
         //When a new module is requested to be added
         // by a previous processor in the chain that inserted a tf module in the context
-        TerraformModule requestedModule = ImmutableTerraformModule.builder().from(aTfModule())
-                .id("service-instance-guid")
-                .moduleName("cloudflare-route-ondemandroute5")
-                .build();
-
-
-        //Then it checks if a conflicting module exists, and rejects the request
-        //when
-        cloudFlareProcessor.checkForConflictingModuleName(requestedModule);
+        try {
+            cloudFlareProcessor.checkForConflictingModuleName(aTfModule);
+        } catch (RuntimeException e) {
+            //Then it checks if a conflicting module exists, and rejects the request
+            assertThat(e.getMessage()).containsIgnoringCase("conflict");
+        }
     }
-
-    @Test(expected = RuntimeException.class)
-    public void prevents_modules_submission_with_conflicting_module_id() {
-        //given a repository populated with an existing module
-        TerraformRepository terraformRepository = Mockito.mock(TerraformRepository.class);
-        when(terraformRepository.getByModuleId("service-instance-guid")).thenReturn(aTfModule());
-        cloudFlareProcessor = new CloudFlareProcessor(aConfig(), aSuffixValidator(), terraformRepository, aTracker());
-
-        //When a new module is requested to be added
-        // by a previous processor in the chain that inserted a tf module in the context
-        TerraformModule requestedModule = ImmutableTerraformModule.builder().from(aTfModule())
-                .id("service-instance-guid")
-                .build();
-
-
-        //Then it checks if a conflicting module exists, and rejects the request
-        //when
-        cloudFlareProcessor.checkForConflictingModuleId(requestedModule);
-    }
-
 
     @Test
     public void looks_up_paas_secrets_git_local_checkout() throws IOException {
@@ -170,7 +150,6 @@ public class CloudFlareProcessorTest {
 
         //then module is properly formed
         ImmutableTerraformModule expectedModule = ImmutableTerraformModule.builder().from(deserialized)
-                .id("serviceinstance_guid")
                 .moduleName("serviceinstance_guid")
                 .putProperties("org_guid", "org_id")
                 .putProperties("route-prefix", "avalidroute")
@@ -268,7 +247,7 @@ public class CloudFlareProcessorTest {
         //given a repository with an existing module
         terraformRepository = Mockito.mock(TerraformRepository.class);
         ImmutableTerraformModule aTfModule = aTfModule();
-        when(terraformRepository.getByModuleId("instance_id")).thenReturn(aTfModule);
+        when(terraformRepository.getByModuleName("instance_id")).thenReturn(aTfModule);
         cloudFlareProcessor = new CloudFlareProcessor(aConfig(), aSuffixValidator(), terraformRepository, aTracker());
 
 
@@ -334,9 +313,8 @@ public class CloudFlareProcessorTest {
 
     public static ImmutableTerraformModule aTfModule() {
         return ImmutableTerraformModule.builder()
-                .moduleName("module1")
                 .source("path/to/module")
-                .id("instance_id")
+                .moduleName("instance_id")
                 .build();
     }
 

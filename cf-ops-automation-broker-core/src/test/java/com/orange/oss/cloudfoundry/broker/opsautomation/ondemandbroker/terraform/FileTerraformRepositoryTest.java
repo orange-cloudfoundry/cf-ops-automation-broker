@@ -63,7 +63,7 @@ public class FileTerraformRepositoryTest {
         //given an empty dir
 
         //when asked to read the module
-        TerraformModule readModule = repository.getByModuleId("instance_id");
+        TerraformModule readModule = repository.getByModuleName("instance_id");
 
         assertThat(readModule).isNull();
     }
@@ -79,15 +79,11 @@ public class FileTerraformRepositoryTest {
         //then it actually writes the file
         Gson gson = new GsonBuilder().registerTypeAdapter(ImmutableTerraformModule.class, new TerraformModuleGsonAdapter()).create();
         FileReader reader = new FileReader(tempDirectory.resolve("cloudflare-instance_id.tf").toFile());
-        ImmutableTerraformModule readFromDisk = gson.fromJson(reader, ImmutableTerraformModule.class);
-        ImmutableTerraformModule actual = ImmutableTerraformModule.builder()
-                .from(readFromDisk)
-                .id(module.getId()) //override id
-                .build();
+        ImmutableTerraformModule actual = gson.fromJson(reader, ImmutableTerraformModule.class);
         assertThat(actual).isEqualTo(module);
 
         //when asked to read the module
-        TerraformModule readModule = repository.getByModuleId("instance_id");
+        TerraformModule readModule = repository.getByModuleName("instance_id");
 
         //then
         assertThat(readModule).isEqualTo(module);
@@ -107,14 +103,12 @@ public class FileTerraformRepositoryTest {
         ImmutableTerraformModule module1 = ImmutableTerraformModule.builder()
                 .moduleName("0")
                 .source("path/to/module")
-                .id("0")
                 .putProperties("prop1", "value1")
                 .build();
         ImmutableTerraformModule module2 = ImmutableTerraformModule.builder()
                 .moduleName("1")
                 .source("path/to/module")
                 .putProperties("prop1", "value1")
-                .id("1")
                 .build();
         repository.save(module1);
         repository.save(module2);
@@ -137,7 +131,7 @@ public class FileTerraformRepositoryTest {
         repository.delete(module);
 
         //then
-        assertThat(repository.getByModuleId(module.getId())).isNull();
+        assertThat(repository.getByModuleName(module.getModuleName())).isNull();
 
     }
 
@@ -161,7 +155,6 @@ public class FileTerraformRepositoryTest {
         return ImmutableTerraformModule.builder()
                 .moduleName(id)
                 .source("path/to/module")
-                .id(id)
                 .build();
     }
 

@@ -12,19 +12,15 @@ import java.util.Map;
 @Value.Immutable
 public abstract class TerraformModule {
 
+	/**
+	 * The terraform module name is used as the module file name and needs to be unique and portable
+	 * (i.e. not too long and without too special characters)
+	 * Typically a service instance guid.
+	 */
 	public abstract String getModuleName();
 
 	public abstract String getSource();
 
-	/**
-	 * The Id is used as the module file name and needs to be unique and portable
-	 * (i.e. not too long and without too special characters)
-	 * Typically a service instance guid.
-	 */
-	@Value.Default
-	public String getId() {
-		return "0"; //a default value enables reading from Json content without knowning the enclosing file name
-	}
 
 	public abstract Map<String, String> getProperties();
 

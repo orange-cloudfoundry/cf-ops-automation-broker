@@ -91,7 +91,12 @@ public class FileTerraformRepository implements TerraformRepository {
     }
 
     File buildFileForModule(String name) {
-        return directory.resolve(filePrefix + name + ".tf").toFile();
+        File file = directory.resolve(filePrefix + name + ".tf").toFile();
+        if (!directory.equals(file.getParentFile().toPath())) {
+            logger.error("unexpectedly trying to save outside of expected dir. Getting FS injection attempt? Module name=" + name);
+            throw new RuntimeException("invalid module name");
+        }
+        return file;
     }
 
 

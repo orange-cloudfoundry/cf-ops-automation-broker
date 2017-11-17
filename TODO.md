@@ -1,8 +1,9 @@
 
 # Next cloudflare
 
+- check tests asserts using catch clause
+
 - terraform repository: 
-   - add input validation to module.name to prevent FS path injection from OSB received arguments 
    - exception handling in streams
 
 - Application & Integration test: 

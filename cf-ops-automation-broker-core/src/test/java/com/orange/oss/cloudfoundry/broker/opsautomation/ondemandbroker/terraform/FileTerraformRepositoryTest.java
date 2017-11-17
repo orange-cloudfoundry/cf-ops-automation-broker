@@ -16,6 +16,7 @@ import java.util.*;
 import static java.nio.file.FileVisitOption.FOLLOW_LINKS;
 import static java.util.Arrays.asList;
 import static org.fest.assertions.Assertions.assertThat;
+import static org.fest.assertions.Fail.fail;
 
 /**
  *
@@ -91,6 +92,11 @@ public class FileTerraformRepositoryTest {
 
         //then
         assertThat(readModule).isEqualTo(module);
+    }
+
+    @Test(expected = RuntimeException.class)
+    public void rejects_module_names_injections() {
+        repository.buildFileForModule("../asuffix");
     }
 
     @Test

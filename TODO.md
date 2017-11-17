@@ -1,34 +1,34 @@
 
 # Next cloudflare
 
-- add input validation to terraform module.name and outputs (from hashicorp hcl specs)
-- then refactor repository impl: extract duplicate code
+- terraform repository: 
+   - add input validation to module.name to prevent FS path injection from OSB received arguments 
+   - exception handling in streams
 
-- exception handling in streams
-- optimize repository / caching ??
-- rename terraformRepository into TerraformModuleRepository ?
-- import spring data commons
+- Application & Integration test: 
+   - @Service or @Bean in application.
+   - explicit application maven module
+   - git.properties injected as env vars
+   - looks_up_paas_secrets_git_local_checkout
 
-Implement Repository
-- looks_up_paas_secrets_git_local_checkout
+
+- configure catalog: not bindeable, not updeable
+
+- add input validation to terraform module.name and outputs (from hashicorp hcl specs) to detect more issues up front if OSB-injected ids are HCL unfriendly   
+
+
+Refine Repository impl using spring data
 - Spring injection of Validation: constructor injection.
+- import spring data commons
 - SpringData import
 - SpringData file impl https://github.com/spring-projects/spring-data-keyvalue ?
     - https://github.com/spring-projects/spring-data-keyvalue/blob/master/src/main/asciidoc/key-value-repositories.adoc
     - https://github.com/hazelcast/spring-data-hazelcast/blob/master/src/main/java/org/springframework/data/hazelcast/HazelcastKeyValueAdapter.java
     - https://github.com/spring-projects/spring-data-keyvalue-examples/blob/master/retwisj/src/main/java/org/springframework/data/redis/samples/retwisj/redis/RetwisRepository.java
     - https://paulcwarren.github.io/spring-content/refs/release/fs-index.html
-    - 
 
 
-- Integration test: 
-   - @Service or @Bean in application.
-   - explicit application maven module
-   - git.properties injected as env vars
-
-- configure catalog: not bindeable, not updeable
-
-
+- extract terraform state loading into a repository when needed to support a different backend than file.
  
 
 # Next core framework

@@ -79,6 +79,7 @@ public class CloudFlareProcessorTest {
         //Then it checks if a conflicting module exists, and rejects the request
         try {
             cloudFlareProcessor.checkForConflictingProperty(requestedModule, "route-prefix", "route");
+            Assert.fail("expected to be rejected");
         } catch (RuntimeException e) {
             //Message should indicate to end user the incorrect param name and value
             assertThat(e.getMessage()).contains("route");
@@ -101,6 +102,7 @@ public class CloudFlareProcessorTest {
         // by a previous processor in the chain that inserted a tf module in the context
         try {
             cloudFlareProcessor.checkForConflictingModuleName(aTfModule);
+            Assert.fail("expected to be rejected");
         } catch (RuntimeException e) {
             //Then it checks if a conflicting module exists, and rejects the request
             assertThat(e.getMessage()).containsIgnoringCase("conflict");

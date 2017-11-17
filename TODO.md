@@ -1,8 +1,6 @@
 
 # Next cloudflare
 
-- check tests asserts using catch clause
-
 - terraform repository: 
    - exception handling in streams
 

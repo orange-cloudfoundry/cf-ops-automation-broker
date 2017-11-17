@@ -7,6 +7,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
@@ -28,7 +29,10 @@ public class FileTerraformRepositoryTest {
     public void setUpTempDir() throws IOException {
         tempDirectory = Files.createTempDirectory(FileTerraformRepositoryTest.class.getSimpleName());
         repository = new FileTerraformRepository(tempDirectory, "cloudflare-");
+        FileWriter fileWriter = new FileWriter(tempDirectory.resolve("a-static-tf-config-to-be-ignored.tf").toFile());
+        fileWriter.write("Please ignore me, you should not try to parse me");
     }
+
 
     @After
     public void cleanUpTempDir() throws IOException {
@@ -92,9 +96,17 @@ public class FileTerraformRepositoryTest {
     @Test
     public void list_modules() throws IOException {
         //Given a directory holding tf modules
-        list_modules_with_prefix("cloudflare-");
-        list_modules_with_prefix("");
-        list_modules_with_prefix(null);
+        FileTerraformRepository repository1 = new FileTerraformRepository(tempDirectory, "cloudflare-");
+        ImmutableTerraformModule module1 = aModule("0");
+        ImmutableTerraformModule module2 = aModule("1");
+        repository1.save(module1);
+        repository1.save(module2);
+
+        //when
+        List<ImmutableTerraformModule> modules = repository1.findAll();
+
+        //then
+        assertThat(modules).containsOnly(module1, module2);
     }
 
     @Test
@@ -133,21 +145,6 @@ public class FileTerraformRepositoryTest {
         //then
         assertThat(repository.getByModuleName(module.getModuleName())).isNull();
 
-    }
-
-    private void list_modules_with_prefix(String filePrefix) throws IOException {
-        //Given
-        FileTerraformRepository repository = new FileTerraformRepository(tempDirectory, filePrefix);
-        ImmutableTerraformModule module1 = aModule("0");
-        ImmutableTerraformModule module2 = aModule("1");
-        repository.save(module1);
-        repository.save(module2);
-
-        //when
-        List<ImmutableTerraformModule> modules = repository.findAll();
-
-        //then
-        assertThat(modules).containsOnly(module1, module2);
     }
 
 

@@ -25,8 +25,8 @@ public class FileTerraformRepository implements TerraformRepository {
 
     public FileTerraformRepository(Path directory, String filePrefix) {
         this.directory = directory;
-        if (filePrefix == null) {
-            filePrefix = "";
+        if (filePrefix == null || filePrefix.isEmpty()) {
+            throw new IllegalArgumentException("expected non empty prefix. This is required to support ignoring some unrelated files in the directory that don't match the prefix.");
         }
         this.filePrefix = filePrefix;
         gson = new GsonBuilder().registerTypeAdapter(ImmutableTerraformModule.class, new TerraformModuleGsonAdapter()).create();
@@ -43,33 +43,6 @@ public class FileTerraformRepository implements TerraformRepository {
             throw new RuntimeException("unable to save tf module named: " + moduleName, e);
         }
         return module;
-    }
-
-    public List<ImmutableTerraformModule> findAll() throws IOException {
-        PathMatcher matcher = FileSystems.getDefault().getPathMatcher("glob:**" + filePrefix +"*.tf");
-
-        Stream<Path> list = Files.list(directory);
-
-        return list
-                .filter(matcher::matches)
-                .map(path -> {
-                    try (Reader reader = new FileReader(path.toFile())) {
-                        ImmutableTerraformModule module = gson.fromJson(reader, ImmutableTerraformModule.class);
-                        return ImmutableTerraformModule.builder()
-                                .from(module)
-                                .build();
-                    } catch (IOException e) {
-                        logger.error("unable to load module from " + path, e);
-                        throw new RuntimeException("unable to load modules");
-                    }
-
-                })
-                .collect(Collectors.toList());
-    }
-
-
-    public File buildFileForModule(String name) {
-        return directory.resolve(filePrefix + name + ".tf").toFile();
     }
 
     @Override
@@ -115,5 +88,32 @@ public class FileTerraformRepository implements TerraformRepository {
                 throw new RuntimeException("unable to delete module", e);
             }
         }
+    }
+
+    File buildFileForModule(String name) {
+        return directory.resolve(filePrefix + name + ".tf").toFile();
+    }
+
+
+    List<ImmutableTerraformModule> findAll() throws IOException {
+        PathMatcher matcher = FileSystems.getDefault().getPathMatcher("glob:**" + filePrefix +"*.tf");
+
+        Stream<Path> list = Files.list(directory);
+
+        return list
+                .filter(matcher::matches)
+                .map(path -> {
+                    try (Reader reader = new FileReader(path.toFile())) {
+                        ImmutableTerraformModule module = gson.fromJson(reader, ImmutableTerraformModule.class);
+                        return ImmutableTerraformModule.builder()
+                                .from(module)
+                                .build();
+                    } catch (IOException e) {
+                        logger.error("unable to load module from " + path, e);
+                        throw new RuntimeException("unable to load modules");
+                    }
+
+                })
+                .collect(Collectors.toList());
     }
 }

@@ -325,14 +325,14 @@ public class CloudFlareProcessorTest {
         return context;
     }
 
-    CloudFlareConfig aConfig() {
+    public static CloudFlareConfig aConfig() {
         TerraformModule template = TerraformModuleHelper.getTerraformModuleFromClasspath("/terraform/cloudflare-module-template.tf.json");
         return ImmutableCloudFlareConfig.builder()
                 .template(template)
                 .routeSuffix("-cdn-cw-vdr-pprod-apps.redacted-domain.org").build();
     }
 
-    ImmutableTerraformModule aTfModule() {
+    public static ImmutableTerraformModule aTfModule() {
         return ImmutableTerraformModule.builder()
                 .moduleName("module1")
                 .source("path/to/module")

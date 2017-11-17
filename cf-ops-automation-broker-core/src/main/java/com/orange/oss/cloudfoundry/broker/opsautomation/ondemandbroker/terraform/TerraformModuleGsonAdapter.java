@@ -38,13 +38,15 @@ public class TerraformModuleGsonAdapter implements JsonDeserializer<TerraformMod
             }
         }
         JsonObject output = jsonObject.getAsJsonObject("output");
-        for (Map.Entry<String, JsonElement> entry : output.entrySet()) {
-            JsonObject outputValue = (JsonObject) entry.getValue();
-            JsonElement value = outputValue.get("value");
-            terraformModuleBuilder.putOutputs(
-                    entry.getKey(),
-                    ImmutableOutputConfig.builder().value(value.getAsString()).build()
-            );
+        if (output != null) {
+            for (Map.Entry<String, JsonElement> entry : output.entrySet()) {
+                JsonObject outputValue = (JsonObject) entry.getValue();
+                JsonElement value = outputValue.get("value");
+                terraformModuleBuilder.putOutputs(
+                        entry.getKey(),
+                        ImmutableOutputConfig.builder().value(value.getAsString()).build()
+                );
+            }
         }
 
         return terraformModuleBuilder.build();

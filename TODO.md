@@ -1,7 +1,16 @@
 
 # Next cloudflare
 
-- archive terraform config files used to prototype module outputs 
+- reconsider module.id assignement for performance reasons?
+    file name = module name
+    remove module id
+    
+    => then refactory repository impl
+
+- exception handling in streams
+- optimize repository / caching ??
+- rename terraformRepository into TerraformModuleRepository ?
+- import spring data commons
 
 Implement Repository
 - looks_up_paas_secrets_git_local_checkout
@@ -20,7 +29,7 @@ Implement Repository
    - explicit application maven module
    - git.properties injected as env vars
 
-- catalog: not bindeable, not updeable
+- configure catalog: not bindeable, not updeable
 
 
  
@@ -28,7 +37,7 @@ Implement Repository
 # Next core framework
 
 - context key: encapsulate with methods + as immutable object ?
-- update + bind/ubind request in context key
+- update + bind/unbind request in context key
  
  
 ---------------

@@ -23,13 +23,13 @@ public class CloudFlareProcessor extends DefaultBrokerProcessor {
 
     private CloudFlareConfig cloudFlareConfig;
     private CloudFlareRouteSuffixValidator cloudFlareRouteSuffixValidator;
-    private TerraformRepository repository;
+    private TerraformRepository.Factory repositoryFactory;
     private TerraformCompletionTracker completionTracker;
 
-    public CloudFlareProcessor(CloudFlareConfig cloudFlareConfig, CloudFlareRouteSuffixValidator cloudFlareRouteSuffixValidator, TerraformRepository repository, TerraformCompletionTracker completionTracker) {
+    public CloudFlareProcessor(CloudFlareConfig cloudFlareConfig, CloudFlareRouteSuffixValidator cloudFlareRouteSuffixValidator, TerraformRepository.Factory repositoryFactory, TerraformCompletionTracker completionTracker) {
         this.cloudFlareConfig = cloudFlareConfig;
         this.cloudFlareRouteSuffixValidator = cloudFlareRouteSuffixValidator;
-        this.repository = repository;
+        this.repositoryFactory = repositoryFactory;
         this.completionTracker = completionTracker;
     }
 
@@ -50,11 +50,11 @@ public class CloudFlareProcessor extends DefaultBrokerProcessor {
 
 
         ImmutableTerraformModule terraformModule = constructModule(request);
+        TerraformRepository repository = getRepository(ctx); // lookup git clone for request
+        checkForConflictingModuleName(terraformModule, repository);
+        checkForConflictingProperty(terraformModule, ROUTE_PREFIX, route, repository);
 
-        checkForConflictingModuleName(terraformModule, getRepository(ctx));
-        checkForConflictingProperty(terraformModule, ROUTE_PREFIX, route, getRepository(ctx));
-
-        getRepository(ctx).save(terraformModule);
+        repository.save(terraformModule);
 
         CreateServiceInstanceResponse response = new CreateServiceInstanceResponse();
         response.withAsync(true);
@@ -94,12 +94,13 @@ public class CloudFlareProcessor extends DefaultBrokerProcessor {
     public void preDelete(Context context) {
         DeleteServiceInstanceRequest request = (DeleteServiceInstanceRequest) context.contextKeys.get(ProcessorChainServiceInstanceService.DELETE_SERVICE_INSTANCE_REQUEST);
         String serviceInstanceId = request.getServiceInstanceId();
-        TerraformModule terraformModule = getRepository(context).getByModuleName(serviceInstanceId);
+        TerraformRepository repository = getRepository(context); //lookup git clone for request
+        TerraformModule terraformModule = repository.getByModuleName(serviceInstanceId);
 
         if (terraformModule == null) {
             logger.warn("Asked to delete a service instance with id=" + serviceInstanceId + " without any associated module in the repository");
         } else {
-            getRepository(context).delete(terraformModule);
+            repository.delete(terraformModule);
         }
 
         DeleteServiceInstanceResponse response = new DeleteServiceInstanceResponse();
@@ -135,6 +136,6 @@ public class CloudFlareProcessor extends DefaultBrokerProcessor {
 
     protected TerraformRepository getRepository(Context ctx) {
         Path gitWorkDir = (Path) ctx.contextKeys.get(GitProcessorContext.workDir.toString());
-        return repository;
+        return repositoryFactory.getInstance(gitWorkDir);
     }
 }

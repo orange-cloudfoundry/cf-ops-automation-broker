@@ -37,7 +37,7 @@ public class CloudFlareProcessorTest {
     @Mock
     TerraformRepository terraformRepository;
 
-    CloudFlareProcessor cloudFlareProcessor = new CloudFlareProcessor(aConfig(), aSuffixValidator(), terraformRepository, aTracker());
+    CloudFlareProcessor cloudFlareProcessor = new CloudFlareProcessor(aConfig(), aSuffixValidator(), getRepositoryFactory(), aTracker());
 
 
     @Test(expected = UnsupportedOperationException.class)
@@ -67,7 +67,7 @@ public class CloudFlareProcessorTest {
         TerraformRepository terraformRepository = Mockito.mock(TerraformRepository.class);
         when(terraformRepository.getByModuleProperty("route-prefix", "avalidroute")).thenReturn(aTfModule());
 
-        cloudFlareProcessor = new CloudFlareProcessor(aConfig(), aSuffixValidator(), terraformRepository, aTracker());
+        cloudFlareProcessor = new CloudFlareProcessor(aConfig(), aSuffixValidator(), getRepositoryFactory(), aTracker());
 
         //When a new module is requested to be added
         TerraformModule requestedModule = ImmutableTerraformModule.builder().from(aTfModule())
@@ -96,7 +96,7 @@ public class CloudFlareProcessorTest {
                 .moduleName("service-instance-guid")
                 .build();
         when(terraformRepository.getByModuleName("service-instance-guid")).thenReturn(aTfModule);
-        cloudFlareProcessor = new CloudFlareProcessor(aConfig(), aSuffixValidator(), terraformRepository, null);
+        cloudFlareProcessor = new CloudFlareProcessor(aConfig(), aSuffixValidator(), getRepositoryFactory(), null);
 
         //When a new module is requested to be added
         // by a previous processor in the chain that inserted a tf module in the context
@@ -115,15 +115,19 @@ public class CloudFlareProcessorTest {
         //the git mediation cloned the repo and populated context
         Context ctx = new Context();
         Path workDir = Files.createTempDirectory("paas-secret-clone");
+        ctx.contextKeys.put(GitProcessorContext.workDir.toString(),workDir);
 
-        Path gitWorkDir = (Path) ctx.contextKeys.get(GitProcessorContext.workDir.toString());
+        //and a repository factory instianciating file repository
+
+        TerraformRepository.Factory repositoryFactory = FileTerraformRepository.getFactory("cloudflare-");
+        cloudFlareProcessor = new CloudFlareProcessor(aConfig(), aSuffixValidator(), repositoryFactory, null);
 
         //when
+        FileTerraformRepository repository = (FileTerraformRepository) cloudFlareProcessor.getRepository(ctx);
         //Path lookedUpWorkDir = terraformModuleProcessor.lookUpGitworkDir(ctx);
 
         //then
-        //Asserts.assertThat(lookedUpWorkDir.equals());
-
+        assertThat(repository.getDirectory().toFile()).isEqualTo(workDir.toFile());
     }
 
 
@@ -134,7 +138,7 @@ public class CloudFlareProcessorTest {
         ImmutableCloudFlareConfig cloudFlareConfig = ImmutableCloudFlareConfig.builder()
                 .routeSuffix("-cdn-cw-vdr-pprod-apps.redacted-domain.org")
                 .template(deserialized).build();
-        cloudFlareProcessor = new CloudFlareProcessor(cloudFlareConfig, aSuffixValidator(), terraformRepository, aTracker());
+        cloudFlareProcessor = new CloudFlareProcessor(cloudFlareConfig, aSuffixValidator(), getRepositoryFactory(), aTracker());
 
         //given a user request with a route
         Map<String, Object> parameters = new HashMap<>();
@@ -183,7 +187,7 @@ public class CloudFlareProcessorTest {
         Clock clock = Clock.fixed(Instant.ofEpochMilli(1510680248007L), ZoneId.of("Europe/Paris"));
         TerraformCompletionTracker tracker = new TerraformCompletionTracker(TerraformCompletionTrackerTest.getFileFromClasspath(tfStateFileInClasspath), clock, 120);
 
-        cloudFlareProcessor = new CloudFlareProcessor(cloudFlareConfig, aSuffixValidator(), terraformRepository, tracker);
+        cloudFlareProcessor = new CloudFlareProcessor(cloudFlareConfig, aSuffixValidator(), getRepositoryFactory(), tracker);
 
 
         //given a user request with a route
@@ -224,7 +228,7 @@ public class CloudFlareProcessorTest {
         expectedResponse.withOperationState(IN_PROGRESS);
         when(tracker.getModuleExecStatus("serviceinstance_guid", "2017-11-14T17:24:08.007Z")).thenReturn(expectedResponse);
 
-        cloudFlareProcessor = new CloudFlareProcessor(aConfig(), aSuffixValidator(), terraformRepository, tracker);
+        cloudFlareProcessor = new CloudFlareProcessor(aConfig(), aSuffixValidator(), getRepositoryFactory(), tracker);
         //given an async polling from CC
         GetLastServiceOperationRequest operationRequest = new GetLastServiceOperationRequest("serviceinstance_guid",
                 "service_definition_id",
@@ -250,7 +254,7 @@ public class CloudFlareProcessorTest {
         terraformRepository = Mockito.mock(TerraformRepository.class);
         ImmutableTerraformModule aTfModule = aTfModule();
         when(terraformRepository.getByModuleName("instance_id")).thenReturn(aTfModule);
-        cloudFlareProcessor = new CloudFlareProcessor(aConfig(), aSuffixValidator(), terraformRepository, aTracker());
+        cloudFlareProcessor = new CloudFlareProcessor(aConfig(), aSuffixValidator(), getRepositoryFactory(), aTracker());
 
 
         //given an incoming delete request
@@ -320,5 +324,9 @@ public class CloudFlareProcessorTest {
                 .build();
     }
 
+
+    private TerraformRepository.Factory getRepositoryFactory() {
+        return path -> this.terraformRepository;
+    }
 
 }

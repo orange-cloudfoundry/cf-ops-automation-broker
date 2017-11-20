@@ -33,6 +33,10 @@ public class FileTerraformRepository implements TerraformRepository {
         gson = new GsonBuilder().registerTypeAdapter(ImmutableTerraformModule.class, new TerraformModuleGsonAdapter()).create();
     }
 
+    public static Factory getFactory(String filePrefix) {
+        return path -> new FileTerraformRepository(path, filePrefix);
+    }
+
     @Override
     public TerraformModule save(TerraformModule module) {
         String moduleName = module.getModuleName();
@@ -81,6 +85,13 @@ public class FileTerraformRepository implements TerraformRepository {
                 throw new RuntimeException("unable to delete module", e);
             }
         }
+    }
+
+    /**
+     * Supports unit tests
+     */
+    public Path getDirectory() {
+        return directory;
     }
 
     File buildFileForModule(String name) {

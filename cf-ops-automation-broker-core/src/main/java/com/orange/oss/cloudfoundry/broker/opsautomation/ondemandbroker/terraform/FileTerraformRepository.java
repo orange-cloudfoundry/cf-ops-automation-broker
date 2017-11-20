@@ -11,6 +11,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.PathMatcher;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -61,19 +62,11 @@ public class FileTerraformRepository implements TerraformRepository {
 
     @Override
     public TerraformModule getByModuleProperty(String propertyName, String propertyValue) {
-        try {
-            List<ImmutableTerraformModule> modules = findAll();
-            for (ImmutableTerraformModule module : modules) {
-                if (propertyValue.equals(module.getProperties().get(propertyName))) {
-                    return module;
-                }
-            }
-        } catch (IOException e) {
-            logger.error("Unable to load module at: " + directory, e);
+        Optional<ImmutableTerraformModule> module = findAllAsStream()
+                .filter(m -> propertyValue.equals(m.getProperties().get(propertyName)))
+                .findFirst();
 
-            throw new RuntimeException("unable to load modules", e);
-        }
-        return null;
+        return module.orElse(null);
     }
 
     @Override
@@ -100,10 +93,22 @@ public class FileTerraformRepository implements TerraformRepository {
     }
 
 
-    List<ImmutableTerraformModule> findAll() throws IOException {
+    List<ImmutableTerraformModule> findAll(){
+        Stream<ImmutableTerraformModule> modules = findAllAsStream();
+        return modules
+                .collect(Collectors.toList());
+    }
+
+    protected Stream<ImmutableTerraformModule> findAllAsStream() {
         PathMatcher matcher = FileSystems.getDefault().getPathMatcher("glob:**" + filePrefix +"*.tf");
 
-        Stream<Path> list = Files.list(directory);
+        Stream<Path> list;
+        try {
+            list = Files.list(directory);
+        } catch (IOException e) {
+            logger.error("unable to list module from " + directory, e);
+            throw new RuntimeException("unable to list modules");
+        }
 
         return list
                 .filter(matcher::matches)
@@ -115,7 +120,6 @@ public class FileTerraformRepository implements TerraformRepository {
                         throw new RuntimeException("unable to load modules");
                     }
 
-                })
-                .collect(Collectors.toList());
+                });
     }
 }

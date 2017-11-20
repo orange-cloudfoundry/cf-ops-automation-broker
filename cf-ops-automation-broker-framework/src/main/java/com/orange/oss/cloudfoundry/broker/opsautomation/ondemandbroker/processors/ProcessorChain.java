@@ -19,12 +19,6 @@ public class ProcessorChain {
 		this.sink=sink;
 	}
 
-	public void create() {
-		Context ctx=new Context();
-		create(ctx);
-
-	}
-
 	public void create(Context ctx) {
 		for (BrokerProcessor m: processors) {
 			m.preCreate(ctx);
@@ -35,11 +29,6 @@ public class ProcessorChain {
 			BrokerProcessor m= processors.get(i);
 			m.postCreate(ctx);
 		}
-	}
-
-	public void getLastCreateOperation() {
-		Context ctx=new Context();
-		getLastCreateOperation(ctx);
 	}
 
 	public void getLastCreateOperation(Context ctx) {
@@ -83,8 +72,7 @@ public class ProcessorChain {
 
 	}
 
-	public void delete() {
-		Context ctx=new Context();
+	public void delete(Context ctx) {
 		for (BrokerProcessor m: processors) {
 			m.preDelete(ctx);
 		}

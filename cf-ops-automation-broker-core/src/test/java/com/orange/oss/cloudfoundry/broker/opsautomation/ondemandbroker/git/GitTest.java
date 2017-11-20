@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.BrokerProcessor;
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.Context;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.DefaultBrokerSink;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.ProcessorChain;
 import org.junit.Ignore;
@@ -27,11 +28,13 @@ public class GitTest {
 	public void testGitProcessor() {
 		
 		GitProcessor processor=new GitProcessor(gitProperties.getGitUser(), gitProperties.getGitPassword(), gitProperties.getGitUrl());
-		List<BrokerProcessor> processors=new ArrayList<BrokerProcessor>();
+		List<BrokerProcessor> processors= new ArrayList<>();
 		processors.add(processor);
 		ProcessorChain chain=new ProcessorChain(processors, new DefaultBrokerSink());
-		
-		chain.create();
+
+		Context ctx=new Context();
+		chain.create(ctx);
+
 	}
 	
 }

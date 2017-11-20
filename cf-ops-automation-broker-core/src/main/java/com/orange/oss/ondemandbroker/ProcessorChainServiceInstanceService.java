@@ -18,6 +18,8 @@ public class ProcessorChainServiceInstanceService implements ServiceInstanceServ
     public static final String CREATE_SERVICE_INSTANCE_RESPONSE = "CreateServiceInstanceResponse";
     public static final String GET_LAST_SERVICE_OPERATION_REQUEST = "GetLastServiceOperationRequest";
     public static final String GET_LAST_SERVICE_OPERATION_RESPONSE = "GetLastServiceOperationResponse";
+    public static final String DELETE_SERVICE_INSTANCE_REQUEST = "DeleteServiceInstanceRequest";
+    public static final String DELETE_SERVICE_INSTANCE_RESPONSE = "DeleteServiceInstanceResponse";
 
     private ProcessorChain processorChain;
 
@@ -42,8 +44,17 @@ public class ProcessorChainServiceInstanceService implements ServiceInstanceServ
 
     @Override
     public DeleteServiceInstanceResponse deleteServiceInstance(DeleteServiceInstanceRequest request) {
-        processorChain.delete();
-        return new DeleteServiceInstanceResponse();
+        Context ctx = new Context();
+        ctx.contextKeys.put(DELETE_SERVICE_INSTANCE_REQUEST, request);
+
+        processorChain.delete(ctx);
+        DeleteServiceInstanceResponse response;
+        if (ctx.contextKeys.get(DELETE_SERVICE_INSTANCE_RESPONSE) instanceof DeleteServiceInstanceResponse) {
+            response = (DeleteServiceInstanceResponse) ctx.contextKeys.get(DELETE_SERVICE_INSTANCE_RESPONSE);
+        } else {
+            response = new DeleteServiceInstanceResponse();
+        }
+        return response;
     }
 
     @Override

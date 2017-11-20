@@ -23,6 +23,7 @@ public class TerraformModuleTest {
         TerraformModule deserialized = TerraformModuleHelper.getTerraformModuleFromClasspath(referenceJsonFormat);
 
         //then it extracts properly fields
+
         ImmutableTerraformModule expectedModule = ImmutableTerraformModule.builder()
                 .moduleName("cloudflare-route-ondemandroute5")
                 .source("modules/cloudflare")
@@ -33,6 +34,12 @@ public class TerraformModuleTest {
                 .putProperties("route-prefix", "ondemandroute5")
                 .putProperties("service_instance_guid", "3456")
                 .putProperties("space_guid", "${data.cloudfoundry_space.space_on_demand_internet_route.id}")
+                .putOutputs(
+                        "3456.started",
+                        ImmutableOutputConfig.builder().value("${module.cloudflare-route-ondemandroute5.started}").build())
+                .putOutputs(
+                        "3456.completed",
+                        ImmutableOutputConfig.builder().value("${module.cloudflare-route-ondemandroute5.completed}").build())
                 .build();
         assertThat(deserialized).isEqualTo(expectedModule);
 

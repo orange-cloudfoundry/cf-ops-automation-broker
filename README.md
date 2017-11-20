@@ -28,6 +28,9 @@ Maven example:
           </dependency>
         ...
     </dependencies>
+
+This project uses the immutables library. See [related documentation](https://immutables.github.io/apt.html) on how to setup you IDE to perform annotation processing
+   
     
 ## Configuring the broker
 

@@ -1,40 +1,54 @@
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.terraform.cloudflare;
 
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.GitProcessorContext;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.Context;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.terraform.*;
 import com.orange.oss.ondemandbroker.ProcessorChainServiceInstanceService;
 import org.junit.Assert;
 import org.junit.Test;
-import org.springframework.cloud.servicebroker.model.CreateServiceInstanceRequest;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.runners.MockitoJUnitRunner;
+import org.springframework.cloud.servicebroker.model.*;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneId;
 import java.util.HashMap;
 import java.util.Map;
 
 import static org.fest.assertions.Assertions.assertThat;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.springframework.cloud.servicebroker.model.OperationState.IN_PROGRESS;
 
 /**
  *
  */
+@RunWith(MockitoJUnitRunner.class)
 public class CloudFlareProcessorTest {
 
-    CloudFlareProcessor cloudFlareProcessor = new CloudFlareProcessor(aConfig());
+    @Mock
+    TerraformRepository terraformRepository;
+
+    CloudFlareProcessor cloudFlareProcessor = new CloudFlareProcessor(aConfig(), aSuffixValidator(), terraformRepository, aTracker());
 
 
-    @Test
-    public void accepts_correct_requested_routes() {
-        //given a user performing
-        //cf cs cloudflare -c '{route="a-valid-route"}'
-        Context context = aContextWithCreateRequest("route", "a-valid-route");
-
-        //when the processor is invoked
-        cloudFlareProcessor.preCreate(context);
-
-        //then no exception is thrown
+    @Test(expected = UnsupportedOperationException.class)
+    public void rejects_bind_calls() {
+        cloudFlareProcessor.preBind(new Context());
     }
 
     @Test
     public void rejects_invalid_requested_routes() {
-        //Given an invalid route
+        //given a user performing
+        //cf cs cloudflare -c '{route="@"}'
         Context context = aContextWithCreateRequest("route", "@");
 
         try {
@@ -48,13 +62,129 @@ public class CloudFlareProcessorTest {
     }
 
     @Test
-    public void injects_tf_module_into_context() {
+    public void rejects_duplicate_route_request() {
+        //given a repository populated with an existing module
+        TerraformRepository terraformRepository = Mockito.mock(TerraformRepository.class);
+        when(terraformRepository.getByModuleProperty("route-prefix", "avalidroute")).thenReturn(aTfModule());
+
+        cloudFlareProcessor = new CloudFlareProcessor(aConfig(), aSuffixValidator(), terraformRepository, aTracker());
+
+        //When a new module is requested to be added
+        TerraformModule requestedModule = ImmutableTerraformModule.builder().from(aTfModule())
+                .moduleName("service-instance-guid")
+                .putProperties("route-prefix", "avalidroute")
+                .build();
+
+
+        //Then it checks if a conflicting module exists, and rejects the request
+        try {
+            cloudFlareProcessor.checkForConflictingProperty(requestedModule, "route-prefix", "route");
+            Assert.fail("expected to be rejected");
+        } catch (RuntimeException e) {
+            //Message should indicate to end user the incorrect param name and value
+            assertThat(e.getMessage()).contains("route");
+            assertThat(e.getMessage()).contains("avalidroute");
+        }
+    }
+
+    @Test
+    public void prevents_modules_submission_with_conflicting_module_name() {
+        //given a repository populated with an existing module
+        TerraformRepository terraformRepository = Mockito.mock(TerraformRepository.class);
+        ImmutableTerraformModule aTfModule = ImmutableTerraformModule.builder()
+                .source("path/to/module")
+                .moduleName("service-instance-guid")
+                .build();
+        when(terraformRepository.getByModuleName("service-instance-guid")).thenReturn(aTfModule);
+        cloudFlareProcessor = new CloudFlareProcessor(aConfig(), aSuffixValidator(), terraformRepository, null);
+
+        //When a new module is requested to be added
+        // by a previous processor in the chain that inserted a tf module in the context
+        try {
+            cloudFlareProcessor.checkForConflictingModuleName(aTfModule);
+            Assert.fail("expected to be rejected");
+        } catch (RuntimeException e) {
+            //Then it checks if a conflicting module exists, and rejects the request
+            assertThat(e.getMessage()).containsIgnoringCase("conflict");
+        }
+    }
+
+    @Test
+    public void looks_up_paas_secrets_git_local_checkout() throws IOException {
+        //given
+        //the git mediation cloned the repo and populated context
+        Context ctx = new Context();
+        Path workDir = Files.createTempDirectory("paas-secret-clone");
+
+        ctx.contextKeys.put(GitProcessorContext.workDir.toString(), workDir);
+
+        //when
+        //Path lookedUpWorkDir = terraformModuleProcessor.lookUpGitworkDir(ctx);
+
+        //then
+        //Asserts.assertThat(lookedUpWorkDir.equals());
+
+    }
+
+
+    @Test
+    public void creates_tf_module() {
         //given a tf module template available in the classpath
         TerraformModule deserialized = TerraformModuleHelper.getTerraformModuleFromClasspath("/terraform/cloudflare-module-template.tf.json");
         ImmutableCloudFlareConfig cloudFlareConfig = ImmutableCloudFlareConfig.builder()
                 .routeSuffix("-cdn-cw-vdr-pprod-apps.redacted-domain.org")
                 .template(deserialized).build();
-        cloudFlareProcessor = new CloudFlareProcessor(cloudFlareConfig);
+        cloudFlareProcessor = new CloudFlareProcessor(cloudFlareConfig, aSuffixValidator(), terraformRepository, aTracker());
+
+        //given a user request with a route
+        Map<String, Object> parameters = new HashMap<>();
+        parameters.put("route", "avalidroute");
+        CreateServiceInstanceRequest request = new CreateServiceInstanceRequest("service_definition_id",
+                "plan_id",
+                "org_id",
+                "space_id",
+                parameters
+        );
+        request.withServiceInstanceId("serviceinstance_guid");
+
+        //when
+        ImmutableTerraformModule terraformModule = cloudFlareProcessor.constructModule(request);
+
+        //then module is properly formed
+        ImmutableTerraformModule expectedModule = ImmutableTerraformModule.builder().from(deserialized)
+                .moduleName("serviceinstance_guid")
+                .putProperties("org_guid", "org_id")
+                .putProperties("route-prefix", "avalidroute")
+                .putProperties("service_instance_guid", "serviceinstance_guid")
+                .putProperties("space_guid", "space_id")
+                .putOutputs(
+                        "serviceinstance_guid.started",
+                        ImmutableOutputConfig.builder().value("${module.serviceinstance_guid.started}").build())
+                .putOutputs(
+                        "serviceinstance_guid.completed",
+                        ImmutableOutputConfig.builder().value("${module.serviceinstance_guid.completed}").build())
+
+                .build();
+
+        assertThat(terraformModule).isEqualTo(expectedModule);
+    }
+
+    @Test
+    public void creates_tf_module_and_persists_into_repository_and_returns_resp() {
+        //given a tf module template available in the classpath
+        TerraformModule template = TerraformModuleHelper.getTerraformModuleFromClasspath("/terraform/cloudflare-module-template.tf.json");
+        ImmutableCloudFlareConfig cloudFlareConfig = ImmutableCloudFlareConfig.builder()
+                .routeSuffix("-cdn-cw-vdr-pprod-apps.redacted-domain.org")
+                .template(template).build();
+
+        //given a tf state with no completed execution
+        String tfStateFileInClasspath = "/terraform/terraform-without-successfull-module-exec.tfstate";
+        //given a configured timeout
+        Clock clock = Clock.fixed(Instant.ofEpochMilli(1510680248007L), ZoneId.of("Europe/Paris"));
+        TerraformCompletionTracker tracker = new TerraformCompletionTracker(TerraformCompletionTrackerTest.getFileFromClasspath(tfStateFileInClasspath), clock, 120);
+
+        cloudFlareProcessor = new CloudFlareProcessor(cloudFlareConfig, aSuffixValidator(), terraformRepository, tracker);
+
 
         //given a user request with a route
         Map<String, Object> parameters = new HashMap<>();
@@ -74,24 +204,88 @@ public class CloudFlareProcessorTest {
         //when
         cloudFlareProcessor.preCreate(context);
 
-        //then it injects a terraform module into the context
-        TerraformModule terraformModule = (TerraformModule) context.contextKeys.get(TerraformModuleProcessor.ADD_TF_MODULE);
+        //then it injects a terraform module into the repository
+        verify(terraformRepository).save(any(TerraformModule.class));
 
-        ImmutableTerraformModule expectedModule = ImmutableTerraformModule.builder().from(deserialized)
-                .moduleName(request.getServiceInstanceId())
-                .putProperties("org_guid", "org_id")
-                .putProperties("route-prefix", "avalidroute")
-                .putProperties("service_instance_guid", "serviceinstance_guid")
-                .putProperties("space_guid", "space_id")
-                .build();
-
-        assertThat(terraformModule).isEqualTo(expectedModule);
+        //and populates a response into the context
+        CreateServiceInstanceResponse serviceInstanceResponse = (CreateServiceInstanceResponse) context.contextKeys.get(ProcessorChainServiceInstanceService.CREATE_SERVICE_INSTANCE_RESPONSE);
+        // specifying asynchronous creations
+        assertThat(serviceInstanceResponse.isAsync()).isTrue();
+        // with a timestamp used to timeout on too long responses
+        assertThat(serviceInstanceResponse.getOperation()).isEqualTo("2017-11-14T17:24:08.007Z");
     }
 
+    @Test
+    public void responds_to_get_last_create_service_operation() {
+        //Given a tf state without completed module outputs
+        TerraformCompletionTracker tracker = Mockito.mock(TerraformCompletionTracker.class);
+        GetLastServiceOperationResponse expectedResponse = new GetLastServiceOperationResponse();
+        expectedResponse.withDescription("module exec in progress");
+        expectedResponse.withOperationState(IN_PROGRESS);
+        when(tracker.getModuleExecStatus("serviceinstance_guid", "2017-11-14T17:24:08.007Z")).thenReturn(expectedResponse);
+
+        cloudFlareProcessor = new CloudFlareProcessor(aConfig(), aSuffixValidator(), terraformRepository, tracker);
+        //given an async polling from CC
+        GetLastServiceOperationRequest operationRequest = new GetLastServiceOperationRequest("serviceinstance_guid",
+                "service_definition_id",
+                "plan_id",
+                "2017-11-14T17:24:08.007Z");
+
+        //and the context being injected to a cloudflare processor
+        Context context = new Context();
+        context.contextKeys.put(ProcessorChainServiceInstanceService.GET_LAST_SERVICE_OPERATION_REQUEST, operationRequest);
+
+
+        //when
+        cloudFlareProcessor.preGetLastCreateOperation(context);
+
+        // then mapped response from tracker is returned
+        GetLastServiceOperationResponse operationResponse = (GetLastServiceOperationResponse) context.contextKeys.get(ProcessorChainServiceInstanceService.GET_LAST_SERVICE_OPERATION_RESPONSE);
+        assertThat(operationResponse).isEqualTo(expectedResponse);
+    }
 
     @Test
-    public void rejects_duplicate_route_request() {
+    public void delete_modules_when_requested() {
+        //given a repository with an existing module
+        terraformRepository = Mockito.mock(TerraformRepository.class);
+        ImmutableTerraformModule aTfModule = aTfModule();
+        when(terraformRepository.getByModuleName("instance_id")).thenReturn(aTfModule);
+        cloudFlareProcessor = new CloudFlareProcessor(aConfig(), aSuffixValidator(), terraformRepository, aTracker());
 
+
+        //given an incoming delete request
+        DeleteServiceInstanceRequest request = new DeleteServiceInstanceRequest("instance_id",
+                "service_id",
+                "plan_id",
+                new ServiceDefinition(),
+                true);
+        Context context = new Context();
+        context.contextKeys.put(ProcessorChainServiceInstanceService.DELETE_SERVICE_INSTANCE_REQUEST, request);
+
+
+        //when
+        cloudFlareProcessor.preDelete(context);
+
+        //then it deletes the terraform module from the repository
+        verify(terraformRepository).delete(aTfModule);
+
+        /*and the delete response is returned*/
+        DeleteServiceInstanceResponse response = (DeleteServiceInstanceResponse) context.contextKeys.get(ProcessorChainServiceInstanceService.DELETE_SERVICE_INSTANCE_RESPONSE);
+        assertThat(response.isAsync()).isFalse();
+    }
+
+    TerraformCompletionTracker aTracker() {
+        GetLastServiceOperationResponse expectedResponse = new GetLastServiceOperationResponse();
+        expectedResponse.withDescription("module exec in progress");
+        expectedResponse.withOperationState(IN_PROGRESS);
+        TerraformCompletionTracker tracker = Mockito.mock(TerraformCompletionTracker.class);
+        when(tracker.getModuleExecStatus(anyString(), anyString())).thenReturn(expectedResponse);
+        when(tracker.getCurrentDate()).thenReturn("2017-11-14T17:24:08.007Z");
+        return tracker;
+    }
+
+    CloudFlareRouteSuffixValidator aSuffixValidator() {
+        return new CloudFlareRouteSuffixValidator(aConfig().getRouteSuffix());
     }
 
     @SuppressWarnings("SameParameterValue")
@@ -112,11 +306,18 @@ public class CloudFlareProcessorTest {
         return context;
     }
 
-    private CloudFlareConfig aConfig() {
+    public static CloudFlareConfig aConfig() {
         TerraformModule template = TerraformModuleHelper.getTerraformModuleFromClasspath("/terraform/cloudflare-module-template.tf.json");
         return ImmutableCloudFlareConfig.builder()
                 .template(template)
                 .routeSuffix("-cdn-cw-vdr-pprod-apps.redacted-domain.org").build();
+    }
+
+    public static ImmutableTerraformModule aTfModule() {
+        return ImmutableTerraformModule.builder()
+                .source("path/to/module")
+                .moduleName("instance_id")
+                .build();
     }
 
 

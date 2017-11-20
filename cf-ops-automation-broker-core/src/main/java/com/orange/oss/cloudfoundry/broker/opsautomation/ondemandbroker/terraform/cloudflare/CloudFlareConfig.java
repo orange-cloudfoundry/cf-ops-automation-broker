@@ -11,5 +11,10 @@ public abstract class CloudFlareConfig {
 
     public abstract String getRouteSuffix();
 
+    @Value.Default
+    public int getMaxExecutionDurationSeconds() {
+        return 120;
+    }
+
     public abstract TerraformModule getTemplate();
 }

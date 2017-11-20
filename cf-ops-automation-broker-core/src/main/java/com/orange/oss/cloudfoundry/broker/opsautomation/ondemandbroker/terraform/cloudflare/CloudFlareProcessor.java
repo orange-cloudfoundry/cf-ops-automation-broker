@@ -1,5 +1,6 @@
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.terraform.cloudflare;
 
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.GitProcessorContext;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.Context;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.DefaultBrokerProcessor;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.terraform.*;
@@ -8,6 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cloud.servicebroker.model.*;
 
+import java.nio.file.Path;
 import java.util.Map;
 
 /**
@@ -49,10 +51,10 @@ public class CloudFlareProcessor extends DefaultBrokerProcessor {
 
         ImmutableTerraformModule terraformModule = constructModule(request);
 
-        checkForConflictingModuleName(terraformModule);
-        checkForConflictingProperty(terraformModule, ROUTE_PREFIX, route);
+        checkForConflictingModuleName(terraformModule, getRepository(ctx));
+        checkForConflictingProperty(terraformModule, ROUTE_PREFIX, route, getRepository(ctx));
 
-        repository.save(terraformModule);
+        getRepository(ctx).save(terraformModule);
 
         CreateServiceInstanceResponse response = new CreateServiceInstanceResponse();
         response.withAsync(true);
@@ -92,12 +94,12 @@ public class CloudFlareProcessor extends DefaultBrokerProcessor {
     public void preDelete(Context context) {
         DeleteServiceInstanceRequest request = (DeleteServiceInstanceRequest) context.contextKeys.get(ProcessorChainServiceInstanceService.DELETE_SERVICE_INSTANCE_REQUEST);
         String serviceInstanceId = request.getServiceInstanceId();
-        TerraformModule terraformModule = repository.getByModuleName(serviceInstanceId);
+        TerraformModule terraformModule = getRepository(context).getByModuleName(serviceInstanceId);
 
         if (terraformModule == null) {
             logger.warn("Asked to delete a service instance with id=" + serviceInstanceId + " without any associated module in the repository");
         } else {
-            repository.delete(terraformModule);
+            getRepository(context).delete(terraformModule);
         }
 
         DeleteServiceInstanceResponse response = new DeleteServiceInstanceResponse();
@@ -110,7 +112,7 @@ public class CloudFlareProcessor extends DefaultBrokerProcessor {
     }
 
 
-    void checkForConflictingModuleName(TerraformModule requestedModule) {
+    void checkForConflictingModuleName(TerraformModule requestedModule, TerraformRepository repository) {
         String requestedModuleModuleName = requestedModule.getModuleName();
         TerraformModule existing = repository.getByModuleName(requestedModuleModuleName);
         if (existing != null) {
@@ -120,7 +122,7 @@ public class CloudFlareProcessor extends DefaultBrokerProcessor {
             throw new RuntimeException("unexpected conflicting terraform module with name=" + requestedModuleModuleName + ". A module with same name already exists.");
         }
     }
-    void checkForConflictingProperty(TerraformModule requestedModule, String propertyName, String userFacingParam) {
+    void checkForConflictingProperty(TerraformModule requestedModule, String propertyName, String userFacingParam, TerraformRepository repository) {
         String propertyValue = requestedModule.getProperties().get(propertyName);
         TerraformModule existing = repository.getByModuleProperty(propertyName, propertyValue);
         if (existing != null) {
@@ -131,4 +133,8 @@ public class CloudFlareProcessor extends DefaultBrokerProcessor {
         }
     }
 
+    protected TerraformRepository getRepository(Context ctx) {
+        Path gitWorkDir = (Path) ctx.contextKeys.get(GitProcessorContext.workDir.toString());
+        return repository;
+    }
 }

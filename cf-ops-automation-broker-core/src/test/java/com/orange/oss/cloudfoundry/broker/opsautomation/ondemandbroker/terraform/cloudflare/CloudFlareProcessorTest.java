@@ -78,7 +78,7 @@ public class CloudFlareProcessorTest {
 
         //Then it checks if a conflicting module exists, and rejects the request
         try {
-            cloudFlareProcessor.checkForConflictingProperty(requestedModule, "route-prefix", "route");
+            cloudFlareProcessor.checkForConflictingProperty(requestedModule, "route-prefix", "route", terraformRepository);
             Assert.fail("expected to be rejected");
         } catch (RuntimeException e) {
             //Message should indicate to end user the incorrect param name and value
@@ -101,7 +101,7 @@ public class CloudFlareProcessorTest {
         //When a new module is requested to be added
         // by a previous processor in the chain that inserted a tf module in the context
         try {
-            cloudFlareProcessor.checkForConflictingModuleName(aTfModule);
+            cloudFlareProcessor.checkForConflictingModuleName(aTfModule, terraformRepository);
             Assert.fail("expected to be rejected");
         } catch (RuntimeException e) {
             //Then it checks if a conflicting module exists, and rejects the request
@@ -116,7 +116,7 @@ public class CloudFlareProcessorTest {
         Context ctx = new Context();
         Path workDir = Files.createTempDirectory("paas-secret-clone");
 
-        ctx.contextKeys.put(GitProcessorContext.workDir.toString(), workDir);
+        Path gitWorkDir = (Path) ctx.contextKeys.get(GitProcessorContext.workDir.toString());
 
         //when
         //Path lookedUpWorkDir = terraformModuleProcessor.lookUpGitworkDir(ctx);

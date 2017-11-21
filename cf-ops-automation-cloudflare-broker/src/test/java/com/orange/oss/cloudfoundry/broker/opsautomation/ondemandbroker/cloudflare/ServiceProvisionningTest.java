@@ -9,6 +9,7 @@ import org.junit.runner.RunWith;
 import org.springframework.boot.context.embedded.LocalServerPort;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.cloud.servicebroker.model.CreateServiceInstanceRequest;
+import org.springframework.cloud.servicebroker.model.GetLastServiceOperationRequest;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import java.util.HashMap;
@@ -16,6 +17,7 @@ import java.util.Map;
 
 import static io.restassured.RestAssured.basic;
 import static io.restassured.RestAssured.given;
+import static org.hamcrest.Matchers.containsString;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 
 @RunWith(SpringRunner.class)
@@ -32,7 +34,14 @@ public class ServiceProvisionningTest {
     }
 
     @Test
-    public void create_a_service_instance() {
+    public void supports_crud_lifecycle() {
+        create_async_service_instance();
+        //polls_last_create_operation();
+        delete_a_service_instance();
+    }
+
+
+    public void create_async_service_instance() {
 
         Map<String, Object> params = new HashMap<>();
         params.put("route", "a-valid-route");
@@ -50,11 +59,29 @@ public class ServiceProvisionningTest {
         when()
                 .put("/service_instances/{id}", "111").
         then()
-                .statusCode(HttpStatus.SC_CREATED);
+                .statusCode(HttpStatus.SC_ACCEPTED);
+
 
     }
 
-    @Test
+    public void polls_last_create_operation() {
+        GetLastServiceOperationRequest lastServiceOperationRequest =
+                new GetLastServiceOperationRequest(
+                        "111",
+                        "cloudflare-route",
+                        "cloudflare-default", "");
+
+        given()
+                .basePath("/v2")
+                .contentType("application/json")
+                .body(lastServiceOperationRequest).
+        when()
+                .get("/service_instances/{id}/last_operation", "111").
+        then()
+                .statusCode(HttpStatus.SC_OK)
+                .body(containsString("in progress"));
+    }
+
     public void delete_a_service_instance() {
 
         given()

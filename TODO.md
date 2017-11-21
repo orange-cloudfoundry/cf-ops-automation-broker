@@ -3,14 +3,7 @@
 
 
 - Application & Integration test:
-   - inject properties into ImmutableCloudFlareConfig 
-      - @ConfigurationProperties not currently supporting immutables https://github.com/spring-projects/spring-boot/issues/8762#issuecomment-341671642
-   - @Service or @Bean in application.
-   - explicit application maven module
-   - git.properties injected as env vars
-
-
-- configure catalog: not bindeable, not updeable
+   - support/test catalog injected from env var
 
 - refine status code in delete: return 410 GONE if service instance missing
 
@@ -31,7 +24,10 @@ Refine Repository impl
         - https://github.com/spring-projects/spring-data-keyvalue-examples/blob/master/retwisj/src/main/java/org/springframework/data/redis/samples/retwisj/redis/RetwisRepository.java
         - https://paulcwarren.github.io/spring-content/refs/release/fs-index.html
     - extract terraform state loading into a repository when needed to support a different backend than file (credhub, S3)
- 
+
+# git bugs
+
+- unexpectedly add commits when no changes  
 
 # Next core framework
 

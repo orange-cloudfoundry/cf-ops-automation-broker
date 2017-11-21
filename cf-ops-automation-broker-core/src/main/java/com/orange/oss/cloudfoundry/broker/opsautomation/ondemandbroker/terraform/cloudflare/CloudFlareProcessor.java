@@ -51,7 +51,7 @@ public class CloudFlareProcessor extends DefaultBrokerProcessor {
 
 
         ImmutableTerraformModule terraformModule = constructModule(request);
-        TerraformRepository repository = getRepository(ctx); // lookup git clone for request
+        TerraformRepository repository = getRepository(ctx); // lookup git clone for request, might throw runtime exception
         checkForConflictingModuleName(terraformModule, repository);
         checkForConflictingProperty(terraformModule, ROUTE_PREFIX, route, repository);
 
@@ -97,7 +97,7 @@ public class CloudFlareProcessor extends DefaultBrokerProcessor {
     public void preDelete(Context context) {
         DeleteServiceInstanceRequest request = (DeleteServiceInstanceRequest) context.contextKeys.get(ProcessorChainServiceInstanceService.DELETE_SERVICE_INSTANCE_REQUEST);
         String serviceInstanceId = request.getServiceInstanceId();
-        TerraformRepository repository = getRepository(context); //lookup git clone for request
+        TerraformRepository repository = getRepository(context); //lookup git clone for request, might throw runtime exception
         TerraformModule terraformModule = repository.getByModuleName(serviceInstanceId);
 
         if (terraformModule == null) {
@@ -144,6 +144,10 @@ public class CloudFlareProcessor extends DefaultBrokerProcessor {
 
     protected Path getGitWorkDir(Context ctx) {
         Path path = (Path) ctx.contextKeys.get(GitProcessorContext.workDir.toString());
+        if (path == null ) {
+            logger.error("expected git repo clone dir to be available, but missing from context");
+            throw new RuntimeException("missing git clone with dir for terraform config/state");
+        }
         return path;
     }
 }

@@ -29,6 +29,9 @@ public class FileTerraformRepository implements TerraformRepository {
         if (filePrefix == null || filePrefix.isEmpty()) {
             throw new IllegalArgumentException("expected non empty prefix. This is required to support ignoring some unrelated files in the directory that don't match the prefix.");
         }
+        if (directory == null || ! directory.toFile().exists() || ! directory.toFile().canRead()) {
+            throw new IllegalArgumentException("expected existing readeable dir, but got:" + directory);
+        }
         this.filePrefix = filePrefix;
         gson = new GsonBuilder().registerTypeAdapter(ImmutableTerraformModule.class, new TerraformModuleGsonAdapter()).create();
     }

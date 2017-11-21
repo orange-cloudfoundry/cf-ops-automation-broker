@@ -53,11 +53,8 @@ public class TerraformCompletionTracker {
             return mapOutputToStatus(started, completed, elapsedTimeSecsSinceLastOperation);
         } catch (IOException e) {
             logger.error("unable to extract tfstate output from:" + tfStateFile, e);
-            response.withDescription("Internal error checking service instance state");
+            throw new RuntimeException("unable to check service instance status . Client platform should retry polling status");
         }
-
-        response.withOperationState(OperationState.FAILED);
-        return response;
     }
 
      GetLastServiceOperationResponse mapOutputToStatus(TerraformState.Output started, TerraformState.Output completed, long elapsedTimeSecsSinceLastOperation) {

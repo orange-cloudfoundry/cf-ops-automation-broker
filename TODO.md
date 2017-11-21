@@ -2,8 +2,6 @@
 # Next cloudflare
 
 
-- refine error handling upon failed clone during delete or getlastoperation: client retry or fail (which will lead to service instance removal)
-
 - Application & Integration test:
    - inject properties into ImmutableCloudFlareConfig 
       - @ConfigurationProperties not currently supporting immutables https://github.com/spring-projects/spring-boot/issues/8762#issuecomment-341671642
@@ -14,7 +12,7 @@
 
 - configure catalog: not bindeable, not updeable
 
-getGitWorkDir
+- refine status code in delete: return 410 GONE if service instance missing
 
 - add stronger input validation to terraform module.name and outputs (from hashicorp hcl specs) to detect more issues up front if OSB-injected ids are HCL unfriendly   
 
@@ -47,7 +45,12 @@ Refine Repository impl
 
 
 core framework:
-- fail to execute SampleBrokerApplication:  Empty reply from server
+- exception handling in processor in delete, getlastoperationstatus in ProcessorChainServiceInstanceService + ProcessorChain:
+   default behavior to propagate exception upstream seems a good approach matching our needs: 
+   - in delete: platform will return the delete failure to end-users which should retry
+   - in get last create operation: platform will retry.
+   
+
 
 - typing of exceptions throw by processors: RuntimeException ?
 - spaces vs tabs indentation reported by intellij

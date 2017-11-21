@@ -133,6 +133,20 @@ public class CloudFlareProcessorTest {
         assertThat(repository.getDirectory().toFile()).isEqualTo(workDir.toFile());
     }
 
+    @Test(expected = RuntimeException.class)
+    public void missing_paas_secrets_git_local_checkout_triggers_OSB_retries() {
+        //given the git mediation failed to properly clone the repo
+        Context ctx = new Context();
+
+        TerraformRepository.Factory repositoryFactory = FileTerraformRepository.getFactory("cloudflare-");
+        cloudFlareProcessor = new CloudFlareProcessor(aConfig(), aSuffixValidator(), repositoryFactory, null);
+
+        //when
+        FileTerraformRepository repository = (FileTerraformRepository) cloudFlareProcessor.getRepository(ctx);
+
+        //then OSB will retry polling status, or ask user to retry the delete request.
+    }
+
 
     @Test
     public void creates_tf_module() {
@@ -207,6 +221,8 @@ public class CloudFlareProcessorTest {
         //and the context being injected to a cloudflare processor
         Context context = new Context();
         context.contextKeys.put(ProcessorChainServiceInstanceService.CREATE_SERVICE_INSTANCE_REQUEST, request);
+        context.contextKeys.put(GitProcessorContext.workDir.toString(), aGitRepoWorkDir());
+
 
         //when
         cloudFlareProcessor.preCreate(context);
@@ -241,7 +257,7 @@ public class CloudFlareProcessorTest {
         //and the context being injected to a cloudflare processor
         Context context = new Context();
         context.contextKeys.put(ProcessorChainServiceInstanceService.GET_LAST_SERVICE_OPERATION_REQUEST, operationRequest);
-        context.contextKeys.put(GitProcessorContext.workDir.toString(), FileSystems.getDefault().getPath("/a/git_workdir/path"));
+        context.contextKeys.put(GitProcessorContext.workDir.toString(), aGitRepoWorkDir());
 
 
         //when
@@ -269,6 +285,7 @@ public class CloudFlareProcessorTest {
                 true);
         Context context = new Context();
         context.contextKeys.put(ProcessorChainServiceInstanceService.DELETE_SERVICE_INSTANCE_REQUEST, request);
+        context.contextKeys.put(GitProcessorContext.workDir.toString(), aGitRepoWorkDir());
 
 
         //when
@@ -280,6 +297,10 @@ public class CloudFlareProcessorTest {
         /*and the delete response is returned*/
         DeleteServiceInstanceResponse response = (DeleteServiceInstanceResponse) context.contextKeys.get(ProcessorChainServiceInstanceService.DELETE_SERVICE_INSTANCE_RESPONSE);
         assertThat(response.isAsync()).isFalse();
+    }
+
+    protected Path aGitRepoWorkDir() {
+        return FileSystems.getDefault().getPath("/a/git_workdir/path");
     }
 
     TerraformCompletionTracker aTracker() {

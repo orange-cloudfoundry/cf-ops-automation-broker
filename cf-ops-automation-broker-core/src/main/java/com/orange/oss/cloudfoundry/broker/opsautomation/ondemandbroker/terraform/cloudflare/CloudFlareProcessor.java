@@ -9,6 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cloud.servicebroker.model.*;
 
+import java.io.File;
 import java.nio.file.Path;
 import java.util.Map;
 
@@ -66,7 +67,9 @@ public class CloudFlareProcessor extends DefaultBrokerProcessor {
     public void preGetLastCreateOperation(Context ctx) {
         GetLastServiceOperationRequest operationRequest = (GetLastServiceOperationRequest) ctx.contextKeys.get(ProcessorChainServiceInstanceService.GET_LAST_SERVICE_OPERATION_REQUEST);
 
-        GetLastServiceOperationResponse operationResponse = completionTracker.getModuleExecStatus(operationRequest.getServiceInstanceId(), operationRequest.getOperation());
+        Path gitWorkDir = getGitWorkDir(ctx);
+        File tfStateFile = gitWorkDir.resolve("terraform.tfstate").toFile();
+        GetLastServiceOperationResponse operationResponse = completionTracker.getModuleExecStatus(tfStateFile, operationRequest.getServiceInstanceId(), operationRequest.getOperation());
 
         ctx.contextKeys.put(ProcessorChainServiceInstanceService.GET_LAST_SERVICE_OPERATION_RESPONSE, operationResponse);
     }
@@ -135,7 +138,12 @@ public class CloudFlareProcessor extends DefaultBrokerProcessor {
     }
 
     protected TerraformRepository getRepository(Context ctx) {
-        Path gitWorkDir = (Path) ctx.contextKeys.get(GitProcessorContext.workDir.toString());
+        Path gitWorkDir = getGitWorkDir(ctx);
         return repositoryFactory.getInstance(gitWorkDir);
+    }
+
+    protected Path getGitWorkDir(Context ctx) {
+        Path path = (Path) ctx.contextKeys.get(GitProcessorContext.workDir.toString());
+        return path;
     }
 }

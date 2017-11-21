@@ -23,12 +23,10 @@ public class TerraformCompletionTracker {
 
     private Gson gson;
 
-    private File tfStateFile;
     private Clock clock;
     private int maxExecutionDurationSeconds;
 
-    public TerraformCompletionTracker(File tfStateFile, Clock clock, int maxExecutionDurationSeconds) {
-        this.tfStateFile = tfStateFile;
+    public TerraformCompletionTracker(Clock clock, int maxExecutionDurationSeconds) {
         this.clock = clock;
         this.maxExecutionDurationSeconds = maxExecutionDurationSeconds;
 
@@ -40,7 +38,7 @@ public class TerraformCompletionTracker {
         return now.toString();
     }
 
-    public GetLastServiceOperationResponse getModuleExecStatus(String moduleName, String lastOperationState) {
+    public GetLastServiceOperationResponse getModuleExecStatus(File tfStateFile, String moduleName, String lastOperationState) {
 
         GetLastServiceOperationResponse response = new GetLastServiceOperationResponse();
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(tfStateFile)))) {

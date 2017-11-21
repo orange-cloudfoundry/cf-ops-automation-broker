@@ -12,7 +12,9 @@ import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.springframework.cloud.servicebroker.model.*;
 
+import java.io.File;
 import java.io.IOException;
+import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Clock;
@@ -24,6 +26,7 @@ import java.util.Map;
 import static org.fest.assertions.Assertions.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.cloud.servicebroker.model.OperationState.IN_PROGRESS;
@@ -185,7 +188,7 @@ public class CloudFlareProcessorTest {
         String tfStateFileInClasspath = "/terraform/terraform-without-successfull-module-exec.tfstate";
         //given a configured timeout
         Clock clock = Clock.fixed(Instant.ofEpochMilli(1510680248007L), ZoneId.of("Europe/Paris"));
-        TerraformCompletionTracker tracker = new TerraformCompletionTracker(TerraformCompletionTrackerTest.getFileFromClasspath(tfStateFileInClasspath), clock, 120);
+        TerraformCompletionTracker tracker = new TerraformCompletionTracker(clock, 120);
 
         cloudFlareProcessor = new CloudFlareProcessor(cloudFlareConfig, aSuffixValidator(), getRepositoryFactory(), tracker);
 
@@ -226,7 +229,7 @@ public class CloudFlareProcessorTest {
         GetLastServiceOperationResponse expectedResponse = new GetLastServiceOperationResponse();
         expectedResponse.withDescription("module exec in progress");
         expectedResponse.withOperationState(IN_PROGRESS);
-        when(tracker.getModuleExecStatus("serviceinstance_guid", "2017-11-14T17:24:08.007Z")).thenReturn(expectedResponse);
+        when(tracker.getModuleExecStatus(any(File.class), eq("serviceinstance_guid"), eq("2017-11-14T17:24:08.007Z"))).thenReturn(expectedResponse);
 
         cloudFlareProcessor = new CloudFlareProcessor(aConfig(), aSuffixValidator(), getRepositoryFactory(), tracker);
         //given an async polling from CC
@@ -238,6 +241,7 @@ public class CloudFlareProcessorTest {
         //and the context being injected to a cloudflare processor
         Context context = new Context();
         context.contextKeys.put(ProcessorChainServiceInstanceService.GET_LAST_SERVICE_OPERATION_REQUEST, operationRequest);
+        context.contextKeys.put(GitProcessorContext.workDir.toString(), FileSystems.getDefault().getPath("/a/git_workdir/path"));
 
 
         //when
@@ -283,7 +287,7 @@ public class CloudFlareProcessorTest {
         expectedResponse.withDescription("module exec in progress");
         expectedResponse.withOperationState(IN_PROGRESS);
         TerraformCompletionTracker tracker = Mockito.mock(TerraformCompletionTracker.class);
-        when(tracker.getModuleExecStatus(anyString(), anyString())).thenReturn(expectedResponse);
+        when(tracker.getModuleExecStatus(any(File.class), anyString(), anyString())).thenReturn(expectedResponse);
         when(tracker.getCurrentDate()).thenReturn("2017-11-14T17:24:08.007Z");
         return tracker;
     }

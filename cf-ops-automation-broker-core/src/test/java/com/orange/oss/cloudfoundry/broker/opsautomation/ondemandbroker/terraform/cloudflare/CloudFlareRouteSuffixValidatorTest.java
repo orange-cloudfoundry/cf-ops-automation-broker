@@ -10,6 +10,15 @@ public class CloudFlareRouteSuffixValidatorTest {
 
     private CloudFlareRouteSuffixValidator cloudFlareRouteSuffixValidator = new CloudFlareRouteSuffixValidator("-cdn-cw-vdr-pprod-apps.redacted-domain.org");
 
+    @Test(expected = RuntimeException.class)
+    public void rejects_empty_suffix() {
+        new CloudFlareRouteSuffixValidator("");
+    }
+    @Test(expected = RuntimeException.class)
+    public void rejects_null_suffix() {
+        new CloudFlareRouteSuffixValidator(null);
+    }
+
     @Test
     public void accepts_valid_routes() {
         Assertions.assertThat(cloudFlareRouteSuffixValidator.isRouteValid("route")).isTrue();

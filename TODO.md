@@ -46,6 +46,8 @@ core framework:
    - in delete: platform will return the delete failure to end-users which should retry
    - in get last create operation: platform will retry.
    
+  - avoid internal exceptions to be user facing:
+    Server error, status code: 502, error code: 10001, message: Service broker error: org.eclipse.jgit.api.errors.TransportException git repo url
 
 
 - typing of exceptions throw by processors: RuntimeException ?

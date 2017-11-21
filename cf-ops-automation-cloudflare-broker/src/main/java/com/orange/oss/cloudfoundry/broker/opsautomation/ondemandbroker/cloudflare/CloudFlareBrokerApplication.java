@@ -1,0 +1,91 @@
+package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.cloudflare;
+
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.GitProcessor;
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.BrokerProcessor;
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.DefaultBrokerSink;
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.ProcessorChain;
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.terraform.*;
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.terraform.cloudflare.CloudFlareConfig;
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.terraform.cloudflare.CloudFlareProcessor;
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.terraform.cloudflare.CloudFlareRouteSuffixValidator;
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.terraform.cloudflare.ImmutableCloudFlareConfig;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.Bean;
+
+import java.time.Clock;
+import java.util.ArrayList;
+import java.util.List;
+
+@SpringBootApplication
+public class CloudFlareBrokerApplication {
+
+    public static void main(String[] args) {
+        SpringApplication.run(CloudFlareBrokerApplication.class, args);
+    }
+
+    @Bean
+    public TerraformModule terraformModuleTemplate() {
+        return TerraformModuleHelper.getTerraformModuleFromClasspath("/terraform/cloudflare-module-template.tf.json");
+    }
+
+
+    @Bean
+    public CloudFlareConfig cloudFlareConfig(@Value("${cloudflare.routeSuffix}") String routeSuffix, TerraformModule template) {
+        return ImmutableCloudFlareConfig.builder()
+                .routeSuffix(routeSuffix)
+                .template(template).build();
+    }
+
+    @Bean
+    public Clock clock() {
+        return Clock.systemDefaultZone();
+    }
+
+    @Bean
+    public TerraformCompletionTracker terraformCompletionTracker(CloudFlareConfig cloudFlareConfig, Clock clock) {
+        return new TerraformCompletionTracker(clock, cloudFlareConfig.getMaxExecutionDurationSeconds());
+    }
+
+    @Bean
+    public static TerraformRepository.Factory getFactory(@Value("${cloudflare.pathTFSpecs}") String pathtoTerraformSpecs) {
+        return path -> new FileTerraformRepository(path.resolve(pathtoTerraformSpecs), "cloudflare-");
+    }
+
+
+    @Bean
+    public CloudFlareRouteSuffixValidator cloudFlareRouteSuffixValidator(CloudFlareConfig cloudFlareConfig) {
+        return new CloudFlareRouteSuffixValidator(cloudFlareConfig.getRouteSuffix());
+    }
+
+    @Bean
+    public CloudFlareProcessor cloudFlareProcessor(CloudFlareConfig cloudFlareConfig, TerraformRepository.Factory repositoryFactory, TerraformCompletionTracker tracker, CloudFlareRouteSuffixValidator cloudFlareRouteSuffixValidator) {
+        return new CloudFlareProcessor(cloudFlareConfig, cloudFlareRouteSuffixValidator, repositoryFactory, tracker);
+    }
+
+    @Bean
+    public BrokerProcessor gitProcessor(
+            @Value("${git.user}") String gitUser,
+            @Value("${git.password}") String gitPassword,
+            @Value("${git.url}") String gitUrl) {
+        return new GitProcessor(gitUser, gitPassword, gitUrl);
+    }
+
+    @Bean
+    public ProcessorChain processorChain(BrokerProcessor cloudFlareProcessor, BrokerProcessor gitProcessor) {
+        List<BrokerProcessor> processors= new ArrayList<>();
+
+
+        processors.add(gitProcessor); //needs to be 1st
+        processors.add(cloudFlareProcessor);
+
+        //Add git processor: See GitTest
+
+        DefaultBrokerSink sink=new DefaultBrokerSink();
+        ProcessorChain chain=new ProcessorChain(processors, sink);
+        return chain;
+    }
+
+
+}

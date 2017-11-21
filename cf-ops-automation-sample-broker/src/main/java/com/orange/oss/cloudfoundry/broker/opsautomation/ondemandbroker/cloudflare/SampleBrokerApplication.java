@@ -1,4 +1,4 @@
-package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.sample;
+package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.cloudflare;
 
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.BrokerProcessor;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.DefaultBrokerProcessor;
@@ -20,11 +20,10 @@ public class SampleBrokerApplication {
 
     @Bean
     public ProcessorChain processorChain() {
-        List<BrokerProcessor> processors=new ArrayList<BrokerProcessor>();
+        List<BrokerProcessor> processors= new ArrayList<>();
         processors.add(new DefaultBrokerProcessor());
         DefaultBrokerSink sink=new DefaultBrokerSink();
-        ProcessorChain chain=new ProcessorChain(processors, sink);
-        return chain;
+        return new ProcessorChain(processors, sink);
     }
 
 

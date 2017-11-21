@@ -1,4 +1,4 @@
-package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.sample;
+package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.cloudflare;
 
 
 import io.restassured.RestAssured;
@@ -10,6 +10,9 @@ import org.springframework.boot.context.embedded.LocalServerPort;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.cloud.servicebroker.model.CreateServiceInstanceRequest;
 import org.springframework.test.context.junit4.SpringRunner;
+
+import java.util.HashMap;
+import java.util.Map;
 
 import static io.restassured.RestAssured.basic;
 import static io.restassured.RestAssured.given;
@@ -31,10 +34,14 @@ public class ServiceProvisionningTest {
     @Test
     public void create_a_service_instance() {
 
-        CreateServiceInstanceRequest request = new CreateServiceInstanceRequest("ondemand-service",
-                "ondemand-plan",
+        Map<String, Object> params = new HashMap<>();
+        params.put("route", "a-valid-route");
+        CreateServiceInstanceRequest request = new CreateServiceInstanceRequest("cloudflare-route",
+                "cloudflare-default",
                 "org_id",
-                "space_id");
+                "space_id",
+                params
+                );
 
         given()
                 .basePath("/v2")

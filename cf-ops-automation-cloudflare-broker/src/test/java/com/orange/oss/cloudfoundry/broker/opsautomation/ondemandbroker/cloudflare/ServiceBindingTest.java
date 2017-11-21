@@ -1,4 +1,4 @@
-package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.sample;
+package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.cloudflare;
 
 
 import io.restassured.RestAssured;

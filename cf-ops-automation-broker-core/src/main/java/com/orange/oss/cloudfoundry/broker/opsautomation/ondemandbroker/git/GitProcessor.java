@@ -87,7 +87,7 @@ public class GitProcessor extends DefaultBrokerProcessor {
 
 	/**
 	 * local clone a repo
-	 * @param ctx. exposing the workDir Path in context
+	 * @param ctx exposing the workDir Path in context
 	 */
 	private void cloneRepo(Context ctx) {
 		try {
@@ -114,12 +114,13 @@ public class GitProcessor extends DefaultBrokerProcessor {
 			git.submoduleInit().call();
 			git.submoduleUpdate().call();
 
-			logger.info("git repo is ready, on branch {}", branch);
+			logger.info("git repo is ready at {}, on branch {} at {}", workDir, branch);
 			//push the work dir in invokation context
 			ctx.contextKeys.put(GitProcessorContext.workDir.toString(),workDir);
 			
 			
 		} catch (Exception e) {
+			logger.warn("caught " +e, e);
 			throw new IllegalArgumentException(e);
 
 		}
@@ -128,10 +129,6 @@ public class GitProcessor extends DefaultBrokerProcessor {
 
 	/**
 	 * commit, rebase the push the modification
-	 * 
-	 * @throws GitAPIException
-	 * @throws NoFilepatternException
-	 * @throws IOException
 	 */
 	private void commitPushRepo(Context ctx) {
 		try {
@@ -152,17 +149,14 @@ public class GitProcessor extends DefaultBrokerProcessor {
 			logger.info("pushed ...");
 			deleteRecursiveDir(workDir);
 		} catch (Exception e) {
+			logger.warn("caught " +e, e);
 			throw new IllegalArgumentException(e);
-
 		}
 
 	}
 
 	/**
 	 * recursive directory delete
-	 * 
-	 * @param workDir
-	 * @throws IOException
 	 */
 	private void deleteRecursiveDir(Path workDir) throws IOException {
 		// cleaning workDir

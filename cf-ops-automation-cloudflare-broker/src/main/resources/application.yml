@@ -9,6 +9,7 @@ servicebroker:
       name: cloudflare
       description: Creates a internet domain protected by cloudflare.
       bindable: false
+      planUpdateable: false
       plans:
         - id: cloudflare-default
           name: default
@@ -26,7 +27,5 @@ servicebroker:
 logging:
   level:
     com.orange.oss: debug
-    com:
-      orange:
-        oss: debug
+    org.springframework.cloud.servicebroker: debug
 

@@ -178,6 +178,7 @@ public class CloudFlareProcessorTest {
                 .putProperties("route-prefix", "avalidroute")
                 .putProperties("service_instance_guid", "serviceinstance_guid")
                 .putProperties("space_guid", "space_id")
+                .outputs(new HashMap<>())
                 .putOutputs(
                         "serviceinstance_guid.started",
                         ImmutableOutputConfig.builder().value("${module.serviceinstance_guid.started}").build())

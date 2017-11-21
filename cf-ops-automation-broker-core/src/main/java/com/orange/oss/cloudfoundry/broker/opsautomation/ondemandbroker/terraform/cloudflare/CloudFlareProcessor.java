@@ -11,6 +11,7 @@ import org.springframework.cloud.servicebroker.model.*;
 
 import java.io.File;
 import java.nio.file.Path;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -44,6 +45,7 @@ public class CloudFlareProcessor extends DefaultBrokerProcessor {
         //Fetch requested route and param name from Service Instance
         Map<String, Object> contextKeys = ctx.contextKeys;
         CreateServiceInstanceRequest request= (CreateServiceInstanceRequest) contextKeys.get(ProcessorChainServiceInstanceService.CREATE_SERVICE_INSTANCE_REQUEST);
+        logger.debug("processing request " + request);
 
         //validate input params
         String route = (String) request.getParameters().get("route");
@@ -82,6 +84,7 @@ public class CloudFlareProcessor extends DefaultBrokerProcessor {
                 .putProperties(ROUTE_PREFIX, (String) request.getParameters().get("route"))
                 .putProperties("service_instance_guid", request.getServiceInstanceId())
                 .putProperties("space_guid", request.getSpaceGuid())
+                .outputs(new HashMap<>()) //clear sample outputs
                 .putOutputs(
                         request.getServiceInstanceId() + ".started",
                         ImmutableOutputConfig.builder().value("${module." + request.getServiceInstanceId() + ".started}").build())
@@ -112,7 +115,10 @@ public class CloudFlareProcessor extends DefaultBrokerProcessor {
 
     void validateRequestedRoute(String route, @SuppressWarnings("SameParameterValue") String paramName) {
         boolean valid = cloudFlareRouteSuffixValidator.isRouteValid(route);
-        if (!valid) throw new RuntimeException("Invalid parameter " + paramName + " with value:" + route);
+        if (!valid) {
+            logger.info("Invalid parameter " + paramName + " with value:" + route);
+            throw new RuntimeException("Invalid parameter " + paramName + " with value:" + route);
+        }
     }
 
 

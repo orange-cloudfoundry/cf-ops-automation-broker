@@ -49,8 +49,10 @@ public class CloudFlareBrokerApplication {
     }
 
     @Bean
-    public static TerraformRepository.Factory getFactory(@Value("${cloudflare.pathTFSpecs}") String pathtoTerraformSpecs) {
-        return path -> new FileTerraformRepository(path.resolve(pathtoTerraformSpecs), "cloudflare-");
+    public static TerraformRepository.Factory getFactory(
+            @Value("${cloudflare.pathTFSpecs}") String pathtoTerraformSpecs,
+            @Value("${clouflare.filePrefix:cloudflare-instance-}")String filePrefix) {
+        return path -> new FileTerraformRepository(path.resolve(pathtoTerraformSpecs), filePrefix);
     }
 
 
@@ -83,8 +85,7 @@ public class CloudFlareBrokerApplication {
         //Add git processor: See GitTest
 
         DefaultBrokerSink sink=new DefaultBrokerSink();
-        ProcessorChain chain=new ProcessorChain(processors, sink);
-        return chain;
+        return new ProcessorChain(processors, sink);
     }
 
 

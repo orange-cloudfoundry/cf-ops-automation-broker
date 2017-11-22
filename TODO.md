@@ -7,6 +7,10 @@
 
 - refine status code in delete: return 410 GONE if service instance missing
 
+- tune the git commit message
+
+- prevent secrets in exceptions from being exposed to end-users: catch exceptions at 
+
 - add stronger input validation to terraform module.name and outputs (from hashicorp hcl specs) to detect more issues up front if OSB-injected ids are HCL unfriendly   
 
 

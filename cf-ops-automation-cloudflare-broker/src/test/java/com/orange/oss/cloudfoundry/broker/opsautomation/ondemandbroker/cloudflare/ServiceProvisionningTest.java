@@ -36,7 +36,7 @@ public class ServiceProvisionningTest {
     @Test
     public void supports_crud_lifecycle() {
         create_async_service_instance();
-        //polls_last_create_operation();
+        polls_last_create_operation();
         delete_a_service_instance();
     }
 
@@ -65,16 +65,13 @@ public class ServiceProvisionningTest {
     }
 
     public void polls_last_create_operation() {
-        GetLastServiceOperationRequest lastServiceOperationRequest =
-                new GetLastServiceOperationRequest(
-                        "111",
-                        "cloudflare-route",
-                        "cloudflare-default", "");
 
         given()
                 .basePath("/v2")
                 .contentType("application/json")
-                .body(lastServiceOperationRequest).
+                .param("operation", "2017-11-14T17:24:08.007Z")
+                .param("plan_id", "cloudflare-default")
+                .param("service_id", "cloudflare-route").
         when()
                 .get("/service_instances/{id}/last_operation", "111").
         then()

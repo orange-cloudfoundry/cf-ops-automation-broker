@@ -51,7 +51,7 @@ public class OpsAutomationServiceBrokerAutoConfigurationTests {
 		String spaceId = "spaceId";
 		String orgId = "orgId";
 		CreateServiceInstanceRequest req = new CreateServiceInstanceRequest(serviceDefId, planId,
-				orgId, spaceId);
+				orgId, spaceId, new HashMap<>());
 		CreateServiceInstanceResponse si = this.service.createServiceInstance(req);
 
 		String appGuid="appGuid";

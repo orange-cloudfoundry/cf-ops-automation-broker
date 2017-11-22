@@ -76,7 +76,8 @@ public class ServiceProvisionningTest {
                 .get("/service_instances/{id}/last_operation", "111").
         then()
                 .statusCode(HttpStatus.SC_OK)
-                .body(containsString("in progress"));
+                .body(containsString("failed"))
+                .body(containsString("timeout")); //hard coded start date way in the past
     }
 
     public void delete_a_service_instance() {

@@ -26,154 +26,170 @@ import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processor
  * Git Mediation :
  * clones repo
  * adds modified files
- * commit, rebase then push 
- * @author poblin-orange
+ * commit, rebase then push
  *
+ * @author poblin-orange
  */
 public class GitProcessor extends DefaultBrokerProcessor {
 
 
+    private static Logger logger = LoggerFactory.getLogger(GitProcessor.class.getName());
 
-	private static Logger logger = LoggerFactory.getLogger(GitProcessor.class.getName());
-
-	private String gitUser;
-	private String gitPassword;
-	private String gitUrl;
+    private String gitUser;
+    private String gitPassword;
+    private String gitUrl;
 
 
-	private Git git;
-	private UsernamePasswordCredentialsProvider cred;
-	private Path workDir;
+    private Git git;
+    private UsernamePasswordCredentialsProvider cred;
+    private Path workDir;
 
-	public GitProcessor(String gitUser, String gitPassword, String gitUrl) {
-		this.gitUser = gitUser;
-		this.gitPassword = gitPassword;
-		this.gitUrl = gitUrl;
-	}
+    public GitProcessor(String gitUser, String gitPassword, String gitUrl) {
+        this.gitUser = gitUser;
+        this.gitPassword = gitPassword;
+        this.gitUrl = gitUrl;
+    }
 
-	@Override
-	public void preCreate(Context ctx) {
-		this.cloneRepo(ctx);
-	}
+    @Override
+    public void preCreate(Context ctx) {
+        this.cloneRepo(ctx);
+    }
 
-	@Override
-	public void postCreate(Context ctx) {
-		this.commitPushRepo(ctx);
-	}
+    @Override
+    public void postCreate(Context ctx) {
+        this.commitPushRepo(ctx);
+    }
 
-	@Override
-	public void preBind(Context ctx) {
-		this.cloneRepo(ctx);	}
+    @Override
+    public void preGetLastCreateOperation(Context ctx) {
+        this.cloneRepo(ctx);
+    }
 
-	@Override
-	public void postBind(Context ctx) {
-		this.commitPushRepo(ctx);	}
+    @Override
+    public void postGetLastCreateOperation(Context ctx) {
+        this.commitPushRepo(ctx);
+    }
 
-	@Override
-	public void preDelete(Context ctx) {
-		this.cloneRepo(ctx);	}
+    @Override
+    public void preBind(Context ctx) {
+        this.cloneRepo(ctx);
+    }
 
-	@Override
-	public void postDelete(Context ctx) {
-		this.commitPushRepo(ctx);	}
+    @Override
+    public void postBind(Context ctx) {
+        this.commitPushRepo(ctx);
+    }
 
-	@Override
-	public void preUnBind(Context ctx) {
-		this.cloneRepo(ctx);	}
+    @Override
+    public void preDelete(Context ctx) {
+        this.cloneRepo(ctx);
+    }
 
-	@Override
-	public void postUnBind(Context ctx) {
-		this.commitPushRepo(ctx);	}
+    @Override
+    public void postDelete(Context ctx) {
+        this.commitPushRepo(ctx);
+    }
 
-	/**
-	 * local clone a repo
-	 * @param ctx exposing the workDir Path in context
-	 */
-	private void cloneRepo(Context ctx) {
-		try {
-			
-			logger.info("cloning repo");
-			this.cred = new UsernamePasswordCredentialsProvider(this.gitUser, this.gitPassword);
-		
+    @Override
+    public void preUnBind(Context ctx) {
+        this.cloneRepo(ctx);
+    }
 
-			String prefix = "broker-";
+    @Override
+    public void postUnBind(Context ctx) {
+        this.commitPushRepo(ctx);
+    }
 
-			workDir = Files.createTempDirectory(prefix);
+    /**
+     * local clone a repo
+     *
+     * @param ctx exposing the workDir Path in context
+     */
+    private void cloneRepo(Context ctx) {
+        try {
 
-			int timeoutSeconds = 60; //git timeout
-			CloneCommand cc = new CloneCommand()
-					.setCredentialsProvider(cred)
-					.setDirectory(workDir.toFile())
-					.setTimeout(timeoutSeconds)
-					.setURI(this.gitUrl);
+            logger.info("cloning repo");
+            this.cred = new UsernamePasswordCredentialsProvider(this.gitUser, this.gitPassword);
 
-			this.git = cc.call();
 
-			String branch = "master";
-			git.checkout().setName(branch).call();
-			git.submoduleInit().call();
-			git.submoduleUpdate().call();
+            String prefix = "broker-";
 
-			logger.info("git repo is ready at {}, on branch {} at {}", workDir, branch);
-			//push the work dir in invokation context
-			ctx.contextKeys.put(GitProcessorContext.workDir.toString(),workDir);
-			
-			
-		} catch (Exception e) {
-			logger.warn("caught " +e, e);
-			throw new IllegalArgumentException(e);
+            workDir = Files.createTempDirectory(prefix);
 
-		}
+            int timeoutSeconds = 60; //git timeout
+            CloneCommand cc = new CloneCommand()
+                    .setCredentialsProvider(cred)
+                    .setDirectory(workDir.toFile())
+                    .setTimeout(timeoutSeconds)
+                    .setURI(this.gitUrl);
 
-	}
+            this.git = cc.call();
 
-	/**
-	 * commit, rebase the push the modification
-	 */
-	private void commitPushRepo(Context ctx) {
-		try {
-			logger.info("commit push");
-			AddCommand addC = git.add().addFilepattern(".");
-			addC.call();
-			logger.info("added files");
+            String branch = "master";
+            git.checkout().setName(branch).call();
+            git.submoduleInit().call();
+            git.submoduleUpdate().call();
 
-			CommitCommand commitC = git.commit().setMessage("commit by ondemand broker");
-			commitC.call();
-			logger.info("commited files");
+            logger.info("git repo is ready at {}, on branch {} at {}", workDir, branch);
+            //push the work dir in invokation context
+            ctx.contextKeys.put(GitProcessorContext.workDir.toString(), workDir);
 
-			//TODO: rebase
-			
-			logger.info("pushing ...");
-			PushCommand pushCommand = git.push().setCredentialsProvider(cred);
-			pushCommand.call();
-			logger.info("pushed ...");
-			deleteRecursiveDir(workDir);
-		} catch (Exception e) {
-			logger.warn("caught " +e, e);
-			throw new IllegalArgumentException(e);
-		}
 
-	}
+        } catch (Exception e) {
+            logger.warn("caught " + e, e);
+            throw new IllegalArgumentException(e);
 
-	/**
-	 * recursive directory delete
-	 */
-	private void deleteRecursiveDir(Path workDir) throws IOException {
-		// cleaning workDir
-		Files.walkFileTree(workDir, new SimpleFileVisitor<Path>() {
-			@Override
-			public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-				Files.delete(file);
-				return FileVisitResult.CONTINUE;
-			}
+        }
 
-			@Override
-			public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
-				Files.delete(dir);
-				return FileVisitResult.CONTINUE;
-			}
-		});
-		logger.info("deleted {} work directory", workDir);
-	}
+    }
+
+    /**
+     * commit, rebase the push the modification
+     */
+    private void commitPushRepo(Context ctx) {
+        try {
+            logger.info("commit push");
+            AddCommand addC = git.add().addFilepattern(".");
+            addC.call();
+            logger.info("added files");
+
+            CommitCommand commitC = git.commit().setMessage("commit by ondemand broker");
+            commitC.call();
+            logger.info("commited files");
+
+            //TODO: rebase
+
+            logger.info("pushing ...");
+            PushCommand pushCommand = git.push().setCredentialsProvider(cred);
+            pushCommand.call();
+            logger.info("pushed ...");
+            deleteRecursiveDir(workDir);
+        } catch (Exception e) {
+            logger.warn("caught " + e, e);
+            throw new IllegalArgumentException(e);
+        }
+
+    }
+
+    /**
+     * recursive directory delete
+     */
+    private void deleteRecursiveDir(Path workDir) throws IOException {
+        // cleaning workDir
+        Files.walkFileTree(workDir, new SimpleFileVisitor<Path>() {
+            @Override
+            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                Files.delete(file);
+                return FileVisitResult.CONTINUE;
+            }
+
+            @Override
+            public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+                Files.delete(dir);
+                return FileVisitResult.CONTINUE;
+            }
+        });
+        logger.info("deleted {} work directory", workDir);
+    }
 
 }

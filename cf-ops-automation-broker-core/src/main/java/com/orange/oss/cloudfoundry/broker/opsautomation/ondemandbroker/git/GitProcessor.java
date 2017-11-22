@@ -189,7 +189,7 @@ public class GitProcessor extends DefaultBrokerProcessor {
                 return FileVisitResult.CONTINUE;
             }
         });
-        logger.info("deleted {} work directory", workDir);
+        logger.info("cleaned-up {} work directory", workDir);
     }
 
 }

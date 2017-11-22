@@ -6,14 +6,15 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.Collections;
+import java.util.Set;
 
-import org.eclipse.jgit.api.AddCommand;
-import org.eclipse.jgit.api.CloneCommand;
-import org.eclipse.jgit.api.CommitCommand;
-import org.eclipse.jgit.api.Git;
-import org.eclipse.jgit.api.PushCommand;
+import org.apache.commons.lang.builder.ToStringBuilder;
+import org.eclipse.jgit.api.*;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.NoFilepatternException;
+import org.eclipse.jgit.revwalk.RevCommit;
+import org.eclipse.jgit.transport.PushResult;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -149,20 +150,40 @@ public class GitProcessor extends DefaultBrokerProcessor {
     private void commitPushRepo(Context ctx) {
         try {
             logger.info("commit push");
+
+
             AddCommand addC = git.add().addFilepattern(".");
             addC.call();
-            logger.info("added files");
+
+            Status status = git.status().call();
+            Set<String> missing = status.getMissing();
+            for (String f : missing) {
+                logger.info("staging as deleted: " + f);
+                git.rm().addFilepattern(f).call();
+            }
+            status = git.status().call();
+            logger.info("pending commit: " +  status.getUncommittedChanges() + ". With deleted:" + status.getRemoved() + " added:" + status.getAdded() + " changed:" + status.getChanged());
+
 
             CommitCommand commitC = git.commit().setMessage("commit by ondemand broker");
-            commitC.call();
-            logger.info("commited files");
+            RevCommit revCommit = commitC.call();
+            logger.info("commited files in " + revCommit.toString());
 
             //TODO: rebase
 
             logger.info("pushing ...");
             PushCommand pushCommand = git.push().setCredentialsProvider(cred);
-            pushCommand.call();
+            Iterable<PushResult> pushResults = pushCommand.call();
             logger.info("pushed ...");
+            if (logger.isDebugEnabled()) {
+                StringBuilder sb = new StringBuilder();
+                for (PushResult pushResult : pushResults) {
+                    sb.append(ToStringBuilder.reflectionToString(pushResult));
+                    sb.append(" ");
+                }
+                logger.debug("push details"+ sb.toString());
+
+            }
             deleteRecursiveDir(workDir);
         } catch (Exception e) {
             logger.warn("caught " + e, e);
@@ -192,4 +213,8 @@ public class GitProcessor extends DefaultBrokerProcessor {
         logger.info("cleaned-up {} work directory", workDir);
     }
 
+    //support unit tests
+    Git getGit() {
+        return git;
+    }
 }

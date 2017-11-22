@@ -3,8 +3,6 @@
 
 - handle spaceid and orgguid being provided in OSB context
 
-- fix MissingServletRequestParameterException: Required String parameter 'service_id' is not present
-
 - Application & Integration test:
    - support/test catalog injected from env var
 

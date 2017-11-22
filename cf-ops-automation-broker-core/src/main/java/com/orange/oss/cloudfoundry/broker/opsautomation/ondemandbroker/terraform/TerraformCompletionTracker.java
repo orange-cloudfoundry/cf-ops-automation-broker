@@ -8,6 +8,7 @@ import org.springframework.cloud.servicebroker.model.GetLastServiceOperationResp
 import org.springframework.cloud.servicebroker.model.OperationState;
 
 import java.io.*;
+import java.nio.file.Path;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -19,6 +20,7 @@ import java.util.Map;
 public class TerraformCompletionTracker {
 
     private static Logger logger = LoggerFactory.getLogger(TerraformCompletionTracker.class.getName());
+    private final String pathToTfState;
 
 
     private Gson gson;
@@ -26,9 +28,10 @@ public class TerraformCompletionTracker {
     private Clock clock;
     private int maxExecutionDurationSeconds;
 
-    public TerraformCompletionTracker(Clock clock, int maxExecutionDurationSeconds) {
+    public TerraformCompletionTracker(Clock clock, int maxExecutionDurationSeconds, String pathToTfState) {
         this.clock = clock;
         this.maxExecutionDurationSeconds = maxExecutionDurationSeconds;
+        this.pathToTfState = pathToTfState;
 
         gson = new GsonBuilder().registerTypeAdapter(TerraformState.class, new TerraformStateGsonAdapter()).create();
     }
@@ -38,9 +41,9 @@ public class TerraformCompletionTracker {
         return now.toString();
     }
 
-    public GetLastServiceOperationResponse getModuleExecStatus(File tfStateFile, String moduleName, String lastOperationState) {
+    public GetLastServiceOperationResponse getModuleExecStatus(Path gitWorkDir, String moduleName, String lastOperationState) {
+        File tfStateFile = gitWorkDir.resolve(pathToTfState).toFile();
 
-        GetLastServiceOperationResponse response = new GetLastServiceOperationResponse();
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(tfStateFile)))) {
             TerraformState tfState = gson.fromJson(reader, TerraformState.class);
 

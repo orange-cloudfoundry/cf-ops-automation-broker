@@ -67,16 +67,17 @@ public class CloudFlareProcessor extends DefaultBrokerProcessor {
 
     @Override
     public void preGetLastCreateOperation(Context ctx) {
-        GetLastServiceOperationRequest operationRequest = (GetLastServiceOperationRequest) ctx.contextKeys.get(ProcessorChainServiceInstanceService.GET_LAST_SERVICE_OPERATION_REQUEST);
+        GetLastServiceOperationRequest operationRequest = (GetLastServiceOperationRequest)
+                ctx.contextKeys.get(ProcessorChainServiceInstanceService.GET_LAST_SERVICE_OPERATION_REQUEST);
 
-        Path gitWorkDir = getGitWorkDir(ctx);
-        File tfStateFile = gitWorkDir.resolve("terraform.tfstate").toFile();
-        GetLastServiceOperationResponse operationResponse = completionTracker.getModuleExecStatus(tfStateFile, operationRequest.getServiceInstanceId(), operationRequest.getOperation());
+        GetLastServiceOperationResponse operationResponse =
+                completionTracker.getModuleExecStatus(getGitWorkDir(ctx), operationRequest.getServiceInstanceId(), operationRequest.getOperation());
 
         ctx.contextKeys.put(ProcessorChainServiceInstanceService.GET_LAST_SERVICE_OPERATION_RESPONSE, operationResponse);
     }
 
     public ImmutableTerraformModule constructModule(CreateServiceInstanceRequest request) {
+        //noinspection deprecation
         return ImmutableTerraformModule.builder()
                 .from(cloudFlareConfig.getTemplate())
                 .moduleName(request.getServiceInstanceId())

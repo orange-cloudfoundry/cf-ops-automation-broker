@@ -44,8 +44,11 @@ public class CloudFlareBrokerApplication {
     }
 
     @Bean
-    public TerraformCompletionTracker terraformCompletionTracker(CloudFlareConfig cloudFlareConfig, Clock clock) {
-        return new TerraformCompletionTracker(clock, cloudFlareConfig.getMaxExecutionDurationSeconds());
+    public TerraformCompletionTracker terraformCompletionTracker(
+            CloudFlareConfig cloudFlareConfig,
+            Clock clock,
+            @Value("${cloudflare.pathToTfState}") String pathToTfState) {
+        return new TerraformCompletionTracker(clock, cloudFlareConfig.getMaxExecutionDurationSeconds(), pathToTfState);
     }
 
     @Bean

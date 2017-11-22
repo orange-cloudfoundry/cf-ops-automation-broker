@@ -12,7 +12,6 @@ import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.springframework.cloud.servicebroker.model.*;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
@@ -203,7 +202,7 @@ public class CloudFlareProcessorTest {
         String tfStateFileInClasspath = "/terraform/terraform-without-successfull-module-exec.tfstate";
         //given a configured timeout
         Clock clock = Clock.fixed(Instant.ofEpochMilli(1510680248007L), ZoneId.of("Europe/Paris"));
-        TerraformCompletionTracker tracker = new TerraformCompletionTracker(clock, 120);
+        TerraformCompletionTracker tracker = new TerraformCompletionTracker(clock, 120, "terraform.tfstate");
 
         cloudFlareProcessor = new CloudFlareProcessor(cloudFlareConfig, aSuffixValidator(), getRepositoryFactory(), tracker);
 
@@ -246,7 +245,7 @@ public class CloudFlareProcessorTest {
         GetLastServiceOperationResponse expectedResponse = new GetLastServiceOperationResponse();
         expectedResponse.withDescription("module exec in progress");
         expectedResponse.withOperationState(IN_PROGRESS);
-        when(tracker.getModuleExecStatus(any(File.class), eq("serviceinstance_guid"), eq("2017-11-14T17:24:08.007Z"))).thenReturn(expectedResponse);
+        when(tracker.getModuleExecStatus(any(Path.class), eq("serviceinstance_guid"), eq("2017-11-14T17:24:08.007Z"))).thenReturn(expectedResponse);
 
         cloudFlareProcessor = new CloudFlareProcessor(aConfig(), aSuffixValidator(), getRepositoryFactory(), tracker);
         //given an async polling from CC
@@ -309,7 +308,7 @@ public class CloudFlareProcessorTest {
         expectedResponse.withDescription("module exec in progress");
         expectedResponse.withOperationState(IN_PROGRESS);
         TerraformCompletionTracker tracker = Mockito.mock(TerraformCompletionTracker.class);
-        when(tracker.getModuleExecStatus(any(File.class), anyString(), anyString())).thenReturn(expectedResponse);
+        when(tracker.getModuleExecStatus(any(Path.class), anyString(), anyString())).thenReturn(expectedResponse);
         when(tracker.getCurrentDate()).thenReturn("2017-11-14T17:24:08.007Z");
         return tracker;
     }

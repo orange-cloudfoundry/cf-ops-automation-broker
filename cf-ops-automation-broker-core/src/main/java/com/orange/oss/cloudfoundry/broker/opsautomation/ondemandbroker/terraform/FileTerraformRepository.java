@@ -87,6 +87,8 @@ public class FileTerraformRepository implements TerraformRepository {
                 logger.error("Unable to delete file at: " + path, e);
                 throw new RuntimeException("unable to delete module", e);
             }
+        } else {
+            logger.error("asked to delete missing file {}" , moduleFile);
         }
     }
 

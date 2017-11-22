@@ -1,14 +1,19 @@
 
 # Next cloudflare
 
-- handle spaceid and orgguid being provided in OSB context
+- implement async delete 
+
+- simplify delete: TerraformRepository.deleteById()
+
+- handle spaceid and orgguid being provided in OSB context (to plan for query params depreciation)
 
 - Application & Integration test:
    - support/test catalog injected from env var
 
 - refine status code in delete: return 410 GONE if service instance missing
 
-- tune the git commit message
+- tune git processor logs to display the commit id
+- tune the git commit message to include author
 
 - prevent secrets in exceptions from being exposed to end-users: catch exceptions at 
 

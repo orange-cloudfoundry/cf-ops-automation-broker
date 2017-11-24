@@ -1,5 +1,6 @@
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git;
 
+import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
@@ -13,6 +14,7 @@ import org.apache.commons.lang.builder.ToStringBuilder;
 import org.eclipse.jgit.api.*;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.NoFilepatternException;
+import org.eclipse.jgit.lib.Config;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.transport.PushResult;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
@@ -39,16 +41,20 @@ public class GitProcessor extends DefaultBrokerProcessor {
     private String gitUser;
     private String gitPassword;
     private String gitUrl;
+    private String committerName;
+    private String committerEmail;
 
 
     private Git git;
     private UsernamePasswordCredentialsProvider cred;
     private Path workDir;
 
-    public GitProcessor(String gitUser, String gitPassword, String gitUrl) {
+    public GitProcessor(String gitUser, String gitPassword, String gitUrl, String committerName, String committerEmail) {
         this.gitUser = gitUser;
         this.gitPassword = gitPassword;
         this.gitUrl = gitUrl;
+        this.committerName = committerName;
+        this.committerEmail = committerEmail;
     }
 
     @Override
@@ -126,6 +132,8 @@ public class GitProcessor extends DefaultBrokerProcessor {
 
             this.git = cc.call();
 
+            setUserConfig();
+
             String branch = "master";
             git.checkout().setName(branch).call();
             git.submoduleInit().call();
@@ -142,6 +150,16 @@ public class GitProcessor extends DefaultBrokerProcessor {
 
         }
 
+    }
+
+    protected void setUserConfig() {
+        Config config = this.git.getRepository().getConfig();
+        if (this.committerName != null) {
+            config.setString("user", null, "name", this.committerName);
+        }
+        if (this.committerEmail != null) {
+            config.setString("user", null, "email", this.committerEmail);
+        }
     }
 
     /**

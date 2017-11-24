@@ -15,6 +15,11 @@ public class GitTestProperties {
 	@Value("${gitUrl}")	
 	private String gitUrl;
 
+	@Value("${committerName:coab}")
+	private String committerName;
+	@Value("${committerEmail:coab@orange.com}")
+	private String committerEmail;
+
 
 	public String getGitUser() {
 		return gitUser;
@@ -37,5 +42,12 @@ public class GitTestProperties {
 		this.gitUrl = gitUrl;
 	}
 
-	
+
+	public String committerName() {
+		return committerName;
+	}
+
+	public String committerEmail() {
+		return committerEmail;
+	}
 }

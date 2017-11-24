@@ -32,10 +32,14 @@ public class CloudFlareBrokerApplication {
 
 
     @Bean
-    public CloudFlareConfig cloudFlareConfig(@Value("${cloudflare.routeSuffix}") String routeSuffix, TerraformModule template) {
+    public CloudFlareConfig cloudFlareConfig(@Value("${cloudflare.routeSuffix}") String routeSuffix,
+                                             @Value("${cloudflare.maxExecutionDurationSeconds:600}") int maxExecutionDurationSeconds,
+                                             TerraformModule template) {
         return ImmutableCloudFlareConfig.builder()
                 .routeSuffix(routeSuffix)
-                .template(template).build();
+                .template(template)
+                .maxExecutionDurationSeconds(maxExecutionDurationSeconds)
+                .build();
     }
 
     @Bean
@@ -54,7 +58,7 @@ public class CloudFlareBrokerApplication {
     @Bean
     public static TerraformRepository.Factory getFactory(
             @Value("${cloudflare.pathTFSpecs}") String pathtoTerraformSpecs,
-            @Value("${clouflare.filePrefix:cloudflare-instance-}")String filePrefix) {
+            @Value("${clouflare.filePrefix:cloudflare-instance-}") String filePrefix) {
         return path -> new FileTerraformRepository(path.resolve(pathtoTerraformSpecs), filePrefix);
     }
 
@@ -73,13 +77,15 @@ public class CloudFlareBrokerApplication {
     public BrokerProcessor gitProcessor(
             @Value("${git.user}") String gitUser,
             @Value("${git.password}") String gitPassword,
-            @Value("${git.url}") String gitUrl) {
-        return new GitProcessor(gitUser, gitPassword, gitUrl);
+            @Value("${git.url}") String gitUrl,
+            @Value("${git.committerName:@null}") String committerName,
+            @Value("${git.committerEmail:@null}") String committerEmail) {
+        return new GitProcessor(gitUser, gitPassword, gitUrl, committerName, committerEmail);
     }
 
     @Bean
     public ProcessorChain processorChain(BrokerProcessor cloudFlareProcessor, BrokerProcessor gitProcessor) {
-        List<BrokerProcessor> processors= new ArrayList<>();
+        List<BrokerProcessor> processors = new ArrayList<>();
 
 
         processors.add(gitProcessor); //needs to be 1st
@@ -87,7 +93,7 @@ public class CloudFlareBrokerApplication {
 
         //Add git processor: See GitTest
 
-        DefaultBrokerSink sink=new DefaultBrokerSink();
+        DefaultBrokerSink sink = new DefaultBrokerSink();
         return new ProcessorChain(processors, sink);
     }
 

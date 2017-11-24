@@ -33,7 +33,7 @@ public class GlobalBrokerProcessorChainIT {
 	@Test
 	public void testCompositeProcessorChain() {
 		
-		GitProcessor processor=new GitProcessor(gitProperties.getGitUser(), gitProperties.getGitPassword(), gitProperties.getGitUrl());
+		GitProcessor processor=new GitProcessor(gitProperties.getGitUser(), gitProperties.getGitPassword(), gitProperties.getGitUrl(), gitProperties.committerName(), gitProperties.committerEmail());
 		List<BrokerProcessor> processors= new ArrayList<>();
 		processors.add(processor);
 		//TODO: add credhub password generation

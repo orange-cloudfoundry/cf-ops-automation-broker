@@ -3,9 +3,7 @@
 
 
 - integration tests for jgit & related fixes 
-    - tune git processor logs to display the commit id
-    - tune the git commit message to include author
-    - tune the git user name & email (vcap)
+    - tune the git commit message to service details
     - properly handle git push errors: try rebasing
 
 - implement cf-ops-automation unit tests 

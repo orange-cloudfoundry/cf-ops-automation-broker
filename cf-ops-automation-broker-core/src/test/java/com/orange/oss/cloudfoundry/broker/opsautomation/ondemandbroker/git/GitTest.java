@@ -27,7 +27,7 @@ public class GitTest {
 	@Test
 	public void testGitProcessor() {
 		
-		GitProcessor processor=new GitProcessor(gitProperties.getGitUser(), gitProperties.getGitPassword(), gitProperties.getGitUrl());
+		GitProcessor processor=new GitProcessor(gitProperties.getGitUser(), gitProperties.getGitPassword(), gitProperties.getGitUrl(), "committerName", "committerEmail");
 		List<BrokerProcessor> processors= new ArrayList<>();
 		processors.add(processor);
 		ProcessorChain chain=new ProcessorChain(processors, new DefaultBrokerSink());

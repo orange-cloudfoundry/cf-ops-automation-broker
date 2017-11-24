@@ -2,6 +2,7 @@ package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git;
 
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.Context;
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.lib.PersonIdent;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -37,7 +38,7 @@ public class GitProcessorTest {
     @Test
     public void noop_when_no_changes_made() throws GitAPIException {
         //given a clone of an empty repo
-        GitProcessor processor=new GitProcessor("gituser", "gitsecret", GIT_URL);
+        GitProcessor processor = new GitProcessor("gituser", "gitsecret", GIT_URL, "committerName", "committer@address.org");
         Context ctx = new Context();
         processor.cloneRepo(ctx);
 
@@ -54,27 +55,58 @@ public class GitProcessorTest {
         assertThat(countIterables(resultingCommits)).isEqualTo(countIterables(initialCommits));
     }
 
-    public int countIterables(Iterable<RevCommit> resultingCommits) {
-        int size = 0;
-        for (RevCommit resultingCommit : resultingCommits) {
-            size++;
-        }
-        return size;
-    }
-
     @Test
-	public void adds_and_deletes_files() throws GitAPIException, IOException {
-        //given a clone of an empty repo
-		GitProcessor processor=new GitProcessor("gituser", "gitsecret", GIT_URL);
+    public void configures_user_name_and_email_in_commits() throws GitAPIException, IOException {
+        //given explicit user config
+        GitProcessor processor = new GitProcessor("gituser", "gitsecret", GIT_URL, "committerName", "committer@address.org");
         Context ctx = new Context();
         processor.cloneRepo(ctx);
 
         //when adding files
         //and asking to commit and push
-        Path workDir = (Path) ctx.contextKeys.get(GitProcessorContext.workDir.toString());
-        try(FileWriter writer = new FileWriter(workDir.resolve("afile.txt").toFile())){
-            writer.append("hello.txt");
-        }
+        addAFile(ctx);
+        processor.commitPushRepo(new Context());
+
+        //then commit have proper identity
+        processor.cloneRepo(ctx);
+        Iterable<RevCommit> resultingCommits = processor.getGit().log().call();
+        RevCommit commit = resultingCommits.iterator().next();
+        PersonIdent committerIdent = commit.getCommitterIdent();
+        assertThat(committerIdent.getName()).isEqualTo("committerName");
+        assertThat(committerIdent.getEmailAddress()).isEqualTo("committer@address.org");
+        PersonIdent authorIdent = commit.getAuthorIdent();
+        assertThat(authorIdent.getName()).isEqualTo("committerName");
+        assertThat(commit.getAuthorIdent().getEmailAddress()).isEqualTo("committer@address.org");
+
+    }
+
+    @Test
+    public void supports_default_user_name_and_emails_config() throws GitAPIException, IOException {
+        //given no user config specified
+        GitProcessor processor = new GitProcessor("gituser", "gitsecret", GIT_URL, null, null);
+        Context ctx = new Context();
+        processor.cloneRepo(ctx);
+
+        //when adding files
+        //and asking to commit and push
+        addAFile(ctx);
+        processor.commitPushRepo(new Context());
+
+        //then commit does not fail
+        //we don't asser the content since this depends on the local execution environment
+    }
+
+
+    @Test
+    public void adds_and_deletes_files() throws GitAPIException, IOException {
+        //given a clone of an empty repo
+        GitProcessor processor = new GitProcessor("gituser", "gitsecret", GIT_URL, "committerName", "committerEmail");
+        Context ctx = new Context();
+        processor.cloneRepo(ctx);
+
+        //when adding files
+        //and asking to commit and push
+        addAFile(ctx);
         processor.commitPushRepo(new Context());
 
         //then file should be persisted
@@ -82,19 +114,34 @@ public class GitProcessorTest {
         File secondCloneFile = secondClone.resolve("afile.txt").toFile();
         assertThat(secondCloneFile).exists();
 
-		//when deleting file
+        //when deleting file
         assertThat(secondCloneFile.delete()).isTrue();
         //and committing
         processor.commitPushRepo(new Context());
 
         //then file should be removed from repo
-		Path thirdClone = cloneRepo(processor);
-		File thirdCloneFile = thirdClone.resolve("afile.txt").toFile();
-		assertThat(thirdCloneFile).doesNotExist();
-	}
+        Path thirdClone = cloneRepo(processor);
+        File thirdCloneFile = thirdClone.resolve("afile.txt").toFile();
+        assertThat(thirdCloneFile).doesNotExist();
+    }
+
+    public void addAFile(Context ctx) throws IOException {
+        Path workDir = (Path) ctx.contextKeys.get(GitProcessorContext.workDir.toString());
+        try (FileWriter writer = new FileWriter(workDir.resolve("afile.txt").toFile())) {
+            writer.append("hello.txt");
+        }
+    }
+
+    public int countIterables(Iterable<RevCommit> resultingCommits) {
+        int size = 0;
+        for (RevCommit ignored : resultingCommits) {
+            size++;
+        }
+        return size;
+    }
 
     public Path cloneRepo(GitProcessor processor) {
-        Context ctx=new Context();
+        Context ctx = new Context();
         processor.preCreate(ctx);
 
         return (Path) ctx.contextKeys.get(GitProcessorContext.workDir.toString());

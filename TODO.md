@@ -3,7 +3,6 @@
 
 
 - integration tests for jgit & related fixes 
-    - fix bug: unexpectedly add commits when no changes  
     - tune git processor logs to display the commit id
     - tune the git commit message to include author
     - tune the git user name & email (vcap)

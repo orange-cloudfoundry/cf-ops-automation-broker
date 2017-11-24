@@ -2,6 +2,7 @@ package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git;
 
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.Context;
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.revwalk.RevCommit;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -34,11 +35,39 @@ public class GitProcessorTest {
     }
 
     @Test
+    public void noop_when_no_changes_made() throws GitAPIException {
+        //given a clone of an empty repo
+        GitProcessor processor=new GitProcessor("gituser", "gitsecret", GIT_URL);
+        Context ctx = new Context();
+        processor.cloneRepo(ctx);
+
+        Iterable<RevCommit> initialCommits = processor.getGit().log().call();
+
+        //when no changes are made
+        processor.commitPushRepo(new Context());
+
+
+        //then a new clone does not contain new commits
+        processor.cloneRepo(ctx);
+        Iterable<RevCommit> resultingCommits = processor.getGit().log().call();
+
+        assertThat(countIterables(resultingCommits)).isEqualTo(countIterables(initialCommits));
+    }
+
+    public int countIterables(Iterable<RevCommit> resultingCommits) {
+        int size = 0;
+        for (RevCommit resultingCommit : resultingCommits) {
+            size++;
+        }
+        return size;
+    }
+
+    @Test
 	public void adds_and_deletes_files() throws GitAPIException, IOException {
         //given a clone of an empty repo
 		GitProcessor processor=new GitProcessor("gituser", "gitsecret", GIT_URL);
         Context ctx = new Context();
-        processor.preCreate(ctx);
+        processor.cloneRepo(ctx);
 
         //when adding files
         //and asking to commit and push
@@ -46,7 +75,7 @@ public class GitProcessorTest {
         try(FileWriter writer = new FileWriter(workDir.resolve("afile.txt").toFile())){
             writer.append("hello.txt");
         }
-        processor.postCreate(new Context());
+        processor.commitPushRepo(new Context());
 
         //then file should be persisted
         Path secondClone = cloneRepo(processor);
@@ -56,9 +85,9 @@ public class GitProcessorTest {
 		//when deleting file
         assertThat(secondCloneFile.delete()).isTrue();
         //and committing
-		processor.postCreate(new Context());
+        processor.commitPushRepo(new Context());
 
-		//then file should be removed from repo
+        //then file should be removed from repo
 		Path thirdClone = cloneRepo(processor);
 		File thirdCloneFile = thirdClone.resolve("afile.txt").toFile();
 		assertThat(thirdCloneFile).doesNotExist();

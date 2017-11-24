@@ -162,28 +162,32 @@ public class GitProcessor extends DefaultBrokerProcessor {
                 git.rm().addFilepattern(f).call();
             }
             status = git.status().call();
-            logger.info("pending commit: " +  status.getUncommittedChanges() + ". With deleted:" + status.getRemoved() + " added:" + status.getAdded() + " changed:" + status.getChanged());
+            if (status.hasUncommittedChanges()) {
+                logger.info("pending commit: " +  status.getUncommittedChanges() + ". With deleted:" + status.getRemoved() + " added:" + status.getAdded() + " changed:" + status.getChanged());
+                CommitCommand commitC = git.commit().setMessage("commit by ondemand broker");
 
+                RevCommit revCommit = commitC.call();
+                logger.info("commited files in " + revCommit.toString());
 
-            CommitCommand commitC = git.commit().setMessage("commit by ondemand broker");
-            RevCommit revCommit = commitC.call();
-            logger.info("commited files in " + revCommit.toString());
+                //TODO: handle conflicts and automatically perform a git rebase
 
-            //TODO: rebase
+                logger.info("pushing ...");
+                PushCommand pushCommand = git.push().setCredentialsProvider(cred);
+                Iterable<PushResult> pushResults = pushCommand.call();
+                logger.info("pushed ...");
+                if (logger.isDebugEnabled()) {
+                    StringBuilder sb = new StringBuilder();
+                    for (PushResult pushResult : pushResults) {
+                        sb.append(ToStringBuilder.reflectionToString(pushResult));
+                        sb.append(" ");
+                    }
+                    logger.debug("push details: "+ sb.toString());
 
-            logger.info("pushing ...");
-            PushCommand pushCommand = git.push().setCredentialsProvider(cred);
-            Iterable<PushResult> pushResults = pushCommand.call();
-            logger.info("pushed ...");
-            if (logger.isDebugEnabled()) {
-                StringBuilder sb = new StringBuilder();
-                for (PushResult pushResult : pushResults) {
-                    sb.append(ToStringBuilder.reflectionToString(pushResult));
-                    sb.append(" ");
                 }
-                logger.debug("push details: "+ sb.toString());
-
+            } else {
+                logger.info("No changes to commit, skipping push");
             }
+
             deleteRecursiveDir(workDir);
         } catch (Exception e) {
             logger.warn("caught " + e, e);

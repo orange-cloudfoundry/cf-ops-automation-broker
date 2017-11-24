@@ -236,6 +236,9 @@ public class CloudFlareProcessorTest {
         assertThat(serviceInstanceResponse.isAsync()).isTrue();
         // with a timestamp used to timeout on too long responses
         assertThat(serviceInstanceResponse.getOperation()).isEqualTo("2017-11-14T17:24:08.007Z");
+        // and with a proper commit message
+        String customMessage = (String) context.contextKeys.get(GitProcessorContext.commitMessage.toString());
+        assertThat(customMessage).isEqualTo("cloudflare broker: create instance id=serviceinstance_guid with route-prefix=avalidroute");
     }
 
     @Test
@@ -298,9 +301,10 @@ public class CloudFlareProcessorTest {
         //then it deletes the terraform module from the repository
         verify(terraformRepository).delete(aTfModule);
 
-        /*and the delete response is returned*/
+        // and the delete response is returned
         DeleteServiceInstanceResponse response = (DeleteServiceInstanceResponse) context.contextKeys.get(ProcessorChainServiceInstanceService.DELETE_SERVICE_INSTANCE_RESPONSE);
         assertThat(response.isAsync()).isFalse();
+        // with a proper commit message
         String customMessage = (String) context.contextKeys.get(GitProcessorContext.commitMessage.toString());
         assertThat(customMessage).isEqualTo("cloudflare broker: delete instance id=instance_id with route-prefix=avalidroute");
     }

@@ -41,9 +41,9 @@ public class CloudFlareProcessor extends DefaultBrokerProcessor {
     }
 
     @Override
-    public void preCreate(Context ctx) {
-        //Fetch requested routePrefix from Service Instance
-        Map<String, Object> contextKeys = ctx.contextKeys;
+    public void preCreate(Context context) {
+        //Fetch requested routePrefix and id from Service Instance
+        Map<String, Object> contextKeys = context.contextKeys;
         CreateServiceInstanceRequest request= (CreateServiceInstanceRequest) contextKeys.get(ProcessorChainServiceInstanceService.CREATE_SERVICE_INSTANCE_REQUEST);
         logger.debug("processing request " + request);
 
@@ -53,7 +53,7 @@ public class CloudFlareProcessor extends DefaultBrokerProcessor {
 
 
         ImmutableTerraformModule terraformModule = constructModule(request);
-        TerraformRepository repository = getRepository(ctx); // lookup git clone for request, might throw runtime exception
+        TerraformRepository repository = getRepository(context); // lookup git clone for request, might throw runtime exception
         checkForConflictingModuleName(terraformModule, repository);
         checkForConflictingProperty(terraformModule, ROUTE_PREFIX, routePrefix, repository);
 
@@ -62,7 +62,8 @@ public class CloudFlareProcessor extends DefaultBrokerProcessor {
         CreateServiceInstanceResponse response = new CreateServiceInstanceResponse();
         response.withAsync(true);
         response.withOperation(completionTracker.getCurrentDate());
-        ctx.contextKeys.put(ProcessorChainServiceInstanceService.CREATE_SERVICE_INSTANCE_RESPONSE, response);
+        context.contextKeys.put(ProcessorChainServiceInstanceService.CREATE_SERVICE_INSTANCE_RESPONSE, response);
+        insertCommitMsg(context, "create", request.getServiceInstanceId(), terraformModule);
     }
 
     @Override
@@ -112,11 +113,15 @@ public class CloudFlareProcessor extends DefaultBrokerProcessor {
 
         DeleteServiceInstanceResponse response = new DeleteServiceInstanceResponse();
         context.contextKeys.put(ProcessorChainServiceInstanceService.DELETE_SERVICE_INSTANCE_RESPONSE, response);
+        insertCommitMsg(context, "delete", serviceInstanceId, terraformModule);
+    }
+
+    public void insertCommitMsg(Context context, String action, String serviceInstanceId, TerraformModule terraformModule) {
         String routePrefix = null;
         if (terraformModule != null) {
             routePrefix = terraformModule.getProperties().get(ROUTE_PREFIX);
         }
-        String msg = getBrokerNameForCommitLog() + ": delete instance id=" + serviceInstanceId + " with " + ROUTE_PREFIX+"="+ routePrefix;
+        String msg = getBrokerNameForCommitLog() + ": "+ action + " instance id=" + serviceInstanceId + " with " + ROUTE_PREFIX+"="+ routePrefix;
         context.contextKeys.put(GitProcessorContext.commitMessage.toString(), msg);
     }
 

@@ -1,8 +1,6 @@
 
 # Next cloudflare
 
-- customize create-service instance commit msg
-
 - integration tests for jgit & related fixes 
     - properly handle git push errors: try rebasing
 

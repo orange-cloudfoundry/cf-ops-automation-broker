@@ -3,7 +3,6 @@
 
 
 - integration tests for jgit & related fixes 
-    - tune the git commit message to service details
     - properly handle git push errors: try rebasing
 
 - implement cf-ops-automation unit tests 

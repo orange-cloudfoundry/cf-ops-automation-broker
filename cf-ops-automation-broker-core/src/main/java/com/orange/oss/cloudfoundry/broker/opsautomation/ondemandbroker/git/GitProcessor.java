@@ -1,28 +1,21 @@
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git;
 
-import java.io.FileWriter;
-import java.io.IOException;
-import java.nio.file.FileVisitResult;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.SimpleFileVisitor;
-import java.nio.file.attribute.BasicFileAttributes;
-import java.util.Collections;
-import java.util.Set;
-
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.Context;
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.DefaultBrokerProcessor;
 import org.apache.commons.lang.builder.ToStringBuilder;
 import org.eclipse.jgit.api.*;
-import org.eclipse.jgit.api.errors.GitAPIException;
-import org.eclipse.jgit.api.errors.NoFilepatternException;
 import org.eclipse.jgit.lib.Config;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.transport.PushResult;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.util.FileSystemUtils;
 
-import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.Context;
-import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.DefaultBrokerProcessor;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Set;
 
 
 /**
@@ -64,7 +57,7 @@ public class GitProcessor extends DefaultBrokerProcessor {
 
     @Override
     public void postCreate(Context ctx) {
-        this.commitPushRepo(ctx);
+        this.commitPushRepo(ctx, true);
     }
 
     @Override
@@ -74,7 +67,7 @@ public class GitProcessor extends DefaultBrokerProcessor {
 
     @Override
     public void postGetLastCreateOperation(Context ctx) {
-        this.commitPushRepo(ctx);
+        this.commitPushRepo(ctx, true);
     }
 
     @Override
@@ -84,7 +77,7 @@ public class GitProcessor extends DefaultBrokerProcessor {
 
     @Override
     public void postBind(Context ctx) {
-        this.commitPushRepo(ctx);
+        this.commitPushRepo(ctx, true);
     }
 
     @Override
@@ -94,7 +87,7 @@ public class GitProcessor extends DefaultBrokerProcessor {
 
     @Override
     public void postDelete(Context ctx) {
-        this.commitPushRepo(ctx);
+        this.commitPushRepo(ctx, true);
     }
 
     @Override
@@ -104,7 +97,7 @@ public class GitProcessor extends DefaultBrokerProcessor {
 
     @Override
     public void postUnBind(Context ctx) {
-        this.commitPushRepo(ctx);
+        this.commitPushRepo(ctx, true);
     }
 
     /**
@@ -165,7 +158,7 @@ public class GitProcessor extends DefaultBrokerProcessor {
     /**
      * commit, rebase the push the modification
      */
-    void commitPushRepo(Context ctx) {
+    void commitPushRepo(Context ctx, boolean deleteRepo) {
         try {
             logger.info("commit push");
 
@@ -182,7 +175,7 @@ public class GitProcessor extends DefaultBrokerProcessor {
             status = git.status().call();
             if (status.hasUncommittedChanges()) {
                 logger.info("pending commit: " +  status.getUncommittedChanges() + ". With deleted:" + status.getRemoved() + " added:" + status.getAdded() + " changed:" + status.getChanged());
-                CommitCommand commitC = git.commit().setMessage("commit by ondemand broker");
+                CommitCommand commitC = git.commit().setMessage(getCommitMessage(ctx));
 
                 RevCommit revCommit = commitC.call();
                 logger.info("commited files in " + revCommit.toString());
@@ -206,7 +199,9 @@ public class GitProcessor extends DefaultBrokerProcessor {
                 logger.info("No changes to commit, skipping push");
             }
 
-            deleteRecursiveDir(workDir);
+            if (deleteRepo) {
+                deleteWorkingDir();
+            }
         } catch (Exception e) {
             logger.warn("caught " + e, e);
             throw new IllegalArgumentException(e);
@@ -214,25 +209,22 @@ public class GitProcessor extends DefaultBrokerProcessor {
 
     }
 
-    /**
-     * recursive directory delete
-     */
-    public static void deleteRecursiveDir(Path workDir) throws IOException {
-        // cleaning workDir
-        Files.walkFileTree(workDir, new SimpleFileVisitor<Path>() {
-            @Override
-            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-                Files.delete(file);
-                return FileVisitResult.CONTINUE;
-            }
+    protected String getCommitMessage(Context ctx) {
+        String configuredMessage = (String) ctx.contextKeys.get(GitProcessorContext.commitMessage.toString());
+        return configuredMessage == null ? "commit by ondemand broker" : configuredMessage;
+    }
 
-            @Override
-            public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
-                Files.delete(dir);
-                return FileVisitResult.CONTINUE;
-            }
-        });
-        logger.info("cleaned-up {} work directory", workDir);
+    /**
+     * recursively delete working directory
+     */
+    public void deleteWorkingDir() throws IOException {
+        // cleaning workDir
+        boolean deletesuccessful = FileSystemUtils.deleteRecursively(this.workDir.toFile());
+        if (deletesuccessful) {
+            logger.info("cleaned-up {} work directory", this.workDir);
+        } else {
+            logger.error("unable to clean up {}", this.workDir);
+        }
     }
 
     //support unit tests

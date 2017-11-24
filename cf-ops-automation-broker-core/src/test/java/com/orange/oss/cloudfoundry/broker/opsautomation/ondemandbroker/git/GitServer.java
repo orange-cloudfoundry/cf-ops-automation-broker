@@ -11,6 +11,7 @@ import org.eclipse.jgit.transport.ServiceMayNotContinueException;
 import org.eclipse.jgit.transport.resolver.RepositoryResolver;
 import org.eclipse.jgit.transport.resolver.ServiceNotAuthorizedException;
 import org.eclipse.jgit.transport.resolver.ServiceNotEnabledException;
+import org.springframework.util.FileSystemUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -41,8 +42,19 @@ public class GitServer {
         this.server.start();
     }
 
+
+
     public void stopLocalEmptyReposServer() throws InterruptedException {
+        cleanUpRepos();
         this.server.stopAndWait();
+    }
+
+    public void cleanUpRepos() {
+        for (Repository repository : repositories.values()) {
+            File workTree = repository.getWorkTree();
+            FileSystemUtils.deleteRecursively(workTree.getParentFile());
+        }
+        repositories.clear();
     }
 
     private final class RepositoryResolverImplementation implements
@@ -57,9 +69,10 @@ public class GitServer {
 
                 try {
                     Path workDir = Files.createTempDirectory("GitTestSetup");
+                    //Note: we use local disk because RepositoryBuilder does the heavy lifting of repository init
+                    //and we can debug using local disk more easily if needed
                     repo = FileRepositoryBuilder.create(new File(workDir.resolve(name).toFile(), ".git"));
                     repo.create();
-//                    populateRepository(repo);
                     Git git = new Git(repo);
                     git.commit().setMessage("Initial empty repo setup").call();
                     git.close();

@@ -1,19 +1,8 @@
 
 # Next cloudflare
 
-- host a git server
-   - jgit daemon
-      - pb: apparently permission refused
-   - in memory repository
-      - pb: empty repo "warning: remote HEAD refers to nonexistent ref, unable to checkout." 
-         - look for tests that initiate a repo
-            - TestRepository is not in exported jar  
-
 
 - integration tests for jgit & related fixes 
-    - try to host a git server using jgit: https://github.com/centic9/jgit-cookbook/issues/32#issuecomment-260221052
-        - set up a reference git repo in src/test/resources
-    - commit jgit delete tests (and make them run outside springboot to make them faster)
     - fix bug: unexpectedly add commits when no changes  
     - tune git processor logs to display the commit id
     - tune the git commit message to include author

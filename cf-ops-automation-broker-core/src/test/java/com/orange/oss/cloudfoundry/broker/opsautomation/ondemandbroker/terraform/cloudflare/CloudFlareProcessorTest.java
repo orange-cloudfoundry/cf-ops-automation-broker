@@ -51,14 +51,14 @@ public class CloudFlareProcessorTest {
     public void rejects_invalid_requested_routes() {
         //given a user performing
         //cf cs cloudflare -c '{route="@"}'
-        Context context = aContextWithCreateRequest("route", "@");
+        Context context = aContextWithCreateRequest(CloudFlareProcessor.ROUTE_PREFIX, "@");
 
         try {
             cloudFlareProcessor.preCreate(context);
             Assert.fail("expected to be rejected");
         } catch (RuntimeException e) {
             //Message should indicate to end user the incorrect param name and value
-            assertThat(e.getMessage()).contains("route");
+            assertThat(e.getMessage()).contains(CloudFlareProcessor.ROUTE_PREFIX);
             assertThat(e.getMessage()).contains("@");
         }
     }
@@ -67,24 +67,24 @@ public class CloudFlareProcessorTest {
     public void rejects_duplicate_route_request() {
         //given a repository populated with an existing module
         TerraformRepository terraformRepository = Mockito.mock(TerraformRepository.class);
-        when(terraformRepository.getByModuleProperty("route-prefix", "avalidroute")).thenReturn(aTfModule());
+        when(terraformRepository.getByModuleProperty(CloudFlareProcessor.ROUTE_PREFIX, "avalidroute")).thenReturn(aTfModule());
 
         cloudFlareProcessor = new CloudFlareProcessor(aConfig(), aSuffixValidator(), getRepositoryFactory(), aTracker());
 
         //When a new module is requested to be added
         TerraformModule requestedModule = ImmutableTerraformModule.builder().from(aTfModule())
                 .moduleName("service-instance-guid")
-                .putProperties("route-prefix", "avalidroute")
+                .putProperties(CloudFlareProcessor.ROUTE_PREFIX, "avalidroute")
                 .build();
 
 
         //Then it checks if a conflicting module exists, and rejects the request
         try {
-            cloudFlareProcessor.checkForConflictingProperty(requestedModule, "route-prefix", "route", terraformRepository);
+            cloudFlareProcessor.checkForConflictingProperty(requestedModule, CloudFlareProcessor.ROUTE_PREFIX, CloudFlareProcessor.ROUTE_PREFIX, terraformRepository);
             Assert.fail("expected to be rejected");
         } catch (RuntimeException e) {
             //Message should indicate to end user the incorrect param name and value
-            assertThat(e.getMessage()).contains("route");
+            assertThat(e.getMessage()).contains(CloudFlareProcessor.ROUTE_PREFIX);
             assertThat(e.getMessage()).contains("avalidroute");
         }
     }
@@ -158,7 +158,7 @@ public class CloudFlareProcessorTest {
 
         //given a user request with a route
         Map<String, Object> parameters = new HashMap<>();
-        parameters.put("route", "avalidroute");
+        parameters.put(CloudFlareProcessor.ROUTE_PREFIX, "avalidroute");
         CreateServiceInstanceRequest request = new CreateServiceInstanceRequest("service_definition_id",
                 "plan_id",
                 "org_id",
@@ -174,7 +174,7 @@ public class CloudFlareProcessorTest {
         ImmutableTerraformModule expectedModule = ImmutableTerraformModule.builder().from(deserialized)
                 .moduleName("serviceinstance_guid")
                 .putProperties("org_guid", "org_id")
-                .putProperties("route-prefix", "avalidroute")
+                .putProperties(CloudFlareProcessor.ROUTE_PREFIX, "avalidroute")
                 .putProperties("service_instance_guid", "serviceinstance_guid")
                 .putProperties("space_guid", "space_id")
                 .outputs(new HashMap<>())
@@ -209,7 +209,7 @@ public class CloudFlareProcessorTest {
 
         //given a user request with a route
         Map<String, Object> parameters = new HashMap<>();
-        parameters.put("route", "avalidroute");
+        parameters.put(CloudFlareProcessor.ROUTE_PREFIX, "avalidroute");
         CreateServiceInstanceRequest request = new CreateServiceInstanceRequest("service_definition_id",
                 "plan_id",
                 "org_id",
@@ -272,7 +272,11 @@ public class CloudFlareProcessorTest {
     public void delete_modules_when_requested() {
         //given a repository with an existing module
         terraformRepository = Mockito.mock(TerraformRepository.class);
-        ImmutableTerraformModule aTfModule = aTfModule();
+
+        ImmutableTerraformModule aTfModule = ImmutableTerraformModule.builder()
+                .from(aTfModule())
+                .putProperties(CloudFlareProcessor.ROUTE_PREFIX, "avalidroute")
+                .build();
         when(terraformRepository.getByModuleName("instance_id")).thenReturn(aTfModule);
         cloudFlareProcessor = new CloudFlareProcessor(aConfig(), aSuffixValidator(), getRepositoryFactory(), aTracker());
 
@@ -297,6 +301,8 @@ public class CloudFlareProcessorTest {
         /*and the delete response is returned*/
         DeleteServiceInstanceResponse response = (DeleteServiceInstanceResponse) context.contextKeys.get(ProcessorChainServiceInstanceService.DELETE_SERVICE_INSTANCE_RESPONSE);
         assertThat(response.isAsync()).isFalse();
+        String customMessage = (String) context.contextKeys.get(GitProcessorContext.commitMessage.toString());
+        assertThat(customMessage).isEqualTo("cloudflare broker: delete instance id=instance_id with route-prefix=avalidroute");
     }
 
     protected Path aGitRepoWorkDir() {

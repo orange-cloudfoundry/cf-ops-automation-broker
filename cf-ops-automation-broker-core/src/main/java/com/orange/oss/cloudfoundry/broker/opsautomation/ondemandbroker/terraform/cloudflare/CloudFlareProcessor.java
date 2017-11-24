@@ -19,7 +19,7 @@ import java.util.Map;
  */
 public class CloudFlareProcessor extends DefaultBrokerProcessor {
 
-    private static final String ROUTE_PREFIX = "route-prefix";
+    public static final String ROUTE_PREFIX = "route-prefix";
     private static Logger logger = LoggerFactory.getLogger(CloudFlareProcessor.class.getName());
 
 
@@ -42,20 +42,20 @@ public class CloudFlareProcessor extends DefaultBrokerProcessor {
 
     @Override
     public void preCreate(Context ctx) {
-        //Fetch requested route and param name from Service Instance
+        //Fetch requested routePrefix from Service Instance
         Map<String, Object> contextKeys = ctx.contextKeys;
         CreateServiceInstanceRequest request= (CreateServiceInstanceRequest) contextKeys.get(ProcessorChainServiceInstanceService.CREATE_SERVICE_INSTANCE_REQUEST);
         logger.debug("processing request " + request);
 
         //validate input params
-        String route = (String) request.getParameters().get("route");
-        validateRequestedRoute(route, "route");
+        String routePrefix = (String) request.getParameters().get(ROUTE_PREFIX);
+        validateRequestedRoute(routePrefix, ROUTE_PREFIX);
 
 
         ImmutableTerraformModule terraformModule = constructModule(request);
         TerraformRepository repository = getRepository(ctx); // lookup git clone for request, might throw runtime exception
         checkForConflictingModuleName(terraformModule, repository);
-        checkForConflictingProperty(terraformModule, ROUTE_PREFIX, route, repository);
+        checkForConflictingProperty(terraformModule, ROUTE_PREFIX, routePrefix, repository);
 
         repository.save(terraformModule);
 
@@ -82,7 +82,7 @@ public class CloudFlareProcessor extends DefaultBrokerProcessor {
                 .from(cloudFlareConfig.getTemplate())
                 .moduleName(request.getServiceInstanceId())
                 .putProperties("org_guid", request.getOrganizationGuid())
-                .putProperties(ROUTE_PREFIX, (String) request.getParameters().get("route"))
+                .putProperties(ROUTE_PREFIX, (String) request.getParameters().get(ROUTE_PREFIX))
                 .putProperties("service_instance_guid", request.getServiceInstanceId())
                 .putProperties("space_guid", request.getSpaceGuid())
                 .outputs(new HashMap<>()) //clear sample outputs
@@ -112,13 +112,23 @@ public class CloudFlareProcessor extends DefaultBrokerProcessor {
 
         DeleteServiceInstanceResponse response = new DeleteServiceInstanceResponse();
         context.contextKeys.put(ProcessorChainServiceInstanceService.DELETE_SERVICE_INSTANCE_RESPONSE, response);
+        String routePrefix = null;
+        if (terraformModule != null) {
+            routePrefix = terraformModule.getProperties().get(ROUTE_PREFIX);
+        }
+        String msg = getBrokerNameForCommitLog() + ": delete instance id=" + serviceInstanceId + " with " + ROUTE_PREFIX+"="+ routePrefix;
+        context.contextKeys.put(GitProcessorContext.commitMessage.toString(), msg);
     }
 
-    void validateRequestedRoute(String route, @SuppressWarnings("SameParameterValue") String paramName) {
-        boolean valid = cloudFlareRouteSuffixValidator.isRouteValid(route);
+    public String getBrokerNameForCommitLog() {
+        return "cloudflare broker";
+    }
+
+    void validateRequestedRoute(String routePrefix, @SuppressWarnings("SameParameterValue") String paramName) {
+        boolean valid = cloudFlareRouteSuffixValidator.isRouteValid(routePrefix);
         if (!valid) {
-            logger.info("Invalid parameter " + paramName + " with value:" + route);
-            throw new RuntimeException("Invalid parameter " + paramName + " with value:" + route);
+            logger.info("Invalid parameter " + paramName + " with value:" + routePrefix);
+            throw new RuntimeException("Invalid parameter " + paramName + " with value:" + routePrefix);
         }
     }
 

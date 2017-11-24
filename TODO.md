@@ -1,6 +1,7 @@
 
 # Next cloudflare
 
+- customize create-service instance commit msg
 
 - integration tests for jgit & related fixes 
     - properly handle git push errors: try rebasing
@@ -10,8 +11,6 @@
 
     
 - make ServiceProvisionningTest independent of external git repo
-
-- rename "route" arbitrary param into "route-prefix"
 
 - harden cloudflare input validation: 
   - proper message for empty route

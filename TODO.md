@@ -1,7 +1,53 @@
 
 # Next cloudflare
 
-- implement async delete 
+- host a git server
+   - jgit daemon
+      - pb: apparently permission refused
+   - in memory repository
+      - pb: empty repo "warning: remote HEAD refers to nonexistent ref, unable to checkout." 
+         - look for tests that initiate a repo
+            - TestRepository is not in exported jar  
+
+
+- integration tests for jgit & related fixes 
+    - try to host a git server using jgit: https://github.com/centic9/jgit-cookbook/issues/32#issuecomment-260221052
+        - set up a reference git repo in src/test/resources
+    - commit jgit delete tests (and make them run outside springboot to make them faster)
+    - fix bug: unexpectedly add commits when no changes  
+    - tune git processor logs to display the commit id
+    - tune the git commit message to include author
+    - tune the git user name & email (vcap)
+    - properly handle git push errors: try rebasing
+
+- implement cf-ops-automation unit tests 
+- prevent secrets in exceptions from being exposed to end-users: catch exceptions  
+
+    
+- make ServiceProvisionningTest independent of external git repo
+
+- rename "route" arbitrary param into "route-prefix"
+
+- harden cloudflare input validation: 
+  - proper message for empty route
+  - reject nested domains apparently accepted by cloudflare
+  - reject unsupported arbitrary params ? Wait for JSON schema support ?
+
+- implement async delete
+
+- cut 0.1 release & publish on github
+- automate deployment in paas-template 
+
+- upgrade cf-ops-automation TF version to 0.11.0
+ 
+- cf-ops-automation pipeline: 
+   - add a retry step on terraform-apply
+   - add a serial statement to avoid concurrent triggers http://concourse.ci/configuring-jobs.html
+   - secrets-<%=depls %> have an additional shared/secrets in path
+   - remove duplicated paas-templates-full + add necessary paths to paas-template-<%=depls %>
+
+- refine update-service status message to pass up the tf output status message ?
+
 
 - simplify delete: TerraformRepository.deleteById()
 
@@ -12,10 +58,7 @@
 
 - refine status code in delete: return 410 GONE if service instance missing
 
-- tune git processor logs to display the commit id
-- tune the git commit message to include author
 
-- prevent secrets in exceptions from being exposed to end-users: catch exceptions at 
 
 - add stronger input validation to terraform module.name and outputs (from hashicorp hcl specs) to detect more issues up front if OSB-injected ids are HCL unfriendly   
 
@@ -35,9 +78,8 @@ Refine Repository impl
         - https://paulcwarren.github.io/spring-content/refs/release/fs-index.html
     - extract terraform state loading into a repository when needed to support a different backend than file (credhub, S3)
 
-# git bugs
 
-- unexpectedly add commits when no changes  
+
 
 # Next core framework
 

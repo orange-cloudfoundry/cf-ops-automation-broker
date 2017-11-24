@@ -106,7 +106,7 @@ public class GitProcessor extends DefaultBrokerProcessor {
      *
      * @param ctx exposing the workDir Path in context
      */
-    private void cloneRepo(Context ctx) {
+    void cloneRepo(Context ctx) {
         try {
 
             logger.info("cloning repo");
@@ -147,7 +147,7 @@ public class GitProcessor extends DefaultBrokerProcessor {
     /**
      * commit, rebase the push the modification
      */
-    private void commitPushRepo(Context ctx) {
+    void commitPushRepo(Context ctx) {
         try {
             logger.info("commit push");
 
@@ -181,7 +181,7 @@ public class GitProcessor extends DefaultBrokerProcessor {
                     sb.append(ToStringBuilder.reflectionToString(pushResult));
                     sb.append(" ");
                 }
-                logger.debug("push details"+ sb.toString());
+                logger.debug("push details: "+ sb.toString());
 
             }
             deleteRecursiveDir(workDir);
@@ -195,7 +195,7 @@ public class GitProcessor extends DefaultBrokerProcessor {
     /**
      * recursive directory delete
      */
-    private void deleteRecursiveDir(Path workDir) throws IOException {
+    public static void deleteRecursiveDir(Path workDir) throws IOException {
         // cleaning workDir
         Files.walkFileTree(workDir, new SimpleFileVisitor<Path>() {
             @Override

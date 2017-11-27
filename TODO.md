@@ -1,10 +1,11 @@
 
 # Next cloudflare
 
-- extract terraform value object into a single class with @ConfigurationProperties(prefix = "cloudflare")
 - integration tests for jgit & related fixes 
     - properly handle git push errors: try rebasing
    
+- extract terraform value object into a single class with @ConfigurationProperties(prefix = "cloudflare")
+    - make CloudFlareConfig a POJO instead of an immutable ?
 - deploy and manual verifications of improvements
 
 - harden cloudflare input validation: 

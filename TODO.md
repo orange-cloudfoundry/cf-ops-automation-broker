@@ -1,21 +1,20 @@
 
 # Next cloudflare
 
+- update catalog in application.yml yo mention arbitrary param
 - integration tests for jgit & related fixes 
     - properly handle git push errors: try rebasing
    
 - deploy and manual verifications of improvements
 
-- harden cloudflare input validation: 
-  - proper message for empty route
-  - reject nested domains apparently accepted by cloudflare
-  - reject unsupported arbitrary params ? Wait for JSON schema support ?
 
 
 
 - implement cf-ops-automation unit tests 
 - prevent secrets in exceptions from being exposed to end-users: catch exceptions  
 
+- harden cloudflare input validation: 
+  - reject unsupported/unknown arbitrary params ? Wait for JSON schema support ?
     
 
 

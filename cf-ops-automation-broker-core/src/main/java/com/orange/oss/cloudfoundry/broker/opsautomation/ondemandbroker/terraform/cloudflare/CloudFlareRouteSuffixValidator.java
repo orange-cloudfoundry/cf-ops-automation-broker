@@ -23,7 +23,7 @@ public class CloudFlareRouteSuffixValidator {
     }
 
     public boolean isRouteValid(String routePrefix) {
-        if (routePrefix == null || routePrefix.isEmpty()) {
+        if (routePrefix == null || routePrefix.isEmpty() || routePrefix.contains(".") ) {
             return false;
         }
         //Guava might be too heavy

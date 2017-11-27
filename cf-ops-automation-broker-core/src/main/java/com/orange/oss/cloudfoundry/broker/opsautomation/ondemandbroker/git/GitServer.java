@@ -20,6 +20,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Consumer;
 
 /**
  * A simple git server serving anynymous git: protocol
@@ -29,16 +30,26 @@ import java.util.Map;
  *
  * Inspired from https://stackoverflow.com/questions/14360909/jgit-how-to-use-inmemoryrepository-to-learn-about-dfs-implementations
  * and https://github.com/centic9/jgit-cookbook/blob/c0f0d591839382461119fc5bd7a73db109d795b0/httpserver/src/main/java/org/dstadler/jgit/server/Main.java#L79-L94 (latter example is not accepting writes and pulls netty making it slower)
+ *
+ * This is shipped in production code to be shared with other submodules in a cheap way.
  */
 public class GitServer {
+    public static final Consumer<Git> NO_OP_INITIALIZER = git -> { };
     private Map<String, Repository> repositories = new HashMap<>();
     private Daemon server;
 
+    public GitServer() {
+    }
 
-    public void startLocalEmptyReposServer() throws IOException, GitAPIException {
+    /**
+     * Start a git server, by default serving empty git repo
+     * @param repoInitializer optional way to initialize the git repo on the fly
+     *                        If not needed, use #NO_OP_INITIALIZER as a convenience
+     */
+    public void startLocalEmptyReposServer(Consumer<Git> repoInitializer) throws IOException, GitAPIException {
         this.server = new Daemon(new InetSocketAddress(9418));
         this.server.getService("git-receive-pack").setEnabled(true);
-        this.server.setRepositoryResolver(new RepositoryResolverImplementation());
+        this.server.setRepositoryResolver(new RepositoryResolverImplementation(repoInitializer));
         this.server.start();
     }
 
@@ -59,6 +70,13 @@ public class GitServer {
 
     private final class RepositoryResolverImplementation implements
             RepositoryResolver<DaemonClient> {
+
+        Consumer<Git> repoInitStep;
+
+        public RepositoryResolverImplementation(Consumer<Git> repoInitStep) {
+            this.repoInitStep = repoInitStep;
+        }
+
         @Override
         public Repository open(DaemonClient client, String name)
                 throws RepositoryNotFoundException,
@@ -66,7 +84,6 @@ public class GitServer {
                 ServiceMayNotContinueException {
             Repository repo = repositories.get(name);
             if (repo == null) {
-
                 try {
                     Path workDir = Files.createTempDirectory("GitTestSetup");
                     //Note: we use local disk because RepositoryBuilder does the heavy lifting of repository init
@@ -74,15 +91,30 @@ public class GitServer {
                     repo = FileRepositoryBuilder.create(new File(workDir.resolve(name).toFile(), ".git"));
                     repo.create();
                     Git git = new Git(repo);
-                    git.commit().setMessage("Initial empty repo setup").call();
+
+                    Consumer<Git> combinedConsumer = repoInitStep.andThen(this::addInitialCommit);
+                    combinedConsumer.accept(git);
+
                     git.close();
                     repositories.put(name, repo);
                 } catch (Exception e) {
-                    e.printStackTrace();
                     throw new RuntimeException();
                 }
             }
             return repo;
         }
+
+        /**
+         * When missing then master branch is missing and can't be checked out in clones.
+         */
+        public void addInitialCommit(Git git) {
+            try {
+                git.commit().setMessage("Initial empty repo setup").call();
+            } catch (GitAPIException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
     }
+
 }

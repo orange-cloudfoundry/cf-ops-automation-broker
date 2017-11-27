@@ -1,24 +1,30 @@
 
 # Next cloudflare
 
+- extract terraform value object into a single class with @ConfigurationProperties(prefix = "cloudflare")
 - integration tests for jgit & related fixes 
     - properly handle git push errors: try rebasing
-
-- implement cf-ops-automation unit tests 
-- prevent secrets in exceptions from being exposed to end-users: catch exceptions  
-
-    
-- make ServiceProvisionningTest independent of external git repo
+   
+- deploy and manual verifications of improvements
 
 - harden cloudflare input validation: 
   - proper message for empty route
   - reject nested domains apparently accepted by cloudflare
   - reject unsupported arbitrary params ? Wait for JSON schema support ?
 
+
+
+- implement cf-ops-automation unit tests 
+- prevent secrets in exceptions from being exposed to end-users: catch exceptions  
+
+    
+
+
 - implement async delete
 
 - cut 0.1 release & publish on github
-- automate deployment in paas-template 
+- automate deployment in paas-template
+    - automate ASG to git server 
 
 - upgrade cf-ops-automation TF version to 0.11.0
  

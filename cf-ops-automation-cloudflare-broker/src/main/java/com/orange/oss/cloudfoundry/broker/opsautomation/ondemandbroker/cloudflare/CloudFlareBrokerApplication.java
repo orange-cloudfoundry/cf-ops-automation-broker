@@ -19,6 +19,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 @SpringBootApplication
+//@EnableConfigurationProperties({CatalogProperties.class,CatalogProperties.class})
+
 public class CloudFlareBrokerApplication {
 
     public static void main(String[] args) {

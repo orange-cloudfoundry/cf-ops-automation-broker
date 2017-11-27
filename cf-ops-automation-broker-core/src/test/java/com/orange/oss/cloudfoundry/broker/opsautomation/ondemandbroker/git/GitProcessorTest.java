@@ -31,7 +31,7 @@ public class GitProcessorTest {
     @BeforeClass
     public static void startGitServer() throws IOException, GitAPIException {
         gitServer = new GitServer();
-        gitServer.startLocalEmptyReposServer();
+        gitServer.startLocalEmptyReposServer(GitServer.NO_OP_INITIALIZER);
     }
 
     @AfterClass

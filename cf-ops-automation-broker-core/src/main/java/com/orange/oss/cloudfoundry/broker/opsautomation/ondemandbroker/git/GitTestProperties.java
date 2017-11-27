@@ -1,12 +1,13 @@
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Service;
 
-//@Service
+@ConfigurationProperties(prefix = "git")
 public class GitTestProperties {
 
-	@Value("${gitUser}")	
+	@Value("${gitUser}")
 	private String gitUser;
 
 	@Value("${gitPassword}")	
@@ -16,9 +17,9 @@ public class GitTestProperties {
 	private String gitUrl;
 
 	@Value("${committerName:coab}")
-	private String committerName;
+	private String committerName = "coab";
 	@Value("${committerEmail:coab@orange.com}")
-	private String committerEmail;
+	private String committerEmail = "coab@orange.com";
 
 
 	public String getGitUser() {

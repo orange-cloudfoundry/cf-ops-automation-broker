@@ -1,24 +1,13 @@
 
 # Next cloudflare
 
-- update catalog in application.yml yo mention arbitrary param
 - integration tests for jgit & related fixes 
     - properly handle git push errors: try rebasing
    
-- deploy and manual verifications of improvements
-
-
-
+- implement async delete
 
 - implement cf-ops-automation unit tests 
 - prevent secrets in exceptions from being exposed to end-users: catch exceptions  
-
-- harden cloudflare input validation: 
-  - reject unsupported/unknown arbitrary params ? Wait for JSON schema support ?
-    
-
-
-- implement async delete
 
 - cut 0.1 release & publish on github
 - automate deployment in paas-template
@@ -32,15 +21,18 @@
    - secrets-<%=depls %> have an additional shared/secrets in path
    - remove duplicated paas-templates-full + add necessary paths to paas-template-<%=depls %>
 
+- Application & Integration test:
+   - support/test catalog injected from env var
+
 - refine update-service status message to pass up the tf output status message ?
 
+- harden cloudflare input validation: 
+  - reject unsupported/unknown arbitrary params ? => Wait for JSON schema support
 
 - simplify delete: TerraformRepository.deleteById()
 
 - handle spaceid and orgguid being provided in OSB context (to plan for query params depreciation)
 
-- Application & Integration test:
-   - support/test catalog injected from env var
 
 - refine status code in delete: return 410 GONE if service instance missing
 

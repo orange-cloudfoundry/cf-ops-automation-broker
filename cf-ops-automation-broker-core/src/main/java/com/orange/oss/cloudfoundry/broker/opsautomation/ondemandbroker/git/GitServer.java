@@ -46,16 +46,14 @@ public class GitServer {
      * @param repoInitializer optional way to initialize the git repo on the fly
      *                        If not needed, use #NO_OP_INITIALIZER as a convenience
      */
-    public void startLocalEmptyReposServer(Consumer<Git> repoInitializer) throws IOException, GitAPIException {
+    public void startEphemeralReposServer(Consumer<Git> repoInitializer) throws IOException, GitAPIException {
         this.server = new Daemon(new InetSocketAddress(9418));
         this.server.getService("git-receive-pack").setEnabled(true);
         this.server.setRepositoryResolver(new RepositoryResolverImplementation(repoInitializer));
         this.server.start();
     }
 
-
-
-    public void stopLocalEmptyReposServer() throws InterruptedException {
+    public void stopAndCleanupReposServer() throws InterruptedException {
         cleanUpRepos();
         this.server.stopAndWait();
     }

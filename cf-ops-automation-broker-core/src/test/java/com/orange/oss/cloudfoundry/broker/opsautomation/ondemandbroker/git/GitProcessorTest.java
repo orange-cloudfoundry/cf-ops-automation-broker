@@ -31,12 +31,12 @@ public class GitProcessorTest {
     @BeforeClass
     public static void startGitServer() throws IOException, GitAPIException {
         gitServer = new GitServer();
-        gitServer.startLocalEmptyReposServer(GitServer.NO_OP_INITIALIZER);
+        gitServer.startEphemeralReposServer(GitServer.NO_OP_INITIALIZER);
     }
 
     @AfterClass
     public static void stopGitServer() throws InterruptedException {
-        gitServer.stopLocalEmptyReposServer();
+        gitServer.stopAndCleanupReposServer();
     }
 
     @After

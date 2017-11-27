@@ -1,27 +1,33 @@
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.GitProcessor;
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.GitProperties;
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.GitServer;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.BrokerProcessor;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.Context;
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.DefaultBrokerSink;
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.ProcessorChain;
+import org.eclipse.jgit.api.errors.GitAPIException;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.core.io.Resource;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
-import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.GitTestProperties;
-import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.DefaultBrokerSink;
-import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.ProcessorChain;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @SpringBootTest
 @TestPropertySource("classpath:git.properties")
+@EnableConfigurationProperties({GitProperties.class})
 public class GitPipelineTemplatingProcessorIT {
 
 	@Value("classpath:/manifests/hazelcast.yml")
@@ -29,12 +35,12 @@ public class GitPipelineTemplatingProcessorIT {
 
 	
 	@Autowired
-	GitTestProperties gitProperties;
+	GitProperties gitProperties;
 	
 	@Test
 	public void testTemplatingProcessor() {
 		
-		GitProcessor processor=new GitProcessor(gitProperties.getGitUser(), gitProperties.getGitPassword(), gitProperties.getGitUrl(), "committerName", "committerEmail");
+		GitProcessor processor=new GitProcessor(gitProperties.getUser(), gitProperties.getPassword(), gitProperties.getUrl(), "committerName", "committerEmail");
 		List<BrokerProcessor> processors= new ArrayList<>();
 		processors.add(processor);
 		processors.add(new GitPipelineTemplatingProcessor("on-demand-depl",this.manifestResource));
@@ -44,5 +50,21 @@ public class GitPipelineTemplatingProcessorIT {
 		chain.create(ctx);
 
 	}
+
+	GitServer gitServer;
+
+	@Before
+	public void startGitServer() throws IOException, GitAPIException {
+		gitServer = new GitServer();
+		gitServer.startEphemeralReposServer(GitServer.NO_OP_INITIALIZER);
+		//FIXME: initialize git mock repo or reference publicly accessible git repo
+		//containing expected hazelcast/template/hazelcast.yml
+	}
+
+	@After
+	public void cleanUpGit() throws Exception {
+		gitServer.stopAndCleanupReposServer();
+	}
+
 
 }

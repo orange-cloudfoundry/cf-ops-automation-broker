@@ -73,18 +73,13 @@ public class CloudFlareServiceProvisionningTest {
                 throw new RuntimeException(e);
             }
         };
-        gitServer.startLocalEmptyReposServer(initPaasSecret);
+        gitServer.startEphemeralReposServer(initPaasSecret);
     }
 
 
     @After
     public void stopGitServer() throws InterruptedException {
-        gitServer.stopLocalEmptyReposServer();
-    }
-
-    @After
-    public void cleanUpClone() throws IOException {
-        gitServer.cleanUpRepos();
+        gitServer.stopAndCleanupReposServer();
     }
 
     @Test

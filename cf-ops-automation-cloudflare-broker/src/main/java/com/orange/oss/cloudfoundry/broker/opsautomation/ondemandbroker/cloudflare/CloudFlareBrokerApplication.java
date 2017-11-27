@@ -1,5 +1,6 @@
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.cloudflare;
 
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.GitProperties;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.GitProcessor;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.BrokerProcessor;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.DefaultBrokerSink;
@@ -12,6 +13,7 @@ import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.terraform
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 
 import java.time.Clock;
@@ -19,7 +21,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 @SpringBootApplication
-//@EnableConfigurationProperties({CatalogProperties.class,CatalogProperties.class})
+@EnableConfigurationProperties({GitProperties.class
+        //, CloudFlareConfig.class
+})
 
 public class CloudFlareBrokerApplication {
 
@@ -76,13 +80,8 @@ public class CloudFlareBrokerApplication {
     }
 
     @Bean
-    public BrokerProcessor gitProcessor(
-            @Value("${git.user}") String gitUser,
-            @Value("${git.password}") String gitPassword,
-            @Value("${git.url}") String gitUrl,
-            @Value("${git.committerName:@null}") String committerName,
-            @Value("${git.committerEmail:@null}") String committerEmail) {
-        return new GitProcessor(gitUser, gitPassword, gitUrl, committerName, committerEmail);
+    public BrokerProcessor gitProcessor(GitProperties gitProperties) {
+        return new GitProcessor(gitProperties.getUser(), gitProperties.getPassword(), gitProperties.getUrl(), gitProperties.committerName(), gitProperties.committerEmail());
     }
 
     @Bean

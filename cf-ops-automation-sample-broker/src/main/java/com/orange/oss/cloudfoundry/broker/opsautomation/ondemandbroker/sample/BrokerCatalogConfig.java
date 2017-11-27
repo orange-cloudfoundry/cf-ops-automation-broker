@@ -1,4 +1,4 @@
-package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.cloudflare;
+package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.sample;
 
 import org.springframework.cloud.servicebroker.model.Catalog;
 import org.springframework.cloud.servicebroker.model.Plan;

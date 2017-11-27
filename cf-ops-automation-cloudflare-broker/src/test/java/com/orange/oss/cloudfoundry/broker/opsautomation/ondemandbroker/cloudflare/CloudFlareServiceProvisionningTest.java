@@ -3,6 +3,7 @@ package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.cloudfla
 
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.GitServer;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.terraform.TerraformModuleHelper;
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.terraform.cloudflare.CloudFlareProperties;
 import io.restassured.RestAssured;
 import org.apache.http.HttpStatus;
 import org.eclipse.jgit.api.AddCommand;
@@ -12,7 +13,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.embedded.LocalServerPort;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.cloud.servicebroker.model.CreateServiceInstanceRequest;
@@ -45,8 +46,8 @@ public class CloudFlareServiceProvisionningTest {
     int port;
     GitServer gitServer;
 
-    @Value("${cloudflare.pathTFSpecs}") String pathTFSpecs;
-    @Value("${cloudflare.pathToTfState}") String pathToTfState;
+    @Autowired
+    CloudFlareProperties cloudFlareProperties;
 
 
     @Before
@@ -144,7 +145,7 @@ public class CloudFlareServiceProvisionningTest {
     }
 
     public void createTfConfigSpecDir(File gitWorkDir) throws IOException {
-        Path tfSpecsDir = gitWorkDir.toPath().resolve(pathTFSpecs);
+        Path tfSpecsDir = gitWorkDir.toPath().resolve(cloudFlareProperties.getPathTFSpecs());
         Files.createDirectories(tfSpecsDir);
         //TODO: create .gitignore
         try(Writer writer = new FileWriter(tfSpecsDir.resolve(".gitkeep").toFile())) {
@@ -153,7 +154,7 @@ public class CloudFlareServiceProvisionningTest {
     }
 
     public void populateRepoWithTfState(Path gitWorkDir) throws IOException {
-        Files.createDirectories(gitWorkDir.resolve(pathToTfState).getParent());
+        Files.createDirectories(gitWorkDir.resolve(cloudFlareProperties.getPathToTfState()).getParent());
 
         File tfStateFile = getFileFromClasspath("/terraform.tfstate");
         Files.copy(tfStateFile.toPath(), gitWorkDir.resolve("terraform.tfstate"));

@@ -6,11 +6,7 @@ import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processor
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.DefaultBrokerSink;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.ProcessorChain;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.terraform.*;
-import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.terraform.cloudflare.CloudFlareConfig;
-import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.terraform.cloudflare.CloudFlareProcessor;
-import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.terraform.cloudflare.CloudFlareRouteSuffixValidator;
-import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.terraform.cloudflare.ImmutableCloudFlareConfig;
-import org.springframework.beans.factory.annotation.Value;
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.terraform.cloudflare.*;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -21,10 +17,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @SpringBootApplication
-@EnableConfigurationProperties({GitProperties.class
-        //, CloudFlareConfig.class
-})
-
+@EnableConfigurationProperties({GitProperties.class, CloudFlareProperties.class})
 public class CloudFlareBrokerApplication {
 
     public static void main(String[] args) {
@@ -38,13 +31,12 @@ public class CloudFlareBrokerApplication {
 
 
     @Bean
-    public CloudFlareConfig cloudFlareConfig(@Value("${cloudflare.routeSuffix}") String routeSuffix,
-                                             @Value("${cloudflare.maxExecutionDurationSeconds:600}") int maxExecutionDurationSeconds,
+    public CloudFlareConfig cloudFlareConfig(CloudFlareProperties cloudFlareProperties,
                                              TerraformModule template) {
         return ImmutableCloudFlareConfig.builder()
-                .routeSuffix(routeSuffix)
+                .routeSuffix(cloudFlareProperties.getRouteSuffix())
+                .maxExecutionDurationSeconds(cloudFlareProperties.getMaxExecutionDurationSeconds())
                 .template(template)
-                .maxExecutionDurationSeconds(maxExecutionDurationSeconds)
                 .build();
     }
 
@@ -57,15 +49,13 @@ public class CloudFlareBrokerApplication {
     public TerraformCompletionTracker terraformCompletionTracker(
             CloudFlareConfig cloudFlareConfig,
             Clock clock,
-            @Value("${cloudflare.pathToTfState}") String pathToTfState) {
-        return new TerraformCompletionTracker(clock, cloudFlareConfig.getMaxExecutionDurationSeconds(), pathToTfState);
+            CloudFlareProperties cloudFlareProperties) {
+        return new TerraformCompletionTracker(clock, cloudFlareConfig.getMaxExecutionDurationSeconds(), cloudFlareProperties.getPathToTfState());
     }
 
     @Bean
-    public static TerraformRepository.Factory getFactory(
-            @Value("${cloudflare.pathTFSpecs}") String pathtoTerraformSpecs,
-            @Value("${clouflare.filePrefix:cloudflare-instance-}") String filePrefix) {
-        return path -> new FileTerraformRepository(path.resolve(pathtoTerraformSpecs), filePrefix);
+    public static TerraformRepository.Factory getFactory(CloudFlareProperties cloudFlareProperties) {
+        return path -> new FileTerraformRepository(path.resolve(cloudFlareProperties.getPathTFSpecs()), cloudFlareProperties.getFilePrefix());
     }
 
 

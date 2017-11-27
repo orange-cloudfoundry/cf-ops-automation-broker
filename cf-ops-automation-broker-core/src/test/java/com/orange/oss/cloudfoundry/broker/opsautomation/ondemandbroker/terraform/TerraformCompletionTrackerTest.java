@@ -6,6 +6,7 @@ import org.springframework.cloud.servicebroker.model.GetLastServiceOperationResp
 import org.springframework.cloud.servicebroker.model.OperationState;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneId;
@@ -24,10 +25,11 @@ public class TerraformCompletionTrackerTest {
         //4567.completed = successfully provisionned /tmp/writeable/file and /tmp/writeable/file
         //4567.started = successfully received module invocation
 
-        TerraformCompletionTracker tracker = new TerraformCompletionTracker(getFileFromClasspath(tfStateFileInClasspath), Clock.systemUTC(), 120);
+        TerraformCompletionTracker tracker = new TerraformCompletionTracker(Clock.systemUTC(), 120, "terraform-with-successfull-module-exec.tfstate");
 
         //when asked status
-        GetLastServiceOperationResponse moduleExecStatus = tracker.getModuleExecStatus("4567", "2017-11-14T17:24:08.007Z");
+        File fileFromClasspath = getFileFromClasspath(tfStateFileInClasspath);
+        GetLastServiceOperationResponse moduleExecStatus = tracker.getModuleExecStatus(fileFromClasspath.getParentFile().toPath(), "4567", "2017-11-14T17:24:08.007Z");
 
         //
         assertThat(moduleExecStatus.getState()).isEqualTo(OperationState.SUCCEEDED);
@@ -37,17 +39,19 @@ public class TerraformCompletionTrackerTest {
     public void returns_failure_when_max_execution_time_reached() {
         //given a tf state with pending execution
         String tfStateFileInClasspath = "/terraform/terraform-without-successfull-module-exec.tfstate";
+        File tfStateFile = getFileFromClasspath(tfStateFileInClasspath);
+        Path gitWorkDir = tfStateFile.getParentFile().toPath();
+
         //given a configured timeout
         Clock clock = Clock.fixed(Instant.ofEpochMilli(1510680248007L), ZoneId.of("Europe/Paris"));
-        TerraformCompletionTracker tracker = new TerraformCompletionTracker(getFileFromClasspath(tfStateFileInClasspath),clock, 120);
-
-
-        File tfStateFile = getFileFromClasspath(tfStateFileInClasspath);
+        TerraformCompletionTracker tracker = new TerraformCompletionTracker(clock, 120, "terraform-without-successfull-module-exec.tfstate");
 
         //when asked status before timeout
-        GetLastServiceOperationResponse moduleExecStatus = tracker.getModuleExecStatus("4567", "2017-11-14T17:24:08.007Z");
+        GetLastServiceOperationResponse moduleExecStatus = tracker.getModuleExecStatus(gitWorkDir, "4567", "2017-11-14T17:24:08.007Z");
         assertThat(moduleExecStatus.getState()).isEqualTo(OperationState.IN_PROGRESS);
-        moduleExecStatus = tracker.getModuleExecStatus("4567", "2017-11-14T17:14:08.007Z");//-10 mins
+
+        //when asked status after timeout
+        moduleExecStatus = tracker.getModuleExecStatus(gitWorkDir, "4567", "2017-11-14T17:14:08.007Z");//-10 mins
         assertThat(moduleExecStatus.getState()).isEqualTo(OperationState.FAILED);
         assertThat(moduleExecStatus.getDescription()).contains("timeout");
 
@@ -67,7 +71,7 @@ public class TerraformCompletionTrackerTest {
     public void provides_current_date_for_last_operation() {
         //given
         Clock clock = Clock.fixed(Instant.ofEpochMilli(1510680248007L), ZoneId.of("Europe/Paris"));
-        TerraformCompletionTracker tracker = new TerraformCompletionTracker(Mockito.mock(File.class),clock, 120);
+        TerraformCompletionTracker tracker = new TerraformCompletionTracker(clock, 120, "terraform.tfstate");
 
         //when
         String currentDateAsOperation = tracker.getCurrentDate();
@@ -80,7 +84,7 @@ public class TerraformCompletionTrackerTest {
     public void get_elapsed_time_since_last_operation() {
         //given
         Clock clock = Clock.fixed(Instant.ofEpochMilli(1510680248007L+120*1000L), ZoneId.of("Europe/Paris"));
-        TerraformCompletionTracker tracker = new TerraformCompletionTracker(Mockito.mock(File.class),clock, 120);
+        TerraformCompletionTracker tracker = new TerraformCompletionTracker(clock, 120, "terraform.tfstate");
 
         //when
         long elapsedTimeSecsSinceLastOperation = tracker.getElapsedTimeSecsSinceLastOperation("2017-11-14T17:24:08.007Z");
@@ -109,7 +113,7 @@ public class TerraformCompletionTrackerTest {
 
     private void assert_expected_status(TerraformState.Output started, TerraformState.Output completed, OperationState expected) {
         File tfStateFile = Mockito.mock(File.class);
-        TerraformCompletionTracker tracker = new TerraformCompletionTracker(tfStateFile, Clock.systemUTC(), 120);
+        TerraformCompletionTracker tracker = new TerraformCompletionTracker(Clock.systemUTC(), 120, "terraform.tfstate");
 
         GetLastServiceOperationResponse response = tracker.mapOutputToStatus(started, completed, 5);
 

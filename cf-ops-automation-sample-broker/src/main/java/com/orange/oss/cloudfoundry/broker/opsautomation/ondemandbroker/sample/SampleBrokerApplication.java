@@ -20,11 +20,10 @@ public class SampleBrokerApplication {
 
     @Bean
     public ProcessorChain processorChain() {
-        List<BrokerProcessor> processors=new ArrayList<BrokerProcessor>();
+        List<BrokerProcessor> processors= new ArrayList<>();
         processors.add(new DefaultBrokerProcessor());
         DefaultBrokerSink sink=new DefaultBrokerSink();
-        ProcessorChain chain=new ProcessorChain(processors, sink);
-        return chain;
+        return new ProcessorChain(processors, sink);
     }
 
 

@@ -1,8 +1,8 @@
 package com.orange.oss.ondemandbroker;
 
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.*;
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.Context;
 import org.assertj.core.api.Assertions;
-import org.fest.assertions.MapAssert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
@@ -16,8 +16,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.fest.assertions.Assertions.assertThat;
-import static org.fest.assertions.MapAssert.entry;
-import static org.mockito.Matchers.any;
 
 @RunWith(MockitoJUnitRunner.class)
 public class ProcessorChainServiceInstanceServiceTest {

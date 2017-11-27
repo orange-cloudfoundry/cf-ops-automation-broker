@@ -29,8 +29,15 @@ public class FileTerraformRepository implements TerraformRepository {
         if (filePrefix == null || filePrefix.isEmpty()) {
             throw new IllegalArgumentException("expected non empty prefix. This is required to support ignoring some unrelated files in the directory that don't match the prefix.");
         }
+        if (directory == null || ! directory.toFile().exists() || ! directory.toFile().canRead()) {
+            throw new IllegalArgumentException("expected existing readeable dir, but got:" + directory);
+        }
         this.filePrefix = filePrefix;
         gson = new GsonBuilder().registerTypeAdapter(ImmutableTerraformModule.class, new TerraformModuleGsonAdapter()).create();
+    }
+
+    public static Factory getFactory(String filePrefix) {
+        return path -> new FileTerraformRepository(path, filePrefix);
     }
 
     @Override
@@ -80,7 +87,16 @@ public class FileTerraformRepository implements TerraformRepository {
                 logger.error("Unable to delete file at: " + path, e);
                 throw new RuntimeException("unable to delete module", e);
             }
+        } else {
+            logger.error("asked to delete missing file {}" , moduleFile);
         }
+    }
+
+    /**
+     * Supports unit tests
+     */
+    public Path getDirectory() {
+        return directory;
     }
 
     File buildFileForModule(String name) {
@@ -115,7 +131,7 @@ public class FileTerraformRepository implements TerraformRepository {
                 .map(path -> {
                     try (Reader reader = new FileReader(path.toFile())) {
                         return gson.fromJson(reader, ImmutableTerraformModule.class);
-                    } catch (IOException e) {
+                    } catch (Exception e) {
                         logger.error("unable to load module from " + path, e);
                         throw new RuntimeException("unable to load modules");
                     }

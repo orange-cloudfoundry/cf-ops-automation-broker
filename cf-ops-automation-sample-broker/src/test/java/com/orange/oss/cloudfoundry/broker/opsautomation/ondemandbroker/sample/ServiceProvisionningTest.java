@@ -11,6 +11,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.cloud.servicebroker.model.CreateServiceInstanceRequest;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import java.util.HashMap;
+
 import static io.restassured.RestAssured.basic;
 import static io.restassured.RestAssured.given;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
@@ -34,7 +36,7 @@ public class ServiceProvisionningTest {
         CreateServiceInstanceRequest request = new CreateServiceInstanceRequest("ondemand-service",
                 "ondemand-plan",
                 "org_id",
-                "space_id");
+                "space_id", new HashMap<>());
 
         given()
                 .basePath("/v2")

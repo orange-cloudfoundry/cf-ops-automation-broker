@@ -1,16 +1,53 @@
 
 # Next cloudflare
 
-- Application & Integration test: 
-   - @Service or @Bean in application.
-   - explicit application maven module
-   - git.properties injected as env vars
-   - looks_up_paas_secrets_git_local_checkout
+- integration tests for jgit & related fixes 
+    - properly handle git push errors: try rebasing
+   
+- deploy and manual verifications of improvements
+
+- harden cloudflare input validation: 
+  - proper message for empty route
+  - reject nested domains apparently accepted by cloudflare
+  - reject unsupported arbitrary params ? Wait for JSON schema support ?
 
 
-- configure catalog: not bindeable, not updeable
 
-- add input validation to terraform module.name and outputs (from hashicorp hcl specs) to detect more issues up front if OSB-injected ids are HCL unfriendly   
+- implement cf-ops-automation unit tests 
+- prevent secrets in exceptions from being exposed to end-users: catch exceptions  
+
+    
+
+
+- implement async delete
+
+- cut 0.1 release & publish on github
+- automate deployment in paas-template
+    - automate ASG to git server 
+
+- upgrade cf-ops-automation TF version to 0.11.0
+ 
+- cf-ops-automation pipeline: 
+   - add a retry step on terraform-apply
+   - add a serial statement to avoid concurrent triggers http://concourse.ci/configuring-jobs.html
+   - secrets-<%=depls %> have an additional shared/secrets in path
+   - remove duplicated paas-templates-full + add necessary paths to paas-template-<%=depls %>
+
+- refine update-service status message to pass up the tf output status message ?
+
+
+- simplify delete: TerraformRepository.deleteById()
+
+- handle spaceid and orgguid being provided in OSB context (to plan for query params depreciation)
+
+- Application & Integration test:
+   - support/test catalog injected from env var
+
+- refine status code in delete: return 410 GONE if service instance missing
+
+
+
+- add stronger input validation to terraform module.name and outputs (from hashicorp hcl specs) to detect more issues up front if OSB-injected ids are HCL unfriendly   
 
 
 Refine Repository impl
@@ -27,9 +64,12 @@ Refine Repository impl
         - https://github.com/spring-projects/spring-data-keyvalue-examples/blob/master/retwisj/src/main/java/org/springframework/data/redis/samples/retwisj/redis/RetwisRepository.java
         - https://paulcwarren.github.io/spring-content/refs/release/fs-index.html
     - extract terraform state loading into a repository when needed to support a different backend than file (credhub, S3)
- 
+
+
+
 
 # Next core framework
+
 
 - context key: encapsulate with methods + as immutable object ?
 - update + bind/unbind request in context key
@@ -40,7 +80,14 @@ Refine Repository impl
 
 
 core framework:
-- fail to execute SampleBrokerApplication:  Empty reply from server
+- exception handling in processor in delete, getlastoperationstatus in ProcessorChainServiceInstanceService + ProcessorChain:
+   default behavior to propagate exception upstream seems a good approach matching our needs: 
+   - in delete: platform will return the delete failure to end-users which should retry
+   - in get last create operation: platform will retry.
+   
+  - avoid internal exceptions to be user facing:
+    Server error, status code: 502, error code: 10001, message: Service broker error: org.eclipse.jgit.api.errors.TransportException git repo url
+
 
 - typing of exceptions throw by processors: RuntimeException ?
 - spaces vs tabs indentation reported by intellij

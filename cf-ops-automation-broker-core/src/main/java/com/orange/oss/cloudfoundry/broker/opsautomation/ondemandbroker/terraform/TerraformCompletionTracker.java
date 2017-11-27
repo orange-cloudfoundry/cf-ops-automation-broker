@@ -8,6 +8,7 @@ import org.springframework.cloud.servicebroker.model.GetLastServiceOperationResp
 import org.springframework.cloud.servicebroker.model.OperationState;
 
 import java.io.*;
+import java.nio.file.Path;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -19,18 +20,18 @@ import java.util.Map;
 public class TerraformCompletionTracker {
 
     private static Logger logger = LoggerFactory.getLogger(TerraformCompletionTracker.class.getName());
+    private final String pathToTfState;
 
 
     private Gson gson;
 
-    private File tfStateFile;
     private Clock clock;
     private int maxExecutionDurationSeconds;
 
-    public TerraformCompletionTracker(File tfStateFile, Clock clock, int maxExecutionDurationSeconds) {
-        this.tfStateFile = tfStateFile;
+    public TerraformCompletionTracker(Clock clock, int maxExecutionDurationSeconds, String pathToTfState) {
         this.clock = clock;
         this.maxExecutionDurationSeconds = maxExecutionDurationSeconds;
+        this.pathToTfState = pathToTfState;
 
         gson = new GsonBuilder().registerTypeAdapter(TerraformState.class, new TerraformStateGsonAdapter()).create();
     }
@@ -40,9 +41,9 @@ public class TerraformCompletionTracker {
         return now.toString();
     }
 
-    public GetLastServiceOperationResponse getModuleExecStatus(String moduleName, String lastOperationState) {
+    public GetLastServiceOperationResponse getModuleExecStatus(Path gitWorkDir, String moduleName, String lastOperationState) {
+        File tfStateFile = gitWorkDir.resolve(pathToTfState).toFile();
 
-        GetLastServiceOperationResponse response = new GetLastServiceOperationResponse();
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(tfStateFile)))) {
             TerraformState tfState = gson.fromJson(reader, TerraformState.class);
 
@@ -55,11 +56,8 @@ public class TerraformCompletionTracker {
             return mapOutputToStatus(started, completed, elapsedTimeSecsSinceLastOperation);
         } catch (IOException e) {
             logger.error("unable to extract tfstate output from:" + tfStateFile, e);
-            response.withDescription("Internal error checking service instance state");
+            throw new RuntimeException("unable to check service instance status . Client platform should retry polling status");
         }
-
-        response.withOperationState(OperationState.FAILED);
-        return response;
     }
 
      GetLastServiceOperationResponse mapOutputToStatus(TerraformState.Output started, TerraformState.Output completed, long elapsedTimeSecsSinceLastOperation) {

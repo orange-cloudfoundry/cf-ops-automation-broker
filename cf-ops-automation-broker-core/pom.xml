@@ -59,8 +59,17 @@
 		<dependency>
 		  <groupId>org.eclipse.jgit</groupId>
 		  <artifactId>org.eclipse.jgit</artifactId>
-		  <version>4.2.0.201601211800-r</version>
+		  <version>4.9.0.201710071750-r</version>
 		</dependency>
+
+		<!-- Use SimpleLogger as the slf4j implementation in tests for getting debug traces from libs
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-simple</artifactId>
+			<version>1.7.12</version>
+			<scope>test</scope>
+		</dependency>
+		-->
 		
         <dependency>
             <groupId>org.springframework.cloud</groupId>

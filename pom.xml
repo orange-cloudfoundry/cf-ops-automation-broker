@@ -22,13 +22,14 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <java.version>1.8</java.version>
-        <springCloudServiceBrokerVersion>1.0.1.RELEASE</springCloudServiceBrokerVersion>
+        <springCloudServiceBrokerVersion>1.0.2.RELEASE</springCloudServiceBrokerVersion>
     </properties>
 
     <modules>
         <module>cf-ops-automation-broker-core</module>
         <module>cf-ops-automation-broker-framework</module>
         <module>cf-ops-automation-sample-broker</module>
+        <module>cf-ops-automation-cloudflare-broker</module>
         <module>spring-boot-starter-servicebroker-catalog</module>
     </modules>
 
@@ -61,7 +62,7 @@
         <dependency>
             <groupId>org.eclipse.jgit</groupId>
             <artifactId>org.eclipse.jgit</artifactId>
-            <version>4.2.0.201601211800-r</version>
+            <version>4.9.0.201710071750-r</version>
         </dependency>
 
         <!-- for bosh manifest yml parsing -->

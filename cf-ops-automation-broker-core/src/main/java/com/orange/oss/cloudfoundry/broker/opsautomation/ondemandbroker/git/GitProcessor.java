@@ -1,185 +1,234 @@
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git;
 
-import java.io.IOException;
-import java.nio.file.FileVisitResult;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.SimpleFileVisitor;
-import java.nio.file.attribute.BasicFileAttributes;
-
-import org.eclipse.jgit.api.AddCommand;
-import org.eclipse.jgit.api.CloneCommand;
-import org.eclipse.jgit.api.CommitCommand;
-import org.eclipse.jgit.api.Git;
-import org.eclipse.jgit.api.PushCommand;
-import org.eclipse.jgit.api.errors.GitAPIException;
-import org.eclipse.jgit.api.errors.NoFilepatternException;
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.Context;
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.DefaultBrokerProcessor;
+import org.apache.commons.lang.builder.ToStringBuilder;
+import org.eclipse.jgit.api.*;
+import org.eclipse.jgit.lib.Config;
+import org.eclipse.jgit.revwalk.RevCommit;
+import org.eclipse.jgit.transport.PushResult;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.util.FileSystemUtils;
 
-import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.Context;
-import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.DefaultBrokerProcessor;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Set;
 
 
 /**
  * Git Mediation :
  * clones repo
  * adds modified files
- * commit, rebase then push 
- * @author poblin-orange
+ * commit, rebase then push
  *
+ * @author poblin-orange
  */
 public class GitProcessor extends DefaultBrokerProcessor {
 
 
+    private static Logger logger = LoggerFactory.getLogger(GitProcessor.class.getName());
 
-	private static Logger logger = LoggerFactory.getLogger(GitProcessor.class.getName());
+    private String gitUser;
+    private String gitPassword;
+    private String gitUrl;
+    private String committerName;
+    private String committerEmail;
 
-	private String gitUser;
-	private String gitPassword;
-	private String gitUrl;
+
+    private Git git;
+    private UsernamePasswordCredentialsProvider cred;
+    private Path workDir;
+
+    public GitProcessor(String gitUser, String gitPassword, String gitUrl, String committerName, String committerEmail) {
+        this.gitUser = gitUser;
+        this.gitPassword = gitPassword;
+        this.gitUrl = gitUrl;
+        this.committerName = committerName;
+        this.committerEmail = committerEmail;
+    }
+
+    @Override
+    public void preCreate(Context ctx) {
+        this.cloneRepo(ctx);
+    }
+
+    @Override
+    public void postCreate(Context ctx) {
+        this.commitPushRepo(ctx, true);
+    }
+
+    @Override
+    public void preGetLastCreateOperation(Context ctx) {
+        this.cloneRepo(ctx);
+    }
+
+    @Override
+    public void postGetLastCreateOperation(Context ctx) {
+        this.commitPushRepo(ctx, true);
+    }
+
+    @Override
+    public void preBind(Context ctx) {
+        this.cloneRepo(ctx);
+    }
+
+    @Override
+    public void postBind(Context ctx) {
+        this.commitPushRepo(ctx, true);
+    }
+
+    @Override
+    public void preDelete(Context ctx) {
+        this.cloneRepo(ctx);
+    }
+
+    @Override
+    public void postDelete(Context ctx) {
+        this.commitPushRepo(ctx, true);
+    }
+
+    @Override
+    public void preUnBind(Context ctx) {
+        this.cloneRepo(ctx);
+    }
+
+    @Override
+    public void postUnBind(Context ctx) {
+        this.commitPushRepo(ctx, true);
+    }
+
+    /**
+     * local clone a repo
+     *
+     * @param ctx exposing the workDir Path in context
+     */
+    void cloneRepo(Context ctx) {
+        try {
+
+            logger.info("cloning repo");
+            this.cred = new UsernamePasswordCredentialsProvider(this.gitUser, this.gitPassword);
 
 
-	private Git git;
-	private UsernamePasswordCredentialsProvider cred;
-	private Path workDir;
+            String prefix = "broker-";
 
-	public GitProcessor(String gitUser, String gitPassword, String gitUrl) {
-		this.gitUser = gitUser;
-		this.gitPassword = gitPassword;
-		this.gitUrl = gitUrl;
-	}
+            workDir = Files.createTempDirectory(prefix);
 
-	@Override
-	public void preCreate(Context ctx) {
-		this.cloneRepo(ctx);
-	}
+            int timeoutSeconds = 60; //git timeout
+            CloneCommand cc = new CloneCommand()
+                    .setCredentialsProvider(cred)
+                    .setDirectory(workDir.toFile())
+                    .setTimeout(timeoutSeconds)
+                    .setURI(this.gitUrl);
 
-	@Override
-	public void postCreate(Context ctx) {
-		this.commitPushRepo(ctx);
-	}
+            this.git = cc.call();
 
-	@Override
-	public void preBind(Context ctx) {
-		this.cloneRepo(ctx);	}
+            setUserConfig();
 
-	@Override
-	public void postBind(Context ctx) {
-		this.commitPushRepo(ctx);	}
+            String branch = "master";
+            git.checkout().setName(branch).call();
+            git.submoduleInit().call();
+            git.submoduleUpdate().call();
 
-	@Override
-	public void preDelete(Context ctx) {
-		this.cloneRepo(ctx);	}
+            logger.info("git repo is ready at {}, on branch {} at {}", workDir, branch);
+            //push the work dir in invokation context
+            ctx.contextKeys.put(GitProcessorContext.workDir.toString(), workDir);
 
-	@Override
-	public void postDelete(Context ctx) {
-		this.commitPushRepo(ctx);	}
 
-	@Override
-	public void preUnBind(Context ctx) {
-		this.cloneRepo(ctx);	}
+        } catch (Exception e) {
+            logger.warn("caught " + e, e);
+            throw new IllegalArgumentException(e);
 
-	@Override
-	public void postUnBind(Context ctx) {
-		this.commitPushRepo(ctx);	}
+        }
 
-	/**
-	 * local clone a repo
-	 * @param ctx. exposing the workDir Path in context
-	 */
-	private void cloneRepo(Context ctx) {
-		try {
-			
-			logger.info("cloning repo");
-			this.cred = new UsernamePasswordCredentialsProvider(this.gitUser, this.gitPassword);
-		
+    }
 
-			String prefix = "broker-";
+    protected void setUserConfig() {
+        Config config = this.git.getRepository().getConfig();
+        if (this.committerName != null) {
+            config.setString("user", null, "name", this.committerName);
+        }
+        if (this.committerEmail != null) {
+            config.setString("user", null, "email", this.committerEmail);
+        }
+    }
 
-			workDir = Files.createTempDirectory(prefix);
+    /**
+     * commit, rebase the push the modification
+     */
+    void commitPushRepo(Context ctx, boolean deleteRepo) {
+        try {
+            logger.info("commit push");
 
-			int timeoutSeconds = 60; //git timeout
-			CloneCommand cc = new CloneCommand()
-					.setCredentialsProvider(cred)
-					.setDirectory(workDir.toFile())
-					.setTimeout(timeoutSeconds)
-					.setURI(this.gitUrl);
 
-			this.git = cc.call();
+            AddCommand addC = git.add().addFilepattern(".");
+            addC.call();
 
-			String branch = "master";
-			git.checkout().setName(branch).call();
-			git.submoduleInit().call();
-			git.submoduleUpdate().call();
+            Status status = git.status().call();
+            Set<String> missing = status.getMissing();
+            for (String f : missing) {
+                logger.info("staging as deleted: " + f);
+                git.rm().addFilepattern(f).call();
+            }
+            status = git.status().call();
+            if (status.hasUncommittedChanges()) {
+                logger.info("pending commit: " +  status.getUncommittedChanges() + ". With deleted:" + status.getRemoved() + " added:" + status.getAdded() + " changed:" + status.getChanged());
+                CommitCommand commitC = git.commit().setMessage(getCommitMessage(ctx));
 
-			logger.info("git repo is ready, on branch {}", branch);
-			//push the work dir in invokation context
-			ctx.contextKeys.put(GitProcessorContext.workDir.toString(),workDir);
-			
-			
-		} catch (Exception e) {
-			throw new IllegalArgumentException(e);
+                RevCommit revCommit = commitC.call();
+                logger.info("commited files in " + revCommit.toString());
 
-		}
+                //TODO: handle conflicts and automatically perform a git rebase
 
-	}
+                logger.info("pushing ...");
+                PushCommand pushCommand = git.push().setCredentialsProvider(cred);
+                Iterable<PushResult> pushResults = pushCommand.call();
+                logger.info("pushed ...");
+                if (logger.isDebugEnabled()) {
+                    StringBuilder sb = new StringBuilder();
+                    for (PushResult pushResult : pushResults) {
+                        sb.append(ToStringBuilder.reflectionToString(pushResult));
+                        sb.append(" ");
+                    }
+                    logger.debug("push details: "+ sb.toString());
 
-	/**
-	 * commit, rebase the push the modification
-	 * 
-	 * @throws GitAPIException
-	 * @throws NoFilepatternException
-	 * @throws IOException
-	 */
-	private void commitPushRepo(Context ctx) {
-		try {
-			logger.info("commit push");
-			AddCommand addC = git.add().addFilepattern(".");
-			addC.call();
-			logger.info("added files");
+                }
+            } else {
+                logger.info("No changes to commit, skipping push");
+            }
 
-			CommitCommand commitC = git.commit().setMessage("commit by ondemand broker");
-			commitC.call();
-			logger.info("commited files");
+            if (deleteRepo) {
+                deleteWorkingDir();
+            }
+        } catch (Exception e) {
+            logger.warn("caught " + e, e);
+            throw new IllegalArgumentException(e);
+        }
 
-			//TODO: rebase
-			
-			logger.info("pushing ...");
-			PushCommand pushCommand = git.push().setCredentialsProvider(cred);
-			pushCommand.call();
-			logger.info("pushed ...");
-			deleteRecursiveDir(workDir);
-		} catch (Exception e) {
-			throw new IllegalArgumentException(e);
+    }
 
-		}
+    protected String getCommitMessage(Context ctx) {
+        String configuredMessage = (String) ctx.contextKeys.get(GitProcessorContext.commitMessage.toString());
+        return configuredMessage == null ? "commit by ondemand broker" : configuredMessage;
+    }
 
-	}
+    /**
+     * recursively delete working directory
+     */
+    public void deleteWorkingDir() throws IOException {
+        // cleaning workDir
+        boolean deletesuccessful = FileSystemUtils.deleteRecursively(this.workDir.toFile());
+        if (deletesuccessful) {
+            logger.info("cleaned-up {} work directory", this.workDir);
+        } else {
+            logger.error("unable to clean up {}", this.workDir);
+        }
+    }
 
-	/**
-	 * recursive directory delete
-	 * 
-	 * @param workDir
-	 * @throws IOException
-	 */
-	private void deleteRecursiveDir(Path workDir) throws IOException {
-		// cleaning workDir
-		Files.walkFileTree(workDir, new SimpleFileVisitor<Path>() {
-			@Override
-			public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-				Files.delete(file);
-				return FileVisitResult.CONTINUE;
-			}
-
-			@Override
-			public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
-				Files.delete(dir);
-				return FileVisitResult.CONTINUE;
-			}
-		});
-		logger.info("deleted {} work directory", workDir);
-	}
-
+    //support unit tests
+    Git getGit() {
+        return git;
+    }
 }

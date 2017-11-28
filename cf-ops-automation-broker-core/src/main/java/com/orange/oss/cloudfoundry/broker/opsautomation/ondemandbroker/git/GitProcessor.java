@@ -35,27 +35,22 @@ import java.util.stream.StreamSupport;
 public class GitProcessor extends DefaultBrokerProcessor {
 
 
-    private static Logger logger = LoggerFactory.getLogger(GitProcessor.class.getName());
+    private static final String PRIVATE_GIT_INSTANCE = "private-git-instance";
+    private static final Logger logger = LoggerFactory.getLogger(GitProcessor.class.getName());
     private final String branch;
 
-    private String gitUser;
-    private String gitPassword;
-    private String gitUrl;
-    private String committerName;
-    private String committerEmail;
+    private final String gitUrl;
+    private final String committerName;
+    private final String committerEmail;
 
-
-    private Git git;
-    private UsernamePasswordCredentialsProvider cred;
-    private Path workDir;
+    private final UsernamePasswordCredentialsProvider cred;
 
     public GitProcessor(String gitUser, String gitPassword, String gitUrl, String committerName, String committerEmail) {
-        this.gitUser = gitUser;
-        this.gitPassword = gitPassword;
         this.gitUrl = gitUrl;
         this.committerName = committerName;
         this.committerEmail = committerEmail;
         branch = "master";
+        this.cred = new UsernamePasswordCredentialsProvider(gitUser, gitPassword);
     }
 
     @Override
@@ -117,12 +112,11 @@ public class GitProcessor extends DefaultBrokerProcessor {
         try {
 
             logger.info("cloning repo");
-            this.cred = new UsernamePasswordCredentialsProvider(this.gitUser, this.gitPassword);
 
 
             String prefix = "broker-";
 
-            workDir = Files.createTempDirectory(prefix);
+            Path workDir = Files.createTempDirectory(prefix);
 
             int timeoutSeconds = 60; //git timeout
             CloneCommand cc = new CloneCommand()
@@ -131,9 +125,10 @@ public class GitProcessor extends DefaultBrokerProcessor {
                     .setTimeout(timeoutSeconds)
                     .setURI(this.gitUrl);
 
-            this.git = cc.call();
+            Git git = cc.call();
+            this.setGit(git, ctx);
 
-            setUserConfig();
+            setUserConfig(git);
 
             git.checkout().setName(this.branch).call();
             git.submoduleInit().call();
@@ -142,8 +137,7 @@ public class GitProcessor extends DefaultBrokerProcessor {
 
             logger.info("git repo is ready at {}, on branch {} at {}", workDir, this.branch);
             //push the work dir in invokation context
-            ctx.contextKeys.put(GitProcessorContext.workDir.toString(), workDir);
-
+            setWorkDir(workDir, ctx);
 
         } catch (Exception e) {
             logger.warn("caught " + e, e);
@@ -152,8 +146,8 @@ public class GitProcessor extends DefaultBrokerProcessor {
 
     }
 
-    protected void setUserConfig() {
-        Config config = this.git.getRepository().getConfig();
+    protected void setUserConfig(Git git) {
+        Config config = git.getRepository().getConfig();
         if (this.committerName != null) {
             config.setString("user", null, "name", this.committerName);
         }
@@ -170,6 +164,7 @@ public class GitProcessor extends DefaultBrokerProcessor {
             logger.info("commit push");
 
 
+            Git git = getGit(ctx);
             AddCommand addC = git.add().addFilepattern(".");
             addC.call();
 
@@ -189,13 +184,13 @@ public class GitProcessor extends DefaultBrokerProcessor {
 
                 //TODO: handle conflicts and automatically perform a git rebase
 
-                pushCommits();
+                pushCommits(git);
             } else {
                 logger.info("No changes to commit, skipping push");
             }
 
             if (deleteRepo) {
-                deleteWorkingDir();
+                deleteWorkingDir(ctx);
             }
         } catch (Exception e) {
             logger.warn("caught " + e, e);
@@ -204,7 +199,7 @@ public class GitProcessor extends DefaultBrokerProcessor {
 
     }
 
-    void pushCommits() throws GitAPIException {
+    void pushCommits(Git git) throws GitAPIException {
         logger.info("pushing ...");
         PushCommand pushCommand = git.push().setCredentialsProvider(cred);
         Iterable<PushResult> pushResults = pushCommand.call();
@@ -265,20 +260,33 @@ public class GitProcessor extends DefaultBrokerProcessor {
     /**
      * recursively delete working directory
      */
-    public void deleteWorkingDir() throws IOException {
+    public void deleteWorkingDir(Context ctx) throws IOException {
         // cleaning workDir
-        if (this.workDir != null) {
-            boolean deletesuccessful = FileSystemUtils.deleteRecursively(this.workDir.toFile());
+        Path workDir = this.getWorkDir(ctx);
+        if (workDir != null) {
+            boolean deletesuccessful = FileSystemUtils.deleteRecursively(workDir.toFile());
             if (deletesuccessful) {
-                logger.info("cleaned-up {} work directory", this.workDir);
+                logger.info("cleaned-up {} work directory", workDir);
             } else {
-                logger.error("unable to clean up {}", this.workDir);
+                logger.error("unable to clean up {}", workDir);
             }
+            setWorkDir(null, ctx);
         }
     }
 
-    //support unit tests
-    Git getGit() {
-        return git;
+    Git getGit(Context ctx) {
+        return (Git) ctx.contextKeys.get(PRIVATE_GIT_INSTANCE);
+    }
+
+    private void setGit(Git git, Context ctx) {
+        ctx.contextKeys.put(PRIVATE_GIT_INSTANCE, git);
+    }
+
+    Path getWorkDir(Context ctx) {
+        return (Path) ctx.contextKeys.get(GitProcessorContext.workDir.toString());
+    }
+
+    private void setWorkDir(Path workDir, Context ctx) {
+        ctx.contextKeys.put(GitProcessorContext.workDir.toString(), workDir);
     }
 }

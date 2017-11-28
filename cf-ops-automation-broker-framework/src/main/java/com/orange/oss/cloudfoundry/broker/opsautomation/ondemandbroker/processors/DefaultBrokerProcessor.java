@@ -12,7 +12,7 @@ import org.slf4j.LoggerFactory;
  */
 public class DefaultBrokerProcessor implements BrokerProcessor {
 
-	private static Logger logger=LoggerFactory.getLogger(DefaultBrokerProcessor.class.getName());
+	private static final Logger logger=LoggerFactory.getLogger(DefaultBrokerProcessor.class.getName());
 
 	@Override
 	public void preCreate(Context ctx) {

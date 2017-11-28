@@ -4,9 +4,11 @@ import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processor
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.DefaultBrokerProcessor;
 import org.apache.commons.lang.builder.ToStringBuilder;
 import org.eclipse.jgit.api.*;
+import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.Config;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.transport.PushResult;
+import org.eclipse.jgit.transport.RemoteRefUpdate;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,7 +17,11 @@ import org.springframework.util.FileSystemUtils;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Collection;
+import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 
 /**
@@ -30,6 +36,7 @@ public class GitProcessor extends DefaultBrokerProcessor {
 
 
     private static Logger logger = LoggerFactory.getLogger(GitProcessor.class.getName());
+    private final String branch;
 
     private String gitUser;
     private String gitPassword;
@@ -48,6 +55,7 @@ public class GitProcessor extends DefaultBrokerProcessor {
         this.gitUrl = gitUrl;
         this.committerName = committerName;
         this.committerEmail = committerEmail;
+        branch = "master";
     }
 
     @Override
@@ -127,12 +135,12 @@ public class GitProcessor extends DefaultBrokerProcessor {
 
             setUserConfig();
 
-            String branch = "master";
-            git.checkout().setName(branch).call();
+            git.checkout().setName(this.branch).call();
             git.submoduleInit().call();
             git.submoduleUpdate().call();
 
-            logger.info("git repo is ready at {}, on branch {} at {}", workDir, branch);
+
+            logger.info("git repo is ready at {}, on branch {} at {}", workDir, this.branch);
             //push the work dir in invokation context
             ctx.contextKeys.put(GitProcessorContext.workDir.toString(), workDir);
 
@@ -140,7 +148,6 @@ public class GitProcessor extends DefaultBrokerProcessor {
         } catch (Exception e) {
             logger.warn("caught " + e, e);
             throw new IllegalArgumentException(e);
-
         }
 
     }
@@ -182,19 +189,7 @@ public class GitProcessor extends DefaultBrokerProcessor {
 
                 //TODO: handle conflicts and automatically perform a git rebase
 
-                logger.info("pushing ...");
-                PushCommand pushCommand = git.push().setCredentialsProvider(cred);
-                Iterable<PushResult> pushResults = pushCommand.call();
-                logger.info("pushed ...");
-                if (logger.isDebugEnabled()) {
-                    StringBuilder sb = new StringBuilder();
-                    for (PushResult pushResult : pushResults) {
-                        sb.append(ToStringBuilder.reflectionToString(pushResult));
-                        sb.append(" ");
-                    }
-                    logger.debug("push details: "+ sb.toString());
-
-                }
+                pushCommits();
             } else {
                 logger.info("No changes to commit, skipping push");
             }
@@ -209,6 +204,59 @@ public class GitProcessor extends DefaultBrokerProcessor {
 
     }
 
+    void pushCommits() throws GitAPIException {
+        logger.info("pushing ...");
+        PushCommand pushCommand = git.push().setCredentialsProvider(cred);
+        Iterable<PushResult> pushResults = pushCommand.call();
+        logger.info("pushed ...");
+        List<RemoteRefUpdate.Status> failedStatuses = extractFailedStatuses(pushResults);
+
+        if (failedStatuses.contains(RemoteRefUpdate.Status.REJECTED_NONFASTFORWARD)) {
+            logger.info("Failed to push with status {}", failedStatuses);
+            logger.info("pull and rebasing from origin/{} ...", this.branch);
+            PullResult pullRebaseResult = git.pull().call();
+            if (!pullRebaseResult.isSuccessful()) {
+                logger.info("Failed to pull rebase: " + pullRebaseResult);
+                throw new RuntimeException("failed to push: remote conflict. pull rebased failed:" + pullRebaseResult);
+            }
+            logger.info("rebased from origin/{}", this.branch);
+            logger.debug("pull details:" + ToStringBuilder.reflectionToString(pullRebaseResult));
+
+            logger.info("re-pushing ...");
+            pushCommand = git.push().setCredentialsProvider(cred);
+            pushResults = pushCommand.call();
+            logger.info("re-pushed ...");
+            List<RemoteRefUpdate.Status> secondPushFailures = extractFailedStatuses(pushResults);
+            if (!secondPushFailures.isEmpty()) {
+                logger.info("Failed to re-push with status {}", failedStatuses);
+                throw new RuntimeException("failed to push: remote conflict. pull rebased failed:" + pullRebaseResult);
+            }
+        }
+
+        if (logger.isDebugEnabled()) {
+            logger.debug("push details: "+ prettyPrint(pushResults));
+        }
+    }
+
+    List<RemoteRefUpdate.Status> extractFailedStatuses(Iterable<PushResult> pushResults) {
+        return StreamSupport.stream(pushResults.spliterator(), false) //https://stackoverflow.com/questions/23932061/convert-iterable-to-stream-using-java-8-jdk
+                    .map(PushResult::getRemoteUpdates)
+                    .flatMap(Collection::stream) //reduces the Iterable
+                    .map(RemoteRefUpdate::getStatus)
+                    .distinct()
+                    .filter(status -> !RemoteRefUpdate.Status.OK.equals(status))
+                    .collect(Collectors.toList());
+    }
+
+    public StringBuilder prettyPrint(Iterable results) {
+        StringBuilder sb = new StringBuilder();
+        for (Object result : results) {
+            sb.append(ToStringBuilder.reflectionToString(result));
+            sb.append(" ");
+        }
+        return sb;
+    }
+
     protected String getCommitMessage(Context ctx) {
         String configuredMessage = (String) ctx.contextKeys.get(GitProcessorContext.commitMessage.toString());
         return configuredMessage == null ? "commit by ondemand broker" : configuredMessage;
@@ -219,11 +267,13 @@ public class GitProcessor extends DefaultBrokerProcessor {
      */
     public void deleteWorkingDir() throws IOException {
         // cleaning workDir
-        boolean deletesuccessful = FileSystemUtils.deleteRecursively(this.workDir.toFile());
-        if (deletesuccessful) {
-            logger.info("cleaned-up {} work directory", this.workDir);
-        } else {
-            logger.error("unable to clean up {}", this.workDir);
+        if (this.workDir != null) {
+            boolean deletesuccessful = FileSystemUtils.deleteRecursively(this.workDir.toFile());
+            if (deletesuccessful) {
+                logger.info("cleaned-up {} work directory", this.workDir);
+            } else {
+                logger.error("unable to clean up {}", this.workDir);
+            }
         }
     }
 

@@ -2,7 +2,7 @@
 # Next cloudflare
 
 - integration tests for jgit & related fixes 
-    - properly handle git push errors: try rebasing
+    - implement caching of local repo: try a pull instead of a clone
    
 - implement async delete
 

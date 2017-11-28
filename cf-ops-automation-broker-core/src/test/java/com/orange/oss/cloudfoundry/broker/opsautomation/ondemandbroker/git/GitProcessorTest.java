@@ -4,10 +4,7 @@ import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processor
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.PersonIdent;
 import org.eclipse.jgit.revwalk.RevCommit;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -114,11 +111,11 @@ public class GitProcessorTest {
 
         //then file should be persisted
         Path secondClone = cloneRepo(processor);
-        File secondCloneFile = secondClone.resolve("afile.txt").toFile();
-        assertThat(secondCloneFile).exists();
+        File secondCloneSameFile = secondClone.resolve("afile.txt").toFile();
+        assertThat(secondCloneSameFile).exists();
 
         //when deleting file
-        assertThat(secondCloneFile.delete()).isTrue();
+        assertThat(secondCloneSameFile.delete()).isTrue();
         //and committing
         processor.commitPushRepo(new Context(), true);
 
@@ -127,6 +124,59 @@ public class GitProcessorTest {
         File thirdCloneFile = thirdClone.resolve("afile.txt").toFile();
         assertThat(thirdCloneFile).doesNotExist();
     }
+
+    @Test
+    public void rebases_during_push_conflicts() throws GitAPIException, IOException {
+        //given a clone of an empty repo
+        Context ctx1 = new Context();
+        GitProcessor processor1 = new GitProcessor("gituser", "gitsecret", GIT_URL, "committerName", "committer@address.org");
+        processor1.cloneRepo(ctx1);
+
+        //Given concurrent commits
+        Context ctx2 = new Context();
+        GitProcessor processor2 = new GitProcessor("gituser", "gitsecret", GIT_URL, "committerName", "committer@address.org");
+        processor2.cloneRepo(ctx2);
+        addAFile(ctx2, "content2", "a_first_file.txt");
+        processor2.commitPushRepo(new Context(), true);
+
+        //when trying to commit and push
+        addAFile(ctx1, "content1", "a_second_file.txt");
+        processor1.commitPushRepo(new Context(), true);
+
+        //then a rebase should be tried, a 3rd clone sees both files commited
+        Context ctx3 = new Context();
+        GitProcessor processor3 = new GitProcessor("gituser", "gitsecret", GIT_URL, "committerName", "committer@address.org");
+        processor3.cloneRepo(ctx3);
+        Path thirdClone = getWorkDir(ctx3);
+        assertThat(thirdClone.resolve("a_first_file.txt").toFile()).exists();
+        assertThat(thirdClone.resolve("a_second_file.txt").toFile()).exists();
+    }
+
+
+    @Test
+    public void fails_if_pull_rebase_fails_during_push() throws GitAPIException, IOException {
+        //given a clone of an empty repo
+        Context ctx1 = new Context();
+        GitProcessor processor1 = new GitProcessor("gituser", "gitsecret", GIT_URL, "committerName", "committer@address.org");
+        processor1.cloneRepo(ctx1);
+
+        //Given concurrent commits
+        Context ctx2 = new Context();
+        GitProcessor processor2 = new GitProcessor("gituser", "gitsecret", GIT_URL, "committerName", "committer@address.org");
+        processor2.cloneRepo(ctx2);
+        addAFile(ctx2, "content2", "same_file.txt");
+        processor2.commitPushRepo(new Context(), true);
+
+        //when trying to commit and push
+        addAFile(ctx1, "content1", "same_file.txt");
+        try {
+            processor1.commitPushRepo(new Context(), true);
+            Assert.fail("expected exception");
+        } catch (RuntimeException e) {
+            assertThat(e.getMessage()).contains("conflict");
+        }
+    }
+
 
     @Test
     public void supports_custom_commit_msg() throws GitAPIException, IOException {
@@ -145,10 +195,18 @@ public class GitProcessorTest {
     }
 
     public void addAFile(Context ctx) throws IOException {
-        Path workDir = (Path) ctx.contextKeys.get(GitProcessorContext.workDir.toString());
-        try (FileWriter writer = new FileWriter(workDir.resolve("afile.txt").toFile())) {
-            writer.append("hello.txt");
+        addAFile(ctx, "hello.txt", "afile.txt");
+    }
+
+    public void addAFile(Context ctx, String content, String fileRelativePath) throws IOException {
+        Path workDir = getWorkDir(ctx);
+        try (FileWriter writer = new FileWriter(workDir.resolve(fileRelativePath).toFile())) {
+            writer.append(content);
         }
+    }
+
+    public Path getWorkDir(Context ctx) {
+        return (Path) ctx.contextKeys.get(GitProcessorContext.workDir.toString());
     }
 
     public int countIterables(Iterable<RevCommit> resultingCommits) {
@@ -163,7 +221,7 @@ public class GitProcessorTest {
         Context ctx = new Context();
         processor.preCreate(ctx);
 
-        return (Path) ctx.contextKeys.get(GitProcessorContext.workDir.toString());
+        return getWorkDir(ctx);
     }
 
 

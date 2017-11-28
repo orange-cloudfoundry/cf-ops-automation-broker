@@ -1,10 +1,14 @@
 
 # Next cloudflare
 
-- integration tests for jgit & related fixes 
-    - implement caching of local repo: try a pull instead of a clone
-   
 - implement async delete
+
+- integration tests for jgit & related fixes 
+    - implement caching of local repo: try a pull instead of a clone. Alternatives:
+       - populate within the context a key to be persisted by OSB client (operation): the local clone path for a given request id. Enables caching across get/poll/update/delete
+       - set up a cache queue shared by the different threads: each thread pop a clone in the queue. 
+    - fix concurrency issue: GitProcessor currently holds state while being called in concurrence 
+   
 
 - implement cf-ops-automation unit tests 
 - prevent secrets in exceptions from being exposed to end-users: catch exceptions  

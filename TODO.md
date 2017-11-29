@@ -1,22 +1,22 @@
 
 # Next cloudflare
 
-- implement async delete
+- refactor tf modules files names: successfull -> completed
+- (configure editor plugins to remind use of shortcuts)
 
-- integration tests for jgit & related fixes 
-    - implement caching of local repo: try a pull instead of a clone. Alternatives:
-       - populate within the context a key to be persisted by OSB client (operation): the local clone path for a given request id. Enables caching across get/poll/update/delete
-       - set up a cache queue shared by the different threads: each thread pop a clone in the queue. 
-   
-
-- implement cf-ops-automation unit tests 
 - prevent secrets in exceptions from being exposed to end-users: catch exceptions  
+- implement cf-ops-automation unit tests 
 
 - cut 0.1 release & publish on github
 - automate deployment in paas-template
     - automate ASG to git server 
 
 - upgrade cf-ops-automation TF version to 0.11.0
+
+- integration tests for jgit & related fixes 
+    - implement caching of local repo: try a pull instead of a clone. Alternatives:
+       - populate within the context a key to be persisted by OSB client (operation): the local clone path for a given request id. Enables caching across get/poll/update/delete
+       - set up a cache queue shared by the different threads: each thread pop a clone in the queue. 
  
 - cf-ops-automation pipeline: 
    - add a retry step on terraform-apply

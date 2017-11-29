@@ -235,7 +235,7 @@ public class CloudFlareProcessorTest {
         // specifying asynchronous creations
         assertThat(serviceInstanceResponse.isAsync()).isTrue();
         // with a timestamp used to timeout on too long responses
-        assertThat(serviceInstanceResponse.getOperation()).isEqualTo("2017-11-14T17:24:08.007Z");
+        assertThat(serviceInstanceResponse.getOperation()).isEqualTo("{\"lastOperationDate\":\"2017-11-14T17:24:08.007Z\",\"operation\":\"create\"}");
         // and with a proper commit message
         String customMessage = (String) context.contextKeys.get(GitProcessorContext.commitMessage.toString());
         assertThat(customMessage).isEqualTo("cloudflare broker: create instance id=serviceinstance_guid with route-prefix=avalidroute");
@@ -248,14 +248,14 @@ public class CloudFlareProcessorTest {
         GetLastServiceOperationResponse expectedResponse = new GetLastServiceOperationResponse();
         expectedResponse.withDescription("module exec in progress");
         expectedResponse.withOperationState(IN_PROGRESS);
-        when(tracker.getModuleExecStatus(any(Path.class), eq("serviceinstance_guid"), eq("2017-11-14T17:24:08.007Z"))).thenReturn(expectedResponse);
+        when(tracker.getModuleExecStatus(any(Path.class), eq("serviceinstance_guid"), eq("{\"lastOperationDate\":\"2017-11-14T17:24:08.007Z\",\"operation\":\"create\"}"))).thenReturn(expectedResponse);
 
         cloudFlareProcessor = new CloudFlareProcessor(aConfig(), aSuffixValidator(), getRepositoryFactory(), tracker);
         //given an async polling from CC
         GetLastServiceOperationRequest operationRequest = new GetLastServiceOperationRequest("serviceinstance_guid",
                 "service_definition_id",
                 "plan_id",
-                "2017-11-14T17:24:08.007Z");
+                "{\"lastOperationDate\":\"2017-11-14T17:24:08.007Z\",\"operation\":\"create\"}");
 
         //and the context being injected to a cloudflare processor
         Context context = new Context();
@@ -281,7 +281,11 @@ public class CloudFlareProcessorTest {
                 .putProperties(CloudFlareProcessor.ROUTE_PREFIX, "avalidroute")
                 .build();
         when(terraformRepository.getByModuleName("instance_id")).thenReturn(aTfModule);
-        cloudFlareProcessor = new CloudFlareProcessor(aConfig(), aSuffixValidator(), getRepositoryFactory(), aTracker());
+
+        //given a configured timeout
+        Clock clock = Clock.fixed(Instant.ofEpochMilli(1510680248007L), ZoneId.of("Europe/Paris"));
+        TerraformCompletionTracker tracker = new TerraformCompletionTracker(clock, 120, "terraform.tfstate");
+        cloudFlareProcessor = new CloudFlareProcessor(aConfig(), aSuffixValidator(), getRepositoryFactory(), tracker);
 
 
         //given an incoming delete request
@@ -303,7 +307,9 @@ public class CloudFlareProcessorTest {
 
         // and the delete response is returned
         DeleteServiceInstanceResponse response = (DeleteServiceInstanceResponse) context.contextKeys.get(ProcessorChainServiceInstanceService.DELETE_SERVICE_INSTANCE_RESPONSE);
-        assertThat(response.isAsync()).isFalse();
+        assertThat(response.isAsync()).isTrue();
+        assertThat(response.getOperation()).isEqualTo("{\"lastOperationDate\":\"2017-11-14T17:24:08.007Z\",\"operation\":\"delete\"}");
+
         // with a proper commit message
         String customMessage = (String) context.contextKeys.get(GitProcessorContext.commitMessage.toString());
         assertThat(customMessage).isEqualTo("cloudflare broker: delete instance id=instance_id with route-prefix=avalidroute");
@@ -319,7 +325,7 @@ public class CloudFlareProcessorTest {
         expectedResponse.withOperationState(IN_PROGRESS);
         TerraformCompletionTracker tracker = Mockito.mock(TerraformCompletionTracker.class);
         when(tracker.getModuleExecStatus(any(Path.class), anyString(), anyString())).thenReturn(expectedResponse);
-        when(tracker.getCurrentDate()).thenReturn("2017-11-14T17:24:08.007Z");
+        when(tracker.getOperationStateAsJson(TerraformCompletionTracker.CREATE)).thenReturn("{\"lastOperationDate\":\"2017-11-14T17:24:08.007Z\",\"operation\":\"create\"}");
         return tracker;
     }
 

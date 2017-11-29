@@ -1,9 +1,9 @@
 
 # Next cloudflare
 
+- prevent secrets in exceptions from being exposed to end-users: catch exceptions
 - (configure editor plugins to remind use of shortcuts)
 
-- prevent secrets in exceptions from being exposed to end-users: catch exceptions  
 - implement cf-ops-automation unit tests 
 
 - cut 0.1 release & publish on github

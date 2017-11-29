@@ -66,7 +66,7 @@ public class ProcessorChainServiceInstanceService implements ServiceInstanceServ
     public GetLastServiceOperationResponse getLastOperation(GetLastServiceOperationRequest request) {
         Context ctx = new Context();
         ctx.contextKeys.put(GET_LAST_SERVICE_OPERATION_REQUEST, request);
-        processorChain.getLastCreateOperation(ctx);
+        processorChain.getLastOperation(ctx);
 
         GetLastServiceOperationResponse response;
         if (ctx.contextKeys.get(GET_LAST_SERVICE_OPERATION_RESPONSE) instanceof GetLastServiceOperationResponse) {

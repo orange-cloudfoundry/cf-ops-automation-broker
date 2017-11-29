@@ -242,7 +242,7 @@ public class CloudFlareProcessorTest {
     }
 
     @Test
-    public void responds_to_get_last_create_service_operation() {
+    public void responds_to_get_last_service_operation() {
         //Given a tf state without completed module outputs
         TerraformCompletionTracker tracker = Mockito.mock(TerraformCompletionTracker.class);
         GetLastServiceOperationResponse expectedResponse = new GetLastServiceOperationResponse();
@@ -264,7 +264,7 @@ public class CloudFlareProcessorTest {
 
 
         //when
-        cloudFlareProcessor.preGetLastCreateOperation(context);
+        cloudFlareProcessor.preGetLastOperation(context);
 
         // then mapped response from tracker is returned
         GetLastServiceOperationResponse operationResponse = (GetLastServiceOperationResponse) context.contextKeys.get(ProcessorChainServiceInstanceService.GET_LAST_SERVICE_OPERATION_RESPONSE);

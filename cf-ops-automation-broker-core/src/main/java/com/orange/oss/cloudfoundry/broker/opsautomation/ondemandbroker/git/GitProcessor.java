@@ -64,12 +64,12 @@ public class GitProcessor extends DefaultBrokerProcessor {
     }
 
     @Override
-    public void preGetLastCreateOperation(Context ctx) {
+    public void preGetLastOperation(Context ctx) {
         this.cloneRepo(ctx);
     }
 
     @Override
-    public void postGetLastCreateOperation(Context ctx) {
+    public void postGetLastOperation(Context ctx) {
         this.commitPushRepo(ctx, true);
     }
 

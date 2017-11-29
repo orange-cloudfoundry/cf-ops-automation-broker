@@ -21,12 +21,12 @@ public class DefaultBrokerProcessor implements BrokerProcessor {
 	}
 
 	@Override
-	public void preGetLastCreateOperation(Context ctx) {
+	public void preGetLastOperation(Context ctx) {
 		logger.debug("noop default preGetLastCreateOperation");
 	}
 
 	@Override
-	public void postGetLastCreateOperation(Context ctx) {
+	public void postGetLastOperation(Context ctx) {
 		logger.debug("noop default postGetLastCreateOperation");
 	}
 

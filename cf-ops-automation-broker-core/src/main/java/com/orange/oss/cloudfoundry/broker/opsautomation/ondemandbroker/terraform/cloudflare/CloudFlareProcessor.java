@@ -66,7 +66,7 @@ public class CloudFlareProcessor extends DefaultBrokerProcessor {
     }
 
     @Override
-    public void preGetLastCreateOperation(Context ctx) {
+    public void preGetLastOperation(Context ctx) {
         GetLastServiceOperationRequest operationRequest = (GetLastServiceOperationRequest)
                 ctx.contextKeys.get(ProcessorChainServiceInstanceService.GET_LAST_SERVICE_OPERATION_REQUEST);
 

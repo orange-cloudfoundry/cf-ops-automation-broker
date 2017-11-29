@@ -30,7 +30,7 @@ public class ProcessorChainTest {
 			}
 
 			@Override
-			public void preGetLastCreateOperation(Context ctx) { logger.info("preGetLastCreateOperation 1"); }
+			public void preGetLastOperation(Context ctx) { logger.info("preGetLastCreateOperation 1"); }
 
 			@Override
 			public void postCreate(Context ctx) {
@@ -38,7 +38,7 @@ public class ProcessorChainTest {
 			}
 
 			@Override
-			public void postGetLastCreateOperation(Context ctx) { logger.info("preGetLastCreateOperation 1"); }
+			public void postGetLastOperation(Context ctx) { logger.info("preGetLastCreateOperation 1"); }
 
 			@Override
 			public void postBind(Context ctx) {
@@ -78,7 +78,7 @@ public class ProcessorChainTest {
 			}
 
 			@Override
-			public void preGetLastCreateOperation(Context ctx) { logger.info("preGetLastCreateOperation 2"); }
+			public void preGetLastOperation(Context ctx) { logger.info("preGetLastCreateOperation 2"); }
 
 			@Override
 			public void preBind(Context ctx) {
@@ -92,7 +92,7 @@ public class ProcessorChainTest {
 			}
 
 			@Override
-			public void postGetLastCreateOperation(Context ctx) { logger.info("preGetLastCreateOperation 2"); }
+			public void postGetLastOperation(Context ctx) { logger.info("preGetLastCreateOperation 2"); }
 
 			@Override
 			public void postBind(Context ctx) {
@@ -131,7 +131,7 @@ public class ProcessorChainTest {
 		chain.create(ctx);
 
 		Context ctx1 =new Context();
-		chain.getLastCreateOperation(ctx1);
+		chain.getLastOperation(ctx1);
 		chain.bind();
 		chain.unBind();
 		chain.delete(new Context());

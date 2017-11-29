@@ -21,11 +21,11 @@ public class TerraformCompletionTrackerTest {
     @Test
     public void returns_creation_status_matching_tfstate_output() {
         //given a tfstate with a completed module
-        String tfStateFileInClasspath = "/terraform/terraform-with-successfull-module-exec.tfstate";
+        String tfStateFileInClasspath = "/terraform/terraform-with-completed-module-exec.tfstate";
         //4567.completed = successfully provisionned /tmp/writeable/file and /tmp/writeable/file
         //4567.started = successfully received module invocation
 
-        TerraformCompletionTracker tracker = new TerraformCompletionTracker(Clock.systemUTC(), 120, "terraform-with-successfull-module-exec.tfstate");
+        TerraformCompletionTracker tracker = new TerraformCompletionTracker(Clock.systemUTC(), 120, "terraform-with-completed-module-exec.tfstate");
 
         //when asked status
         File fileFromClasspath = getFileFromClasspath(tfStateFileInClasspath);
@@ -38,13 +38,13 @@ public class TerraformCompletionTrackerTest {
     @Test
     public void returns_creation_failure_when_max_execution_time_reached() {
         //given a tf state with pending execution
-        String tfStateFileInClasspath = "/terraform/terraform-without-successfull-module-exec.tfstate";
+        String tfStateFileInClasspath = "/terraform/terraform-without-completed-module-exec.tfstate";
         File tfStateFile = getFileFromClasspath(tfStateFileInClasspath);
         Path gitWorkDir = tfStateFile.getParentFile().toPath();
 
         //given a configured timeout
         Clock clock = Clock.fixed(Instant.ofEpochMilli(1510680248007L), ZoneId.of("Europe/Paris"));
-        TerraformCompletionTracker tracker = new TerraformCompletionTracker(clock, 120, "terraform-without-successfull-module-exec.tfstate");
+        TerraformCompletionTracker tracker = new TerraformCompletionTracker(clock, 120, "terraform-without-completed-module-exec.tfstate");
 
         //when asked status before timeout
         GetLastServiceOperationResponse moduleExecStatus = tracker.getModuleExecStatus(gitWorkDir, "4567", "{\"lastOperationDate\":\"2017-11-14T17:24:08.007Z\",\"operation\":\"create\"}");
@@ -59,13 +59,13 @@ public class TerraformCompletionTrackerTest {
     @Test
     public void returns_deletion_failure_when_max_execution_time_reached() {
         //given a tf state with pending execution
-        String tfStateFileInClasspath = "/terraform/terraform-with-successfull-module-exec.tfstate";
+        String tfStateFileInClasspath = "/terraform/terraform-with-completed-module-exec.tfstate";
         File tfStateFile = getFileFromClasspath(tfStateFileInClasspath);
         Path gitWorkDir = tfStateFile.getParentFile().toPath();
 
         //given a configured timeout
         Clock clock = Clock.fixed(Instant.ofEpochMilli(1510680248007L), ZoneId.of("Europe/Paris"));
-        TerraformCompletionTracker tracker = new TerraformCompletionTracker(clock, 120, "terraform-with-successfull-module-exec.tfstate");
+        TerraformCompletionTracker tracker = new TerraformCompletionTracker(clock, 120, "terraform-with-completed-module-exec.tfstate");
 
         //when asked status before timeout
         GetLastServiceOperationResponse moduleExecStatus = tracker.getModuleExecStatus(gitWorkDir, "4567", "{\"lastOperationDate\":\"2017-11-14T17:24:08.007Z\",\"operation\":\"delete\"}");

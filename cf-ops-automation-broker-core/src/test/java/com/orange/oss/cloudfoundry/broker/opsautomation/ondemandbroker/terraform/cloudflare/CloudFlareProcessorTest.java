@@ -199,7 +199,7 @@ public class CloudFlareProcessorTest {
                 .template(template).build();
 
         //given a tf state with no completed execution
-        String tfStateFileInClasspath = "/terraform/terraform-without-successfull-module-exec.tfstate";
+        String tfStateFileInClasspath = "/terraform/terraform-without-completed-module-exec.tfstate";
         //given a configured timeout
         Clock clock = Clock.fixed(Instant.ofEpochMilli(1510680248007L), ZoneId.of("Europe/Paris"));
         TerraformCompletionTracker tracker = new TerraformCompletionTracker(clock, 120, "terraform.tfstate");

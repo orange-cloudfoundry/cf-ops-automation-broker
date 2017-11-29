@@ -1,7 +1,6 @@
 
 # Next cloudflare
 
-- refactor tf modules files names: successfull -> completed
 - (configure editor plugins to remind use of shortcuts)
 
 - prevent secrets in exceptions from being exposed to end-users: catch exceptions  

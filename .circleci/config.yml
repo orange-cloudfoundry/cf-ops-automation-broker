@@ -30,4 +30,4 @@ jobs:
           path: ~/junit
 
       - store_artifacts:
-          path: target/cf-ops-automation-sample-broker-0.0.1-SNAPSHOT.jar
+          path: cf-ops-automation-cloudflare-broker/target/cf-ops-automation-cloudflare-broker-0.0.1-SNAPSHOT.jar

@@ -31,15 +31,15 @@ public class ProcessorChain {
 		}
 	}
 
-	public void getLastCreateOperation(Context ctx) {
+	public void getLastOperation(Context ctx) {
 		for (BrokerProcessor m: processors) {
-			m.preGetLastCreateOperation(ctx);
+			m.preGetLastOperation(ctx);
 		}
-		sink.getLastCreateOperation(ctx);
+		sink.getLastOperation(ctx);
 
 		for (int i = processors.size()-1; i>=0; i--) {
 			BrokerProcessor m= processors.get(i);
-			m.postGetLastCreateOperation(ctx);
+			m.postGetLastOperation(ctx);
 		}
 	}
 

@@ -1,31 +1,21 @@
 
 # Next cloudflare
 
-- integration tests for jgit & related fixes 
-    - properly handle git push errors: try rebasing
-   
-- deploy and manual verifications of improvements
-
-- harden cloudflare input validation: 
-  - proper message for empty route
-  - reject nested domains apparently accepted by cloudflare
-  - reject unsupported arbitrary params ? Wait for JSON schema support ?
-
-
+- prevent secrets in exceptions from being exposed to end-users: catch exceptions
+- (configure editor plugins to remind use of shortcuts)
 
 - implement cf-ops-automation unit tests 
-- prevent secrets in exceptions from being exposed to end-users: catch exceptions  
-
-    
-
-
-- implement async delete
 
 - cut 0.1 release & publish on github
 - automate deployment in paas-template
     - automate ASG to git server 
 
 - upgrade cf-ops-automation TF version to 0.11.0
+
+- integration tests for jgit & related fixes 
+    - implement caching of local repo: try a pull instead of a clone. Alternatives:
+       - populate within the context a key to be persisted by OSB client (operation): the local clone path for a given request id. Enables caching across get/poll/update/delete
+       - set up a cache queue shared by the different threads: each thread pop a clone in the queue. 
  
 - cf-ops-automation pipeline: 
    - add a retry step on terraform-apply
@@ -33,15 +23,18 @@
    - secrets-<%=depls %> have an additional shared/secrets in path
    - remove duplicated paas-templates-full + add necessary paths to paas-template-<%=depls %>
 
+- Application & Integration test:
+   - support/test catalog injected from env var
+
 - refine update-service status message to pass up the tf output status message ?
 
+- harden cloudflare input validation: 
+  - reject unsupported/unknown arbitrary params ? => Wait for JSON schema support
 
 - simplify delete: TerraformRepository.deleteById()
 
 - handle spaceid and orgguid being provided in OSB context (to plan for query params depreciation)
 
-- Application & Integration test:
-   - support/test catalog injected from env var
 
 - refine status code in delete: return 410 GONE if service instance missing
 

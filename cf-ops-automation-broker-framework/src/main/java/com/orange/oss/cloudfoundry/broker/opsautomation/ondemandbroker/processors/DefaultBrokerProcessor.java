@@ -12,7 +12,7 @@ import org.slf4j.LoggerFactory;
  */
 public class DefaultBrokerProcessor implements BrokerProcessor {
 
-	private static Logger logger=LoggerFactory.getLogger(DefaultBrokerProcessor.class.getName());
+	private static final Logger logger=LoggerFactory.getLogger(DefaultBrokerProcessor.class.getName());
 
 	@Override
 	public void preCreate(Context ctx) {
@@ -21,12 +21,12 @@ public class DefaultBrokerProcessor implements BrokerProcessor {
 	}
 
 	@Override
-	public void preGetLastCreateOperation(Context ctx) {
+	public void preGetLastOperation(Context ctx) {
 		logger.debug("noop default preGetLastCreateOperation");
 	}
 
 	@Override
-	public void postGetLastCreateOperation(Context ctx) {
+	public void postGetLastOperation(Context ctx) {
 		logger.debug("noop default postGetLastCreateOperation");
 	}
 

@@ -44,4 +44,9 @@ public class CloudFlareRouteSuffixValidatorTest {
 
     }
 
+    @Test
+    public void rejects_nested_subdomains() {
+        Assertions.assertThat(cloudFlareRouteSuffixValidator.isRouteValid("route.subdomain")).isFalse();
+    }
+
 }

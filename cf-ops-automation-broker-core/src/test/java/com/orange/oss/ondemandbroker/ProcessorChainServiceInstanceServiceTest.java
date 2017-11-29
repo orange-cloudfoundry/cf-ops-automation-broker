@@ -80,7 +80,7 @@ public class ProcessorChainServiceInstanceServiceTest {
         //then call is properly chained
         ArgumentCaptor<Context> argument = ArgumentCaptor.forClass(Context.class);
         Assertions.assertThat(response).isEqualTo(new GetLastServiceOperationResponse());
-        Mockito.verify(processorChain).getLastCreateOperation(argument.capture());
+        Mockito.verify(processorChain).getLastOperation(argument.capture());
 
         //and context is populated with the request
         Context ctx=argument.getValue();
@@ -98,7 +98,7 @@ public class ProcessorChainServiceInstanceServiceTest {
 
         BrokerProcessor processor = new DefaultBrokerProcessor() {
             @Override
-            public void preGetLastCreateOperation(Context ctx) {
+            public void preGetLastOperation(Context ctx) {
                 ctx.contextKeys.put(ProcessorChainServiceInstanceService.GET_LAST_SERVICE_OPERATION_RESPONSE, customResponse);
             }
         };

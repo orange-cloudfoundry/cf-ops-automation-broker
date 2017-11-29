@@ -35,7 +35,7 @@ public class TerraformStateTest {
     @Test
     public void parses_multiple_terraform_state_root_module_outputs() throws IOException {
         //given a reference format
-        String tfStateFile = "/terraform/terraform-with-successfull-module-exec.tfstate";
+        String tfStateFile = "/terraform/terraform-with-completed-module-exec.tfstate";
 
         //when parsing
         Gson gson = new GsonBuilder().registerTypeAdapter(TerraformState.class, new TerraformStateGsonAdapter()).create();

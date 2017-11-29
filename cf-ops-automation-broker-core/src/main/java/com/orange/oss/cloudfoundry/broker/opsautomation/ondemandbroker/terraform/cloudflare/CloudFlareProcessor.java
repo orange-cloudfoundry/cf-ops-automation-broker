@@ -9,7 +9,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cloud.servicebroker.model.*;
 
-import java.io.File;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
@@ -61,13 +60,13 @@ public class CloudFlareProcessor extends DefaultBrokerProcessor {
 
         CreateServiceInstanceResponse response = new CreateServiceInstanceResponse();
         response.withAsync(true);
-        response.withOperation(completionTracker.getCurrentDate());
+        response.withOperation(completionTracker.getOperationStateAsJson(TerraformCompletionTracker.CREATE));
         context.contextKeys.put(ProcessorChainServiceInstanceService.CREATE_SERVICE_INSTANCE_RESPONSE, response);
         insertCommitMsg(context, "create", request.getServiceInstanceId(), terraformModule);
     }
 
     @Override
-    public void preGetLastCreateOperation(Context ctx) {
+    public void preGetLastOperation(Context ctx) {
         GetLastServiceOperationRequest operationRequest = (GetLastServiceOperationRequest)
                 ctx.contextKeys.get(ProcessorChainServiceInstanceService.GET_LAST_SERVICE_OPERATION_REQUEST);
 
@@ -112,6 +111,8 @@ public class CloudFlareProcessor extends DefaultBrokerProcessor {
         }
 
         DeleteServiceInstanceResponse response = new DeleteServiceInstanceResponse();
+        response.withAsync(true);
+        response.withOperation(completionTracker.getOperationStateAsJson(TerraformCompletionTracker.DELETE));
         context.contextKeys.put(ProcessorChainServiceInstanceService.DELETE_SERVICE_INSTANCE_RESPONSE, response);
         insertCommitMsg(context, "delete", serviceInstanceId, terraformModule);
     }

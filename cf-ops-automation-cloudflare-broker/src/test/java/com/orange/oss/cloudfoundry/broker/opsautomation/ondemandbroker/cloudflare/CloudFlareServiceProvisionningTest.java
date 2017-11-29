@@ -86,8 +86,9 @@ public class CloudFlareServiceProvisionningTest {
     @Test
     public void supports_crud_lifecycle() {
         create_async_service_instance();
-        polls_last_create_operation();
+        polls_last_create_operation("create", HttpStatus.SC_OK, "failed", "timeout");
         delete_a_service_instance();
+        polls_last_create_operation("delete", HttpStatus.SC_OK, "succeeded", "succeeded");
     }
 
 
@@ -114,20 +115,20 @@ public class CloudFlareServiceProvisionningTest {
 
     }
 
-    public void polls_last_create_operation() {
+    public void polls_last_create_operation(final String operation, int expectedStatusCode, String firstExpectedKeyword, String secondExpectedKeyword) {
 
         given()
                 .basePath("/v2")
                 .contentType("application/json")
-                .param("operation", "2017-11-14T17:24:08.007Z")
+                .param("operation", "{\"lastOperationDate\":\"2017-11-14T17:24:08.007Z\",\"operation\":\"" + operation + "\"}")
                 .param("plan_id", "cloudflare-default")
                 .param("service_id", "cloudflare-route").
                 when()
                 .get("/service_instances/{id}/last_operation", "111").
                 then()
-                .statusCode(HttpStatus.SC_OK)
-                .body(containsString("failed"))
-                .body(containsString("timeout")); //hard coded start date way in the past
+                .statusCode(expectedStatusCode)
+                .body(containsString(firstExpectedKeyword))
+                .body(containsString(secondExpectedKeyword)); //hard coded start date way in the past
     }
 
     public void delete_a_service_instance() {
@@ -140,7 +141,7 @@ public class CloudFlareServiceProvisionningTest {
                 when()
                 .delete("/service_instances/{id}", "111").
                 then()
-                .statusCode(HttpStatus.SC_OK);
+                .statusCode(HttpStatus.SC_ACCEPTED);
 
     }
 

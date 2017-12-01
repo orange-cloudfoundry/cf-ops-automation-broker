@@ -2,6 +2,9 @@ package com.orange.oss.ondemandbroker;
 
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.Context;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.ProcessorChain;
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.UserFacingRuntimeException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.cloud.servicebroker.model.*;
 import org.springframework.cloud.servicebroker.service.ServiceInstanceService;
 import org.springframework.stereotype.Service;
@@ -13,6 +16,9 @@ import org.springframework.stereotype.Service;
  */
 @Service
 public class ProcessorChainServiceInstanceService implements ServiceInstanceService {
+
+    private static Logger logger = LoggerFactory.getLogger(ProcessorChainServiceInstanceService.class.getName());
+
 
     public static final String CREATE_SERVICE_INSTANCE_REQUEST = "CreateServiceInstanceRequest";
     public static final String CREATE_SERVICE_INSTANCE_RESPONSE = "CreateServiceInstanceResponse";
@@ -75,6 +81,14 @@ public class ProcessorChainServiceInstanceService implements ServiceInstanceServ
             response = new GetLastServiceOperationResponse();
         }
         return response;
+    }
+
+    public RuntimeException filterInternalException(RuntimeException exception) {
+        if (exception instanceof UserFacingRuntimeException) {
+            return exception;
+        } else {
+            return new RuntimeException(); //filter out potential confidential data
+        }
     }
 
 }

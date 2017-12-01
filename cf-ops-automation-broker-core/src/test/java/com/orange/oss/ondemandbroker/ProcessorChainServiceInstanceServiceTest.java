@@ -12,6 +12,7 @@ import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.springframework.cloud.servicebroker.model.*;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -42,6 +43,34 @@ public class ProcessorChainServiceInstanceServiceTest {
         //and context is populated with the request
         Context ctx=argument.getValue();
         assertThat(ctx.contextKeys.get(ProcessorChainServiceInstanceService.CREATE_SERVICE_INSTANCE_REQUEST)).isEqualTo(request);
+    }
+
+    @Test
+    public void should_filter_internal_exceptions_details() {
+        //given an exception with confidential internal data thrown
+        IOException rootCause = new IOException();
+        RuntimeException confidentialException = new RuntimeException("unable to push at https://login:pwd@mygit.site.org/secret_path", rootCause);
+
+        //when
+        RuntimeException wrappedException = processorChainServiceInstanceService.filterInternalException(confidentialException);
+
+        //then the exception is wrapped into a runtime exception, hidding the confidential data
+
+        assertThat(wrappedException.toString()).doesNotContain("login");
+    }
+
+    @Test
+    public void should_not_filter_user_facing_exception() {
+
+        //given an exception with confidential internal data thrown
+        RuntimeException safeException = new UserFacingRuntimeException("invalid parameter param with value. Param should only contain alphanumerics");
+
+        //when
+        RuntimeException exception = processorChainServiceInstanceService.filterInternalException(safeException);
+
+        //then the exception is wrapped into a runtime exception, hidding the confidential data
+
+        assertThat(exception.toString()).contains("alphanumerics");
     }
 
     @Test

@@ -20,7 +20,7 @@
 
 - upgrade cf-ops-automation TF version to 0.11.0
 
-- integration tests for jgit & related fixes 
+- jgit related improvement: 
     - implement caching of local repo: try a pull instead of a clone. Alternatives:
        - populate within the context a key to be persisted by OSB client (operation): the local clone path for a given request id. Enables caching across get/poll/update/delete
        - set up a cache queue shared by the different threads: each thread pop a clone in the queue. 

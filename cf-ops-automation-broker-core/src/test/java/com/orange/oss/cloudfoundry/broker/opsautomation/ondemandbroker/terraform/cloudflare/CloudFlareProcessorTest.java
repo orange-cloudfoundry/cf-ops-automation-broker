@@ -2,6 +2,7 @@ package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.terrafor
 
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.GitProcessorContext;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.Context;
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.UserFacingRuntimeException;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.terraform.*;
 import com.orange.oss.ondemandbroker.ProcessorChainServiceInstanceService;
 import org.junit.Assert;
@@ -42,7 +43,7 @@ public class CloudFlareProcessorTest {
     CloudFlareProcessor cloudFlareProcessor = new CloudFlareProcessor(aConfig(), aSuffixValidator(), getRepositoryFactory(), aTracker());
 
 
-    @Test(expected = UnsupportedOperationException.class)
+    @Test(expected = UserFacingRuntimeException.class)
     public void rejects_bind_calls() {
         cloudFlareProcessor.preBind(new Context());
     }
@@ -56,7 +57,7 @@ public class CloudFlareProcessorTest {
         try {
             cloudFlareProcessor.preCreate(context);
             Assert.fail("expected to be rejected");
-        } catch (RuntimeException e) {
+        } catch (UserFacingRuntimeException e) {
             //Message should indicate to end user the incorrect param name and value
             assertThat(e.getMessage()).contains(CloudFlareProcessor.ROUTE_PREFIX);
             assertThat(e.getMessage()).contains("@");
@@ -82,7 +83,7 @@ public class CloudFlareProcessorTest {
         try {
             cloudFlareProcessor.checkForConflictingProperty(requestedModule, CloudFlareProcessor.ROUTE_PREFIX, CloudFlareProcessor.ROUTE_PREFIX, terraformRepository);
             Assert.fail("expected to be rejected");
-        } catch (RuntimeException e) {
+        } catch (UserFacingRuntimeException e) {
             //Message should indicate to end user the incorrect param name and value
             assertThat(e.getMessage()).contains(CloudFlareProcessor.ROUTE_PREFIX);
             assertThat(e.getMessage()).contains("avalidroute");

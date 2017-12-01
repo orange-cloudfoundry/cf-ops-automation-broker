@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.fest.assertions.Assertions.assertThat;
+import static org.mockito.Matchers.any;
 
 @RunWith(MockitoJUnitRunner.class)
 public class ProcessorChainServiceInstanceServiceTest {
@@ -43,6 +44,19 @@ public class ProcessorChainServiceInstanceServiceTest {
         //and context is populated with the request
         Context ctx=argument.getValue();
         assertThat(ctx.contextKeys.get(ProcessorChainServiceInstanceService.CREATE_SERVICE_INSTANCE_REQUEST)).isEqualTo(request);
+    }
+
+   @Test(expected = RuntimeException.class)
+    public void create_method_logs_and_rethrows_exceptions() throws Exception {
+       RuntimeException confidentialException = new RuntimeException("unable to push at https://login:pwd@mygit.site.org/secret_path", new IOException());
+       CreateServiceInstanceRequest request = new CreateServiceInstanceRequest();
+       //given a processor throws an exception
+       Mockito.doThrow(confidentialException).when(processorChain).create(any(Context.class));
+
+       //when
+        CreateServiceInstanceResponse response = processorChainServiceInstanceService.createServiceInstance(request);
+
+        //then exception is logged and rethrown
     }
 
     @Test

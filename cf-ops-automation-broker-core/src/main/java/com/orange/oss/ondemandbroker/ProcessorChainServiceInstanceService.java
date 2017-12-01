@@ -35,17 +35,22 @@ public class ProcessorChainServiceInstanceService implements ServiceInstanceServ
 
     @Override
     public CreateServiceInstanceResponse createServiceInstance(CreateServiceInstanceRequest request) {
-        Context ctx=new Context();
-        ctx.contextKeys.put(CREATE_SERVICE_INSTANCE_REQUEST, request);
-        processorChain.create(ctx);
+        try {
+            Context ctx=new Context();
+            ctx.contextKeys.put(CREATE_SERVICE_INSTANCE_REQUEST, request);
+            processorChain.create(ctx);
 
-        CreateServiceInstanceResponse response;
-        if (ctx.contextKeys.get(CREATE_SERVICE_INSTANCE_RESPONSE) instanceof CreateServiceInstanceResponse) {
-            response = (CreateServiceInstanceResponse) ctx.contextKeys.get(CREATE_SERVICE_INSTANCE_RESPONSE);
-        } else {
-            response = new CreateServiceInstanceResponse();
+            CreateServiceInstanceResponse response;
+            if (ctx.contextKeys.get(CREATE_SERVICE_INSTANCE_RESPONSE) instanceof CreateServiceInstanceResponse) {
+                response = (CreateServiceInstanceResponse) ctx.contextKeys.get(CREATE_SERVICE_INSTANCE_RESPONSE);
+            } else {
+                response = new CreateServiceInstanceResponse();
+            }
+            return response;
+        } catch (RuntimeException e) {
+            logger.info("Unable to create service with request " + request + ", caught " + e, e);
+            throw filterInternalException(e);
         }
-        return response;
     }
 
     @Override

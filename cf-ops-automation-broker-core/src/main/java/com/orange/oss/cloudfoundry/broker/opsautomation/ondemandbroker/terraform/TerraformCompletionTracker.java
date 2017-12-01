@@ -96,6 +96,7 @@ public class TerraformCompletionTracker {
 
     GetLastServiceOperationResponse mapOutputToDeletionStatus(TerraformState.Output started, TerraformState.Output completed, long elapsedTimeSecsSinceLastOperation) {
         GetLastServiceOperationResponse response = new GetLastServiceOperationResponse();
+        response.withDeleteOperation(true);
         if (started != null) {
             //module invocation pending
             if (elapsedTimeSecsSinceLastOperation < maxExecutionDurationSeconds) {

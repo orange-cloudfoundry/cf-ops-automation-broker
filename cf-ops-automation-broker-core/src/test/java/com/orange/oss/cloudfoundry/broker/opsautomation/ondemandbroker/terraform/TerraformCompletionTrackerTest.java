@@ -162,6 +162,7 @@ public class TerraformCompletionTrackerTest {
                 tracker.mapOutputToDeletionStatus(started, completed, 5) :
                 tracker.mapOutputToCreationStatus(started, completed, 5);
 
+        assertThat(response.isDeleteOperation()).isEqualTo(isDelete);
         assertThat(response.getState()).isEqualTo(expected);
     }
 

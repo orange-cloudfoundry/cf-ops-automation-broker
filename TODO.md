@@ -1,14 +1,22 @@
 
 # Next cloudflare
 
-- prevent secrets in exceptions from being exposed to end-users: catch exceptions
-- (configure editor plugins to remind use of shortcuts)
+- cut 0.1 release & publish on github
+- automate deployment in paas-template
+    - pull transient version from 
+    https://84-103646540-gh.circle-artifacts.com/0/home/circleci/cf-ops-automation-broker/cf-ops-automation-cloudflare-broker/target/cf-ops-automation-cloudflare-broker-0.0.1-SNAPSHOT.jar
+    https://circleci.com/api/v1.1/project/github/orange-cloudfoundry/cf-ops-automation-broker/latest/cf-ops-automation-cloudflare-broker/target/cf-ops-automation-cloudflare-broker-0.0.1-SNAPSHOT.jar?branch=develop&filter=successful
+    https://circleci.com/api/v1.1/project/github/orange-cloudfoundry/mongofinil/63/artifacts/0/$CIRCLE_ARTIFACTS/hello.txt
+    https://circleci.com/api/v1.1/project/:vcs-type/:org/:repo/:build_num/artifacts/:container-index/path/to/artifact
+    - automate ASG to git server 
+
+- (fix intellij keymap issue with azerty keyboard)
+    CTRL-ALT-T is mapped by ubuntu
+- check intellij broken analyse stack trace
+- refine CloudFlareProvisionningTest get last operation: simulate git commits from pipeline ?
 
 - implement cf-ops-automation unit tests 
 
-- cut 0.1 release & publish on github
-- automate deployment in paas-template
-    - automate ASG to git server 
 
 - upgrade cf-ops-automation TF version to 0.11.0
 

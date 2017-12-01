@@ -3,6 +3,7 @@ package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.terrafor
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.GitProcessorContext;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.Context;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.DefaultBrokerProcessor;
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.UserFacingRuntimeException;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.terraform.*;
 import com.orange.oss.ondemandbroker.ProcessorChainServiceInstanceService;
 import org.slf4j.Logger;
@@ -36,7 +37,7 @@ public class CloudFlareProcessor extends DefaultBrokerProcessor {
 
     @Override
     public void preBind(Context ctx) {
-        throw new UnsupportedOperationException("Does not support bind requests");
+        throw new UserFacingRuntimeException("Does not support bind requests");
     }
 
     @Override
@@ -131,10 +132,13 @@ public class CloudFlareProcessor extends DefaultBrokerProcessor {
     }
 
     void validateRequestedRoute(String routePrefix, @SuppressWarnings("SameParameterValue") String paramName) {
+        if (routePrefix == null) {
+            throw new UserFacingRuntimeException("Missing parameter " + paramName );
+        }
         boolean valid = cloudFlareRouteSuffixValidator.isRouteValid(routePrefix);
         if (!valid) {
             logger.info("Invalid parameter " + paramName + " with value:" + routePrefix);
-            throw new RuntimeException("Invalid parameter " + paramName + " with value:" + routePrefix);
+            throw new UserFacingRuntimeException("Invalid parameter " + paramName + " with value:\"" + routePrefix+ "\"");
         }
     }
 
@@ -156,7 +160,7 @@ public class CloudFlareProcessor extends DefaultBrokerProcessor {
             logger.info("received conflicting parameter " + userFacingParam + " with value:" + propertyValue  + " A module with same property "  + propertyName + " already exists:" + existing);
             //Don't return details on the existing module to the end user
             //as this may have confidential data
-            throw new RuntimeException("Conflicting parameter " + userFacingParam + " with value:" + propertyValue  + " This value is already used by another service instance.");
+            throw new UserFacingRuntimeException("Conflicting parameter " + userFacingParam + " with value:" + propertyValue  + " This value is already used by another service instance.");
         }
     }
 

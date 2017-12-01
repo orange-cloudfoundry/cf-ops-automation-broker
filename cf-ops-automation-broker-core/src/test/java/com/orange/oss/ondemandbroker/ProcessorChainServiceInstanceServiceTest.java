@@ -12,10 +12,12 @@ import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.springframework.cloud.servicebroker.model.*;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 import static org.fest.assertions.Assertions.assertThat;
+import static org.mockito.Matchers.any;
 
 @RunWith(MockitoJUnitRunner.class)
 public class ProcessorChainServiceInstanceServiceTest {
@@ -42,6 +44,49 @@ public class ProcessorChainServiceInstanceServiceTest {
         //and context is populated with the request
         Context ctx=argument.getValue();
         assertThat(ctx.contextKeys.get(ProcessorChainServiceInstanceService.CREATE_SERVICE_INSTANCE_REQUEST)).isEqualTo(request);
+    }
+
+   @Test(expected = RuntimeException.class)
+    public void create_method_logs_and_rethrows_exceptions() throws Exception {
+       RuntimeException confidentialException = new RuntimeException("unable to push at https://login:pwd@mygit.site.org/secret_path", new IOException());
+       CreateServiceInstanceRequest request = new CreateServiceInstanceRequest();
+       //given a processor throws an exception
+       Mockito.doThrow(confidentialException).when(processorChain).create(any(Context.class));
+
+       //when
+        CreateServiceInstanceResponse response = processorChainServiceInstanceService.createServiceInstance(request);
+
+        //then exception is logged and rethrown
+    }
+
+    @Test
+    public void should_filter_internal_exceptions_details() {
+        //given an exception with confidential internal data thrown
+        IOException rootCause = new IOException();
+        RuntimeException confidentialException = new RuntimeException("unable to push at https://login:pwd@mygit.site.org/secret_path", rootCause);
+
+        //when
+        RuntimeException wrappedException = processorChainServiceInstanceService.processInternalException(confidentialException);
+
+        //then the exception is wrapped into a runtime exception, hidding the confidential data
+
+        assertThat(wrappedException.toString()).doesNotContain("login");
+        assertThat(wrappedException.toString()).containsIgnoringCase("internal");
+        assertThat(wrappedException.toString()).containsIgnoringCase("contact");
+    }
+
+    @Test
+    public void should_not_filter_user_facing_exception() {
+
+        //given an exception with confidential internal data thrown
+        RuntimeException safeException = new UserFacingRuntimeException("invalid parameter param with value. Param should only contain alphanumerics");
+
+        //when
+        RuntimeException exception = processorChainServiceInstanceService.processInternalException(safeException);
+
+        //then the exception is wrapped into a runtime exception, hidding the confidential data
+
+        assertThat(exception.toString()).contains("alphanumerics");
     }
 
     @Test

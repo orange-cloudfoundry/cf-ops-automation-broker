@@ -132,10 +132,13 @@ public class CloudFlareProcessor extends DefaultBrokerProcessor {
     }
 
     void validateRequestedRoute(String routePrefix, @SuppressWarnings("SameParameterValue") String paramName) {
+        if (routePrefix == null) {
+            throw new UserFacingRuntimeException("Missing parameter " + paramName );
+        }
         boolean valid = cloudFlareRouteSuffixValidator.isRouteValid(routePrefix);
         if (!valid) {
             logger.info("Invalid parameter " + paramName + " with value:" + routePrefix);
-            throw new UserFacingRuntimeException("Invalid parameter " + paramName + " with value:" + routePrefix);
+            throw new UserFacingRuntimeException("Invalid parameter " + paramName + " with value:\"" + routePrefix+ "\"");
         }
     }
 

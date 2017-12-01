@@ -1,13 +1,6 @@
 
 # Next cloudflare
 
-- (fix intellij keymap issue with azerty keyboard)
-    CTRL-ALT-T is mapped by ubuntu
-- check intellij broken analyse stack trace
-- refine CloudFlareProvisionningTest get last operation: simulate git commits from pipeline ?
-
-- implement cf-ops-automation unit tests 
-
 - cut 0.1 release & publish on github
 - automate deployment in paas-template
     - pull transient version from 
@@ -16,6 +9,14 @@
     https://circleci.com/api/v1.1/project/github/orange-cloudfoundry/mongofinil/63/artifacts/0/$CIRCLE_ARTIFACTS/hello.txt
     https://circleci.com/api/v1.1/project/:vcs-type/:org/:repo/:build_num/artifacts/:container-index/path/to/artifact
     - automate ASG to git server 
+
+- (fix intellij keymap issue with azerty keyboard)
+    CTRL-ALT-T is mapped by ubuntu
+- check intellij broken analyse stack trace
+- refine CloudFlareProvisionningTest get last operation: simulate git commits from pipeline ?
+
+- implement cf-ops-automation unit tests 
+
 
 - upgrade cf-ops-automation TF version to 0.11.0
 

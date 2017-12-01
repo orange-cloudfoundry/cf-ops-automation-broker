@@ -86,9 +86,9 @@ public class CloudFlareServiceProvisionningTest {
     @Test
     public void supports_crud_lifecycle() {
         create_async_service_instance();
-        polls_last_create_operation("create", HttpStatus.SC_OK, "failed", "timeout");
+        polls_last_operation("create", HttpStatus.SC_OK, "failed", "timeout");
         delete_a_service_instance();
-        polls_last_create_operation("delete", HttpStatus.SC_OK, "succeeded", "succeeded");
+        polls_last_operation("delete", 410, "succeeded", "succeeded");
     }
 
 
@@ -115,7 +115,7 @@ public class CloudFlareServiceProvisionningTest {
 
     }
 
-    public void polls_last_create_operation(final String operation, int expectedStatusCode, String firstExpectedKeyword, String secondExpectedKeyword) {
+    public void polls_last_operation(final String operation, int expectedStatusCode, String firstExpectedKeyword, String secondExpectedKeyword) {
 
         given()
                 .basePath("/v2")

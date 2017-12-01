@@ -3,6 +3,7 @@
 
 - (fix intellij keymap issue with azerty keyboard)
     CTRL-ALT-T is mapped by ubuntu
+- check intellij broken analyse stack trace
 - refine CloudFlareProvisionningTest get last operation: simulate git commits from pipeline ?
 - GetLastServiceOperationResponse(state=succeeded, description=null, deleteOperation=false)
 

@@ -102,7 +102,7 @@ public class ProcessorChainServiceInstanceService implements ServiceInstanceServ
         if (exception instanceof UserFacingRuntimeException) {
             return exception;
         } else {
-            return new RuntimeException(); //filter out potential confidential data
+            return new RuntimeException("Internal error condition. Please contact admin to have him check broker logs"); //filter out potential confidential data
         }
     }
 

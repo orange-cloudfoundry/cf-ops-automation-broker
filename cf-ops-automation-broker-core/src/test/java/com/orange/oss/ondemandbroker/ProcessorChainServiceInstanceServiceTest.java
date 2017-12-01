@@ -71,6 +71,8 @@ public class ProcessorChainServiceInstanceServiceTest {
         //then the exception is wrapped into a runtime exception, hidding the confidential data
 
         assertThat(wrappedException.toString()).doesNotContain("login");
+        assertThat(wrappedException.toString()).containsIgnoringCase("internal");
+        assertThat(wrappedException.toString()).containsIgnoringCase("contact");
     }
 
     @Test

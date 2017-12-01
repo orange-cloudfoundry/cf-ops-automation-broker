@@ -65,6 +65,22 @@ public class CloudFlareProcessorTest {
     }
 
     @Test
+    public void hints_users_when_missing_param() {
+        //given a user performing
+        //cf cs cloudflare -c '{a_wrong_param="myroute"}'
+        Context context = aContextWithCreateRequest(CloudFlareProcessor.ROUTE_PREFIX, null);
+
+        try {
+            cloudFlareProcessor.preCreate(context);
+            Assert.fail("expected to be rejected");
+        } catch (UserFacingRuntimeException e) {
+            //Message should indicate to end user the incorrect param name and value
+            assertThat(e.getMessage()).contains(CloudFlareProcessor.ROUTE_PREFIX);
+            assertThat(e.getMessage()).containsIgnoringCase("missing");
+        }
+    }
+
+    @Test
     public void rejects_duplicate_route_request() {
         //given a repository populated with an existing module
         TerraformRepository terraformRepository = Mockito.mock(TerraformRepository.class);

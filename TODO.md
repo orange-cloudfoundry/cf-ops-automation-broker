@@ -1,10 +1,8 @@
 
 # Next cloudflare
 
-- prevent secrets in exceptions from being exposed to end-users: catch exceptions
-
-
 - (fix intellij keymap issue with azerty keyboard)
+    CTRL-ALT-T is mapped by ubuntu
 - refine CloudFlareProvisionningTest get last operation: simulate git commits from pipeline ?
 - GetLastServiceOperationResponse(state=succeeded, description=null, deleteOperation=false)
 

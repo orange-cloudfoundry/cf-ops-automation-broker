@@ -49,23 +49,28 @@ public class ProcessorChainServiceInstanceService implements ServiceInstanceServ
             return response;
         } catch (RuntimeException e) {
             logger.info("Unable to create service with request " + request + ", caught " + e, e);
-            throw filterInternalException(e);
+            throw processInternalException(e);
         }
     }
 
     @Override
     public DeleteServiceInstanceResponse deleteServiceInstance(DeleteServiceInstanceRequest request) {
-        Context ctx = new Context();
-        ctx.contextKeys.put(DELETE_SERVICE_INSTANCE_REQUEST, request);
+        try {
+            Context ctx = new Context();
+            ctx.contextKeys.put(DELETE_SERVICE_INSTANCE_REQUEST, request);
 
-        processorChain.delete(ctx);
-        DeleteServiceInstanceResponse response;
-        if (ctx.contextKeys.get(DELETE_SERVICE_INSTANCE_RESPONSE) instanceof DeleteServiceInstanceResponse) {
-            response = (DeleteServiceInstanceResponse) ctx.contextKeys.get(DELETE_SERVICE_INSTANCE_RESPONSE);
-        } else {
-            response = new DeleteServiceInstanceResponse();
+            processorChain.delete(ctx);
+            DeleteServiceInstanceResponse response;
+            if (ctx.contextKeys.get(DELETE_SERVICE_INSTANCE_RESPONSE) instanceof DeleteServiceInstanceResponse) {
+                response = (DeleteServiceInstanceResponse) ctx.contextKeys.get(DELETE_SERVICE_INSTANCE_RESPONSE);
+            } else {
+                response = new DeleteServiceInstanceResponse();
+            }
+            return response;
+        } catch (RuntimeException e) {
+            logger.info("Unable to delete service with request " + request + ", caught " + e, e);
+            throw processInternalException(e);
         }
-        return response;
     }
 
     @Override
@@ -75,20 +80,25 @@ public class ProcessorChainServiceInstanceService implements ServiceInstanceServ
 
     @Override
     public GetLastServiceOperationResponse getLastOperation(GetLastServiceOperationRequest request) {
-        Context ctx = new Context();
-        ctx.contextKeys.put(GET_LAST_SERVICE_OPERATION_REQUEST, request);
-        processorChain.getLastOperation(ctx);
+        try {
+            Context ctx = new Context();
+            ctx.contextKeys.put(GET_LAST_SERVICE_OPERATION_REQUEST, request);
+            processorChain.getLastOperation(ctx);
 
-        GetLastServiceOperationResponse response;
-        if (ctx.contextKeys.get(GET_LAST_SERVICE_OPERATION_RESPONSE) instanceof GetLastServiceOperationResponse) {
-            response = (GetLastServiceOperationResponse) ctx.contextKeys.get(GET_LAST_SERVICE_OPERATION_RESPONSE);
-        } else {
-            response = new GetLastServiceOperationResponse();
+            GetLastServiceOperationResponse response;
+            if (ctx.contextKeys.get(GET_LAST_SERVICE_OPERATION_RESPONSE) instanceof GetLastServiceOperationResponse) {
+                response = (GetLastServiceOperationResponse) ctx.contextKeys.get(GET_LAST_SERVICE_OPERATION_RESPONSE);
+            } else {
+                response = new GetLastServiceOperationResponse();
+            }
+            return response;
+        } catch (RuntimeException e) {
+            logger.info("Unable to getLastOperation with request " + request + ", caught " + e, e);
+            throw processInternalException(e);
         }
-        return response;
     }
 
-    public RuntimeException filterInternalException(RuntimeException exception) {
+    public RuntimeException processInternalException(RuntimeException exception) {
         if (exception instanceof UserFacingRuntimeException) {
             return exception;
         } else {

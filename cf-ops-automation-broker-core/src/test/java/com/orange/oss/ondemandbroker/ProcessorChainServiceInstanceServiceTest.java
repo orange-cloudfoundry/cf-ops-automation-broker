@@ -66,7 +66,7 @@ public class ProcessorChainServiceInstanceServiceTest {
         RuntimeException confidentialException = new RuntimeException("unable to push at https://login:pwd@mygit.site.org/secret_path", rootCause);
 
         //when
-        RuntimeException wrappedException = processorChainServiceInstanceService.filterInternalException(confidentialException);
+        RuntimeException wrappedException = processorChainServiceInstanceService.processInternalException(confidentialException);
 
         //then the exception is wrapped into a runtime exception, hidding the confidential data
 
@@ -80,7 +80,7 @@ public class ProcessorChainServiceInstanceServiceTest {
         RuntimeException safeException = new UserFacingRuntimeException("invalid parameter param with value. Param should only contain alphanumerics");
 
         //when
-        RuntimeException exception = processorChainServiceInstanceService.filterInternalException(safeException);
+        RuntimeException exception = processorChainServiceInstanceService.processInternalException(safeException);
 
         //then the exception is wrapped into a runtime exception, hidding the confidential data
 

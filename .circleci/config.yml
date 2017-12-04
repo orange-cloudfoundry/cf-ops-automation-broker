@@ -5,29 +5,83 @@
 version: 2
 jobs:
   build:
-
     working_directory: ~/cf-ops-automation-broker
-
     docker:
       - image: circleci/openjdk:8-jdk
-
     steps:
-
       - checkout
-
+      - attach_workspace:
+          at: ~/cf-ops-automation-broker
       - run:
           name: Build
-          command: mvn clean package
-
+          command: |
+            mvn -q install:help --settings settings.xml
+            mvn install --settings settings.xml
       - run:
           name: Save test results
           command: |
             mkdir -p ~/junit/
             find . -type f -regex ".*/target/surefire-reports/.*xml" -exec cp {} ~/junit/ \;
           when: always
-
       - store_test_results:
           path: ~/junit
-
       - store_artifacts:
           path: cf-ops-automation-cloudflare-broker/target/cf-ops-automation-cloudflare-broker-0.0.1-SNAPSHOT.jar
+      - persist_to_workspace:
+          root: .
+          paths:
+            - cf-ops-automation-cloudflare-broker/target/cf-ops-automation-cloudflare-broker-0.0.1-SNAPSHOT.jar
+            - cf-ops-automation-cloudflare-broker/bin/release.sh
+  build_n_deploy_to_bintray:
+    working_directory: ~/cf-ops-automation-broker
+    docker:
+      - image: circleci/openjdk:8-jdk
+    steps:
+      - checkout
+      - attach_workspace:
+          at: ~/cf-ops-automation-broker
+      - run:
+          name: deploy snapshots to bintray
+          command: bin/deploy_to_bintray.sh
+      - run:
+          name: Save test results
+          command: |
+            mkdir -p ~/junit/
+            find . -type f -regex ".*/target/surefire-reports/.*xml" -exec cp {} ~/junit/ \;
+          when: always
+      - store_test_results:
+          path: ~/junit
+      - store_artifacts:
+          path: cf-ops-automation-cloudflare-broker/target/cf-ops-automation-cloudflare-broker-0.0.1-SNAPSHOT.jar
+  release_to_github:
+    working_directory: ~/cf-ops-automation-broker
+    docker:
+      - image: circleci/golang:1.8.1
+    steps:
+      - attach_workspace:
+          at: ~/cf-ops-automation-broker
+      - run:
+          name: release artefact to github
+          command: cf-ops-automation-cloudflare-broker/bin/release.sh github_api_token=$GITHUB_TOKEN owner=$CIRCLE_PROJECT_USERNAME repo=$CIRCLE_PROJECT_REPONAME tag=$CIRCLE_TAG filename=./cf-ops-automation-cloudflare-broker/target/cf-ops-automation-cloudflare-broker-0.0.1-SNAPSHOT.jar
+workflows:
+  version: 2
+  build-n-deploy:
+    jobs:
+      - build:
+          filters:
+            branches:
+              ignore: develop
+            tags:
+              only: /.*/
+      - build_n_deploy_to_bintray:
+          filters:
+            branches:
+              only: develop
+      - release_to_github:
+          requires:
+            - build
+          filters:
+            tags:
+              only: /.*/
+            branches:
+              ignore: /.*/

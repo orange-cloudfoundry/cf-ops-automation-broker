@@ -12,6 +12,7 @@
 
     <modelVersion>4.0.0</modelVersion>
 
+    <groupId>com.orange.oss.cloudfoundry.broker.opsautomation</groupId>
     <artifactId>cf-ops-automation-sample-broker</artifactId>
     <version>0.0.1-SNAPSHOT</version>
 

@@ -2,6 +2,7 @@ package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.terrafor
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import org.apache.commons.io.IOUtils;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -92,6 +93,26 @@ public class FileTerraformRepositoryTest {
 
         //then
         assertThat(readModule).isEqualTo(module);
+    }
+
+    @Test
+    public void pretty_prints_module_outputs() throws IOException {
+        //when
+        ImmutableTerraformModule module = aModule("instance_id");
+        repository.save(module);
+
+        //then it actually writes the file
+        FileReader reader = new FileReader(tempDirectory.resolve("cloudflare-instance_id.tf").toFile());
+
+        String json = IOUtils.toString(reader);
+        assertThat(json).isEqualTo(
+                "{\n" +
+                        "  \"module\": {\n" +
+                        "    \"instance_id\": {\n" +
+                        "      \"source\": \"path/to/module\"\n" +
+                        "    }\n" +
+                        "  }\n" +
+                        "}");
     }
 
     @Test(expected = RuntimeException.class)

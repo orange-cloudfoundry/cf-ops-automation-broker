@@ -2,6 +2,7 @@ package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.terrafor
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import org.apache.commons.io.IOUtils;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -21,6 +22,8 @@ public class TerraformModuleTest {
 
         //when parsing
         TerraformModule deserialized = TerraformModuleHelper.getTerraformModuleFromClasspath(referenceJsonFormat);
+        String referenceJson = IOUtils.toString(TerraformModuleHelper.getDataFileReader(referenceJsonFormat));
+
 
         //then it extracts properly fields
 
@@ -45,9 +48,10 @@ public class TerraformModuleTest {
 
 
         //when it reserializes
-        Gson gson = new GsonBuilder().registerTypeAdapter(ImmutableTerraformModule.class, new TerraformModuleGsonAdapter()).create();
+        Gson gson = new GsonBuilder().setPrettyPrinting().registerTypeAdapter(ImmutableTerraformModule.class, new TerraformModuleGsonAdapter()).create();
         String serialized = gson.toJson(deserialized);
         //System.err.println(serialized);
+        assertThat(serialized).isEqualTo(referenceJson);
 
         TerraformModule parsed = TerraformModuleHelper.getGson().fromJson(serialized, ImmutableTerraformModule.class);
 

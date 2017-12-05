@@ -33,7 +33,7 @@ public class FileTerraformRepository implements TerraformRepository {
             throw new IllegalArgumentException("expected existing readeable dir, but got:" + directory);
         }
         this.filePrefix = filePrefix;
-        gson = new GsonBuilder().registerTypeAdapter(ImmutableTerraformModule.class, new TerraformModuleGsonAdapter()).create();
+        gson = new GsonBuilder().setPrettyPrinting().registerTypeAdapter(ImmutableTerraformModule.class, new TerraformModuleGsonAdapter()).create();
     }
 
     public static Factory getFactory(String filePrefix) {

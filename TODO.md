@@ -1,8 +1,10 @@
 
 # Next cloudflare
 
-- cut 0.1 release & publish on github
 - automate deployment in paas-template
+- simplify builder invocations in unit tests using default values
+- share cloudflare related TF config and vars from paas-template & paas-secret
+
     - pull transient version from 
     https://84-103646540-gh.circle-artifacts.com/0/home/circleci/cf-ops-automation-broker/cf-ops-automation-cloudflare-broker/target/cf-ops-automation-cloudflare-broker-0.0.1-SNAPSHOT.jar
     https://circleci.com/api/v1.1/project/github/orange-cloudfoundry/cf-ops-automation-broker/latest/cf-ops-automation-cloudflare-broker/target/cf-ops-automation-cloudflare-broker-0.0.1-SNAPSHOT.jar?branch=develop&filter=successful
@@ -11,7 +13,6 @@
     - automate ASG to git server 
 
 - (fix intellij keymap issue with azerty keyboard)
-    CTRL-ALT-T is mapped by ubuntu
 - check intellij broken analyse stack trace
 - refine CloudFlareProvisionningTest get last operation: simulate git commits from pipeline ?
 

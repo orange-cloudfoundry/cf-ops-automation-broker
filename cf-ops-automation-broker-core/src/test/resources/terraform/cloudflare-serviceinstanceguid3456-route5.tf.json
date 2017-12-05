@@ -7,8 +7,8 @@
       "org_guid": "${data.cloudfoundry_organization.org_on_demand_internet_route.id}",
       "route-prefix": "ondemandroute5",
       "service_instance_guid": "3456",
-      "source": "modules/cloudflare",
-      "space_guid": "${data.cloudfoundry_space.space_on_demand_internet_route.id}"
+      "space_guid": "${data.cloudfoundry_space.space_on_demand_internet_route.id}",
+      "source": "modules/cloudflare"
     }
   },
   "output": {
@@ -20,4 +20,3 @@
     }
   }
 }
-

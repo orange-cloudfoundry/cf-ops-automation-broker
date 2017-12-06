@@ -1,6 +1,7 @@
-
 # Global hypothesis
-- Processor chain: 
+- No evolutions on cf-ops-automation (asis)
+
+- Processor chain : 
    - cassandra processor
    - git processor
    - credhub processor
@@ -18,10 +19,15 @@
 - paas-secrets :
     - master branch is used
 
-# Concourse/cf-ops-automation evolutions
-
-- new root deployment/pipeline introduced called coab-depls
-
+# Concourse/cf-ops-automation evolutions/pipelines
+- new root deployment/pipeline introduced called coab-depls targeting BOSH-OPS 
+    - ruby create-root-depls.rb -d coab-depls -t /home/ijly7474/GIT/paas-templates -p /home/ijly7474/GIT/bosh-cloudwatt-secrets-pprod
+    - /!\Destroy paas-secrets/shared/secrets.yml file
+    - Update [paas-secrets/coab-depls/ci-deployment-overview.yml] file for configuring new pipelines
+    - Update [paas-secrets/micro-depls/credentials-auto-init.yml] file for setting new entries for coab
+    - Update [paas-templates/coab-depls/coab-depls-versions.yml] file for setting stemcell name and version
+    - Update [paas-templates/coab-depls/template/deploy.sh] file for d stemcell name and version
+    - Update [paas-templates/coab-depls/template/coab-depls-versions.yml] file for setting stemcell name and version
 
 
 

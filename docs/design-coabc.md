@@ -8,8 +8,23 @@
 
 - Sequence diagram
 
+# Git 
+- paas-templates :
+    - short term : work on a single branch (grouping all service instance depls) called feature-coabdepls-cassandra
+    - mid term : work on multiple branches (one branch per cassandra service instance)
+        - feature-coabdepls-cassandra_guid1 
+        - feature-coabdepls-cassandra_guidn
+
+- paas-secrets :
+    - master branch is used
 
 # Concourse/cf-ops-automation evolutions
+
+- new root deployment/pipeline introduced called coab-depls
+
+
+
+
 
 Specify the template to use for an on-demand deployment:
 - coab writes to paas-templates via git

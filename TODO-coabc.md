@@ -1,0 +1,2 @@
+- validate credhub in ops files for route registrar
+- validate symlinks in paas-template

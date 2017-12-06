@@ -16,7 +16,6 @@
 - check intellij broken analyse stack trace
 - refine CloudFlareProvisionningTest get last operation: simulate git commits from pipeline ?
 
-- implement cf-ops-automation unit tests 
 
 
 - upgrade cf-ops-automation TF version to 0.11.0
@@ -27,6 +26,7 @@
        - set up a cache queue shared by the different threads: each thread pop a clone in the queue. 
  
 - cf-ops-automation pipeline: 
+   - implement cf-ops-automation unit tests 
    - add a retry step on terraform-apply
    - add a serial statement to avoid concurrent triggers http://concourse.ci/configuring-jobs.html
    - secrets-<%=depls %> have an additional shared/secrets in path

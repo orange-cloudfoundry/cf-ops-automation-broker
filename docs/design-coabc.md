@@ -27,7 +27,10 @@
     - Update [paas-secrets/micro-depls/credentials-auto-init.yml] file for setting new entries for coab
     - Update [paas-templates/coab-depls/coab-depls-versions.yml] file for setting stemcell name and version
     - Update [paas-templates/coab-depls/template/deploy.sh] file for d stemcell name and version
-    - Update [paas-templates/coab-depls/template/coab-depls-versions.yml] file for setting stemcell name and version
+    - Update [paas-templates/coab-depls/template/cloud-config-tpl.yml] link (target BOSH-OPS)  
+    - Update [paas-templates/coab-depls/template/runtime-config-tpl.yml] link (target BOSH-OPS) 
+    - Update [paas-secrets/coab-depls/secrets/meta.yml] file
+    - Update [paas-secrets/coab-depls/secrets/secrets.yml] file
 
 
 

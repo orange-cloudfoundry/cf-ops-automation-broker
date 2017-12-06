@@ -1,4 +1,4 @@
-- validate paas-template and paas-secret specs
+- validate paas-template and paas-secret specs: 2 cassandra deployments: 3 creations, 1 deletions
     - validate vars/ops files for
        - route registrar
        - deployment name

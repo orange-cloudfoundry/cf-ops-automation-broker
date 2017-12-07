@@ -27,10 +27,16 @@
     - Update [paas-secrets/micro-depls/credentials-auto-init.yml] file for setting new entries for coab
     - Update [paas-templates/coab-depls/coab-depls-versions.yml] file for setting stemcell name and version
     - Update [paas-templates/coab-depls/template/deploy.sh] file for d stemcell name and version
-    - Update [paas-templates/coab-depls/template/cloud-config-tpl.yml] link (target BOSH-OPS)  
-    - Update [paas-templates/coab-depls/template/runtime-config-tpl.yml] link (target BOSH-OPS) 
+    - Update [paas-templates/coab-depls/template/cloud-config-tpl.yml] link (target BOSH-ONDEMAND)  
+    - Update [paas-templates/coab-depls/template/runtime-config-tpl.yml] link (target BOSH-ONDEMAND) 
     - Update [paas-secrets/coab-depls/secrets/meta.yml] file
     - Update [paas-secrets/coab-depls/secrets/secrets.yml] file
+
+- problems
+    - resource 'bosh-stemcell' is not used => https://elpaaso-concourse-micro.redacted-domain.org/teams/main/pipelines/coab-depls-init-generated/jobs/update-pipeline-coab-depls/builds/14
+    - in secrets, it is not possible to link towards deployment directory ( cp: cannot overwrite directory 'result-dir/./coab-depls/cassandra#aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa0' with non-directory)
+    ln -s ../ops-depls/cassandra#aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa0 cassandra#aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa0 => https://elpaaso-concourse-micro.redacted-domain.org/teams/main/pipelines/coab-depls-init-generated/jobs/update-pipeline-coab-depls/builds/16
+    
 
 
 

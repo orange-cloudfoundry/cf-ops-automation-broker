@@ -5,7 +5,7 @@
 
     <groupId>com.orange.oss.cloudfoundry.broker.opsautomation</groupId>
     <artifactId>cf-ops-automation-broker</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>0.2.0-RELEASE</version>
     <packaging>pom</packaging>
 
     <name>cf-ops-automation-broker</name>
@@ -102,7 +102,7 @@
             <dependency>
                 <groupId>com.orange.oss.cloudfoundry.broker.opsautomation</groupId>
                 <artifactId>cf-ops-automation-broker-framework</artifactId>
-                <version>0.0.1-SNAPSHOT</version>
+                <version>0.2.0-RELEASE</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

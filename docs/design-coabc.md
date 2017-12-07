@@ -34,8 +34,14 @@
 
 - problems
     - resource 'bosh-stemcell' is not used => https://elpaaso-concourse-micro.redacted-domain.org/teams/main/pipelines/coab-depls-init-generated/jobs/update-pipeline-coab-depls/builds/14
+    =>Need to have a fake deployment
+
     - in secrets, it is not possible to link towards deployment directory ( cp: cannot overwrite directory 'result-dir/./coab-depls/cassandra#aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa0' with non-directory)
     ln -s ../ops-depls/cassandra#aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa0 cassandra#aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa0 => https://elpaaso-concourse-micro.redacted-domain.org/teams/main/pipelines/coab-depls-init-generated/jobs/update-pipeline-coab-depls/builds/16
+    =>Need to have symlinks towards files    
+
+    - pipeline is not triggered automatically the first time it is instancied (known issues)
+    =>https://github.com/orange-cloudfoundry/cf-ops-automation/issues/29
     
 
 

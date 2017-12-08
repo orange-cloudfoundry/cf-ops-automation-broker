@@ -47,10 +47,9 @@
     - concourse uses up todate versions : 
     needs to trigger manually the init-concourse-boshrelease-and-stemcell-for-coab-depls(known issue)
 
-    - no # in deployment name (Bosh manifest)
-
-
-
+    - no # in deployment name (Bosh manifest) => HTTP 404 returned by director
+    
+    - no @ in deployment name (Bosh manifest) => HTTP 500 returned by director
 
 Specify the template to use for an on-demand deployment:
 - coab writes to paas-templates via git

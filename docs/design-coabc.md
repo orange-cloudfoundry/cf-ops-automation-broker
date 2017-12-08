@@ -32,7 +32,7 @@
     - Update [paas-secrets/coab-depls/secrets/meta.yml] file
     - Update [paas-secrets/coab-depls/secrets/secrets.yml] file
 
-- problems
+- encountered problems
     - resource 'bosh-stemcell' is not used => https://elpaaso-concourse-micro.redacted-domain.org/teams/main/pipelines/coab-depls-init-generated/jobs/update-pipeline-coab-depls/builds/14
     =>Need to have a fake deployment
 
@@ -40,9 +40,14 @@
     ln -s ../ops-depls/cassandra#aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa0 cassandra#aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa0 => https://elpaaso-concourse-micro.redacted-domain.org/teams/main/pipelines/coab-depls-init-generated/jobs/update-pipeline-coab-depls/builds/16
     =>Need to have symlinks towards files    
 
-    - pipeline is not triggered automatically the first time it is instancied (known issues)
+    - pipeline is not triggered automatically the first time it is instancied (known issue)
+    needs to trigger manually update-pipeline-coabl-depls-generated 
     =>https://github.com/orange-cloudfoundry/cf-ops-automation/issues/29
     
+    - concourse uses up todate versions : 
+    needs to trigger manually the init-concourse-boshrelease-and-stemcell-for-coab-depls(known issue)
+
+    - no # in deployment name (Bosh manifest)
 
 
 

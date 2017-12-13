@@ -23,24 +23,7 @@ export VERSION_SNAPSHOT=$(mvn help:evaluate -Dexpression=project.version --setti
 
 echo "Current version extracted from pom.xml: $VERSION_SNAPSHOT"
 
-export VERSION_PREFIX=$(expr "$VERSION_SNAPSHOT" : "\(.*\)-SNAP.*")
-
-#We are on master without PR
-prefix_number=$(($CIRCLE_BUILD_NUM % 10))
-export RELEASE_CANDIDATE_VERSION=$VERSION_PREFIX.${prefix_number}
-export RELEASE_CANDIDATE_SNAPSHOT_VERSION=${RELEASE_CANDIDATE_VERSION}-SNAPSHOT
-
-echo "Release candidate snapshot version: $RELEASE_CANDIDATE_SNAPSHOT_VERSION"
-
-echo "Setting new version old: $VERSION_SNAPSHOT"
-
-#Download dependencies
-mvn -q versions:help --settings settings.xml
-mvn -e versions:set -DnewVersion=${RELEASE_CANDIDATE_SNAPSHOT_VERSION} -DgenerateBackupPoms=false -DallowSnapshots=true --settings settings.xml
-
 echo "Compiling and deploying to OSS Jfrog"
 
 mvn -q deploy:help --settings settings.xml
 mvn clean deploy --settings settings.xml -P ojo-build-info
-
-echo $RELEASE_CANDIDATE_SNAPSHOT_VERSION > RELEASE_CANDIDATE_VERSION

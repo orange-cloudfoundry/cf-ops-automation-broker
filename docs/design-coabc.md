@@ -26,30 +26,44 @@
     - Update [paas-secrets/coab-depls/ci-deployment-overview.yml] file for configuring new pipelines
     - Update [paas-secrets/micro-depls/credentials-auto-init.yml] file for setting new entries for coab
     - Update [paas-templates/coab-depls/coab-depls-versions.yml] file for setting stemcell name and version
-    - Update [paas-templates/coab-depls/template/deploy.sh] file for d stemcell name and version
-    - Update [paas-templates/coab-depls/template/cloud-config-tpl.yml] link (target BOSH-ONDEMAND)  
-    - Update [paas-templates/coab-depls/template/runtime-config-tpl.yml] link (target BOSH-ONDEMAND) 
+    - Update [paas-templates/coab-depls/template/deploy.sh] file for stemcell name and version
+    - Update [paas-templates/coab-depls/template/cloud-config-tpl.yml] file (target BOSH-ONDEMAND) -> symlink  
+    - Update [paas-templates/coab-depls/template/runtime-config-tpl.yml] file (target BOSH-ONDEMAND) -> symlink 
+
+
     - Update [paas-secrets/coab-depls/secrets/meta.yml] file
     - Update [paas-secrets/coab-depls/secrets/secrets.yml] file
 
+
+
+
 - encountered problems
     - resource 'bosh-stemcell' is not used => https://elpaaso-concourse-micro.redacted-domain.org/teams/main/pipelines/coab-depls-init-generated/jobs/update-pipeline-coab-depls/builds/14
-    =>Need to have a fake deployment
+    =>Solution = deployment model cassandra
 
     - in secrets, it is not possible to link towards deployment directory ( cp: cannot overwrite directory 'result-dir/./coab-depls/cassandra#aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa0' with non-directory)
     ln -s ../ops-depls/cassandra#aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa0 cassandra#aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa0 => https://elpaaso-concourse-micro.redacted-domain.org/teams/main/pipelines/coab-depls-init-generated/jobs/update-pipeline-coab-depls/builds/16
-    =>Need to have symlinks towards files    
+    =>Solution = symlinks towards files    
+
+    - concourse uses up todate versions : 
+    needs to trigger manually the init-concourse-boshrelease-and-stemcell-for-coab-depls(known issue)
+    =>Solution = manual action on Concourse (one shot)    
 
     - pipeline is not triggered automatically the first time it is instancied (known issue)
     needs to trigger manually update-pipeline-coabl-depls-generated 
     =>https://github.com/orange-cloudfoundry/cf-ops-automation/issues/29
-    
-    - concourse uses up todate versions : 
-    needs to trigger manually the init-concourse-boshrelease-and-stemcell-for-coab-depls(known issue)
+    =>Solution = manual action on Concourse (one time), concourse processor or fake commit ?       
 
     - no # in deployment name (Bosh manifest) => HTTP 404 returned by director
+    =>Issue to raise
     
     - no @ in deployment name (Bosh manifest) => HTTP 500 returned by director
+    =>Issue to raise 
+
+    - route registrar 
+        curl -X GET https://cassandra-brokerc.redacted-domain.org:443/v2/catalog
+        404 Not Found: Requested route ('cassandra-brokerc.redacted-domain.org') does not exist.
+    =>To be investigated       
 
 Specify the template to use for an on-demand deployment:
 - coab writes to paas-templates via git

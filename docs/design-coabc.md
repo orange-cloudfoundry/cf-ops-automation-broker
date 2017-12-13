@@ -19,7 +19,7 @@
 - paas-secrets :
     - master branch is used
 
-# Concourse/cf-ops-automation evolutions/pipelines
+# Concourse/cf-ops-automation evolutions/pipelines (coab-depls)
 - new root deployment/pipeline introduced called coab-depls targeting BOSH-OPS 
     - ruby create-root-depls.rb -d coab-depls -t /home/ijly7474/GIT/paas-templates -p /home/ijly7474/GIT/bosh-cloudwatt-secrets-pprod
     - /!\Destroy paas-secrets/shared/secrets.yml file
@@ -34,7 +34,7 @@
     - Update [paas-secrets/coab-depls/secrets/meta.yml] file
     - Update [paas-secrets/coab-depls/secrets/secrets.yml] file
 
-
+    TO UPDATE
 
 
 - encountered problems

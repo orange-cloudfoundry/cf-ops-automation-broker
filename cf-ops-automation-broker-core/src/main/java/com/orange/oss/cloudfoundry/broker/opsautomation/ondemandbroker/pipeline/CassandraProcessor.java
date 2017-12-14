@@ -47,7 +47,7 @@ public class CassandraProcessor extends DefaultBrokerProcessor {
 	private void generateCassandraSecretsStructure(Path workDir, String serviceInstanceId) {
 		File deploymentDirectory=new File(String.valueOf(workDir)+"/"+ ROOT_DEPLOYMENT +"/"+ "cassandra_" + serviceInstanceId);
 		File deploymentSecretsDirectory=new File(String.valueOf(workDir)+"/"+ ROOT_DEPLOYMENT +"/"+ "cassandra_" + serviceInstanceId+"/" + "secrets");
-		deploymentDirectory..mkdir();
+		deploymentDirectory.mkdir();
 		deploymentSecretsDirectory.mkdir();
 	}
 

@@ -136,6 +136,19 @@ public class GitProcessor extends DefaultBrokerProcessor {
             git.submoduleInit().call();
             git.submoduleUpdate().call();
 
+            String targetBranch = (String) ctx.contextKeys.get(GitProcessorContext.createBranchIfMissing);
+            if (targetBranch != null) {
+                boolean branchNeedsCreation= false;
+                try {
+                    git.checkout().setName(targetBranch).call();
+                } catch (GitAPIException e) {
+                    branchNeedsCreation = true;
+                }
+                if (branchNeedsCreation) {
+                    git.branchCreate().setName(targetBranch).call();
+                    git.checkout().setName(targetBranch).call();
+                }
+            }
 
             logger.info("git repo is ready at {}, on branch {} at {}", workDir, this.branch);
             //push the work dir in invokation context

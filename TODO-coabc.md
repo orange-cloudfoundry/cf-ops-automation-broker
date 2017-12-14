@@ -5,6 +5,7 @@
 
 - git processor support for branches
     - accepts a branch name
+    - refactor git tests to initialize clones in the gitserver setup rather than using the gitprocessor in the test itself
 
 - credhub processor
     - integration test

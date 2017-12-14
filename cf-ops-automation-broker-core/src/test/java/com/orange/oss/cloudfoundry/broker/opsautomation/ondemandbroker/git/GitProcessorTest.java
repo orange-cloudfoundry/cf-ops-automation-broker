@@ -1,8 +1,10 @@
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git;
 
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.Context;
+import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.PersonIdent;
+import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.junit.*;
 
@@ -80,7 +82,7 @@ public class GitProcessorTest {
     }
 
     @Test
-    public void creates_specified_branch_when_missing() throws IOException {
+    public void creates_specified_branch_when_missing() throws IOException, GitAPIException {
         givenAnExistingRepoOnSpecifiedBranch("develop");
 
         //given instruction in context to create a branch if missing
@@ -101,7 +103,7 @@ public class GitProcessorTest {
     }
 
     @Test
-    public void uses_the_specified_branch_when_exists() throws IOException {
+    public void uses_the_specified_branch_when_exists() throws IOException, GitAPIException {
         //given two independent branches available in a remote
         givenAnExistingRepoOnSpecifiedBranch("develop");
         givenAnExistingRepoOnSpecifiedBranch("service-instance-guid");
@@ -125,12 +127,16 @@ public class GitProcessorTest {
         assertThat(secondClone.resolve("afile-in-develop-branch.txt").toFile()).doesNotExist();
     }
 
-    protected void givenAnExistingRepoOnSpecifiedBranch(String branch) throws IOException {
+    protected void givenAnExistingRepoOnSpecifiedBranch(String branch) throws IOException, GitAPIException {
         //given a clone of an empty repo on the master branch
-        GitProcessor processor = new GitProcessor("gituser", "gitsecret", GIT_URL, "committerName", "committer@address.org", null, branch);
+        GitProcessor processor = new GitProcessor("gituser", "gitsecret", GIT_URL, "committerName", "committer@address.org", null, "master");
 
         Context context = new Context();
         processor.cloneRepo(context);
+        Git git = processor.getGit(context);
+
+        git.branchCreate().setName(branch).call();
+        git.checkout().setName(branch).call();
 
         //when adding files
         //and asking to commit and push
@@ -139,6 +145,7 @@ public class GitProcessorTest {
 
         //then file should be persisted
         Context ctx1 = new Context();
+        processor = new GitProcessor("gituser", "gitsecret", GIT_URL, "committerName", "committer@address.org", null, branch);
         processor.preCreate(ctx1);
         Path secondClone = getWorkDir(ctx1, "");
         File secondCloneSameFile = secondClone.resolve("afile.txt").toFile();

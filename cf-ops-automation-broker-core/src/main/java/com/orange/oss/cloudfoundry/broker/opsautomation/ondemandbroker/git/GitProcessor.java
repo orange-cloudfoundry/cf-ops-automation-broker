@@ -42,15 +42,17 @@ public class GitProcessor extends DefaultBrokerProcessor {
     private final String gitUrl;
     private final String committerName;
     private final String committerEmail;
+    private String repoAliasName;
 
     private final UsernamePasswordCredentialsProvider cred;
 
-    public GitProcessor(String gitUser, String gitPassword, String gitUrl, String committerName, String committerEmail) {
+    public GitProcessor(String gitUser, String gitPassword, String gitUrl, String committerName, String committerEmail, String repoAliasName) {
         this.gitUrl = gitUrl;
         this.committerName = committerName;
         this.committerEmail = committerEmail;
         branch = "master";
         this.cred = new UsernamePasswordCredentialsProvider(gitUser, gitPassword);
+        this.repoAliasName = repoAliasName == null ? "" : repoAliasName;
     }
 
     @Override
@@ -283,10 +285,14 @@ public class GitProcessor extends DefaultBrokerProcessor {
     }
 
     Path getWorkDir(Context ctx) {
-        return (Path) ctx.contextKeys.get(GitProcessorContext.workDir.toString());
+        return (Path) ctx.contextKeys.get(getWorkDirKey(ctx));
+    }
+
+    String getWorkDirKey(Context ctx) {
+        return repoAliasName + GitProcessorContext.workDir.toString();
     }
 
     private void setWorkDir(Path workDir, Context ctx) {
-        ctx.contextKeys.put(GitProcessorContext.workDir.toString(), workDir);
+        ctx.contextKeys.put(getWorkDirKey(ctx), workDir);
     }
 }

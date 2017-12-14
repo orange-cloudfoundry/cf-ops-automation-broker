@@ -22,7 +22,7 @@ public class GitProcessorTest {
 
     static GitServer gitServer;
 
-    GitProcessor processor = new GitProcessor("gituser", "gitsecret", GIT_URL, "committerName", "committer@address.org");
+    GitProcessor processor = new GitProcessor("gituser", "gitsecret", GIT_URL, "committerName", "committer@address.org", null);
     Context ctx = new Context();
 
 
@@ -63,7 +63,7 @@ public class GitProcessorTest {
     @Test
     public void configures_user_name_and_email_in_commits() throws GitAPIException, IOException {
         //given explicit user config
-        processor = new GitProcessor("gituser", "gitsecret", GIT_URL, "committerName", "committer@address.org");
+        processor = new GitProcessor("gituser", "gitsecret", GIT_URL, "committerName", "committer@address.org", null);
         processor.cloneRepo(ctx);
 
         //when adding files
@@ -85,7 +85,7 @@ public class GitProcessorTest {
     @Test
     public void supports_default_user_name_and_emails_config() throws GitAPIException, IOException {
         //given no user config specified (null values)
-        processor = new GitProcessor("gituser", "gitsecret", GIT_URL, null, null);
+        processor = new GitProcessor("gituser", "gitsecret", GIT_URL, null, null, null);
         processor.cloneRepo(ctx);
 
         //when adding files
@@ -100,58 +100,62 @@ public class GitProcessorTest {
 
     @Test
     public void adds_and_deletes_files() throws GitAPIException, IOException {
-        //given a clone of an empty repo
-        processor.cloneRepo(ctx);
+        addAndDeleteFilesForRepoAlias(this.processor, this.ctx, "");
+    }
 
-        //when adding files
-        //and asking to commit and push
-        addAFile(ctx);
-        processor.commitPushRepo(ctx, true);
+    @Test
+    public void reads_workdir_key_with_repo_alias() {
+        //given a processor with an alias specified
+        GitProcessor processor = new GitProcessor("gituser", "gitsecret", GIT_URL, "committerName", "committer@address.org", "paasSecret");
 
-        //then file should be persisted
-        Context ctx1 = new Context();
-        processor.preCreate(ctx1);
-        Path secondClone = getWorkDir(ctx1);
-        File secondCloneSameFile = secondClone.resolve("afile.txt").toFile();
-        assertThat(secondCloneSameFile).exists();
+        //then workdir uses alias as a prefix
+        assertThat(processor.getWorkDirKey(this.ctx)).isEqualTo("paasSecret" + GitProcessorContext.workDir.toString());
+    }
 
-        //when deleting file
-        assertThat(secondCloneSameFile.delete()).isTrue();
-        //and committing
-        processor.commitPushRepo(ctx1, true);
+    @Test
+    public void reads_workdir_key_without_repo_alias() {
+        //given a processor without an alias specified
+        GitProcessor processor = new GitProcessor("gituser", "gitsecret", GIT_URL, "committerName", "committer@address.org", null);
 
-        //then file should be removed from repo
-        Path thirdClone = cloneRepo(processor);
-        File thirdCloneFile = thirdClone.resolve("afile.txt").toFile();
-        assertThat(thirdCloneFile).doesNotExist();
+        //then workdir works as default
+        assertThat(processor.getWorkDirKey(this.ctx)).isEqualTo(GitProcessorContext.workDir.toString());
+    }
 
-        //cleanup
-        processor.deleteWorkingDir(ctx1);
+    @Test
+    public void supports_multiple_processors_in_same_context_keys_prefixed_by_a_repo_alias() throws IOException {
+        //given two processors instanciated in the same processor chain
+        GitProcessor paasSecretProcessor = new GitProcessor("gituser", "gitsecret", "git://127.0.0.1:9418/paas-secret.git", "committerName", "committer@address.org", "paasSecret");
+        Context sharedContext = new Context();
+        GitProcessor paasTemplateProcessor = new GitProcessor("gituser", "gitsecret", "git://127.0.0.1:9418/paas-template.git", "committerName", "committer@address.org", "paasTemplate");
+
+        //then each processors coexist on the same context without overlapping
+        addAndDeleteFilesForRepoAlias(paasSecretProcessor, sharedContext, "paasSecret");
+        addAndDeleteFilesForRepoAlias(paasTemplateProcessor, sharedContext, "paasTemplate");
     }
 
     @Test
     public void rebases_during_push_conflicts() throws GitAPIException, IOException {
         //given a clone of an empty repo
         Context ctx1 = new Context();
-        GitProcessor processor1 = new GitProcessor("gituser", "gitsecret", GIT_URL, "committerName", "committer@address.org");
+        GitProcessor processor1 = new GitProcessor("gituser", "gitsecret", GIT_URL, "committerName", "committer@address.org", null);
         processor1.cloneRepo(ctx1);
 
         //Given concurrent commits
         Context ctx2 = new Context();
-        GitProcessor processor2 = new GitProcessor("gituser", "gitsecret", GIT_URL, "committerName", "committer@address.org");
+        GitProcessor processor2 = new GitProcessor("gituser", "gitsecret", GIT_URL, "committerName", "committer@address.org", null);
         processor2.cloneRepo(ctx2);
-        addAFile(ctx2, "content2", "a_first_file.txt");
+        addAFile(ctx2, "content2", "a_first_file.txt", "");
         processor2.commitPushRepo(ctx2, true);
 
         //when trying to commit and push
-        addAFile(ctx1, "content1", "a_second_file.txt");
+        addAFile(ctx1, "content1", "a_second_file.txt", "");
         processor1.commitPushRepo(ctx1, true);
 
         //then a rebase should be tried, a 3rd clone sees both files commited
         Context ctx3 = new Context();
-        GitProcessor processor3 = new GitProcessor("gituser", "gitsecret", GIT_URL, "committerName", "committer@address.org");
+        GitProcessor processor3 = new GitProcessor("gituser", "gitsecret", GIT_URL, "committerName", "committer@address.org", null);
         processor3.cloneRepo(ctx3);
-        Path thirdClone = getWorkDir(ctx3);
+        Path thirdClone = getWorkDir(ctx3, "");
         assertThat(thirdClone.resolve("a_first_file.txt").toFile()).exists();
         assertThat(thirdClone.resolve("a_second_file.txt").toFile()).exists();
 
@@ -166,18 +170,18 @@ public class GitProcessorTest {
     public void fails_if_pull_rebase_fails_during_push() throws GitAPIException, IOException {
         //given a clone of an empty repo
         Context ctx1 = new Context();
-        GitProcessor processor1 = new GitProcessor("gituser", "gitsecret", GIT_URL, "committerName", "committer@address.org");
+        GitProcessor processor1 = new GitProcessor("gituser", "gitsecret", GIT_URL, "committerName", "committer@address.org", null);
         processor1.cloneRepo(ctx1);
 
         //Given concurrent commits
         Context ctx2 = new Context();
-        GitProcessor processor2 = new GitProcessor("gituser", "gitsecret", GIT_URL, "committerName", "committer@address.org");
+        GitProcessor processor2 = new GitProcessor("gituser", "gitsecret", GIT_URL, "committerName", "committer@address.org", null);
         processor2.cloneRepo(ctx2);
-        addAFile(ctx2, "content2", "same_file.txt");
+        addAFile(ctx2, "content2", "same_file.txt", "");
         processor2.commitPushRepo(ctx2, true);
 
         //when trying to commit and push
-        addAFile(ctx1, "content1", "same_file.txt");
+        addAFile(ctx1, "content1", "same_file.txt", "");
         try {
             processor1.commitPushRepo(ctx1, true);
             Assert.fail("expected exception");
@@ -203,19 +207,52 @@ public class GitProcessorTest {
         assertThat(commit.getShortMessage()).isEqualTo("a custom message");
     }
 
-    public void addAFile(Context ctx) throws IOException {
-        addAFile(ctx, "hello.txt", "afile.txt");
+
+    ///--------------------------------------- Text fixtures ---------------------------------
+
+    protected void addAndDeleteFilesForRepoAlias(GitProcessor processor, Context context, String repoAlias) throws IOException {
+        //given a clone of an empty repo
+        processor.cloneRepo(context);
+
+        //when adding files
+        //and asking to commit and push
+        addAFile(context, "hello.txt", "afile.txt", repoAlias);
+        processor.commitPushRepo(context, true);
+
+        //then file should be persisted
+        Context ctx1 = new Context();
+        processor.preCreate(ctx1);
+        Path secondClone = getWorkDir(ctx1, repoAlias);
+        File secondCloneSameFile = secondClone.resolve("afile.txt").toFile();
+        assertThat(secondCloneSameFile).exists();
+
+        //when deleting file
+        assertThat(secondCloneSameFile.delete()).isTrue();
+        //and committing
+        processor.commitPushRepo(ctx1, true);
+
+        //then file should be removed from repo
+        Path thirdClone = cloneRepo(processor, repoAlias);
+        File thirdCloneFile = thirdClone.resolve("afile.txt").toFile();
+        assertThat(thirdCloneFile).doesNotExist();
+
+        //cleanup
+        processor.deleteWorkingDir(ctx1);
     }
 
-    public void addAFile(Context ctx, String content, String fileRelativePath) throws IOException {
-        Path workDir = getWorkDir(ctx);
+    public void addAFile(Context ctx) throws IOException {
+        addAFile(ctx, "hello.txt", "afile.txt", "");
+    }
+
+    public void addAFile(Context ctx, String content, String fileRelativePath, String repoAlias) throws IOException {
+        Path workDir = getWorkDir(ctx, repoAlias);
         try (FileWriter writer = new FileWriter(workDir.resolve(fileRelativePath).toFile())) {
             writer.append(content);
         }
     }
 
-    public Path getWorkDir(Context ctx) {
-        return (Path) ctx.contextKeys.get(GitProcessorContext.workDir.toString());
+    public Path getWorkDir(Context ctx, String repoAlias) {
+        return (Path) ctx.contextKeys.get(repoAlias + GitProcessorContext.workDir.toString());
     }
 
     public int countIterables(Iterable<RevCommit> resultingCommits) {
@@ -226,11 +263,11 @@ public class GitProcessorTest {
         return size;
     }
 
-    public Path cloneRepo(GitProcessor processor) {
+    public Path cloneRepo(GitProcessor processor, String repoAlias) {
         Context ctx = new Context();
         processor.preCreate(ctx);
 
-        return getWorkDir(ctx);
+        return getWorkDir(ctx, repoAlias);
     }
 
 

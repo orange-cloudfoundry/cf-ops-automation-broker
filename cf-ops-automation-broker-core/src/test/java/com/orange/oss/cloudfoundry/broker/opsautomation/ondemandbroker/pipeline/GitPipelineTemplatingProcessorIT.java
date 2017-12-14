@@ -40,7 +40,7 @@ public class GitPipelineTemplatingProcessorIT {
 	@Test
 	public void testTemplatingProcessor() {
 		
-		GitProcessor processor=new GitProcessor(gitProperties.getUser(), gitProperties.getPassword(), gitProperties.getUrl(), "committerName", "committerEmail", null);
+		GitProcessor processor=new GitProcessor(gitProperties.getUser(), gitProperties.getPassword(), gitProperties.getUrl(), "committerName", "committerEmail", null, "master");
 		List<BrokerProcessor> processors= new ArrayList<>();
 		processors.add(processor);
 		processors.add(new GitPipelineTemplatingProcessor("on-demand-depl",this.manifestResource));

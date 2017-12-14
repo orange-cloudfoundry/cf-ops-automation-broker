@@ -46,11 +46,11 @@ public class GitProcessor extends DefaultBrokerProcessor {
 
     private final UsernamePasswordCredentialsProvider cred;
 
-    public GitProcessor(String gitUser, String gitPassword, String gitUrl, String committerName, String committerEmail, String repoAliasName) {
+    public GitProcessor(String gitUser, String gitPassword, String gitUrl, String committerName, String committerEmail, String repoAliasName, String branch) {
         this.gitUrl = gitUrl;
         this.committerName = committerName;
         this.committerEmail = committerEmail;
-        branch = "master";
+        this.branch = branch;
         this.cred = new UsernamePasswordCredentialsProvider(gitUser, gitPassword);
         this.repoAliasName = repoAliasName == null ? "" : repoAliasName;
     }

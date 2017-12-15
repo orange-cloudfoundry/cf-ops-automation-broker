@@ -1,20 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
         <version>1.5.6.RELEASE</version>
-        <relativePath/> <!-- lookup parent from repository -->
+        <relativePath /> <!-- lookup parent from repository -->
     </parent>
 
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.orange.oss.cloudfoundry.broker.opsautomation</groupId>
     <artifactId>cf-ops-automation-sample-broker</artifactId>
-    <version>0.5.0-SNAPSHOT</version>
+    <version>0.5.0</version>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -27,12 +25,12 @@
         <dependency>
             <groupId>com.orange.oss.cloudfoundry.broker.opsautomation</groupId>
             <artifactId>cf-ops-automation-broker-core</artifactId>
-            <version>0.5.0-SNAPSHOT</version>
+            <version>0.5.0</version>
         </dependency>
         <dependency>
             <groupId>com.orange.oss.cloudfoundry.broker.opsautomation</groupId>
             <artifactId>spring-boot-starter-servicebroker-catalog</artifactId>
-            <version>0.5.0-SNAPSHOT</version>
+            <version>0.5.0</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -58,4 +56,8 @@
     </build>
 
 
+
+  <scm>
+    <tag>v0.5.0</tag>
+  </scm>
 </project>

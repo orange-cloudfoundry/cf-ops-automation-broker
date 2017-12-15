@@ -62,7 +62,7 @@ jobs:
           at: ~/cf-ops-automation-broker
       - run:
           name: release to bintray
-          command: bin/deploy_to_bintray.sh
+          command: bin/release.sh
   release_to_github:
     working_directory: ~/cf-ops-automation-broker
     docker:

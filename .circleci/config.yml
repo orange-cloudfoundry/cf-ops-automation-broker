@@ -59,7 +59,7 @@ jobs:
           paths:
             - cf-ops-automation-cloudflare-broker/target/cf-ops-automation-cloudflare-broker-0.0.1-SNAPSHOT.jar
             - bin/release.sh
-            - tmp/JFrogPromotion.url
+            - JFrogPromotion.url
   release_to_bintray:
     working_directory: ~/cf-ops-automation-broker
     docker:

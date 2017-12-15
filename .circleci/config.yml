@@ -90,7 +90,7 @@ jobs:
             do
               echo "Processing $f file..."
               # take action on each file.
-              release_to_github.sh github_api_token=$GITHUB_TOKEN owner=$CIRCLE_PROJECT_USERNAME repo=$CIRCLE_PROJECT_REPONAME tag=$CIRCLE_TAG filename=./artefacts/$f
+              bin/release_to_github.sh github_api_token=$GITHUB_TOKEN owner=$CIRCLE_PROJECT_USERNAME repo=$CIRCLE_PROJECT_REPONAME tag=$CIRCLE_TAG filename=./artefacts/$f
             done
 workflows:
   version: 2

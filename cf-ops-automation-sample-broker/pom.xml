@@ -12,7 +12,7 @@
 
     <groupId>com.orange.oss.cloudfoundry.broker.opsautomation</groupId>
     <artifactId>cf-ops-automation-sample-broker</artifactId>
-    <version>0.6.0-SNAPSHOT</version>
+    <version>0.6.0</version>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -25,12 +25,12 @@
         <dependency>
             <groupId>com.orange.oss.cloudfoundry.broker.opsautomation</groupId>
             <artifactId>cf-ops-automation-broker-core</artifactId>
-            <version>0.6.0-SNAPSHOT</version>
+            <version>0.6.0</version>
         </dependency>
         <dependency>
             <groupId>com.orange.oss.cloudfoundry.broker.opsautomation</groupId>
             <artifactId>spring-boot-starter-servicebroker-catalog</artifactId>
-            <version>0.6.0-SNAPSHOT</version>
+            <version>0.6.0</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -54,4 +54,8 @@
             </plugin>
         </plugins>
     </build>
+
+  <scm>
+    <tag>v0.6.0</tag>
+  </scm>
 </project>

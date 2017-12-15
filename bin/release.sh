@@ -16,6 +16,27 @@ set -ev
 
 echo "CIRCLE_TAG: <$CIRCLE_TAG>"
 
-JFROG_PROMOTION_URL=http://oss.jfrog.org/api/plugins/build/promote/snapshotsToBintray/${CIRCLE_PROJECT_REPONAME}/${CIRCLE_BUILD_NUM}
-echo "Promoting build on JFrog to Bintray (Promotion URL: $JFROG_PROMOTION_URL)"
-curl --silent -X POST -u ${BINTRAY_USER}:${BINTRAY_PASSWORD} -d "" $JFROG_PROMOTION_URL
+#Promoting cf-ops-automation-broker-framework
+BROKER_FRAMEWORK_JFROG_PROMOTION_URL=http://oss.jfrog.org/api/plugins/build/promote/snapshotsToBintray/cf-ops-automation-broker-framework/${CIRCLE_BUILD_NUM}
+echo "Promoting build on JFrog to Bintray (Promotion URL: $BROKER_FRAMEWORK_JFROG_PROMOTION_URL)"
+curl --silent -X POST -u ${BINTRAY_USER}:${BINTRAY_PASSWORD} -d "" $BROKER_FRAMEWORK_JFROG_PROMOTION_URL
+
+#Promoting cf-ops-automation-broker-core
+BROKER_CORE_JFROG_PROMOTION_URL=http://oss.jfrog.org/api/plugins/build/promote/snapshotsToBintray/cf-ops-automation-broker-core/${CIRCLE_BUILD_NUM}
+echo "Promoting build on JFrog to Bintray (Promotion URL: $BROKER_CORE_JFROG_PROMOTION_URL)"
+curl --silent -X POST -u ${BINTRAY_USER}:${BINTRAY_PASSWORD} -d "" $BROKER_CORE_JFROG_PROMOTION_URL
+
+#Promoting spring-boot-starter-servicebroker-catalog
+STARTER_CATALOG_JFROG_PROMOTION_URL=http://oss.jfrog.org/api/plugins/build/promote/snapshotsToBintray/spring-boot-starter-servicebroker-catalog/${CIRCLE_BUILD_NUM}
+echo "Promoting build on JFrog to Bintray (Promotion URL: $STARTER_CATALOG_JFROG_PROMOTION_URL)"
+curl --silent -X POST -u ${BINTRAY_USER}:${BINTRAY_PASSWORD} -d "" $STARTER_CATALOG_JFROG_PROMOTION_URL
+
+#Promoting cf-ops-automation-sample-broker
+SAMPLE_BROKER_JFROG_PROMOTION_URL=http://oss.jfrog.org/api/plugins/build/promote/snapshotsToBintray/cf-ops-automation-sample-broker/${CIRCLE_BUILD_NUM}
+echo "Promoting build on JFrog to Bintray (Promotion URL: $SAMPLE_BROKER_JFROG_PROMOTION_URL)"
+curl --silent -X POST -u ${BINTRAY_USER}:${BINTRAY_PASSWORD} -d "" $SAMPLE_BROKER_JFROG_PROMOTION_URL
+
+#Promoting cf-ops-automation-cloudflare-broker
+CLOUDFLARE_BROKER_JFROG_PROMOTION_URL=http://oss.jfrog.org/api/plugins/build/promote/snapshotsToBintray/cf-ops-automation-cloudflare-broker/${CIRCLE_BUILD_NUM}
+echo "Promoting build on JFrog to Bintray (Promotion URL: $CLOUDFLARE_BROKER_JFROG_PROMOTION_URL)"
+curl --silent -X POST -u ${BINTRAY_USER}:${BINTRAY_PASSWORD} -d "" $CLOUDFLARE_BROKER_JFROG_PROMOTION_URL

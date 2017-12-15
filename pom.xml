@@ -5,7 +5,7 @@
 
     <groupId>com.orange.oss.cloudfoundry.broker.opsautomation</groupId>
     <artifactId>cf-ops-automation-broker</artifactId>
-    <version>0.4.0-SNAPSHOT</version>
+    <version>0.5.0-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>cf-ops-automation-broker</name>
@@ -19,10 +19,9 @@
     </parent>
 
     <scm>
-        <url>git@github.com:orange-cloudfoundry/cf-ops-automation-broker.git</url>
-        <connection>scm:git:git@github.com:orange-cloudfoundry/cf-ops-automation-broker.git</connection>
-        <developerConnection>scm:git:git@github.com:orange-cloudfoundry/cf-ops-automation-broker.git
-        </developerConnection>
+        <url>https://github.com/orange-cloudfoundry/cf-ops-automation-broker</url>
+        <connection>scm:git:https://github.com/orange-cloudfoundry/cf-ops-automation-broker.git</connection>
+        <developerConnection>scm:git:https://github.com/orange-cloudfoundry/cf-ops-automation-broker.git</developerConnection>
         <tag>HEAD</tag>
     </scm>
 
@@ -123,7 +122,7 @@
             <dependency>
                 <groupId>com.orange.oss.cloudfoundry.broker.opsautomation</groupId>
                 <artifactId>cf-ops-automation-broker-framework</artifactId>
-                <version>0.4.0-SNAPSHOT</version>
+                <version>0.5.0-SNAPSHOT</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

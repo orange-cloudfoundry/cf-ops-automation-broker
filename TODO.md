@@ -6,8 +6,8 @@
 - share cloudflare related TF config and vars from paas-template & paas-secret
 
     - pull transient version from 
-    https://84-103646540-gh.circle-artifacts.com/0/home/circleci/cf-ops-automation-broker/cf-ops-automation-cloudflare-broker/target/cf-ops-automation-cloudflare-broker-0.4.0-SNAPSHOT.jar
-    https://circleci.com/api/v1.1/project/github/orange-cloudfoundry/cf-ops-automation-broker/latest/cf-ops-automation-cloudflare-broker/target/cf-ops-automation-cloudflare-broker-0.4.0-SNAPSHOT.jar?branch=develop&filter=successful
+    https://84-103646540-gh.circle-artifacts.com/0/home/circleci/cf-ops-automation-broker/cf-ops-automation-cloudflare-broker/target/cf-ops-automation-cloudflare-broker-0.5.0-SNAPSHOT.jar
+    https://circleci.com/api/v1.1/project/github/orange-cloudfoundry/cf-ops-automation-broker/latest/cf-ops-automation-cloudflare-broker/target/cf-ops-automation-cloudflare-broker-0.5.0-SNAPSHOT.jar?branch=develop&filter=successful
     https://circleci.com/api/v1.1/project/github/orange-cloudfoundry/mongofinil/63/artifacts/0/$CIRCLE_ARTIFACTS/hello.txt
     https://circleci.com/api/v1.1/project/:vcs-type/:org/:repo/:build_num/artifacts/:container-index/path/to/artifact
     - automate ASG to git server 

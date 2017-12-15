@@ -18,4 +18,4 @@ echo "CIRCLE_TAG: <$CIRCLE_TAG>"
 
 JFROG_PROMOTION_URL=http://oss.jfrog.org/api/plugins/build/promote/snapshotsToBintray/${CIRCLE_PROJECT_REPONAME}/${CIRCLE_BUILD_NUM}
 echo "Promoting build on JFrog to Bintray (Promotion URL: $JFROG_PROMOTION_URL)"
-curl --silent -X POST -u ${BINTRAY_USER}:${BINTRAY_PASSWORD} $JFROG_PROMOTION_URL
+curl --silent -X POST -u ${BINTRAY_USER}:${BINTRAY_PASSWORD} -d "" $JFROG_PROMOTION_URL

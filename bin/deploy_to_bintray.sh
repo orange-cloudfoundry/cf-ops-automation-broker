@@ -29,10 +29,4 @@ mvn -q deploy:help --settings settings.xml
 mvn clean deploy --settings settings.xml -P ojo-build-info
 
 # build promotion url for cf-ops-automation-broker-framework
-echo "http://oss.jfrog.org/api/plugins/build/promote/snapshotsToBintray/cf-ops-automation-broker-framework/${CIRCLE_BUILD_NUM}" >JFrogPromotion.url
-# build promotion url cf-ops-automation-broker-core
-echo "http://oss.jfrog.org/api/plugins/build/promote/snapshotsToBintray/cf-ops-automation-broker-core/${CIRCLE_BUILD_NUM}" >>JFrogPromotion.url
-# build promotion url spring-boot-starter-servicebroker-catalog
-echo "http://oss.jfrog.org/api/plugins/build/promote/snapshotsToBintray/spring-boot-starter-servicebroker-catalog/${CIRCLE_BUILD_NUM}" >>JFrogPromotion.url
-# build promotion url cf-ops-automation-sample-broker
-echo "http://oss.jfrog.org/api/plugins/build/promote/snapshotsToBintray/cf-ops-automation-sample-broker/${CIRCLE_BUILD_NUM}" >>JFrogPromotion.url
+echo "http://oss.jfrog.org/api/plugins/build/promote/snapshotsToBintray/cf-ops-automation-broker/${CIRCLE_BUILD_NUM}" >JFrogPromotion.url

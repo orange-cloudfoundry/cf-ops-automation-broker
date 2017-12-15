@@ -53,6 +53,16 @@ jobs:
           path: ~/junit
       - store_artifacts:
           path: cf-ops-automation-cloudflare-broker/target/cf-ops-automation-cloudflare-broker-0.0.1-SNAPSHOT.jar
+  release_to_bintray:
+    working_directory: ~/cf-ops-automation-broker
+    docker:
+      - image: circleci/golang:1.8.1
+    steps:
+      - attach_workspace:
+          at: ~/cf-ops-automation-broker
+      - run:
+          name: release to bintray
+          command: bin/deploy_to_bintray.sh
   release_to_github:
     working_directory: ~/cf-ops-automation-broker
     docker:
@@ -77,7 +87,7 @@ workflows:
           filters:
             branches:
               only: develop
-      - release_to_github:
+      - release_to_bintray:
           requires:
             - build
           filters:

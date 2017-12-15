@@ -24,7 +24,7 @@ Maven example:
           <dependency>
                     <groupId>com.orange.oss.cloudfoundry.broker.opsautomation</groupId>
                     <artifactId>cf-ops-automation-broker-core</artifactId>
-                    <version>0.0.1-SNAPSHOT</version>
+                    <version>0.4.0-SNAPSHOT</version>
           </dependency>
         ...
     </dependencies>

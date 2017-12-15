@@ -31,7 +31,6 @@ jobs:
           root: .
           paths:
             - cf-ops-automation-cloudflare-broker/target/cf-ops-automation-cloudflare-broker-0.0.1-SNAPSHOT.jar
-            - bin/release.sh
   build_n_deploy_to_bintray:
     working_directory: ~/cf-ops-automation-broker
     docker:
@@ -52,7 +51,9 @@ jobs:
       - store_test_results:
           path: ~/junit
       - store_artifacts:
-          path: cf-ops-automation-cloudflare-broker/target/cf-ops-automation-cloudflare-broker-0.0.1-SNAPSHOT.jar
+            - cf-ops-automation-cloudflare-broker/target/cf-ops-automation-cloudflare-broker-0.0.1-SNAPSHOT.jar
+            - bin/release.sh
+            - ~/tmp/JFrogPromotion.url
   release_to_bintray:
     working_directory: ~/cf-ops-automation-broker
     docker:
@@ -81,17 +82,17 @@ workflows:
           filters:
             branches:
               ignore: develop
-            tags:
-              only: /.*/
       - build_n_deploy_to_bintray:
           filters:
             branches:
               only: develop
-      - release_to_bintray:
-          requires:
-            - build
-          filters:
             tags:
               only: /.*/
+      - release_to_bintray:
+          requires:
+            - build_n_deploy_to_bintray
+          filters:
             branches:
               ignore: /.*/
+            tags:
+              only: /.*/

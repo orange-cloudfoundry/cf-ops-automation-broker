@@ -12,25 +12,17 @@ import java.util.Arrays;
 /**
  * Created by ijly7474 on 14/12/17.
  */
-public class SecretsGenerator {
+public class SecretsGenerator extends StructureGeneratorImpl {
 
-    public void checkPrerequisites(Path workDir) {
-        Path rootDeployment = Paths.get(String.valueOf(workDir)+ File.separator  + CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY);
-        if (Files.notExists(rootDeployment)){
-            throw new CassandraProcessorException(CassandraProcessorConstants.ROOT_DEPLOYMENT_EXCEPTION);
-        }
-        Path modelDeployment = Paths.get(String.valueOf(workDir)+ File.separator + CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY + File.separator + CassandraProcessorConstants.MODEL_DEPLOYMENT_DIRECTORY);
-        if (Files.notExists(modelDeployment)){
-            throw new CassandraProcessorException(CassandraProcessorConstants.MODEL_DEPLOYMENT_EXCEPTION);
-        }
+    public SecretsGenerator(Path workDir, String serviceInstanceId) {
+        super(workDir, serviceInstanceId);
     }
 
-    public void generateCassandraSecretsStructure(Path workDir, String serviceInstanceId) {
+    public void generate() {
 
         try {
-            //Generate service directory
-            Path pathDeployment = Paths.get(String.valueOf(workDir)+ File.separator + CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY + File.separator + CassandraProcessorConstants.SERVICE_INSTANCE_PREFIX_DIRECTORY + serviceInstanceId);
-            Files.createDirectory(pathDeployment);
+            //Generate secrets directory
+            super.generate();
 
             //Generate secrets directory
             Path pathDeploymentSecrets = Paths.get(String.valueOf(workDir)+ File.separator + CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY + File.separator + CassandraProcessorConstants.SERVICE_INSTANCE_PREFIX_DIRECTORY + serviceInstanceId + File.separator + CassandraProcessorConstants.SECRETS_DIRECTORY);

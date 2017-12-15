@@ -13,4 +13,5 @@ public class CassandraProcessorConstants {
     public static final String ENABLE_DEPLOYMENT_CONTENT = "---";
     public static final String ROOT_DEPLOYMENT_EXCEPTION = "Root deployment doesn't exist";
     public static final String MODEL_DEPLOYMENT_EXCEPTION = "Model deployment doesn't exist";
+    public static final String GENERATION_EXCEPTION = "Generation fails";
 }

@@ -3,8 +3,18 @@
     - triggers new bosh deployment: writes paas-template/paas-secret
     - tracks completion of bosh deployment: watches rendered manifest file 
 
-- git processor support for branches
-    - accepts a branch name
+- git processor 
+    - checkOutRemoteBranch
+    - createBranchIfMissing
+    - refactor GitProcessorContext into PreGitProcessorContext and PostGitProcessorContext
+        - and prefix keys with in and out
+    - failIfRemoteBranchExists
+    - deleteRemoteBranch
+
+
+
+
+    
     - refactor git tests to initialize clones in the gitserver setup rather than using the gitprocessor in the test itself
 
 - credhub processor

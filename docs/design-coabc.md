@@ -18,7 +18,10 @@ create service instance cassandra  (service plan small)
             git checkout develop # checkOutRemoteBranch 
                 Branch develop set up to track remote branch develop from origin.
                 Switched to a new branch 'develop'
-            git checkout cassandra || git checkout -b cassandra #createBranchIfMissing 
+            ~~git checkout cassandra || git checkout -b cassandra && git branch -u origin/cassandra #createBranchIfMissing~~ 
+            ~~git checkout cassandra || git branch cassandra -u origin/cassandrag && git checkout cassandra #createBranchIfMissing~~ 
+            ~~(git branch --list cassandra || git branch cassandra -u origin/cassandra)  && git checkout cassandra #createBranchIfMissing~~ 
+            git branch cassandra ; git config branch.cassandra.remote origin; git config branch.cassandra.merge refs/heads/cassandra; git checkout cassandra   #createBranchIfMissing 
             
         CassandraProcessor:
             produce files in workdir
@@ -27,7 +30,7 @@ create service instance cassandra  (service plan small)
         GitProcessor paas-template:
             git add        
             git commit 
-            git push -u origin cassandra
+            git push 
 
 
 
@@ -35,7 +38,7 @@ update service instance cassandra (service-plan large)
     precreate: 
         GitProcessor paas-template:
             git clone paas template
-            git checkout cassandra #fails if cassandra branch does not exist 
+            git checkout cassandra # fails if remote cassandra branch does not exist 
                                    # checkOutRemoteBranch
                                    
         CassandraProcessor:
@@ -45,14 +48,15 @@ update service instance cassandra (service-plan large)
         GitProcessor paas-template:
             git add        
             git commit 
-            git push -u origin cassandra
+            git push 
 
 
 delete service instance cassandra
     precreate: 
         GitProcessor paas-template:
             git clone paas template
-            git checkout cassandra #fails if cassandra branch does not exist 
+            git checkout cassandra #fails if remote cassandra branch does not exist 
+                                   # checkOutRemoteBranch
             
         CassandraProcessor:
             remove files in workdir
@@ -61,7 +65,7 @@ delete service instance cassandra
         GitProcessor paas-template:
             git add        
             git commit 
-            git push -u origin cassandra
+            git push 
 
 
 
@@ -75,7 +79,14 @@ create service instance cassandra  (service plan small)
             git checkout develop 
                 Branch develop set up to track remote branch develop from origin.
                 Switched to a new branch 'develop'
-            git checkout -b service-instance-guid #fails if branch already exist 
+                
+                # failIfRemoteBranchExists: 
+            git branch -rl service-instance-guid #fails if branch already exist 
+
+
+                # createBranchIfMissing                            
+            git branch service-instance-guid ; git config branch.service-instance-guid.remote origin; git config branch.service-instance-guid.merge refs/heads/service-instance-guid; git checkout service-instance-guid   
+            
             
         CassandraProcessor:
             produce files in workdir
@@ -84,7 +95,7 @@ create service instance cassandra  (service plan small)
         GitProcessor paas-template:
             git add        
             git commit 
-            git push -u origin service-instance-guid
+            git push 
 
 
 
@@ -93,7 +104,7 @@ update service instance cassandra (service-plan large)
         GitProcessor paas-template:
             git clone paas template
             git checkout service-instance-guid #fails if service-instance-guid branch does not exist 
-            
+                                               # checkOutRemoteBranch
         CassandraProcessor:
             update files in workdir
 
@@ -101,7 +112,7 @@ update service instance cassandra (service-plan large)
         GitProcessor paas-template:
             git add        
             git commit 
-            git push -u origin service-instance-guid
+            git push
 
 
 delete service instance cassandra
@@ -109,18 +120,19 @@ delete service instance cassandra
         GitProcessor paas-template:
             git clone paas template
             git checkout service-instance-guid #fails if service-instance-guid branch does not exist 
-            
+                                               # checkOutRemoteBranch
         CassandraProcessor:
             remove files in workdir
 
-    postCreate
+    postCreate:
         GitProcessor paas-template:
             git add        
             git commit
-            git push origin service-instance-guid # push delete commit for audit purposes. 
-            git push -u origin :service-instance-guid # delete the branch.
-                TODO: check behavior of COA sync-feature-branch
-
+            git push # push delete commit for audit purposes.
+            
+            git push :service-instance-guid # delete the branch.
+                Note: currently prevented by https://github.com/orange-cloudfoundry/cf-ops-automation/issues/67
+                     # deleteRemoteBranch
 
 
 

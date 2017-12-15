@@ -53,7 +53,7 @@ jobs:
       - store_artifacts:
           path: cf-ops-automation-cloudflare-broker/target/cf-ops-automation-cloudflare-broker-0.0.1-SNAPSHOT.jar
       - store_artifacts:
-          path: ~/tmp/JFrogPromotion.url
+          path: JFrogPromotion.url
       - persist_to_workspace:
           root: .
           paths:

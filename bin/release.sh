@@ -16,7 +16,7 @@ set -ev
 
 echo "CIRCLE_TAG: <$CIRCLE_TAG>"
 
-cat ~/tmp/JFrogPromotion.url | while read JFROG_PROMOTION_URL
+cat tmp/JFrogPromotion.url | while read JFROG_PROMOTION_URL
     do
         echo "Promoting build on JFrog to Bintray (Promotion URL: $JFROG_PROMOTION_URL)"
         curl --silent -X POST -u ${BINTRAY_USER}:${BINTRAY_PASSWORD} $JFROG_PROMOTION_URL

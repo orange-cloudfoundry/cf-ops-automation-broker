@@ -21,7 +21,7 @@ public class SecretsGenerator extends StructureGeneratorImpl {
     public void generate() {
 
         try {
-            //Generate secrets directory
+            //Generate service directory
             super.generate();
 
             //Generate secrets directory
@@ -42,6 +42,7 @@ public class SecretsGenerator extends StructureGeneratorImpl {
 
         } catch (IOException e) {
             e.printStackTrace();
+            throw new CassandraProcessorException(CassandraProcessorConstants.GENERATION_EXCEPTION);
         }
     }
 }

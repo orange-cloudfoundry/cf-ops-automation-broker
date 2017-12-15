@@ -9,6 +9,122 @@
 
 - Sequence diagram
 
+Phase 1: shared cassandra branch
+
+create service instance cassandra  (service plan small)
+    precreate: 
+        GitProcessor paas-template:
+            git clone paas template
+            git checkout develop # checkOutRemoteBranch 
+                Branch develop set up to track remote branch develop from origin.
+                Switched to a new branch 'develop'
+            git checkout cassandra || git checkout -b cassandra #createBranchIfMissing 
+            
+        CassandraProcessor:
+            produce files in workdir
+
+    postCreate
+        GitProcessor paas-template:
+            git add        
+            git commit 
+            git push -u origin cassandra
+
+
+
+update service instance cassandra (service-plan large)
+    precreate: 
+        GitProcessor paas-template:
+            git clone paas template
+            git checkout cassandra #fails if cassandra branch does not exist 
+                                   # checkOutRemoteBranch
+                                   
+        CassandraProcessor:
+            update files in workdir
+
+    postCreate
+        GitProcessor paas-template:
+            git add        
+            git commit 
+            git push -u origin cassandra
+
+
+delete service instance cassandra
+    precreate: 
+        GitProcessor paas-template:
+            git clone paas template
+            git checkout cassandra #fails if cassandra branch does not exist 
+            
+        CassandraProcessor:
+            remove files in workdir
+
+    postCreate
+        GitProcessor paas-template:
+            git add        
+            git commit 
+            git push -u origin cassandra
+
+
+
+
+Phase 2: per service instance branch
+
+create service instance cassandra  (service plan small)
+    precreate: 
+        GitProcessor paas-template:
+            git clone paas template
+            git checkout develop 
+                Branch develop set up to track remote branch develop from origin.
+                Switched to a new branch 'develop'
+            git checkout -b service-instance-guid #fails if branch already exist 
+            
+        CassandraProcessor:
+            produce files in workdir
+
+    postCreate
+        GitProcessor paas-template:
+            git add        
+            git commit 
+            git push -u origin service-instance-guid
+
+
+
+update service instance cassandra (service-plan large)
+    precreate: 
+        GitProcessor paas-template:
+            git clone paas template
+            git checkout service-instance-guid #fails if service-instance-guid branch does not exist 
+            
+        CassandraProcessor:
+            update files in workdir
+
+    postCreate
+        GitProcessor paas-template:
+            git add        
+            git commit 
+            git push -u origin service-instance-guid
+
+
+delete service instance cassandra
+    precreate: 
+        GitProcessor paas-template:
+            git clone paas template
+            git checkout service-instance-guid #fails if service-instance-guid branch does not exist 
+            
+        CassandraProcessor:
+            remove files in workdir
+
+    postCreate
+        GitProcessor paas-template:
+            git add        
+            git commit
+            git push origin service-instance-guid # push delete commit for audit purposes. 
+            git push -u origin :service-instance-guid # delete the branch.
+                TODO: check behavior of COA sync-feature-branch
+
+
+
+
+
 # Git 
 - paas-templates :
     - short term : work on a single branch (grouping all service instance depls) called feature-coabdepls-cassandra

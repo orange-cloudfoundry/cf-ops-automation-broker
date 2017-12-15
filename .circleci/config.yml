@@ -31,7 +31,7 @@ jobs:
           root: .
           paths:
             - cf-ops-automation-cloudflare-broker/target/cf-ops-automation-cloudflare-broker-0.5.0-SNAPSHOT.jar
-  build_n_deploy_to_bintray:
+  build_n_deploy:
     working_directory: ~/cf-ops-automation-broker
     docker:
       - image: circleci/openjdk:8-jdk
@@ -88,17 +88,7 @@ workflows:
           filters:
             branches:
               ignore: develop
-      - build_n_deploy_to_bintray:
+      - build_n_deploy:
           filters:
             branches:
               only: develop
-            tags:
-              only: /.*/
-      - release_to_bintray:
-          requires:
-            - build_n_deploy_to_bintray
-          filters:
-            branches:
-              ignore: /.*/
-            tags:
-              only: /.*/

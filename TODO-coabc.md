@@ -3,9 +3,16 @@
     - triggers new bosh deployment: writes paas-template/paas-secret
     - tracks completion of bosh deployment: watches rendered manifest file 
 
-- git processor 
-    - checkOutRemoteBranch
+- git processor
+    - Review code & commit/squash
+    - Refine test for createBranchIfMissing: make sure to cover both path: missing remote, existing remote
+    - Refine test for checkOutRemoteBranch: make sure to cover both path: missing remote (should fail), existing remote (pass)
+      
     - createBranchIfMissing
+        - Write new test 
+    - checkOutRemoteBranch
+        - modify tests that specify branch in constructor to specify checkOutRemoteBranch key
+        - remove branch from constructor
     - refactor GitProcessorContext into PreGitProcessorContext and PostGitProcessorContext
         - and prefix keys with in and out
     - failIfRemoteBranchExists

@@ -71,7 +71,7 @@ public class CloudFlareBrokerApplication {
 
     @Bean
     public BrokerProcessor gitProcessor(GitProperties gitProperties) {
-        return new GitProcessor(gitProperties.getUser(), gitProperties.getPassword(), gitProperties.getUrl(), gitProperties.committerName(), gitProperties.committerEmail(), null, "master");
+        return new GitProcessor(gitProperties.getUser(), gitProperties.getPassword(), gitProperties.getUrl(), gitProperties.committerName(), gitProperties.committerEmail(), null);
     }
 
     @Bean

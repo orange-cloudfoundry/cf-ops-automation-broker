@@ -37,7 +37,6 @@ public class GitProcessor extends DefaultBrokerProcessor {
 
     private static final String PRIVATE_GIT_INSTANCE = "private-git-instance";
     private static final Logger logger = LoggerFactory.getLogger(GitProcessor.class.getName());
-    private final String branch;
 
     private final String gitUrl;
     private final String committerName;
@@ -46,11 +45,10 @@ public class GitProcessor extends DefaultBrokerProcessor {
 
     private final UsernamePasswordCredentialsProvider cred;
 
-    public GitProcessor(String gitUser, String gitPassword, String gitUrl, String committerName, String committerEmail, String repoAliasName, String branch) {
+    public GitProcessor(String gitUser, String gitPassword, String gitUrl, String committerName, String committerEmail, String repoAliasName) {
         this.gitUrl = gitUrl;
         this.committerName = committerName;
         this.committerEmail = committerEmail;
-        this.branch = branch;
         this.cred = new UsernamePasswordCredentialsProvider(gitUser, gitPassword);
         this.repoAliasName = repoAliasName == null ? "" : repoAliasName;
     }
@@ -132,31 +130,67 @@ public class GitProcessor extends DefaultBrokerProcessor {
 
             setUserConfig(git);
 
-            git.checkout().setName(this.branch).call();
+            checkoutRemoteBranchIfNeeded(git, ctx);
+
+            createNewBranchIfNeeded(git, ctx);
+
             git.submoduleInit().call();
             git.submoduleUpdate().call();
 
-            String targetBranch = (String) ctx.contextKeys.get(GitProcessorContext.createBranchIfMissing);
-            if (targetBranch != null) {
-                boolean branchNeedsCreation= false;
-                try {
-                    git.checkout().setName(targetBranch).call();
-                } catch (GitAPIException e) {
-                    branchNeedsCreation = true;
-                }
-                if (branchNeedsCreation) {
-                    git.branchCreate().setName(targetBranch).call();
-                    git.checkout().setName(targetBranch).call();
-                }
-            }
-
-            logger.info("git repo is ready at {}, on branch {} at {}", workDir, this.branch);
+            logger.info("git repo is ready at {}", workDir);
             //push the work dir in invokation context
             setWorkDir(workDir, ctx);
 
         } catch (Exception e) {
             logger.warn("caught " + e, e);
             throw new IllegalArgumentException(e);
+        }
+
+    }
+
+    /**
+     * equivalent of
+     * <pre>
+     * git branch cassandra #create a local branch
+     * git config branch.cassandra.remote origin; git config branch.cassandra.merge refs/heads/cassandra; #configure branch to push to remote with same name
+     * git checkout cassandra # checkout
+     * </pre>
+     */
+    private void createNewBranchIfNeeded(Git git, Context ctx) throws GitAPIException {
+        String branch = (String) ctx.contextKeys.get(GitProcessorContext.createBranchIfMissing.toString());
+
+        if (branch != null) {
+            git.branchCreate()
+                    .setName(branch)
+                    .call();
+
+            git.getRepository().getConfig()
+                    .setString("branch", branch, "remote", "origin");
+            git.getRepository().getConfig()
+                    .setString("branch", branch, "merge", "refs/heads/" + branch);
+
+            git.checkout()
+                    .setName(branch)
+                    .call();
+            logger.info("created and checked out branch {}", branch);
+        }
+    }
+
+
+    private String getImplicitRemoteBranchToDisplay(Context ctx) {
+        String branch = (String) ctx.contextKeys.get(GitProcessorContext.checkOutRemoteBranch.toString());
+        return branch == null ? "develop" : branch;
+    }
+
+    private void checkoutRemoteBranchIfNeeded(Git git, Context ctx) throws GitAPIException {
+        String branch = (String) ctx.contextKeys.get(GitProcessorContext.checkOutRemoteBranch.toString());
+        if (branch != null) {
+            git.checkout()
+                    .setCreateBranch(true).setName(branch)
+                    .setUpstreamMode(CreateBranchCommand.SetupUpstreamMode.SET_UPSTREAM)
+                    .setStartPoint("origin/" + branch)
+                    .call();
+            logger.info("checked out branch {}", branch);
         }
 
     }
@@ -191,15 +225,13 @@ public class GitProcessor extends DefaultBrokerProcessor {
             }
             status = git.status().call();
             if (status.hasUncommittedChanges()) {
-                logger.info("pending commit: " +  status.getUncommittedChanges() + ". With deleted:" + status.getRemoved() + " added:" + status.getAdded() + " changed:" + status.getChanged());
+                logger.info("pending commit: " + status.getUncommittedChanges() + ". With deleted:" + status.getRemoved() + " added:" + status.getAdded() + " changed:" + status.getChanged());
                 CommitCommand commitC = git.commit().setMessage(getCommitMessage(ctx));
 
                 RevCommit revCommit = commitC.call();
                 logger.info("commited files in " + revCommit.toString());
 
-                //TODO: handle conflicts and automatically perform a git rebase
-
-                pushCommits(git);
+                pushCommits(git, ctx);
             } else {
                 logger.info("No changes to commit, skipping push");
             }
@@ -214,22 +246,23 @@ public class GitProcessor extends DefaultBrokerProcessor {
 
     }
 
-    void pushCommits(Git git) throws GitAPIException {
-        logger.info("pushing ...");
+    void pushCommits(Git git, Context ctx) throws GitAPIException {
+        logger.info("pushing to {}...", getImplicitRemoteBranchToDisplay(ctx));
         PushCommand pushCommand = git.push().setCredentialsProvider(cred);
+
         Iterable<PushResult> pushResults = pushCommand.call();
         logger.info("pushed ...");
         List<RemoteRefUpdate.Status> failedStatuses = extractFailedStatuses(pushResults);
 
         if (failedStatuses.contains(RemoteRefUpdate.Status.REJECTED_NONFASTFORWARD)) {
             logger.info("Failed to push with status {}", failedStatuses);
-            logger.info("pull and rebasing from origin/{} ...", this.branch);
+            logger.info("pull and rebasing from origin/{} ...", getImplicitRemoteBranchToDisplay(ctx));
             PullResult pullRebaseResult = git.pull().call();
             if (!pullRebaseResult.isSuccessful()) {
                 logger.info("Failed to pull rebase: " + pullRebaseResult);
                 throw new RuntimeException("failed to push: remote conflict. pull rebased failed:" + pullRebaseResult);
             }
-            logger.info("rebased from origin/{}", this.branch);
+            logger.info("rebased from origin/{}", getImplicitRemoteBranchToDisplay(ctx));
             logger.debug("pull details:" + ToStringBuilder.reflectionToString(pullRebaseResult));
 
             logger.info("re-pushing ...");
@@ -244,18 +277,18 @@ public class GitProcessor extends DefaultBrokerProcessor {
         }
 
         if (logger.isDebugEnabled()) {
-            logger.debug("push details: "+ prettyPrint(pushResults));
+            logger.debug("push details: " + prettyPrint(pushResults));
         }
     }
 
     List<RemoteRefUpdate.Status> extractFailedStatuses(Iterable<PushResult> pushResults) {
         return StreamSupport.stream(pushResults.spliterator(), false) //https://stackoverflow.com/questions/23932061/convert-iterable-to-stream-using-java-8-jdk
-                    .map(PushResult::getRemoteUpdates)
-                    .flatMap(Collection::stream) //reduces the Iterable
-                    .map(RemoteRefUpdate::getStatus)
-                    .distinct()
-                    .filter(status -> !RemoteRefUpdate.Status.OK.equals(status))
-                    .collect(Collectors.toList());
+                .map(PushResult::getRemoteUpdates)
+                .flatMap(Collection::stream) //reduces the Iterable
+                .map(RemoteRefUpdate::getStatus)
+                .distinct()
+                .filter(status -> !RemoteRefUpdate.Status.OK.equals(status))
+                .collect(Collectors.toList());
     }
 
     public StringBuilder prettyPrint(Iterable results) {

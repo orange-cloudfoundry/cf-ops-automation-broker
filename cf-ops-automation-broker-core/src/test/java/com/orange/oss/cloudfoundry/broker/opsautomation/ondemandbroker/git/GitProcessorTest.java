@@ -1,10 +1,8 @@
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git;
 
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.Context;
-import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.PersonIdent;
-import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.junit.*;
 
@@ -21,7 +19,7 @@ public class GitProcessorTest {
 
     static GitServer gitServer;
 
-    GitProcessor processor = new GitProcessor("gituser", "gitsecret", GIT_URL, "committerName", "committer@address.org", null, "master");
+    GitProcessor processor = new GitProcessor("gituser", "gitsecret", GIT_URL, "committerName", "committer@address.org", null);
     Context ctx = new Context();
 
 
@@ -62,7 +60,7 @@ public class GitProcessorTest {
     @Test
     public void configures_user_name_and_email_in_commits() throws GitAPIException, IOException {
         //given explicit user config
-        processor = new GitProcessor("gituser", "gitsecret", GIT_URL, "committerName", "committer@address.org", null, "master");
+        processor = new GitProcessor("gituser", "gitsecret", GIT_URL, "committerName", "committer@address.org", null);
         processor.cloneRepo(ctx);
 
         //when adding files
@@ -82,80 +80,87 @@ public class GitProcessorTest {
     }
 
     @Test
-    public void creates_specified_branch_when_missing() throws IOException, GitAPIException {
-        givenAnExistingRepoOnSpecifiedBranch("develop");
+    public void supports_createBranchIfMissing_key() throws IOException, GitAPIException {
+        //given a clone of an empty repo on the master branch
 
-        //given instruction in context to create a branch if missing
-        this.ctx.contextKeys.put(GitProcessorContext.createBranchIfMissing.toString(), "service-instance-guid");
+        GitProcessor processor1 = new GitProcessor("gituser", "gitsecret", GIT_URL, "committerName", "committer@address.org", null);
 
-        //and request to clone
-        processor.cloneRepo(this.ctx);
+        Context context = new Context();
+        processor1.cloneRepo(context);
 
-        //and adding files and asking to commit and push
-        addAFile(this.ctx, "content in branch service-instance-guid", "afile-in-service-instance-guid-branch.txt", "");
-        processor.commitPushRepo(this.ctx, true);
+        //when adding files
+        //and asking to commit and push
+        addAFile(context, "hello.txt", "afile-in-" + "develop" + "-branch.txt", "");
+        context.contextKeys.put(GitProcessorContext.createBranchIfMissing.toString(), "develop");
+        processor1.commitPushRepo(context, false);
 
-        Path secondClone = cloneRepoFromBranch("service-instance-guid");
-        //then file should be persisted in the "service-instance-guid" branch
-        assertThat(secondClone.resolve("afile-in-service-instance-guid-branch.txt").toFile()).exists();
-        //then the develop branch file is still present
-        assertThat(secondClone.resolve("afile-in-develop-branch.txt").toFile()).exists();
+        //then file should be persisted
+        Context ctx1 = new Context();
+        processor1 = new GitProcessor("gituser", "gitsecret", GIT_URL, "committerName", "committer@address.org", null);
+        context.contextKeys.put(GitProcessorContext.checkOutRemoteBranch.toString(), "develop");
+
+        processor1.preCreate(ctx1);
+        Path secondClone = getWorkDir(ctx1, "");
+        File secondCloneSameFile = secondClone.resolve("afile-in-" + "develop" + "-branch.txt").toFile();
+        assertThat(secondCloneSameFile).exists();
     }
 
     @Test
-    public void uses_the_specified_branch_when_exists() throws IOException, GitAPIException {
+    public void supports_checkOutRemoteBranch_key() throws IOException, GitAPIException {
         //given two independent branches available in a remote
         givenAnExistingRepoOnSpecifiedBranch("develop");
         givenAnExistingRepoOnSpecifiedBranch("service-instance-guid");
+        givenAnExistingRepoOnSpecifiedBranch("service-instance-guid2");
 
-        //given a clone of master branch
-        this.processor = new GitProcessor("gituser", "gitsecret", GIT_URL, "committerName", "committer@address.org", null, "master");
-        processor.cloneRepo(this.ctx);
-
+        //given a clone of develop branch
+        this.processor = new GitProcessor("gituser", "gitsecret", GIT_URL, "committerName", "committer@address.org", null);
+        this.ctx = new Context();
+        this.ctx.contextKeys.put(GitProcessorContext.checkOutRemoteBranch.toString(), "develop");
         //given instruction in context to create the "service-instance-guid" branch if missing
         this.ctx.contextKeys.put(GitProcessorContext.createBranchIfMissing.toString(), "service-instance-guid");
+        processor.cloneRepo(this.ctx);
 
         //and adding files
         //and asking to commit and push
         addAFile(this.ctx, "content in branch service-instance-guid", "another-file-in-service-instance-guid-branch.txt", "");
-        processor.commitPushRepo(this.ctx, true);
+        processor.commitPushRepo(this.ctx, false);
 
         Path secondClone = cloneRepoFromBranch("service-instance-guid");
         //then file should be persisted in the "service-instance-guid" branch
         assertThat(secondClone.resolve("afile-in-service-instance-guid-branch.txt").toFile()).exists();
+        assertThat(secondClone.resolve("another-file-in-service-instance-guid-branch.txt").toFile()).exists();
         //then the file from the independent develop branch is irrelevant and not present
-        assertThat(secondClone.resolve("afile-in-develop-branch.txt").toFile()).doesNotExist();
+        assertThat(secondClone.resolve("afile-in-develop-branch.txt").toFile()).exists();
+        assertThat(secondClone.resolve("afile-in-service-instance-guid2-branch.txt").toFile()).doesNotExist();
     }
 
     protected void givenAnExistingRepoOnSpecifiedBranch(String branch) throws IOException, GitAPIException {
         //given a clone of an empty repo on the master branch
-        GitProcessor processor = new GitProcessor("gituser", "gitsecret", GIT_URL, "committerName", "committer@address.org", null, "master");
+        GitProcessor processor = new GitProcessor("gituser", "gitsecret", GIT_URL, "committerName", "committer@address.org", null);
 
         Context context = new Context();
+        context.contextKeys.put(GitProcessorContext.createBranchIfMissing.toString(), branch);
         processor.cloneRepo(context);
-        Git git = processor.getGit(context);
-
-        git.branchCreate().setName(branch).call();
-        git.checkout().setName(branch).call();
 
         //when adding files
         //and asking to commit and push
         addAFile(context, "hello.txt", "afile-in-" + branch + "-branch.txt", "");
-        processor.commitPushRepo(context, true);
+        processor.commitPushRepo(context, false);
 
-        //then file should be persisted
+        //then file should be persisted in the branch
         Context ctx1 = new Context();
-        processor = new GitProcessor("gituser", "gitsecret", GIT_URL, "committerName", "committer@address.org", null, branch);
+        processor = new GitProcessor("gituser", "gitsecret", GIT_URL, "committerName", "committer@address.org", null);
+        ctx1.contextKeys.put(GitProcessorContext.checkOutRemoteBranch.toString(), branch);
         processor.preCreate(ctx1);
         Path secondClone = getWorkDir(ctx1, "");
-        File secondCloneSameFile = secondClone.resolve("afile.txt").toFile();
+        File secondCloneSameFile = secondClone.resolve("afile-in-" + branch + "-branch.txt").toFile();
         assertThat(secondCloneSameFile).exists();
     }
 
     @Test
     public void supports_default_user_name_and_emails_config() throws GitAPIException, IOException {
         //given no user config specified (null values)
-        processor = new GitProcessor("gituser", "gitsecret", GIT_URL, null, null, null, "master");
+        processor = new GitProcessor("gituser", "gitsecret", GIT_URL, null, null, null);
         processor.cloneRepo(ctx);
 
         //when adding files
@@ -176,7 +181,7 @@ public class GitProcessorTest {
     @Test
     public void reads_workdir_key_with_repo_alias() {
         //given a processor with an alias specified
-        GitProcessor processor = new GitProcessor("gituser", "gitsecret", GIT_URL, "committerName", "committer@address.org", "paasSecret", "master");
+        GitProcessor processor = new GitProcessor("gituser", "gitsecret", GIT_URL, "committerName", "committer@address.org", "paasSecret");
 
         //then workdir uses alias as a prefix
         assertThat(processor.getWorkDirKey(this.ctx)).isEqualTo("paasSecret" + GitProcessorContext.workDir.toString());
@@ -185,7 +190,7 @@ public class GitProcessorTest {
     @Test
     public void reads_workdir_key_without_repo_alias() {
         //given a processor without an alias specified
-        GitProcessor processor = new GitProcessor("gituser", "gitsecret", GIT_URL, "committerName", "committer@address.org", null, "master");
+        GitProcessor processor = new GitProcessor("gituser", "gitsecret", GIT_URL, "committerName", "committer@address.org", null);
 
         //then workdir works as default
         assertThat(processor.getWorkDirKey(this.ctx)).isEqualTo(GitProcessorContext.workDir.toString());
@@ -194,9 +199,9 @@ public class GitProcessorTest {
     @Test
     public void supports_multiple_processors_in_same_context_keys_prefixed_by_a_repo_alias() throws IOException {
         //given two processors instanciated in the same processor chain
-        GitProcessor paasSecretProcessor = new GitProcessor("gituser", "gitsecret", "git://127.0.0.1:9418/paas-secret.git", "committerName", "committer@address.org", "paasSecret", "master");
+        GitProcessor paasSecretProcessor = new GitProcessor("gituser", "gitsecret", "git://127.0.0.1:9418/paas-secret.git", "committerName", "committer@address.org", "paasSecret");
         Context sharedContext = new Context();
-        GitProcessor paasTemplateProcessor = new GitProcessor("gituser", "gitsecret", "git://127.0.0.1:9418/paas-template.git", "committerName", "committer@address.org", "paasTemplate", "master");
+        GitProcessor paasTemplateProcessor = new GitProcessor("gituser", "gitsecret", "git://127.0.0.1:9418/paas-template.git", "committerName", "committer@address.org", "paasTemplate");
 
         //then each processors coexist on the same context without overlapping
         addAndDeleteFilesForRepoAlias(paasSecretProcessor, sharedContext, "paasSecret");
@@ -207,12 +212,12 @@ public class GitProcessorTest {
     public void rebases_during_push_conflicts() throws GitAPIException, IOException {
         //given a clone of an empty repo
         Context ctx1 = new Context();
-        GitProcessor processor1 = new GitProcessor("gituser", "gitsecret", GIT_URL, "committerName", "committer@address.org", null, "master");
+        GitProcessor processor1 = new GitProcessor("gituser", "gitsecret", GIT_URL, "committerName", "committer@address.org", null);
         processor1.cloneRepo(ctx1);
 
         //Given concurrent commits
         Context ctx2 = new Context();
-        GitProcessor processor2 = new GitProcessor("gituser", "gitsecret", GIT_URL, "committerName", "committer@address.org", null, "master");
+        GitProcessor processor2 = new GitProcessor("gituser", "gitsecret", GIT_URL, "committerName", "committer@address.org", null);
         processor2.cloneRepo(ctx2);
         addAFile(ctx2, "content2", "a_first_file.txt", "");
         processor2.commitPushRepo(ctx2, true);
@@ -223,7 +228,7 @@ public class GitProcessorTest {
 
         //then a rebase should be tried, a 3rd clone sees both files commited
         Context ctx3 = new Context();
-        GitProcessor processor3 = new GitProcessor("gituser", "gitsecret", GIT_URL, "committerName", "committer@address.org", null, "master");
+        GitProcessor processor3 = new GitProcessor("gituser", "gitsecret", GIT_URL, "committerName", "committer@address.org", null);
         processor3.cloneRepo(ctx3);
         Path thirdClone = getWorkDir(ctx3, "");
         assertThat(thirdClone.resolve("a_first_file.txt").toFile()).exists();
@@ -240,12 +245,12 @@ public class GitProcessorTest {
     public void fails_if_pull_rebase_fails_during_push() throws GitAPIException, IOException {
         //given a clone of an empty repo
         Context ctx1 = new Context();
-        GitProcessor processor1 = new GitProcessor("gituser", "gitsecret", GIT_URL, "committerName", "committer@address.org", null, "master");
+        GitProcessor processor1 = new GitProcessor("gituser", "gitsecret", GIT_URL, "committerName", "committer@address.org", null);
         processor1.cloneRepo(ctx1);
 
         //Given concurrent commits
         Context ctx2 = new Context();
-        GitProcessor processor2 = new GitProcessor("gituser", "gitsecret", GIT_URL, "committerName", "committer@address.org", null, "master");
+        GitProcessor processor2 = new GitProcessor("gituser", "gitsecret", GIT_URL, "committerName", "committer@address.org", null);
         processor2.cloneRepo(ctx2);
         addAFile(ctx2, "content2", "same_file.txt", "");
         processor2.commitPushRepo(ctx2, true);
@@ -283,10 +288,11 @@ public class GitProcessorTest {
 
 
     protected Path cloneRepoFromBranch(@SuppressWarnings("SameParameterValue") String branch) {
-        GitProcessor processor = new GitProcessor("gituser", "gitsecret", GIT_URL, "committerName", "committer@address.org", null, branch);
-        Context ctx1 = new Context();
-        processor.cloneRepo(ctx1);
-        return getWorkDir(ctx1, "");
+        GitProcessor processor = new GitProcessor("gituser", "gitsecret", GIT_URL, "committerName", "committer@address.org", null);
+        Context context = new Context();
+        context.contextKeys.put(GitProcessorContext.checkOutRemoteBranch.toString(), branch);
+        processor.cloneRepo(context);
+        return getWorkDir(context, "");
     }
 
     protected void addAndDeleteFilesForRepoAlias(GitProcessor processor, Context context, String repoAlias) throws IOException {

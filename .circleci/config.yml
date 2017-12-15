@@ -92,3 +92,5 @@ workflows:
           filters:
             branches:
               only: develop
+            tags:
+              only: /.*/

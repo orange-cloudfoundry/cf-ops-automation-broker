@@ -31,7 +31,7 @@ jobs:
           root: .
           paths:
             - cf-ops-automation-cloudflare-broker/target/cf-ops-automation-cloudflare-broker-0.0.1-SNAPSHOT.jar
-            - cf-ops-automation-cloudflare-broker/bin/release.sh
+            - bin/release.sh
   build_n_deploy_to_bintray:
     working_directory: ~/cf-ops-automation-broker
     docker:

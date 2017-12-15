@@ -43,6 +43,12 @@ jobs:
           name: deploy snapshots to bintray
           command: bin/deploy_to_bintray.sh
       - run:
+          name: save artefacts
+          command: |
+            mkdir -p ./artefacts/
+            find . -name '*.jar' -exec cp {} ./artefacts/ \;
+          when: always
+      - run:
           name: Save test results
           command: |
             mkdir -p ~/junit/
@@ -58,8 +64,8 @@ jobs:
           root: .
           paths:
             - cf-ops-automation-cloudflare-broker/target/cf-ops-automation-cloudflare-broker-0.5.0-SNAPSHOT.jar
-            - bin/release.sh
-            - JFrogPromotion.url
+            - bin/release_to_github.sh
+            - artefacts/*
   release_to_bintray:
     working_directory: ~/cf-ops-automation-broker
     docker:
@@ -78,8 +84,14 @@ jobs:
       - attach_workspace:
           at: ~/cf-ops-automation-broker
       - run:
-          name: release artefact to github
-          command: cf-ops-automation-cloudflare-broker/bin/release.sh github_api_token=$GITHUB_TOKEN owner=$CIRCLE_PROJECT_USERNAME repo=$CIRCLE_PROJECT_REPONAME tag=$CIRCLE_TAG filename=./cf-ops-automation-cloudflare-broker/target/cf-ops-automation-cloudflare-broker-0.5.0-SNAPSHOT.jar
+          name: release artefacts to github
+          command: |
+          for f in ./artefacts/*
+          do
+            echo "Processing $f file..."
+            # take action on each file.
+            release_to_github.sh github_api_token=$GITHUB_TOKEN owner=$CIRCLE_PROJECT_USERNAME repo=$CIRCLE_PROJECT_REPONAME tag=$CIRCLE_TAG filename=./artefacts/$f
+          done
 workflows:
   version: 2
   build-n-deploy:
@@ -92,5 +104,13 @@ workflows:
           filters:
             branches:
               only: develop
+            tags:
+              only: /.*/
+      - release_to_github:
+          requires:
+            - build_n_deploy
+          filters:
+            branches:
+              ignore: /.*/
             tags:
               only: /.*/

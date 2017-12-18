@@ -157,7 +157,7 @@ public class GitProcessor extends DefaultBrokerProcessor {
      * </pre>
      */
     private void createNewBranchIfNeeded(Git git, Context ctx) throws GitAPIException {
-        String branch = (String) ctx.contextKeys.get(GitProcessorContext.createBranchIfMissing.toString());
+        String branch = getContextValue(ctx, GitProcessorContext.createBranchIfMissing);
 
         if (branch != null) {
             git.branchCreate()
@@ -178,12 +178,12 @@ public class GitProcessor extends DefaultBrokerProcessor {
 
 
     private String getImplicitRemoteBranchToDisplay(Context ctx) {
-        String branch = (String) ctx.contextKeys.get(GitProcessorContext.checkOutRemoteBranch.toString());
+        String branch = getContextValue(ctx, GitProcessorContext.checkOutRemoteBranch);
         return branch == null ? "develop" : branch;
     }
 
     private void checkoutRemoteBranchIfNeeded(Git git, Context ctx) throws GitAPIException {
-        String branch = (String) ctx.contextKeys.get(GitProcessorContext.checkOutRemoteBranch.toString());
+        String branch = getContextValue(ctx, GitProcessorContext.checkOutRemoteBranch);
         if (branch != null) {
             git.checkout()
                     .setCreateBranch(true).setName(branch)
@@ -301,7 +301,7 @@ public class GitProcessor extends DefaultBrokerProcessor {
     }
 
     protected String getCommitMessage(Context ctx) {
-        String configuredMessage = (String) ctx.contextKeys.get(GitProcessorContext.commitMessage.toString());
+        String configuredMessage = getContextValue(ctx, GitProcessorContext.commitMessage);
         return configuredMessage == null ? "commit by ondemand broker" : configuredMessage;
     }
 
@@ -323,22 +323,26 @@ public class GitProcessor extends DefaultBrokerProcessor {
     }
 
     Git getGit(Context ctx) {
-        return (Git) ctx.contextKeys.get(PRIVATE_GIT_INSTANCE);
+        return (Git) ctx.contextKeys.get(repoAliasName + PRIVATE_GIT_INSTANCE);
     }
 
     private void setGit(Git git, Context ctx) {
-        ctx.contextKeys.put(PRIVATE_GIT_INSTANCE, git);
+        ctx.contextKeys.put(repoAliasName + PRIVATE_GIT_INSTANCE, git);
     }
 
     Path getWorkDir(Context ctx) {
-        return (Path) ctx.contextKeys.get(getWorkDirKey(ctx));
+        return (Path) ctx.contextKeys.get(getContextKey(GitProcessorContext.workDir));
     }
 
-    String getWorkDirKey(Context ctx) {
-        return repoAliasName + GitProcessorContext.workDir.toString();
+    private String getContextValue(Context ctx, GitProcessorContext key) {
+        return (String) ctx.contextKeys.get(getContextKey(key));
+    }
+
+    String getContextKey(GitProcessorContext keyEnum) {
+        return repoAliasName + keyEnum.toString();
     }
 
     private void setWorkDir(Path workDir, Context ctx) {
-        ctx.contextKeys.put(getWorkDirKey(ctx), workDir);
+        ctx.contextKeys.put(getContextKey(GitProcessorContext.workDir), workDir);
     }
 }

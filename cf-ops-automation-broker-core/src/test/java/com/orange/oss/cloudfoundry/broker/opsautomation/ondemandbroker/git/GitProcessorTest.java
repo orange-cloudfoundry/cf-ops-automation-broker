@@ -179,21 +179,21 @@ public class GitProcessorTest {
     }
 
     @Test
-    public void reads_workdir_key_with_repo_alias() {
+    public void reads_context_key_with_repo_alias() {
         //given a processor with an alias specified
         GitProcessor processor = new GitProcessor("gituser", "gitsecret", GIT_URL, "committerName", "committer@address.org", "paasSecret");
 
         //then workdir uses alias as a prefix
-        assertThat(processor.getWorkDirKey(this.ctx)).isEqualTo("paasSecret" + GitProcessorContext.workDir.toString());
+        assertThat(processor.getContextKey(GitProcessorContext.workDir)).isEqualTo("paasSecret" + GitProcessorContext.workDir.toString());
     }
 
     @Test
-    public void reads_workdir_key_without_repo_alias() {
+    public void reads_context_key_without_repo_alias() {
         //given a processor without an alias specified
         GitProcessor processor = new GitProcessor("gituser", "gitsecret", GIT_URL, "committerName", "committer@address.org", null);
 
         //then workdir works as default
-        assertThat(processor.getWorkDirKey(this.ctx)).isEqualTo(GitProcessorContext.workDir.toString());
+        assertThat(processor.getContextKey(GitProcessorContext.workDir)).isEqualTo(GitProcessorContext.workDir.toString());
     }
 
     @Test

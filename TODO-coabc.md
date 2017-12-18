@@ -17,6 +17,11 @@
         - and prefix keys with in and out
     - failIfRemoteBranchExists
     - deleteRemoteBranch
+    
+    - for paas-template support:
+       - disable submodule init and clone ?
+       - prioritize caching ?
+       
 
 
 

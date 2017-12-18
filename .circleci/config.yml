@@ -64,6 +64,7 @@ jobs:
           root: .
           paths:
             - cf-ops-automation-cloudflare-broker/target/cf-ops-automation-cloudflare-broker-0.5.0-SNAPSHOT.jar
+            - bin/create_github_release.sh
             - bin/release_to_github.sh
             - artefacts/*
   release_to_bintray:
@@ -84,7 +85,10 @@ jobs:
       - attach_workspace:
           at: ~/cf-ops-automation-broker
       - run:
-          name: release artefacts to github
+          name: create github release
+          command: bin/create_github_release.sh github_api_token=$GITHUB_TOKEN owner=$CIRCLE_PROJECT_USERNAME repo=$CIRCLE_PROJECT_REPONAME tag=$CIRCLE_TAG
+      - run:
+          name: upload artefacts to github release
           command: |
             for f in ./artefacts/*
             do

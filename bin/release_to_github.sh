@@ -14,7 +14,7 @@
 #
 # Example:
 #
-# release.sh github_api_token=TOKEN owner=orange-cloudfoundry repo=cf-ops-automation-broker tag=v0.1.0 filename=./cf-ops-automation-cloudflare-broker-0.5.0-SNAPSHOT.jar
+# release_to_github.sh github_api_token=TOKEN owner=orange-cloudfoundry repo=cf-ops-automation-broker tag=v0.1.0 filename=./cf-ops-automation-cloudflare-broker-0.5.0-SNAPSHOT.jar
 #
 
 #--- Colors and styles
@@ -48,19 +48,6 @@ fi
 
 # Validate token.
 curl -o /dev/null -sH "$AUTH_HEADER" $GITHUB_REPO || { echo "Error: Invalid repo, token or network issue!";  exit 1; }
-
-# create release
-printf "%bCreating GitHub release for tag $tag ...%b\n" "${YELLOW}" "${STD}"
-GITHUB_DATA='{"tag_name":"'$tag'","draft": false,"prerelease": true}'
-GITHUB_RELEASE="$GITHUB_API/repos/orange-cloudfoundry/cf-ops-automation-broker/releases"
-echo "Github data: $GITHUB_DATA"
-sleep 10
-curl -X POST --silent --write-out '%{http_code}\n' --data "$GITHUB_DATA" -H "$AUTH_HEADER" $GITHUB_RELEASE
-#http_status=$(curl -X POST --silent --write-out '%{http_code}\n' --data "$GITHUB_DATA" -H "$AUTH_HEADER" $GITHUB_RELEASE)
-#if [ "201" != "$http_status" ] ; then
-#	printf "\n%bERROR: Cannot create release for tag $tag%b\n\n" "${RED}" "${STD}"
-#	exit 1
-#fi
 
 # Read release asset tags.
 response=$(curl -sH "$AUTH_HEADER" $GITHUB_TAGS)

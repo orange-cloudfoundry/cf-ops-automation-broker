@@ -4,7 +4,7 @@
 
     <groupId>com.orange.oss.cloudfoundry.broker.opsautomation</groupId>
     <artifactId>cf-ops-automation-broker</artifactId>
-    <version>0.13.0-SNAPSHOT</version>
+    <version>0.13.0</version>
     <packaging>pom</packaging>
 
     <name>cf-ops-automation-broker</name>
@@ -21,7 +21,7 @@
         <url>https://github.com/orange-cloudfoundry/cf-ops-automation-broker</url>
         <connection>scm:git:https://github.com/orange-cloudfoundry/cf-ops-automation-broker.git</connection>
         <developerConnection>scm:git:https://github.com/orange-cloudfoundry/cf-ops-automation-broker.git</developerConnection>
-        <tag>HEAD</tag>
+        <tag>v0.13.0</tag>
     </scm>
 
     <distributionManagement>
@@ -121,7 +121,7 @@
             <dependency>
                 <groupId>com.orange.oss.cloudfoundry.broker.opsautomation</groupId>
                 <artifactId>cf-ops-automation-broker-framework</artifactId>
-                <version>0.13.0-SNAPSHOT</version>
+                <version>0.13.0</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

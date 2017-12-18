@@ -45,7 +45,7 @@ public class SecretsGeneratorTest {
             thrown.expectMessage(CassandraProcessorConstants.MODEL_DEPLOYMENT_EXCEPTION);
             File file = temporaryFolder.newFolder(REPOSITORY_DIRECTORY);
             Path workDir = file.toPath();
-            Path rootDeploymentDir = Paths.get(String.valueOf(workDir)+ File.separator + CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY);
+            Path rootDeploymentDir = StructureGeneratorHelper.generatePath(file.toPath(), CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY);
             rootDeploymentDir = Files.createDirectory(rootDeploymentDir);
             SecretsGenerator secrets = new SecretsGenerator(workDir, "");
             secrets.checkPrerequisites();
@@ -60,9 +60,9 @@ public class SecretsGeneratorTest {
 
             //Given
             Path workDir = Files.createTempDirectory(REPOSITORY_DIRECTORY);
-            Path rootDeploymentDir = Paths.get(String.valueOf(workDir) + File.separator + CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY);
+            Path rootDeploymentDir = StructureGeneratorHelper.generatePath(workDir, CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY);
             rootDeploymentDir = Files.createDirectory(rootDeploymentDir);
-            Path modelDeploymentDir = Paths.get(String.valueOf(rootDeploymentDir) + File.separator + CassandraProcessorConstants.MODEL_DEPLOYMENT_DIRECTORY);
+            Path modelDeploymentDir = StructureGeneratorHelper.generatePath(rootDeploymentDir, CassandraProcessorConstants.MODEL_DEPLOYMENT_DIRECTORY);
             modelDeploymentDir = Files.createDirectory(modelDeploymentDir);
 
             //When
@@ -71,8 +71,15 @@ public class SecretsGeneratorTest {
             secrets.generate();
 
             //Then
-            Path serviceInstanceDir = Paths.get(String.valueOf(workDir) + File.separator + CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY + File.separator + CassandraProcessorConstants.SERVICE_INSTANCE_PREFIX_DIRECTORY + SERVICE_INSTANCE_ID);
-            Path secretsDir = Paths.get(String.valueOf(workDir) + File.separator + CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY + File.separator + CassandraProcessorConstants.SERVICE_INSTANCE_PREFIX_DIRECTORY + SERVICE_INSTANCE_ID + File.separator + CassandraProcessorConstants.SECRETS_DIRECTORY);
+            Path serviceInstanceDir = StructureGeneratorHelper.generatePath(workDir,
+                    CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY,
+                    CassandraProcessorConstants.SERVICE_INSTANCE_PREFIX_DIRECTORY + SERVICE_INSTANCE_ID
+            );
+            Path secretsDir = StructureGeneratorHelper.generatePath(workDir,
+                    CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY,
+                    CassandraProcessorConstants.SERVICE_INSTANCE_PREFIX_DIRECTORY + SERVICE_INSTANCE_ID,
+                    CassandraProcessorConstants.SECRETS_DIRECTORY
+            );
             assertThat("Deployment directory doesn't exist", Files.exists(serviceInstanceDir));
             assertThat("Secrets directory doesn't exist", Files.exists(secretsDir));
 
@@ -87,9 +94,9 @@ public class SecretsGeneratorTest {
 
             //Given
             Path workDir = Files.createTempDirectory(REPOSITORY_DIRECTORY);
-            Path rootDeploymentDir = Paths.get(String.valueOf(workDir) + File.separator + CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY);
+            Path rootDeploymentDir = StructureGeneratorHelper.generatePath(workDir, CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY);
             rootDeploymentDir = Files.createDirectory(rootDeploymentDir);
-            Path modelDeploymentDir = Paths.get(String.valueOf(rootDeploymentDir) + File.separator + CassandraProcessorConstants.MODEL_DEPLOYMENT_DIRECTORY);
+            Path modelDeploymentDir = StructureGeneratorHelper.generatePath(rootDeploymentDir, CassandraProcessorConstants.MODEL_DEPLOYMENT_DIRECTORY);
             modelDeploymentDir = Files.createDirectory(modelDeploymentDir);
 
             //When
@@ -98,10 +105,23 @@ public class SecretsGeneratorTest {
             secrets.generate();
 
             //Then
-            Path metaFile = Paths.get(String.valueOf(workDir) + File.separator + CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY + File.separator + CassandraProcessorConstants.SERVICE_INSTANCE_PREFIX_DIRECTORY + SERVICE_INSTANCE_ID + File.separator + CassandraProcessorConstants.SECRETS_DIRECTORY + File.separator + CassandraProcessorConstants.META_FILENAME);
-            Path secretsFile = Paths.get(String.valueOf(workDir) + File.separator + CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY + File.separator + CassandraProcessorConstants.SERVICE_INSTANCE_PREFIX_DIRECTORY + SERVICE_INSTANCE_ID + File.separator + CassandraProcessorConstants.SECRETS_DIRECTORY + File.separator + CassandraProcessorConstants.SECRETS_FILENAME);
-            Path enableDeploymentFile = Paths.get(String.valueOf(workDir) + File.separator + CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY + File.separator + CassandraProcessorConstants.SERVICE_INSTANCE_PREFIX_DIRECTORY + SERVICE_INSTANCE_ID + File.separator + CassandraProcessorConstants.ENABLE_DEPLOYMENT_FILENAME);
-
+            Path metaFile = StructureGeneratorHelper.generatePath(workDir,
+                    CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY,
+                    CassandraProcessorConstants.SERVICE_INSTANCE_PREFIX_DIRECTORY + SERVICE_INSTANCE_ID,
+                    CassandraProcessorConstants.SECRETS_DIRECTORY,
+                    CassandraProcessorConstants.META_FILENAME
+            );
+            Path secretsFile = StructureGeneratorHelper.generatePath(workDir,
+                    CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY,
+                    CassandraProcessorConstants.SERVICE_INSTANCE_PREFIX_DIRECTORY + SERVICE_INSTANCE_ID,
+                    CassandraProcessorConstants.SECRETS_DIRECTORY,
+                    CassandraProcessorConstants.SECRETS_FILENAME
+            );
+            Path enableDeploymentFile = StructureGeneratorHelper.generatePath(workDir,
+                    CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY,
+                    CassandraProcessorConstants.SERVICE_INSTANCE_PREFIX_DIRECTORY + SERVICE_INSTANCE_ID,
+                    CassandraProcessorConstants.ENABLE_DEPLOYMENT_FILENAME
+            );
 
             assertThat("Meta file doesn't exist", Files.exists(metaFile));
             assertThat("Secrets file doesn't exist", Files.exists(secretsFile));

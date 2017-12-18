@@ -30,11 +30,13 @@ public class TemplatesGeneratorTest {
     @Test
     public void raise_exception_if_root_deployment_is_missing(){
         try {
+            //Then
             thrown.expect(CassandraProcessorException.class);
             thrown.expectMessage(CassandraProcessorConstants.ROOT_DEPLOYMENT_EXCEPTION);
+            //Given repository directory
             File file = temporaryFolder.newFolder(REPOSITORY_DIRECTORY);
-            Path workDir = file.toPath();
-            TemplatesGenerator templates = new TemplatesGenerator(workDir, "");
+            TemplatesGenerator templates = new TemplatesGenerator(file.toPath(), "");
+            //When
             templates.checkPrerequisites();
         } catch (IOException e) {
             e.printStackTrace();
@@ -44,13 +46,15 @@ public class TemplatesGeneratorTest {
     @Test
     public void raise_exception_if_model_deployment_is_missing(){
         try {
+            //Then
             thrown.expect(CassandraProcessorException.class);
             thrown.expectMessage(CassandraProcessorConstants.MODEL_DEPLOYMENT_EXCEPTION);
+            //Given repository and root deployment directory
             File file = temporaryFolder.newFolder(REPOSITORY_DIRECTORY);
-            Path workDir = file.toPath();
-            Path rootDeploymentDir = Paths.get(String.valueOf(workDir)+ File.separator + CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY);
+            Path rootDeploymentDir = StructureGeneratorHelper.generatePath(file.toPath(), CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY);
             rootDeploymentDir = Files.createDirectory(rootDeploymentDir);
-            TemplatesGenerator templates = new TemplatesGenerator(workDir, "");
+            TemplatesGenerator templates = new TemplatesGenerator(file.toPath(), "");
+            //When
             templates.checkPrerequisites();
         } catch (IOException e) {
             e.printStackTrace();
@@ -63,9 +67,9 @@ public class TemplatesGeneratorTest {
 
             //Given
             Path workDir = Files.createTempDirectory(REPOSITORY_DIRECTORY);
-            Path rootDeploymentDir = Paths.get(String.valueOf(workDir) + File.separator + CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY);
+            Path rootDeploymentDir = StructureGeneratorHelper.generatePath(workDir, CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY);
             rootDeploymentDir = Files.createDirectory(rootDeploymentDir);
-            Path modelDeploymentDir = Paths.get(String.valueOf(rootDeploymentDir) + File.separator + CassandraProcessorConstants.MODEL_DEPLOYMENT_DIRECTORY);
+            Path modelDeploymentDir = StructureGeneratorHelper.generatePath(rootDeploymentDir, CassandraProcessorConstants.MODEL_DEPLOYMENT_DIRECTORY);
             modelDeploymentDir = Files.createDirectory(modelDeploymentDir);
 
             //When
@@ -74,8 +78,15 @@ public class TemplatesGeneratorTest {
             templates.generate();
 
             //Then
-            Path serviceInstanceDir = Paths.get(String.valueOf(workDir) + File.separator + CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY + File.separator + CassandraProcessorConstants.SERVICE_INSTANCE_PREFIX_DIRECTORY + SERVICE_INSTANCE_ID);
-            Path templateDir = Paths.get(String.valueOf(workDir) + File.separator + CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY + File.separator + CassandraProcessorConstants.SERVICE_INSTANCE_PREFIX_DIRECTORY + SERVICE_INSTANCE_ID + File.separator + CassandraProcessorConstants.TEMPLATE_DIRECTORY);
+            Path serviceInstanceDir = StructureGeneratorHelper.generatePath(workDir,
+                    CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY,
+                    CassandraProcessorConstants.SERVICE_INSTANCE_PREFIX_DIRECTORY + SERVICE_INSTANCE_ID
+            );
+            Path templateDir = StructureGeneratorHelper.generatePath(workDir,
+                    CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY,
+                    CassandraProcessorConstants.SERVICE_INSTANCE_PREFIX_DIRECTORY + SERVICE_INSTANCE_ID,
+                    CassandraProcessorConstants.TEMPLATE_DIRECTORY
+            );
             assertThat("Deployment directory doesn't exist", Files.exists(serviceInstanceDir));
             assertThat("Template directory doesn't exist", Files.exists(templateDir));
 
@@ -90,9 +101,9 @@ public class TemplatesGeneratorTest {
 
             //Given
             Path workDir = Files.createTempDirectory(REPOSITORY_DIRECTORY);
-            Path rootDeploymentDir = Paths.get(String.valueOf(workDir) + File.separator + CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY);
+            Path rootDeploymentDir = StructureGeneratorHelper.generatePath(workDir, CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY);
             rootDeploymentDir = Files.createDirectory(rootDeploymentDir);
-            Path modelDeploymentDir = Paths.get(String.valueOf(rootDeploymentDir) + File.separator + CassandraProcessorConstants.MODEL_DEPLOYMENT_DIRECTORY);
+            Path modelDeploymentDir = StructureGeneratorHelper.generatePath(rootDeploymentDir, CassandraProcessorConstants.MODEL_DEPLOYMENT_DIRECTORY);
             modelDeploymentDir = Files.createDirectory(modelDeploymentDir);
 
             //When
@@ -101,19 +112,17 @@ public class TemplatesGeneratorTest {
             templates.generate();
 
             //Then
-            Path deploymentDependenciesFile = Paths.get(String.valueOf(workDir) + File.separator + CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY + File.separator + CassandraProcessorConstants.SERVICE_INSTANCE_PREFIX_DIRECTORY + SERVICE_INSTANCE_ID + File.separator + CassandraProcessorConstants.DEPLOYMENT_DEPENDENCIES_FILENAME);
-
+            Path deploymentDependenciesFile = StructureGeneratorHelper.generatePath(workDir,
+                    CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY,
+                    CassandraProcessorConstants.SERVICE_INSTANCE_PREFIX_DIRECTORY + SERVICE_INSTANCE_ID,
+                    CassandraProcessorConstants.DEPLOYMENT_DEPENDENCIES_FILENAME
+            );
             assertThat("Deployment dependencies file doesn't exist", Files.exists(deploymentDependenciesFile));
 
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
-
-
-
-
-
 
     @Test@Ignore
     public void test(){
@@ -129,5 +138,9 @@ public class TemplatesGeneratorTest {
             e.printStackTrace();
         }
     }
+
+
+
+
 
 }

@@ -21,12 +21,15 @@ public class StructureGeneratorImpl implements StructureGenerator {
     }
 
     public void checkPrerequisites() {
-        Path rootDeployment = Paths.get(String.valueOf(workDir)+ File.separator  + CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY);
-        if (Files.notExists(rootDeployment)){
+        Path rootDeploymentDir = StructureGeneratorHelper.generatePath(workDir,
+                CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY);
+        if (Files.notExists(rootDeploymentDir)){
             throw new CassandraProcessorException(CassandraProcessorConstants.ROOT_DEPLOYMENT_EXCEPTION);
         }
-        Path modelDeployment = Paths.get(String.valueOf(workDir)+ File.separator + CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY + File.separator + CassandraProcessorConstants.MODEL_DEPLOYMENT_DIRECTORY);
-        if (Files.notExists(modelDeployment)){
+        Path modelDeploymentDir = StructureGeneratorHelper.generatePath(workDir,
+                CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY,
+                CassandraProcessorConstants.MODEL_DEPLOYMENT_DIRECTORY);
+        if (Files.notExists(modelDeploymentDir)){
             throw new CassandraProcessorException(CassandraProcessorConstants.MODEL_DEPLOYMENT_EXCEPTION);
         }
     }
@@ -34,8 +37,10 @@ public class StructureGeneratorImpl implements StructureGenerator {
     public void generate() {
         try {
             //Generate service directory
-            Path pathDeployment = Paths.get(String.valueOf(workDir) + File.separator + CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY + File.separator + CassandraProcessorConstants.SERVICE_INSTANCE_PREFIX_DIRECTORY + serviceInstanceId);
-            Files.createDirectory(pathDeployment);
+            Path serviceInstanceDir = StructureGeneratorHelper.generatePath(workDir,
+                    CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY,
+                    CassandraProcessorConstants.SERVICE_INSTANCE_PREFIX_DIRECTORY + serviceInstanceId);
+            Files.createDirectory(serviceInstanceDir);
         } catch (IOException e) {
             e.printStackTrace();
             throw new CassandraProcessorException(CassandraProcessorConstants.GENERATION_EXCEPTION);

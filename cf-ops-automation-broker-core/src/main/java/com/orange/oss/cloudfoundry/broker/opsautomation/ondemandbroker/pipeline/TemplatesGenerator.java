@@ -29,8 +29,11 @@ public class TemplatesGenerator extends StructureGeneratorImpl{
             super.generate();
 
             //Generate template directory
-            Path pathDeploymentTemplate = Paths.get(String.valueOf(workDir)+ File.separator + CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY + File.separator + CassandraProcessorConstants.SERVICE_INSTANCE_PREFIX_DIRECTORY + serviceInstanceId + File.separator + CassandraProcessorConstants.TEMPLATE_DIRECTORY);
-            Files.createDirectory(pathDeploymentTemplate);
+            Path deploymentTemplateDir = StructureGeneratorHelper.generatePath(workDir,
+                    CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY,
+                    CassandraProcessorConstants.SERVICE_INSTANCE_PREFIX_DIRECTORY + serviceInstanceId,
+                    CassandraProcessorConstants.TEMPLATE_DIRECTORY);
+            Files.createDirectory(deploymentTemplateDir);
 
             //Generate deployment dependencies files
             this.generateDeploymentDependenciesFile();
@@ -47,9 +50,14 @@ public class TemplatesGenerator extends StructureGeneratorImpl{
 
         try {
             List<String> lines = null;
+            //TODO : Change path building
             lines = Files.readAllLines(Paths.get(getClass().getClassLoader().getResource(CassandraProcessorConstants.MODEL_DEPLOYMENT_DIRECTORY + File.separator + CassandraProcessorConstants.DEPLOYMENT_DEPENDENCIES_FILENAME).toURI()));
-            Path secretsPath = Paths.get(String.valueOf(workDir)+ File.separator + CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY + File.separator + CassandraProcessorConstants.SERVICE_INSTANCE_PREFIX_DIRECTORY + serviceInstanceId + File.separator + CassandraProcessorConstants.DEPLOYMENT_DEPENDENCIES_FILENAME);
-            Files.write(secretsPath, lines, Charset.forName(StandardCharsets.UTF_8.name()));
+
+            Path targetDeploymentDependenciesFile = StructureGeneratorHelper.generatePath(workDir,
+                    CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY,
+                    CassandraProcessorConstants.SERVICE_INSTANCE_PREFIX_DIRECTORY + serviceInstanceId,
+                    CassandraProcessorConstants.DEPLOYMENT_DEPENDENCIES_FILENAME);
+            Files.write(targetDeploymentDependenciesFile, lines, Charset.forName(StandardCharsets.UTF_8.name()));
 
         } catch (IOException e) {
             e.printStackTrace();

@@ -25,10 +25,6 @@ public class CassandraProcessorTest {
 
     private static final Logger logger = LoggerFactory.getLogger(CassandraProcessorTest.class);
 
-//    @Rule
-//    public TemporaryFolder folder= new TemporaryFolder();
-
-
     private final static String ROOT_DEPLOYMENT = "coab-depls";
 
     @Test

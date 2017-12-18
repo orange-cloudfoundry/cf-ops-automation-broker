@@ -43,10 +43,10 @@ jobs:
           name: deploy snapshots to bintray
           command: bin/deploy_to_bintray.sh
       - run:
-          name: save artefacts
+          name: save jar artefacts
           command: |
             mkdir -p ./artefacts/
-            find . -name '*.jar' -exec cp {} ./artefacts/ \;
+            find . -name 'cf*.jar' -exec cp {} ./artefacts/ \;
           when: always
       - run:
           name: Save test results
@@ -65,7 +65,7 @@ jobs:
           paths:
             - cf-ops-automation-cloudflare-broker/target/cf-ops-automation-cloudflare-broker-0.5.0-SNAPSHOT.jar
             - bin/create_github_release.sh
-            - bin/release_to_github.sh
+            - bin/upload_artefact_to_github.sh
             - artefacts/*
   release_to_bintray:
     working_directory: ~/cf-ops-automation-broker
@@ -94,7 +94,7 @@ jobs:
             do
               echo "Processing $f file..."
               # take action on each file.
-              bin/release_to_github.sh github_api_token=$GITHUB_TOKEN owner=$CIRCLE_PROJECT_USERNAME repo=$CIRCLE_PROJECT_REPONAME tag=$CIRCLE_TAG filename=$f
+              bin/upload_artefact_to_github.sh github_api_token=$GITHUB_TOKEN owner=$CIRCLE_PROJECT_USERNAME repo=$CIRCLE_PROJECT_REPONAME tag=$CIRCLE_TAG filename=$f
             done
 workflows:
   version: 2

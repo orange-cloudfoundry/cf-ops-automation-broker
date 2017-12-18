@@ -7,7 +7,6 @@
 # * owner
 # * repo
 # * tag
-# * filename
 # * github_api_token
 #
 # Script to create a release with asset using the GitHub API v3.

@@ -20,7 +20,7 @@ public enum GitProcessorContext {
 	 * In: Name of an expected remote branch to checkout following clone. Defaults to master if missing.
 	 * Fails if the remote branch is missing.
 	 *
-	 * Equivalent of
+	 * Equivalent of:
 	 * <pre>
 	 * git checkout cassandra # fails if remote cassandra branch does not exist
 	 * </pre>
@@ -28,12 +28,13 @@ public enum GitProcessorContext {
 	checkOutRemoteBranch,
 
 	/**
-	 * In: This key represent the name of a branch (e.g. "service-instance-guid".
+	 * In: This key represents the name of a branch to checkout (e.g. "service-instance-guid").
 	 *
 	 * If the branch is missing from the clone, then it will be created from the branch checked out (specified in the GitProcessor constructor)
 	 *
 	 * If the branch is present in the clone, it will simply be used.
-	 * equivalent of
+	 *
+	 * Equivalent of:
 	 * <pre>
 	 * git branch cassandra #create a local branch
 	 * git config branch.cassandra.remote origin; git config branch.cassandra.merge refs/heads/cassandra; #configure branch to push to remote with same name
@@ -58,7 +59,8 @@ public enum GitProcessorContext {
 
 	/**
 	 * In: ask to delete the specified remote branch
-	 * equivalent of:
+	 *
+	 * Equivalent of:
 	 * <pre>
 	 *  git push :service-instance-guid # delete the branch.
 	 * </pre>

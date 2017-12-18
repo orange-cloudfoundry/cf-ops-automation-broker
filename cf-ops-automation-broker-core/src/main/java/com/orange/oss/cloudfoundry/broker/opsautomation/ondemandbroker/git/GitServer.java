@@ -49,7 +49,6 @@ public class GitServer {
     public void startEphemeralReposServer(Consumer<Git> repoInitializer) throws IOException, GitAPIException {
         this.server = new Daemon(new InetSocketAddress(9418));
         this.server.getService("git-receive-pack").setEnabled(true);
-        this.server.getService("git-upload-pack").setEnabled(true);
         this.server.setRepositoryResolver(new RepositoryResolverImplementation(repoInitializer));
         this.server.start();
     }

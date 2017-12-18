@@ -4,7 +4,9 @@
     - tracks completion of bosh deployment: watches rendered manifest file 
 
 - git processor
-    - Review code & commit/squash
+    - Fix issue following code review
+        - getImplicitRemoteBranchToDisplay(ctx) only takes into account checkout branch, not created branch
+            => pushCommits displaying wrong branch to push/pull-from/rebase
     - Refine test for createBranchIfMissing: make sure to cover both path: missing remote, existing remote
     - Refine test for checkOutRemoteBranch: make sure to cover both path: missing remote (should fail), existing remote (pass)
       

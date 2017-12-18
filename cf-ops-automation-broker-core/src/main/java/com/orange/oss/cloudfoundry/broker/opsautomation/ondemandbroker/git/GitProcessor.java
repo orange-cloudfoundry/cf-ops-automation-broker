@@ -247,7 +247,7 @@ public class GitProcessor extends DefaultBrokerProcessor {
     }
 
     void pushCommits(Git git, Context ctx) throws GitAPIException {
-        logger.info("pushing to {}...", getImplicitRemoteBranchToDisplay(ctx));
+        logger.info("pushing to {} ...", getImplicitRemoteBranchToDisplay(ctx));
         PushCommand pushCommand = git.push().setCredentialsProvider(cred);
 
         Iterable<PushResult> pushResults = pushCommand.call();

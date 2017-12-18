@@ -26,11 +26,6 @@
     </scm>
 
     <distributionManagement>
-        <snapshotRepository>
-            <id>jfrog-oss</id>
-            <name>JFrog OSS snapshot repository</name>
-            <url>http://oss.jfrog.org/artifactory/oss-snapshot-local</url>
-        </snapshotRepository>
         <repository>
             <id>bintray-elpaaso-maven</id>
             <name>elpaaso-maven</name>

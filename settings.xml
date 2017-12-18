@@ -13,11 +13,6 @@
 <settings>
     <servers>
         <server>
-            <id>jfrog-oss</id>
-            <username>${env.BINTRAY_USER}</username>
-            <password>${env.BINTRAY_PASSWORD}</password>
-        </server>
-        <server>
             <id>bintray-elpaaso-maven</id>
             <username>${env.BINTRAY_USER}</username>
             <password>${env.BINTRAY_PASSWORD}</password>

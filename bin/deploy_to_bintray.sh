@@ -19,14 +19,11 @@ echo "CIRCLE_BRANCH: <$CIRCLE_BRANCH> - CIRCLE_TAG: <$CIRCLE_TAG>"
 #Download dependencies
 mvn -q help:evaluate -Dexpression=project.version --settings settings.xml
 # Capture execution of maven command - It looks like grep cannot be used like this on circle
-export VERSION_SNAPSHOT=$(mvn help:evaluate -Dexpression=project.version --settings settings.xml |grep '^[0-9].*')
+export VERSION=$(mvn help:evaluate -Dexpression=project.version --settings settings.xml |grep '^[0-9].*')
 
-echo "Current version extracted from pom.xml: $VERSION_SNAPSHOT"
+echo "Current version extracted from pom.xml: $VERSION"
 
-echo "Compiling and deploying to OSS Jfrog"
+echo "Compiling and deploying to bintray"
 
 mvn -q deploy:help --settings settings.xml
-mvn clean deploy --settings settings.xml -P ojo-build-info
-
-# build promotion url for cf-ops-automation-broker-framework
-echo "http://oss.jfrog.org/api/plugins/build/promote/snapshotsToBintray/cf-ops-automation-broker/${CIRCLE_BUILD_NUM}" >JFrogPromotion.url
+mvn clean deploy --settings settings.xml

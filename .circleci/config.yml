@@ -56,16 +56,6 @@ jobs:
             - bin/create_github_release.sh
             - bin/upload_artefact_to_github.sh
             - artefacts/*
-  release_to_bintray:
-    working_directory: ~/cf-ops-automation-broker
-    docker:
-      - image: circleci/golang:1.8.1
-    steps:
-      - attach_workspace:
-          at: ~/cf-ops-automation-broker
-      - run:
-          name: release to bintray
-          command: bin/release.sh
   release_to_github:
     working_directory: ~/cf-ops-automation-broker
     docker:
@@ -96,7 +86,7 @@ workflows:
       - build_n_deploy:
           filters:
             branches:
-              only: develop
+              ignore: /.*/
             tags:
               only: /.*/
       - release_to_github:

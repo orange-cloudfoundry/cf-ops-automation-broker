@@ -46,7 +46,7 @@ jobs:
           name: save jar artefacts
           command: |
             mkdir -p ./artefacts/
-            find . -name 'cf*.jar' -exec cp {} ./artefacts/ \;
+            find . -path '**/target/*.jar' -exec cp {} ./artefacts/ \;
           when: always
       - run:
           name: Save test results

@@ -81,8 +81,8 @@ workflows:
     jobs:
       - build:
           filters:
-            branches:
-              ignore: develop
+            tags:
+              ignore: /.*/
       - build_n_deploy:
           filters:
             branches:

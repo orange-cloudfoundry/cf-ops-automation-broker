@@ -14,6 +14,14 @@
     <artifactId>cf-ops-automation-cloudflare-broker</artifactId>
     <version>0.17.0-SNAPSHOT</version>
 
+    <distributionManagement>
+        <repository>
+            <id>bintray-elpaaso-maven</id>
+            <name>elpaaso-maven</name>
+            <url>https://api.bintray.com/maven/elpaaso/maven/${project.name}/;publish=1</url>
+        </repository>
+    </distributionManagement>
+
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>

@@ -83,26 +83,42 @@ public class GitProcessorTest {
     public void supports_createBranchIfMissing_key() throws IOException, GitAPIException {
         //given a clone of an empty repo on the master branch
 
-        GitProcessor processor1 = new GitProcessor("gituser", "gitsecret", GIT_URL, "committerName", "committer@address.org", null);
-
-        Context context = new Context();
-        processor1.cloneRepo(context);
-
         //when adding files
-        //and asking to commit and push
-        addAFile(context, "hello.txt", "afile-in-" + "develop" + "-branch.txt", "");
+        //and asking to commit and create develop branch
+        Context context = new Context();
         context.contextKeys.put(GitProcessorContext.createBranchIfMissing.toString(), "develop");
-        processor1.commitPushRepo(context, false);
+        processor.cloneRepo(context);
+        addAFile(context, "hello.txt", "afile-in-" + "develop" + "-branch.txt", "");
+        processor.commitPushRepo(context, false);
 
-        //then file should be persisted
+        //then file should be persisted in develop branch
         Context ctx1 = new Context();
-        processor1 = new GitProcessor("gituser", "gitsecret", GIT_URL, "committerName", "committer@address.org", null);
-        context.contextKeys.put(GitProcessorContext.checkOutRemoteBranch.toString(), "develop");
+        ctx1.contextKeys.put(GitProcessorContext.checkOutRemoteBranch.toString(), "develop");
 
-        processor1.preCreate(ctx1);
+        processor.cloneRepo(ctx1);
         Path secondClone = getWorkDir(ctx1, "");
         File secondCloneSameFile = secondClone.resolve("afile-in-" + "develop" + "-branch.txt").toFile();
         assertThat(secondCloneSameFile).exists();
+
+
+        //when adding files
+        //and asking to commit and create develop branch if missing
+        Context ctx2 = new Context();
+        ctx2.contextKeys.put(GitProcessorContext.createBranchIfMissing.toString(), "develop");
+        processor.cloneRepo(ctx2);
+        addAFile(ctx2, "hello.txt", "another-file-in-" + "develop" + "-branch.txt", "");
+        processor.commitPushRepo(ctx2, false);
+
+        //then file should be persisted in the existing develop branch
+        Context ctx3 = new Context();
+        ctx3.contextKeys.put(GitProcessorContext.checkOutRemoteBranch.toString(), "develop");
+
+        processor.cloneRepo(ctx3);
+        Path thirdClone = getWorkDir(ctx3, "");
+        File thirdCloneSameFile = thirdClone.resolve("afile-in-" + "develop" + "-branch.txt").toFile();
+        File thirdCloneAnotherFile = thirdClone.resolve("another-file-in-" + "develop" + "-branch.txt").toFile();
+        assertThat(thirdCloneSameFile).exists();
+        assertThat(thirdCloneAnotherFile).exists();
     }
 
     @Test

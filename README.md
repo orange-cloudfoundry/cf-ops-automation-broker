@@ -110,7 +110,21 @@ export CATALOG_YML="$(cat catalog.yml)"
 
 See [catalog.yml](cf-ops-automation-sample-broker/catalog.yml) for details.
 
+## Contributions
 
+ ### Releasing
+ 
+Releasing is made using [maven release plugin](http://maven.apache.org/maven-release/maven-release-plugin/) as follows :
+ 
+ ```shell
+ 
+ $ mvn release:prepare --batch-mode -Dtag={your git tag} -DreleaseVersion={release version to be set} -DdevelopmentVersion={next snapshot version to be set}
+ 
+ # ex : mvn release:prepare --batch-mode -Dtag=v0.21.0 -DreleaseVersion=0.21.0 -DdevelopmentVersion=0.22.0-SNAPSHOT
+ 
+ ```
+ 
+ For further details, see [release:prepare goals](http://maven.apache.org/maven-release/maven-release-plugin/prepare-mojo.html)
 
 
  

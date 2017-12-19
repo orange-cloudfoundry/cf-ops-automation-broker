@@ -4,13 +4,24 @@
     - tracks completion of bosh deployment: watches rendered manifest file 
 
 - git processor
-    
-    - for paas-template support:
-       - integration test: paas-template create feature-COAB-cassandra-IT
-       - later: disable submodule init and update
    - prioritize caching:
         pull --rebase instead of clone
-              
+    
+    - for paas-template support:
+        - integration test: paas-template create feature-COAB-cassandra-IT:
+            - disable submodules commands unless a specific key is registered 
+        - submodules without opt-in get disabled  
+            submodule.active=false # did not manage to see side effect of this config.
+            submodule.<name>.update=none
+        - submodules get selectively enabled as needed, controlled by a context key  https://git-scm.com/docs/git-config#git-config-submoduleltnamegtactive
+            submodule.active=false # did not manage to see side effect of this config.
+            submodule.<name>.active=false
+            submodule.<name>.update=none
+            
+        - add support for replicated submodules https://github.com/orange-cloudfoundry/cf-ops-automation/issues/69 maintain a ~/.giconfig of form
+             - [url "https://gitlab.internal.paas"]
+                   insteadOf = "https://github.com"  
+                    
        
     - refactor GitProcessorContext into PreGitProcessorContext and PostGitProcessorContext
         - and prefix keys with in and out

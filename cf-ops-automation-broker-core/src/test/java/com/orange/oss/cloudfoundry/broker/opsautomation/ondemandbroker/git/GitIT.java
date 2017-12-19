@@ -36,67 +36,115 @@ import java.util.function.Consumer;
 @EnableConfigurationProperties({GitProperties.class})
 public class GitIT {
 
-	@SuppressWarnings("SpringJavaAutowiredMembersInspection")
+    @SuppressWarnings("SpringJavaAutowiredMembersInspection")
     @Autowired
-	GitProperties gitProperties;
+    GitProperties gitProperties;
 
-	@Test
-	public void testGitProcessor() {
+    @Test
+    public void testGitProcessor() {
 
-		GitProcessor processor=new GitProcessor(gitProperties.getUser(), gitProperties.getPassword(), gitProperties.getUrl(), "committerName", "committerEmail", null);
-		List<BrokerProcessor> processors= new ArrayList<>();
-		processors.add(processor);
-		ProcessorChain chain=new ProcessorChain(processors, new DefaultBrokerSink());
+        GitProcessor gitProcessor = new GitProcessor(gitProperties.getUser(), gitProperties.getPassword(), gitProperties.getUrl(), "committerName", "committerEmail", null);
+        BrokerProcessor fakeProcessor = new BrokerProcessor() {
+            @Override
+            public void preCreate(Context ctx) {
+                ctx.contextKeys.put(GitProcessorContext.checkOutRemoteBranch.toString(), "develop");
+                ctx.contextKeys.put(GitProcessorContext.createBranchIfMissing.toString(), "feature-COAB-cassandra-IT");
+            }
 
-		Context ctx=new Context();
-		ctx.contextKeys.put(GitProcessorContext.checkOutRemoteBranch.toString(), "develop");
-		ctx.contextKeys.put(GitProcessorContext.createBranchIfMissing.toString(), "feature-COAB-cassandra-IT");
-		chain.create(ctx);
+            @Override
+            public void postCreate(Context ctx) {
+                Path workDir = (Path) ctx.contextKeys.get(GitProcessorContext.workDir.toString());
+                try {
+                    createDir(workDir.resolve("coab-depls").resolve("service-instance-guid"));
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            }
 
-	}
+            @Override
+            public void preGetLastOperation(Context ctx) {
+            }
 
-	GitServer gitServer;
+            @Override
+            public void postGetLastOperation(Context ctx) {
+            }
 
-	@Before
-	public void startGitServer() throws IOException, GitAPIException {
-		gitServer = new GitServer();
+            @Override
+            public void preBind(Context ctx) {
+            }
 
-		Consumer<Git> initPaasTemplate= git -> {
-			File gitWorkDir = git.getRepository().getDirectory().getParentFile();
-			try {
-				git.commit().setMessage("Initial empty repo setup").call();
-				//In develop branch
-				git.checkout().setName("develop").setCreateBranch(true).call();
+            @Override
+            public void postBind(Context ctx) {
+            }
 
-				//root deployment
-				Path coabDepls = gitWorkDir.toPath().resolve("coab-depls");
-				createDir(coabDepls);
-				//sub deployments
-				createDir(coabDepls.resolve("cassandra"));
+            @Override
+            public void preDelete(Context ctx) {
+            }
 
-				AddCommand addC = git.add().addFilepattern(".");
-				addC.call();
-				git.commit().setMessage("GitIT#startGitServer").call();
+            @Override
+            public void postDelete(Context ctx) {
+            }
 
-				git.checkout().setName("master").call();
-			} catch (Exception e) {
-				throw new RuntimeException(e);
-			}
-		};
-		gitServer.startEphemeralReposServer(initPaasTemplate);
-	}
+            @Override
+            public void preUnBind(Context ctx) {
+            }
 
-	void createDir(Path dir) throws IOException {
-		Files.createDirectories(dir);
-		//TODO: create .gitignore
-		try(Writer writer = new FileWriter(dir.resolve(".gitkeep").toFile())) {
-			writer.write("Please keep me");
-		}
-	}
+            @Override
+            public void postUnBind(Context ctx) {
 
-	@After
-	public void cleanUpGit() throws Exception {
-		gitServer.stopAndCleanupReposServer();
-	}
+            }
+        };
+        List<BrokerProcessor> processors = new ArrayList<>();
+        processors.add(gitProcessor);
+        ProcessorChain chain = new ProcessorChain(processors, new DefaultBrokerSink());
+
+        Context ctx = new Context();
+        chain.create(ctx);
+
+    }
+
+    GitServer gitServer;
+
+    @Before
+    public void startGitServer() throws IOException, GitAPIException {
+        gitServer = new GitServer();
+
+        Consumer<Git> initPaasTemplate = git -> {
+            File gitWorkDir = git.getRepository().getDirectory().getParentFile();
+            try {
+                git.commit().setMessage("Initial empty repo setup").call();
+                //In develop branch
+                git.checkout().setName("develop").setCreateBranch(true).call();
+
+                //root deployment
+                Path coabDepls = gitWorkDir.toPath().resolve("coab-depls");
+                createDir(coabDepls);
+                //sub deployments
+                createDir(coabDepls.resolve("cassandra"));
+
+                AddCommand addC = git.add().addFilepattern(".");
+                addC.call();
+                git.commit().setMessage("GitIT#startGitServer").call();
+
+                git.checkout().setName("master").call();
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        };
+        gitServer.startEphemeralReposServer(initPaasTemplate);
+    }
+
+    void createDir(Path dir) throws IOException {
+        Files.createDirectories(dir);
+        //TODO: create .gitignore
+        try (Writer writer = new FileWriter(dir.resolve(".gitkeep").toFile())) {
+            writer.write("Please keep me");
+        }
+    }
+
+    @After
+    public void cleanUpGit() throws Exception {
+        gitServer.stopAndCleanupReposServer();
+    }
 
 }

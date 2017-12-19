@@ -7,9 +7,48 @@
    - credhub processor
    - osb processor
 
-- Sequence diagram
+# Git
 
-Phase 1: shared cassandra branch
+## Overview
+- paas-templates :
+    - short term : work on a single branch (grouping all service instance depls) called feature-coabdepls-cassandra
+    - mid term : work on multiple branches (one branch per cassandra service instance)
+        - feature-coabdepls-cassandra_guid1 
+        - feature-coabdepls-cassandra_guidn
+
+- paas-secrets :
+    - master branch is used
+
+## Paas-template submodule handling
+
+- how to fetch github modules ?
+  - Q: add support for http proxy for fetching github submodules ? 
+      - JGit supports environment variables
+                String keyNoProxy = "no_proxy";
+                String keyHttpProxy = "http_proxy";
+                String keyHttpsProxy = "https_proxy";
+      - Q: what other http resources would proxy interfere with ?
+         - OSB processor: IP is dynamically provided, so can't rely on static no_proxy env var unless using fragile no-proxy regexp syntax
+             - so we'd need to programmatically assign system.properties, with append only, reducing likelyhood of race conditions
+         - private gitsubmodule
+  - A: No, rather focus on replicated submodules https://github.com/orange-cloudfoundry/cf-ops-automation/issues/69 maintain a ~/.giconfig of form:
+  
+    ```  
+           [url "https://gitlab.internal.paas"]
+               insteadOf = "https://github.com"  
+    ```  
+
+     - by default submodules are disabled and get selectively enabled as needed  https://git-scm.com/docs/git-config#git-config-submoduleltnamegtactive
+     
+    ```  
+            submodule.active=false
+            submodule.<name>.active=true 
+    ```
+
+
+## sequence diagram of processor interactions
+
+### Phase 1: shared cassandra branch
 
 create service instance cassandra  (service plan small)
     precreate: 
@@ -70,7 +109,7 @@ delete service instance cassandra
 
 
 
-Phase 2: per service instance branch
+### Phase 2: per service instance branch
 
 create service instance cassandra  (service plan small)
     precreate: 
@@ -137,15 +176,7 @@ delete service instance cassandra
 
 
 
-# Git 
-- paas-templates :
-    - short term : work on a single branch (grouping all service instance depls) called feature-coabdepls-cassandra
-    - mid term : work on multiple branches (one branch per cassandra service instance)
-        - feature-coabdepls-cassandra_guid1 
-        - feature-coabdepls-cassandra_guidn
 
-- paas-secrets :
-    - master branch is used
 
 # Concourse/cf-ops-automation evolutions/pipelines (coab-depls)
 - new root deployment/pipeline introduced called coab-depls targeting BOSH-OPS 

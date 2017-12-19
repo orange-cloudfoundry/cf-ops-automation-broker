@@ -106,6 +106,25 @@ public class GitProcessorTest {
     }
 
     @Test
+    public void displays_remote_branch_being_pushed_to() {
+        Context context0 = new Context();
+        assertGetImplicitRemoteBranchToDisplay(context0, "master");
+
+        Context context1 = new Context();
+        context1.contextKeys.put(GitProcessorContext.checkOutRemoteBranch.toString(), "develop");
+        assertGetImplicitRemoteBranchToDisplay(context1, "develop");
+
+        Context context2 = new Context();
+        context2.contextKeys.put(GitProcessorContext.checkOutRemoteBranch.toString(), "develop");
+        context2.contextKeys.put(GitProcessorContext.createBranchIfMissing.toString(), "service-instance-guid");
+        assertGetImplicitRemoteBranchToDisplay(context2, "service-instance-guid");
+    }
+
+    private void assertGetImplicitRemoteBranchToDisplay(Context context, String expectedBranchDisplayed) {
+        assertThat(processor.getImplicitRemoteBranchToDisplay(context)).isEqualTo(expectedBranchDisplayed);
+    }
+
+    @Test
     public void supports_checkOutRemoteBranch_key() throws IOException, GitAPIException {
         //given two independent branches available in a remote
         givenAnExistingRepoOnSpecifiedBranch("develop");

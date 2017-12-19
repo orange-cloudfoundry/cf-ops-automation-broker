@@ -177,9 +177,15 @@ public class GitProcessor extends DefaultBrokerProcessor {
     }
 
 
-    private String getImplicitRemoteBranchToDisplay(Context ctx) {
-        String branch = getContextValue(ctx, GitProcessorContext.checkOutRemoteBranch);
-        return branch == null ? "develop" : branch;
+    String getImplicitRemoteBranchToDisplay(Context ctx) {
+        String branch = getContextValue(ctx, GitProcessorContext.createBranchIfMissing);
+        if (branch == null) {
+            branch = getContextValue(ctx, GitProcessorContext.checkOutRemoteBranch);
+        }
+        if (branch == null) {
+            branch = "master";
+        }
+        return branch;
     }
 
     private void checkoutRemoteBranchIfNeeded(Git git, Context ctx) throws GitAPIException {

@@ -2,6 +2,7 @@ package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git;
 
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.Context;
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.api.errors.RefNotFoundException;
 import org.eclipse.jgit.lib.PersonIdent;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.junit.*;
@@ -141,14 +142,13 @@ public class GitProcessorTest {
     }
 
     @Test
-    public void supports_checkOutRemoteBranch_key() throws IOException, GitAPIException {
-        //given two independent branches available in a remote
+    public void supports_checkOutRemoteBranch_key_when_branch_exists() throws IOException, GitAPIException {
+        //given three independent branches available in a remote
         givenAnExistingRepoOnSpecifiedBranch("develop");
         givenAnExistingRepoOnSpecifiedBranch("service-instance-guid");
         givenAnExistingRepoOnSpecifiedBranch("service-instance-guid2");
 
         //given a clone of develop branch
-        this.processor = new GitProcessor("gituser", "gitsecret", GIT_URL, "committerName", "committer@address.org", null);
         this.ctx = new Context();
         this.ctx.contextKeys.put(GitProcessorContext.checkOutRemoteBranch.toString(), "develop");
         //given instruction in context to create the "service-instance-guid" branch if missing
@@ -167,6 +167,19 @@ public class GitProcessorTest {
         //then the file from the independent develop branch is irrelevant and not present
         assertThat(secondClone.resolve("afile-in-develop-branch.txt").toFile()).exists();
         assertThat(secondClone.resolve("afile-in-service-instance-guid2-branch.txt").toFile()).doesNotExist();
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void supports_checkOutRemoteBranch_key_when_branch_is_missing() throws IOException, GitAPIException {
+        //given an empty repo
+
+        //When asking to clone develop branch
+        this.ctx = new Context();
+        this.ctx.contextKeys.put(GitProcessorContext.checkOutRemoteBranch.toString(), "develop");
+
+        processor.cloneRepo(this.ctx);
+
+        //then an exception should be thrown
     }
 
     protected void givenAnExistingRepoOnSpecifiedBranch(String branch) throws IOException, GitAPIException {

@@ -5,17 +5,18 @@
 
 - git processor
     
-    - checkOutRemoteBranch
-        - modify tests that specify branch in constructor to specify checkOutRemoteBranch key
-        - remove branch from constructor
+    - for paas-template support:
+       - integration test: paas-template create feature-COAB-cassandra-IT
+       - later: disable submodule init and update
+   - prioritize caching:
+        pull --rebase instead of clone
+              
+       
     - refactor GitProcessorContext into PreGitProcessorContext and PostGitProcessorContext
         - and prefix keys with in and out
-    - failIfRemoteBranchExists
-    - deleteRemoteBranch
+    - Implement failIfRemoteBranchExists key
+    - Implement deleteRemoteBranch key
     
-    - for paas-template support:
-       - disable submodule init and clone ?
-       - prioritize caching ?
        
 
 

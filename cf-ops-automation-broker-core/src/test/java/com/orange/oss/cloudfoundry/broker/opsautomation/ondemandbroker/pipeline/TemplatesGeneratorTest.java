@@ -269,16 +269,69 @@ public class TemplatesGeneratorTest {
 
     @Test@Ignore
     public void check_if_symlink_towards_manifest_file_is_generated() {
+        try {
+            //Given repository, root deployment,model deployment and template directory
+            Path workDir = Files.createTempDirectory(REPOSITORY_DIRECTORY);
+            Path modelTemplateDir = StructureGeneratorHelper.generatePath(workDir,
+                    CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY,
+                    CassandraProcessorConstants.MODEL_DEPLOYMENT_DIRECTORY,
+                    CassandraProcessorConstants.TEMPLATE_DIRECTORY);
+            modelTemplateDir = Files.createDirectories(modelTemplateDir);
+            //Given model vars file and manifest file
+            Path modelVarsFile = StructureGeneratorHelper.generatePath(modelTemplateDir, CassandraProcessorConstants.MODEL_VARS_FILENAME);
+            modelVarsFile = Files.createFile(modelVarsFile);
+            Path modelManifestFile = StructureGeneratorHelper.generatePath(modelTemplateDir, CassandraProcessorConstants.MODEL_MANIFEST_FILENAME);
+            modelManifestFile = Files.createFile(modelManifestFile);
+
+            //When
+            TemplatesGenerator templates = new TemplatesGenerator(workDir, SERVICE_INSTANCE_ID);
+            templates.checkPrerequisites();
+            templates.generate();
+
+            //Then
+            Path manifestFile = StructureGeneratorHelper.generatePath(workDir,
+                    CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY,
+                    CassandraProcessorConstants.SERVICE_INSTANCE_PREFIX_DIRECTORY + SERVICE_INSTANCE_ID,
+                    CassandraProcessorConstants.TEMPLATE_DIRECTORY,
+                    CassandraProcessorConstants.SERVICE_INSTANCE_PREFIX_DIRECTORY + SERVICE_INSTANCE_ID + CassandraProcessorConstants.MANIFEST_FILENAME_SUFFIX);
+            assertThat("Manifest file is not a symbolic link", Files.isSymbolicLink(manifestFile));
+            assertThat("Symbolic link towards manifest file doesn't exist", Files.exists(manifestFile));
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
     }
 
     @Test@Ignore
     public void check_if_symlink_towards_vars_file_is_generated() {
-
+        //TODO
     }
 
     @Test@Ignore
     public void check_if_files_content_are_correct() {
         //TODO
     }
+
+    @Test
+    public void testPath(){
+        try {
+        Path workDir = Files.createTempDirectory(REPOSITORY_DIRECTORY);
+        Path targetPath = StructureGeneratorHelper.generatePath(workDir,
+                CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY,
+                CassandraProcessorConstants.MODEL_DEPLOYMENT_DIRECTORY,
+                CassandraProcessorConstants.TEMPLATE_DIRECTORY,
+                CassandraProcessorConstants.MODEL_MANIFEST_FILENAME);
+        Path linkPath = StructureGeneratorHelper.generatePath(workDir,
+                CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY,
+                CassandraProcessorConstants.SERVICE_INSTANCE_PREFIX_DIRECTORY + SERVICE_INSTANCE_ID,
+                CassandraProcessorConstants.TEMPLATE_DIRECTORY,
+                CassandraProcessorConstants.SERVICE_INSTANCE_PREFIX_DIRECTORY + SERVICE_INSTANCE_ID + CassandraProcessorConstants.MANIFEST_FILENAME_SUFFIX);
+        targetPath = targetPath.relativize(linkPath);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
 
 }

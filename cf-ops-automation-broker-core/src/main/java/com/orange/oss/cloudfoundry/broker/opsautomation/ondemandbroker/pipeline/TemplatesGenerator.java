@@ -76,6 +76,10 @@ public class TemplatesGenerator extends StructureGeneratorImpl{
             //Generate operators file
             this.generateOperatorsFile();
 
+            //Generate manifest file as symlink
+            this.generateManifestSymbolicLink();
+
+
         } catch (IOException e) {
             e.printStackTrace();
             throw new CassandraProcessorException(CassandraProcessorConstants.GENERATION_EXCEPTION);
@@ -135,6 +139,29 @@ public class TemplatesGenerator extends StructureGeneratorImpl{
             throw new CassandraProcessorException(CassandraProcessorConstants.GENERATION_EXCEPTION);
         }
     }
+
+    private void generateManifestSymbolicLink(){
+
+        try {
+            Path targetPath = StructureGeneratorHelper.generatePath(workDir,
+                    CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY,
+                    CassandraProcessorConstants.MODEL_DEPLOYMENT_DIRECTORY,
+                    CassandraProcessorConstants.TEMPLATE_DIRECTORY,
+                    CassandraProcessorConstants.MODEL_MANIFEST_FILENAME);
+            Path linkPath = StructureGeneratorHelper.generatePath(workDir,
+                    CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY,
+                    CassandraProcessorConstants.SERVICE_INSTANCE_PREFIX_DIRECTORY + serviceInstanceId,
+                    CassandraProcessorConstants.TEMPLATE_DIRECTORY,
+                    CassandraProcessorConstants.SERVICE_INSTANCE_PREFIX_DIRECTORY + serviceInstanceId + CassandraProcessorConstants.MANIFEST_FILENAME_SUFFIX);
+            targetPath = targetPath.relativize(linkPath);
+            Files.createSymbolicLink(linkPath, targetPath);
+
+        } catch (IOException e) {
+            e.printStackTrace();
+            throw new CassandraProcessorException(CassandraProcessorConstants.GENERATION_EXCEPTION);
+        }
+    }
+
 
 
 }

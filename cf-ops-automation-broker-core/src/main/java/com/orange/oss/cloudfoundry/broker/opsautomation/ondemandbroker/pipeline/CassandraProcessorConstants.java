@@ -9,6 +9,8 @@ public class CassandraProcessorConstants {
     public static final String MODEL_DEPLOYMENT_DIRECTORY = "cassandra";
     public static final String MODEL_MANIFEST_FILENAME = "cassandra-tpl.yml";
     public static final String MODEL_VARS_FILENAME = "cassandra-vars-tpl.yml";
+    public static final String MANIFEST_FILENAME_SUFFIX = "-tpl.yml";
+    public static final String VARS_FILENAME_SUFFIX = "-vars-tpl.yml";
     public static final String META_FILENAME = "meta.yml";
     public static final String META_CONTENT = "meta: {}";
     public static final String SECRETS_FILENAME = "secrets.yml";

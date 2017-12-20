@@ -1,6 +1,12 @@
    
 - cassandra processor: 
     - triggers new bosh deployment: writes paas-template/paas-secret
+        - checks prerequisites (root deployment, model deployment, ...)
+        - generates paas-secrets structure (directory and files)
+        - generates paas-template structure (directory, files and symbolic links) and adapts content
+        - improves tests readability (JUnit rules)
+        - improves tests coverage (file content)
+    
     - tracks completion of bosh deployment: watches rendered manifest file 
 
 - git processor

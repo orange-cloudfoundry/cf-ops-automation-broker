@@ -137,7 +137,7 @@ public class SecretsGeneratorTest {
     @Test
     public void check_if_files_content_are_correct() {
         //TODO
+
+
     }
-
-
 }

@@ -1,6 +1,6 @@
 ---
 deployment:
-  cassandra_aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa0:
+  @service_instance@:
     stemcells:
       bosh-openstack-kvm-ubuntu-trusty-go_agent:
 #        base_location:

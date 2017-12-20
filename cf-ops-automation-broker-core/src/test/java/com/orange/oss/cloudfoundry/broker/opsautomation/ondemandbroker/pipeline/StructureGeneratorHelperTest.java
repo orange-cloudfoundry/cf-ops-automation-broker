@@ -6,6 +6,10 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
 
@@ -13,6 +17,8 @@ import static org.junit.Assert.assertEquals;
  * Created by ijly7474 on 18/12/17.
  */
 public class StructureGeneratorHelperTest {
+
+    public static final String SERVICE_INSTANCE_ID = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa0";
 
     @Test
     public void check_generated_path(){
@@ -34,5 +40,29 @@ public class StructureGeneratorHelperTest {
                     .append(element3);
             String expected = sb.toString();
             assertEquals(expected, actual);
+    }
+
+    @Test
+    public void check_find_and_replace(){
+        //Given an array list and a map
+        List<String> lines = new ArrayList<String>();
+        lines.add("---");
+        lines.add("deployment:");
+        lines.add("  @service_instance@:");
+        lines.add("  value: @service_instance@");
+        lines.add("  value: @url@.((!/secrets/cloudfoundry_system_domain))");
+        Map<String, String> map = new HashMap<String, String>();
+        map.put(CassandraProcessorConstants.SERVICE_INSTANCE_PATTERN, CassandraProcessorConstants.SERVICE_INSTANCE_PREFIX_DIRECTORY + SERVICE_INSTANCE_ID);
+        map.put(CassandraProcessorConstants.URL_PATTERN, CassandraProcessorConstants.BROKER_PREFIX + SERVICE_INSTANCE_ID);
+
+        //When
+        List<String> resultLines = StructureGeneratorHelper.findAndReplace(lines, map);
+
+        //Then
+        assertEquals("---", (String)resultLines.get(0));
+        assertEquals("deployment:", (String)resultLines.get(1));
+        assertEquals("  cassandra_aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa0:", (String)resultLines.get(2));
+        assertEquals("  value: cassandra_aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa0", (String)resultLines.get(3));
+        assertEquals("  value: cassandra-broker_aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa0.((!/secrets/cloudfoundry_system_domain))", (String)resultLines.get(4));
     }
 }

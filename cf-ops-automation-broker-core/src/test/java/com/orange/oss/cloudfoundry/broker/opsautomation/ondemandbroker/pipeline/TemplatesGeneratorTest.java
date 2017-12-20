@@ -26,7 +26,6 @@ public class TemplatesGeneratorTest {
     @Rule
     public TemporaryFolder temporaryFolder = new TemporaryFolder();
 
-
     @Test
     public void raise_exception_if_root_deployment_directory_is_missing(){
         try {
@@ -53,6 +52,7 @@ public class TemplatesGeneratorTest {
             File file = temporaryFolder.newFolder(REPOSITORY_DIRECTORY);
             Path rootDeploymentDir = StructureGeneratorHelper.generatePath(file.toPath(), CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY);
             rootDeploymentDir = Files.createDirectory(rootDeploymentDir);
+
             //When
             TemplatesGenerator templates = new TemplatesGenerator(file.toPath(), "");
             templates.checkPrerequisites();
@@ -69,10 +69,10 @@ public class TemplatesGeneratorTest {
             thrown.expectMessage(CassandraProcessorConstants.TEMPLATE_EXCEPTION);
             //Given repository, root deployment and model deployment directory
             File file = temporaryFolder.newFolder(REPOSITORY_DIRECTORY);
-            Path rootDeploymentDir = StructureGeneratorHelper.generatePath(file.toPath(), CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY);
-            rootDeploymentDir = Files.createDirectory(rootDeploymentDir);
-            Path modelDeploymentDir = StructureGeneratorHelper.generatePath(rootDeploymentDir, CassandraProcessorConstants.MODEL_DEPLOYMENT_DIRECTORY);
-            modelDeploymentDir = Files.createDirectory(modelDeploymentDir);
+            Path modelDeploymentDir = StructureGeneratorHelper.generatePath(file.toPath(),
+                    CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY,
+                    CassandraProcessorConstants.MODEL_DEPLOYMENT_DIRECTORY);
+            modelDeploymentDir = Files.createDirectories(modelDeploymentDir);
             //When
             TemplatesGenerator templates = new TemplatesGenerator(file.toPath(), "");
             templates.checkPrerequisites();
@@ -81,7 +81,7 @@ public class TemplatesGeneratorTest {
         }
     }
 
-    @Test@Ignore
+    @Test
     public void raise_exception_if_model_vars_file_is_missing(){
         try {
             //Then
@@ -89,17 +89,13 @@ public class TemplatesGeneratorTest {
             thrown.expectMessage(CassandraProcessorConstants.VARS_FILE_EXCEPTION);
             //Given repository, root deployment, model, template deployment directory and manifest file
             File file = temporaryFolder.newFolder(REPOSITORY_DIRECTORY);
-            Path rootDeploymentDir = StructureGeneratorHelper.generatePath(file.toPath(), CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY);
-            rootDeploymentDir = Files.createDirectory(rootDeploymentDir);
-            Path modelDeploymentDir = StructureGeneratorHelper.generatePath(rootDeploymentDir, CassandraProcessorConstants.MODEL_DEPLOYMENT_DIRECTORY);
-            modelDeploymentDir = Files.createDirectory(modelDeploymentDir);
-            Path modelTemplateDir = StructureGeneratorHelper.generatePath(modelDeploymentDir, CassandraProcessorConstants.MODEL_DEPLOYMENT_DIRECTORY);
-            Path modelManifestFile = StructureGeneratorHelper.generatePath(modelDeploymentDir, CassandraProcessorConstants.MODEL_DEPLOYMENT_DIRECTORY);
-            //modelManifestFile = Files.createFile()
-
-            modelDeploymentDir = Files.createDirectory(modelDeploymentDir);
-
-
+            Path modelTemplateDir = StructureGeneratorHelper.generatePath(file.toPath(),
+                    CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY,
+                    CassandraProcessorConstants.MODEL_DEPLOYMENT_DIRECTORY,
+                    CassandraProcessorConstants.TEMPLATE_DIRECTORY);
+            modelTemplateDir = Files.createDirectories(modelTemplateDir);
+            Path modelManifestFile = StructureGeneratorHelper.generatePath(modelTemplateDir, CassandraProcessorConstants.MODEL_MANIFEST_FILENAME);
+            modelManifestFile = Files.createFile(modelManifestFile);
             //When
             TemplatesGenerator templates = new TemplatesGenerator(file.toPath(), "");
             templates.checkPrerequisites();
@@ -108,34 +104,46 @@ public class TemplatesGeneratorTest {
         }
     }
 
-    @Test@Ignore
+    @Test
     public void raise_exception_if_model_manifest_file_is_missing(){
         try {
             //Then
             thrown.expect(CassandraProcessorException.class);
-            thrown.expectMessage(CassandraProcessorConstants.MODEL_DEPLOYMENT_EXCEPTION);
-            //Given repository and root deployment directory
+            thrown.expectMessage(CassandraProcessorConstants.MANIFEST_FILE_EXCEPTION);
+            //Given repository, root deployment, model, template deployment directory and vars file
             File file = temporaryFolder.newFolder(REPOSITORY_DIRECTORY);
-            Path rootDeploymentDir = StructureGeneratorHelper.generatePath(file.toPath(), CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY);
-            rootDeploymentDir = Files.createDirectory(rootDeploymentDir);
-            TemplatesGenerator templates = new TemplatesGenerator(file.toPath(), "");
+            Path modelTemplateDir = StructureGeneratorHelper.generatePath(file.toPath(),
+                    CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY,
+                    CassandraProcessorConstants.MODEL_DEPLOYMENT_DIRECTORY,
+                    CassandraProcessorConstants.TEMPLATE_DIRECTORY);
+            modelTemplateDir = Files.createDirectories(modelTemplateDir);
+            Path modelVarsFile = StructureGeneratorHelper.generatePath(modelTemplateDir, CassandraProcessorConstants.MODEL_VARS_FILENAME);
+            modelVarsFile = Files.createFile(modelVarsFile);
+
             //When
+            TemplatesGenerator templates = new TemplatesGenerator(file.toPath(), "");
             templates.checkPrerequisites();
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    @Test@Ignore
-    public void check_if_folders_are_generated() {
+    @Test
+    public void check_if_deployment_directory_is_generated() {
         try {
 
-            //Given
+            //Given repository, root deployment,model deployment and template directory
             Path workDir = Files.createTempDirectory(REPOSITORY_DIRECTORY);
-            Path rootDeploymentDir = StructureGeneratorHelper.generatePath(workDir, CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY);
-            rootDeploymentDir = Files.createDirectory(rootDeploymentDir);
-            Path modelDeploymentDir = StructureGeneratorHelper.generatePath(rootDeploymentDir, CassandraProcessorConstants.MODEL_DEPLOYMENT_DIRECTORY);
-            modelDeploymentDir = Files.createDirectory(modelDeploymentDir);
+            Path modelTemplateDir = StructureGeneratorHelper.generatePath(workDir,
+                    CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY,
+                    CassandraProcessorConstants.MODEL_DEPLOYMENT_DIRECTORY,
+                    CassandraProcessorConstants.TEMPLATE_DIRECTORY);
+            modelTemplateDir = Files.createDirectories(modelTemplateDir);
+            //Given model vars file and manifest file
+            Path modelVarsFile = StructureGeneratorHelper.generatePath(modelTemplateDir, CassandraProcessorConstants.MODEL_VARS_FILENAME);
+            modelVarsFile = Files.createFile(modelVarsFile);
+            Path modelManifestFile = StructureGeneratorHelper.generatePath(modelTemplateDir, CassandraProcessorConstants.MODEL_MANIFEST_FILENAME);
+            modelManifestFile = Files.createFile(modelManifestFile);
 
             //When
             TemplatesGenerator templates = new TemplatesGenerator(workDir, SERVICE_INSTANCE_ID);
@@ -147,12 +155,41 @@ public class TemplatesGeneratorTest {
                     CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY,
                     CassandraProcessorConstants.SERVICE_INSTANCE_PREFIX_DIRECTORY + SERVICE_INSTANCE_ID
             );
+            assertThat("Deployment directory doesn't exist", Files.exists(serviceInstanceDir));
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Test
+    public void check_if_template_directory_is_generated() {
+        try {
+
+            //Given repository, root deployment,model deployment and template directory
+            Path workDir = Files.createTempDirectory(REPOSITORY_DIRECTORY);
+            Path modelTemplateDir = StructureGeneratorHelper.generatePath(workDir,
+                    CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY,
+                    CassandraProcessorConstants.MODEL_DEPLOYMENT_DIRECTORY,
+                    CassandraProcessorConstants.TEMPLATE_DIRECTORY);
+            modelTemplateDir = Files.createDirectories(modelTemplateDir);
+            //Given model vars file and manifest file
+            Path modelVarsFile = StructureGeneratorHelper.generatePath(modelTemplateDir, CassandraProcessorConstants.MODEL_VARS_FILENAME);
+            modelVarsFile = Files.createFile(modelVarsFile);
+            Path modelManifestFile = StructureGeneratorHelper.generatePath(modelTemplateDir, CassandraProcessorConstants.MODEL_MANIFEST_FILENAME);
+            modelManifestFile = Files.createFile(modelManifestFile);
+
+            //When
+            TemplatesGenerator templates = new TemplatesGenerator(workDir, SERVICE_INSTANCE_ID);
+            templates.checkPrerequisites();
+            templates.generate();
+
+            //Then
             Path templateDir = StructureGeneratorHelper.generatePath(workDir,
                     CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY,
                     CassandraProcessorConstants.SERVICE_INSTANCE_PREFIX_DIRECTORY + SERVICE_INSTANCE_ID,
                     CassandraProcessorConstants.TEMPLATE_DIRECTORY
             );
-            assertThat("Deployment directory doesn't exist", Files.exists(serviceInstanceDir));
             assertThat("Template directory doesn't exist", Files.exists(templateDir));
 
         } catch (IOException e) {
@@ -160,16 +197,22 @@ public class TemplatesGeneratorTest {
         }
     }
 
-    @Test@Ignore
+    @Test
     public void check_if_deployment_dependencies_file_is_generated() {
         try {
 
-            //Given
+            //Given repository, root deployment,model deployment and template directory
             Path workDir = Files.createTempDirectory(REPOSITORY_DIRECTORY);
-            Path rootDeploymentDir = StructureGeneratorHelper.generatePath(workDir, CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY);
-            rootDeploymentDir = Files.createDirectory(rootDeploymentDir);
-            Path modelDeploymentDir = StructureGeneratorHelper.generatePath(rootDeploymentDir, CassandraProcessorConstants.MODEL_DEPLOYMENT_DIRECTORY);
-            modelDeploymentDir = Files.createDirectory(modelDeploymentDir);
+            Path modelTemplateDir = StructureGeneratorHelper.generatePath(workDir,
+                    CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY,
+                    CassandraProcessorConstants.MODEL_DEPLOYMENT_DIRECTORY,
+                    CassandraProcessorConstants.TEMPLATE_DIRECTORY);
+            modelTemplateDir = Files.createDirectories(modelTemplateDir);
+            //Given model vars file and manifest file
+            Path modelVarsFile = StructureGeneratorHelper.generatePath(modelTemplateDir, CassandraProcessorConstants.MODEL_VARS_FILENAME);
+            modelVarsFile = Files.createFile(modelVarsFile);
+            Path modelManifestFile = StructureGeneratorHelper.generatePath(modelTemplateDir, CassandraProcessorConstants.MODEL_MANIFEST_FILENAME);
+            modelManifestFile = Files.createFile(modelManifestFile);
 
             //When
             TemplatesGenerator templates = new TemplatesGenerator(workDir, SERVICE_INSTANCE_ID);
@@ -189,17 +232,21 @@ public class TemplatesGeneratorTest {
         }
     }
 
-    @Test@Ignore
+    @Test
     public void check_if_operators_file_is_generated() {
         try {
-            //Given
+            //Given repository, root deployment,model deployment and template directory
             Path workDir = Files.createTempDirectory(REPOSITORY_DIRECTORY);
-            Path rootDeploymentDir = StructureGeneratorHelper.generatePath(workDir, CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY);
-            rootDeploymentDir = Files.createDirectory(rootDeploymentDir);
-            Path modelDeploymentDir = StructureGeneratorHelper.generatePath(rootDeploymentDir, CassandraProcessorConstants.MODEL_DEPLOYMENT_DIRECTORY);
-            modelDeploymentDir = Files.createDirectory(modelDeploymentDir);
-            Path templateDir = StructureGeneratorHelper.generatePath(modelDeploymentDir, CassandraProcessorConstants.TEMPLATE_DIRECTORY);
-            templateDir = Files.createDirectory(templateDir);
+            Path modelTemplateDir = StructureGeneratorHelper.generatePath(workDir,
+                    CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY,
+                    CassandraProcessorConstants.MODEL_DEPLOYMENT_DIRECTORY,
+                    CassandraProcessorConstants.TEMPLATE_DIRECTORY);
+            modelTemplateDir = Files.createDirectories(modelTemplateDir);
+            //Given model vars file and manifest file
+            Path modelVarsFile = StructureGeneratorHelper.generatePath(modelTemplateDir, CassandraProcessorConstants.MODEL_VARS_FILENAME);
+            modelVarsFile = Files.createFile(modelVarsFile);
+            Path modelManifestFile = StructureGeneratorHelper.generatePath(modelTemplateDir, CassandraProcessorConstants.MODEL_MANIFEST_FILENAME);
+            modelManifestFile = Files.createFile(modelManifestFile);
 
             //When
             TemplatesGenerator templates = new TemplatesGenerator(workDir, SERVICE_INSTANCE_ID);

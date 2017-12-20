@@ -113,20 +113,26 @@ public class GitIT {
             File gitWorkDir = git.getRepository().getDirectory().getParentFile();
             try {
                 git.commit().setMessage("Initial empty repo setup").call();
-                //In develop branch
-                git.checkout().setName("develop").setCreateBranch(true).call();
+                String repoName = git.getRepository().getDirectory().toPath().getParent().getFileName().toString();
+                if ("volatile-repo.git".equals(repoName)) {
+                    //In develop branch
+                    git.checkout().setName("develop").setCreateBranch(true).call();
 
-                //root deployment
-                Path coabDepls = gitWorkDir.toPath().resolve("coab-depls");
-                createDir(coabDepls);
-                //sub deployments
-                createDir(coabDepls.resolve("cassandra"));
+                    //root deployment
+                    Path coabDepls = gitWorkDir.toPath().resolve("coab-depls");
+                    createDir(coabDepls);
+                    //sub deployments
+                    createDir(coabDepls.resolve("cassandra"));
 
-                AddCommand addC = git.add().addFilepattern(".");
-                addC.call();
-                git.commit().setMessage("GitIT#startGitServer").call();
+                    AddCommand addC = git.add().addFilepattern(".");
+                    addC.call();
 
-                git.checkout().setName("master").call();
+                    git.submoduleInit().call();
+                    git.submoduleAdd().setPath("bosh-deployment").setURI(gitProperties.getReplicatedSubModuleBasePath() + "bosh-deployment.git").call();
+                    git.commit().setMessage("GitIT#startGitServer").call();
+
+                    git.checkout().setName("master").call();
+                }
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }

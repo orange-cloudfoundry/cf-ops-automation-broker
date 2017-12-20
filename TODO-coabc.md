@@ -24,7 +24,12 @@
         - integration test: paas-template create feature-COAB-cassandra-IT:
             - disable submodules commands unless a specific key is registered 
         - submodules without opt-in get disabled  
-            submodule.active=false # did not manage to see side effect of this config.
+            # did not manage to see side effect of this config (i.e. git submodule update still triggers)
+            submodule.active=false
+            git config --bool submodule.active "false"
+            git config --add submodule.active "expe-depls/"
+            git config --add submodule.active "non-matching"
+             
             submodule.<name>.update=none
         - submodules get selectively enabled as needed, controlled by a context key  https://git-scm.com/docs/git-config#git-config-submoduleltnamegtactive
             submodule.active=false # did not manage to see side effect of this config.

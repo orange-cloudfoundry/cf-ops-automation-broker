@@ -17,11 +17,20 @@
     - CassandraServiceProvisionningTest inspired from CloudFlareServiceProvisionningTest. Potentially simulating concourse observable side effects in git, by driving the embedded GitServer
 
 - git processor
+   - disable submodules commands unless a specific key is registered
+      - simulate submodules in local volatile repo: duplicate/share paas-template test fixture with GitIt
+         - per test case GitServer set up (slower as git server needs to stop/start at each test)
+         - test case accesses GitServer repo list and set it up for the test.
+         - static list of pre configured repos in GitServer: Q which naming ? 
+            - paas-template
+            - repo-with-unreacheable-submodules
+            - test-case  
    - prioritize caching:
         pull --rebase instead of clone
     
     - for paas-template support:
         - integration test: paas-template create feature-COAB-cassandra-IT:
+            - simulate submodules in local volatile repo 
             - disable submodules commands unless a specific key is registered 
         - submodules without opt-in get disabled  
             # did not manage to see side effect of this config (i.e. git submodule update still triggers)

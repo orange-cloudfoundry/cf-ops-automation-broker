@@ -1,9 +1,6 @@
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git;
 
-import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.BrokerProcessor;
-import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.Context;
-import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.DefaultBrokerSink;
-import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.ProcessorChain;
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.*;
 import org.eclipse.jgit.api.AddCommand;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -43,14 +40,16 @@ public class GitIT {
     @Test
     public void testGitProcessor() {
 
-        GitProcessor gitProcessor = new GitProcessor(gitProperties.getUser(), gitProperties.getPassword(), gitProperties.getUrl(), "committerName", "committerEmail", null);
-        BrokerProcessor fakeProcessor = new BrokerProcessor() {
+        GitProcessor gitProcessor = new GitProcessor(gitProperties.getUser(), gitProperties.getPassword(), gitProperties.getUrl(), gitProperties.committerName(), gitProperties.committerEmail(), null);
+        BrokerProcessor paasTemplateSelector = new DefaultBrokerProcessor() {
             @Override
             public void preCreate(Context ctx) {
                 ctx.contextKeys.put(GitProcessorContext.checkOutRemoteBranch.toString(), "develop");
                 ctx.contextKeys.put(GitProcessorContext.createBranchIfMissing.toString(), "feature-COAB-cassandra-IT");
             }
 
+        };
+        BrokerProcessor paasTemplateGenerator = new DefaultBrokerProcessor() {
             @Override
             public void postCreate(Context ctx) {
                 Path workDir = (Path) ctx.contextKeys.get(GitProcessorContext.workDir.toString());
@@ -60,47 +59,18 @@ public class GitIT {
                     throw new RuntimeException(e);
                 }
             }
-
-            @Override
-            public void preGetLastOperation(Context ctx) {
-            }
-
-            @Override
-            public void postGetLastOperation(Context ctx) {
-            }
-
-            @Override
-            public void preBind(Context ctx) {
-            }
-
-            @Override
-            public void postBind(Context ctx) {
-            }
-
-            @Override
-            public void preDelete(Context ctx) {
-            }
-
-            @Override
-            public void postDelete(Context ctx) {
-            }
-
-            @Override
-            public void preUnBind(Context ctx) {
-            }
-
-            @Override
-            public void postUnBind(Context ctx) {
-
-            }
         };
         List<BrokerProcessor> processors = new ArrayList<>();
+        processors.add(paasTemplateSelector);
         processors.add(gitProcessor);
+        processors.add(paasTemplateGenerator);
         ProcessorChain chain = new ProcessorChain(processors, new DefaultBrokerSink());
 
         Context ctx = new Context();
         chain.create(ctx);
 
+
+        //TODO: assert the files are properly pushed to feature-COAB-cassandra-IT branch
     }
 
     GitServer gitServer;

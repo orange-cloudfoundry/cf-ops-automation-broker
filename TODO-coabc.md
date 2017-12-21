@@ -8,6 +8,13 @@
         - improves tests coverage (file content)
     
     - tracks completion of bosh deployment: watches rendered manifest file 
+    - IT with paas-template/paas-secret: Inspired from GitIT
+    - (later once broker password are specific to each instance): specify credhub keys to fetch broker password 
+       - woarkaround: broker password passed to coab as env in its manifest.yml
+
+- cassandra service broker:
+    - inspired from CloudFlareBrokerApplication
+    - CassandraServiceProvisionningTest inspired from CloudFlareServiceProvisionningTest. Potentially simulating concourse observable side effects in git, by driving the embedded GitServer
 
 - git processor
    - prioritize caching:
@@ -33,17 +40,9 @@
         - and prefix keys with in and out
     - Implement failIfRemoteBranchExists key
     - Implement deleteRemoteBranch key
-    
-       
-
-
-
-
-    
+   
+   
     - refactor git tests to initialize clones in the gitserver setup rather than using the gitprocessor in the test itself
-
-- credhub processor
-    - integration test
 
 - osb processor: create service instance 
     - credhub write support
@@ -60,3 +59,7 @@
 - core framework: create/delete service binding 
 
 - osb processor: create/delete service binding
+
+- credhub processor
+    - integration test
+

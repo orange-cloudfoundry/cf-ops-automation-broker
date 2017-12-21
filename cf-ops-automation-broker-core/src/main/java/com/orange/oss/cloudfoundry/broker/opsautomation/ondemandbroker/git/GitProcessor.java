@@ -191,7 +191,7 @@ public class GitProcessor extends DefaultBrokerProcessor {
      * git checkout cassandra # checkout
      * </pre>
      */
-    private void createNewBranchIfNeeded(Git git, Context ctx) throws GitAPIException {
+    private void createNewBranchIfNeeded(Git git, Context ctx) throws GitAPIException, IOException {
         String branch = getContextValue(ctx, GitProcessorContext.createBranchIfMissing);
 
         if (branch != null) {
@@ -202,8 +202,10 @@ public class GitProcessor extends DefaultBrokerProcessor {
             git.getRepository().getConfig()
                     .setString("branch", branch, "remote", "origin");
             git.getRepository().getConfig()
+                    .setString("push", branch, "default", "upstream"); //overkill ?
+            git.getRepository().getConfig()
                     .setString("branch", branch, "merge", "refs/heads/" + branch);
-
+            git.getRepository().getConfig().save();
             git.checkout()
                     .setName(branch)
                     .call();

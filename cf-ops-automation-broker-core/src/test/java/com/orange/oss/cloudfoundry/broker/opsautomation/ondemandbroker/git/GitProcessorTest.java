@@ -93,7 +93,7 @@ public class GitProcessorTest {
         //given a clone of an empty repo on the master branch
 
         //when adding files
-        //and asking to commit and create develop branch
+        //and asking to commit and create missing develop branch
         Context context = new Context();
         context.contextKeys.put(GitProcessorContext.createBranchIfMissing.toString(), "develop");
         processor.cloneRepo(context);
@@ -111,7 +111,7 @@ public class GitProcessorTest {
 
 
         //when adding files
-        //and asking to commit and create develop branch if missing
+        //and asking to commit and create existing develop branch
         Context ctx2 = new Context();
         ctx2.contextKeys.put(GitProcessorContext.createBranchIfMissing.toString(), "develop");
         processor.cloneRepo(ctx2);
@@ -128,6 +128,9 @@ public class GitProcessorTest {
         File thirdCloneAnotherFile = thirdClone.resolve("another-file-in-" + "develop" + "-branch.txt").toFile();
         assertThat(thirdCloneSameFile).exists();
         assertThat(thirdCloneAnotherFile).exists();
+
+
+
     }
 
     @Test
@@ -171,6 +174,31 @@ public class GitProcessorTest {
         //then the file from the independent develop branch is irrelevant and not present
         assertThat(secondClone.resolve("afile-in-develop-branch.txt").toFile()).exists();
         assertThat(secondClone.resolve("afile-in-service-instance-guid2-branch.txt").toFile()).doesNotExist();
+    }
+
+    @Test
+    public void supports_checkOutRemoteBranch_and_createBranchIfMissing_keys_together() throws IOException, GitAPIException {
+        //given three independent branches available in a remote
+        givenAnExistingRepoOnSpecifiedBranch("develop");
+        givenAnExistingRepoOnSpecifiedBranch("service-instance-guid2");
+
+        //given a clone of develop branch
+        this.ctx = new Context();
+        this.ctx.contextKeys.put(GitProcessorContext.checkOutRemoteBranch.toString(), "develop");
+        //given instruction in context to create the "service-instance-guid" branch if missing
+        this.ctx.contextKeys.put(GitProcessorContext.createBranchIfMissing.toString(), "service-instance-guid");
+        processor.cloneRepo(this.ctx);
+
+        //and adding files
+        //and asking to commit and push
+        addAFile(this.ctx, "content in branch service-instance-guid", "another-file-in-service-instance-guid-branch.txt", "");
+        processor.commitPushRepo(this.ctx, false);
+
+        Path secondClone = cloneRepoFromBranch("service-instance-guid");
+        //then file should be persisted in the "service-instance-guid" branch
+        assertThat(secondClone.resolve("another-file-in-service-instance-guid-branch.txt").toFile()).exists();
+        //then the file from the independent develop branch is irrelevant and not present
+        assertThat(secondClone.resolve("afile-in-develop-branch.txt").toFile()).exists();
     }
 
     @Test(expected = IllegalArgumentException.class)

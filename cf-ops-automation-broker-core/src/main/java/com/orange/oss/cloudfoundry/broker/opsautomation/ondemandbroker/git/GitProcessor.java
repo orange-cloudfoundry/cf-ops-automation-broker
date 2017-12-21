@@ -154,10 +154,13 @@ public class GitProcessor extends DefaultBrokerProcessor {
         git.submoduleInit().call();
 
         boolean fetchSubModules = false;
-        Object value = ctx.contextKeys.get(getContextKey(GitProcessorContext.submoduleListToFetch));
-        if (value instanceof List) {
+        if (Boolean.TRUE.equals(ctx.contextKeys.get(getContextKey(GitProcessorContext.fetchAllSubModules)))) {
+            fetchSubModules = true;
+        }
+        Object selectiveModulesToFetch = ctx.contextKeys.get(getContextKey(GitProcessorContext.submoduleListToFetch));
+        if (!fetchSubModules && selectiveModulesToFetch instanceof List) {
             @SuppressWarnings("unchecked")
-            List<String> submodulesToFetch = (List<String>) value;
+            List<String> submodulesToFetch = (List<String>) selectiveModulesToFetch;
             Map<String, SubmoduleStatus> submodules = git.submoduleStatus().call();
             submodules.keySet().stream()
                     .filter(s -> ! submodulesToFetch.contains(s))

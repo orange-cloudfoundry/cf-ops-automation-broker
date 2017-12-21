@@ -11,9 +11,15 @@ public enum GitProcessorContext {
 	/**
 	 * This key should map to an array of String specifying the submodule path specs
 	 * (e.g."master-depls/bosh-expe/template/bosh-deployment" ) to fetch/update.
-	 * If this key is missing or empty, no submodule is fetched.
+	 * If this key is missing or empty, no submodule is fetched by default.
 	 */
 	submoduleListToFetch,
+
+	/**
+	 * When this key is set a boolean true value, then all submodules are fetched without requiring
+	 * to individually list them. This overrides the behavior or submoduleListToFetch key
+	 */
+	fetchAllSubModules,
 
 	/**
 	 * In: When this key is specified, the gitProcessor will fail of the cloned repo does not contain

@@ -233,6 +233,19 @@ public class GitProcessorTest {
         assertThat(workDir.resolve("coab-depls").resolve("cassandra").toFile()).exists();
         assertThat(workDir.resolve("bosh-deployment").toFile()).doesNotExist();
         assertThat(workDir.resolve("mysql-deployment").toFile()).exists();
+
+        //when asking to clone with all submodules opted-in
+        ctx.contextKeys.clear();
+        ctx.contextKeys.put(GitProcessorContext.checkOutRemoteBranch.toString(), "develop");
+        ctx.contextKeys.put(GitProcessorContext.fetchAllSubModules.toString(), Boolean.TRUE);
+        processor.cloneRepo(ctx);
+
+        //then the submodule isn't fetched (and no exception is thrown)
+        workDir = getWorkDir(ctx, "");
+        assertThat(workDir.resolve("coab-depls").resolve("cassandra").toFile()).exists();
+        assertThat(workDir.resolve("bosh-deployment").toFile()).exists();
+        assertThat(workDir.resolve("mysql-deployment").toFile()).exists();
+
     }
 
     public void initPaasTemplate(Git git) {

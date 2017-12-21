@@ -6,7 +6,9 @@ import org.apache.commons.lang.builder.ToStringBuilder;
 import org.eclipse.jgit.api.*;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.Config;
+import org.eclipse.jgit.lib.StoredConfig;
 import org.eclipse.jgit.revwalk.RevCommit;
+import org.eclipse.jgit.submodule.SubmoduleStatus;
 import org.eclipse.jgit.transport.PushResult;
 import org.eclipse.jgit.transport.RemoteRefUpdate;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
@@ -19,6 +21,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
@@ -134,8 +137,7 @@ public class GitProcessor extends DefaultBrokerProcessor {
 
             createNewBranchIfNeeded(git, ctx);
 
-            git.submoduleInit().call();
-            git.submoduleUpdate().call();
+            fetchSubmodulesIfNeeded(ctx, git);
 
             logger.info("git repo is ready at {}", workDir);
             //push the work dir in invokation context
@@ -146,6 +148,36 @@ public class GitProcessor extends DefaultBrokerProcessor {
             throw new IllegalArgumentException(e);
         }
 
+    }
+
+    private void fetchSubmodulesIfNeeded(Context ctx, Git git) throws GitAPIException {
+        git.submoduleInit().call();
+
+        boolean fetchSubModules = false;
+        Object value = ctx.contextKeys.get(getContextKey(GitProcessorContext.submoduleListToFetch));
+        if (value instanceof List) {
+            @SuppressWarnings("unchecked")
+            List<String> submodulesToFetch = (List<String>) value;
+            Map<String, SubmoduleStatus> submodules = git.submoduleStatus().call();
+            submodules.keySet().stream()
+                    .filter(s -> ! submodulesToFetch.contains(s))
+                    .forEach(s -> excludeModuleFromSubModuleUpdate(git, s));
+            fetchSubModules = ! submodulesToFetch.isEmpty();
+        }
+        if (fetchSubModules) {
+            git.submoduleUpdate().call();
+        }
+    }
+
+    private void excludeModuleFromSubModuleUpdate(Git git, String submodulePath) {
+        StoredConfig config = git.getRepository().getConfig();
+        config.setString("submodule", submodulePath, "update", "none"); //does not work because, possibly because JGit bug https://bugs.eclipse.org/bugs/show_bug.cgi?id=521609
+        config.unset("submodule", submodulePath, "url");
+        try {
+            config.save();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     /**
@@ -297,7 +329,7 @@ public class GitProcessor extends DefaultBrokerProcessor {
                 .collect(Collectors.toList());
     }
 
-    public StringBuilder prettyPrint(Iterable results) {
+    public StringBuilder prettyPrint(Iterable<PushResult> results) {
         StringBuilder sb = new StringBuilder();
         for (Object result : results) {
             sb.append(ToStringBuilder.reflectionToString(result));

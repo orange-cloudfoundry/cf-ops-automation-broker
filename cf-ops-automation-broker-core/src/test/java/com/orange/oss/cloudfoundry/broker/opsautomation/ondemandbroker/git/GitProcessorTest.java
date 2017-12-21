@@ -1,22 +1,30 @@
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git;
 
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.Context;
+import org.eclipse.jgit.api.AddCommand;
+import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
-import org.eclipse.jgit.api.errors.RefNotFoundException;
 import org.eclipse.jgit.lib.PersonIdent;
+import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
+import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.junit.*;
 
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.Collections;
 
+import static com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.GitIT.createDir;
 import static org.fest.assertions.Assertions.assertThat;
 
 public class GitProcessorTest {
 
-    private static final String GIT_URL = "git://127.0.0.1:9418/volatile-repo.git";
+    public static final String GIT_BASE_URL = "git://127.0.0.1:9418/";
+    private static final String GIT_URL = GIT_BASE_URL + "volatile-repo.git";
 
     static GitServer gitServer;
 
@@ -137,10 +145,6 @@ public class GitProcessorTest {
         assertGetImplicitRemoteBranchToDisplay(context2, "service-instance-guid");
     }
 
-    private void assertGetImplicitRemoteBranchToDisplay(Context context, String expectedBranchDisplayed) {
-        assertThat(processor.getImplicitRemoteBranchToDisplay(context)).isEqualTo(expectedBranchDisplayed);
-    }
-
     @Test
     public void supports_checkOutRemoteBranch_key_when_branch_exists() throws IOException, GitAPIException {
         //given three independent branches available in a remote
@@ -182,29 +186,6 @@ public class GitProcessorTest {
         //then an exception should be thrown
     }
 
-    protected void givenAnExistingRepoOnSpecifiedBranch(String branch) throws IOException, GitAPIException {
-        //given a clone of an empty repo on the master branch
-        GitProcessor processor = new GitProcessor("gituser", "gitsecret", GIT_URL, "committerName", "committer@address.org", null);
-
-        Context context = new Context();
-        context.contextKeys.put(GitProcessorContext.createBranchIfMissing.toString(), branch);
-        processor.cloneRepo(context);
-
-        //when adding files
-        //and asking to commit and push
-        addAFile(context, "hello.txt", "afile-in-" + branch + "-branch.txt", "");
-        processor.commitPushRepo(context, false);
-
-        //then file should be persisted in the branch
-        Context ctx1 = new Context();
-        processor = new GitProcessor("gituser", "gitsecret", GIT_URL, "committerName", "committer@address.org", null);
-        ctx1.contextKeys.put(GitProcessorContext.checkOutRemoteBranch.toString(), branch);
-        processor.preCreate(ctx1);
-        Path secondClone = getWorkDir(ctx1, "");
-        File secondCloneSameFile = secondClone.resolve("afile-in-" + branch + "-branch.txt").toFile();
-        assertThat(secondCloneSameFile).exists();
-    }
-
     @Test
     public void supports_default_user_name_and_emails_config() throws GitAPIException, IOException {
         //given no user config specified (null values)
@@ -227,6 +208,83 @@ public class GitProcessorTest {
     }
 
     @Test
+    public void fetches_submodules_when_asked() {
+        
+        //given a repo with submodules configured
+        gitServer.initRepo("paas-template.git", this::initPaasTemplate);
+        processor = new GitProcessor("gituser", "gitsecret", GIT_BASE_URL + "paas-template.git", "committerName", "committer@address.org", null);
+        ctx.contextKeys.put(GitProcessorContext.checkOutRemoteBranch.toString(), "develop");
+
+        //when asking to clone it without opt-in for submodules
+        processor.cloneRepo(ctx);
+
+        //then the submodule isn't fetched (and no exception is thrown)
+        Path workDir = getWorkDir(ctx, "");
+        assertThat(workDir.resolve("coab-depls").resolve("cassandra").toFile()).exists();
+        assertThat(workDir.resolve("bosh-deployment").toFile()).doesNotExist();
+        assertThat(workDir.resolve("mysql-deployment").toFile()).doesNotExist();
+
+        //when asking to clone it with opt-in for specific submodules
+        ctx.contextKeys.put(GitProcessorContext.submoduleListToFetch.toString(), Collections.singletonList("mysql-deployment"));
+        processor.cloneRepo(ctx);
+
+        //then the submodule isn't fetched (and no exception is thrown)
+        workDir = getWorkDir(ctx, "");
+        assertThat(workDir.resolve("coab-depls").resolve("cassandra").toFile()).exists();
+        assertThat(workDir.resolve("bosh-deployment").toFile()).doesNotExist();
+        assertThat(workDir.resolve("mysql-deployment").toFile()).exists();
+    }
+
+    public void initPaasTemplate(Git git) {
+        File gitWorkDir = git.getRepository().getDirectory().getParentFile();
+        try {
+            git.commit().setMessage("Initial empty repo setup").call();
+
+            //In develop branch
+            git.checkout().setName("develop").setCreateBranch(true).call();
+
+            //root deployment
+            Path coabDepls = gitWorkDir.toPath().resolve("coab-depls");
+            createDir(coabDepls);
+            //sub deployments
+            createDir(coabDepls.resolve("cassandra"));
+
+            AddCommand addC = git.add().addFilepattern(".");
+            addC.call();
+
+            git.submoduleInit().call();
+//            Path boshDeploymentRepo = gitWorkDir.toPath().resolve("bosh-deployment").resolve(".git");
+//            Repository repository = FileRepositoryBuilder.create(boshDeploymentRepo.toFile());
+//            repository.create();
+            git.submoduleAdd().setPath("bosh-deployment").setURI(GIT_BASE_URL + "bosh-deployment.git").call();
+            git.submoduleAdd().setPath("mysql-deployment").setURI(GIT_BASE_URL + "mysql-deployment").call();
+            git.commit().setMessage("GitIT#startGitServer").call();
+
+            git.checkout().setName("master").call();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    protected void createPaasTemplateRepo() throws IOException {
+        String name = "paas-template";
+            try {
+                Path gitProcessorTest = Files.createTempDirectory("GitProcessorTest");
+                //Note: we use local disk because RepositoryBuilder does the heavy lifting of repository init
+                //and we can debug using local disk more easily if needed
+                Path boshDeploymentRepo = gitProcessorTest.resolve(name);
+                File gitDir = new File(boshDeploymentRepo.toFile(), ".git");
+                Repository repo = FileRepositoryBuilder.create(gitDir);
+                repo.create();
+                Git git = new Git(repo);
+                git.close();
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+    }
+
+
+    @Test
     public void reads_context_key_with_repo_alias() {
         //given a processor with an alias specified
         GitProcessor processor = new GitProcessor("gituser", "gitsecret", GIT_URL, "committerName", "committer@address.org", "paasSecret");
@@ -247,14 +305,16 @@ public class GitProcessorTest {
     @Test
     public void supports_multiple_processors_in_same_context_keys_prefixed_by_a_repo_alias() throws IOException {
         //given two processors instanciated in the same processor chain
-        GitProcessor paasSecretProcessor = new GitProcessor("gituser", "gitsecret", "git://127.0.0.1:9418/paas-secret.git", "committerName", "committer@address.org", "paasSecret");
+        GitProcessor paasSecretProcessor = new GitProcessor("gituser", "gitsecret", GIT_BASE_URL + "paas-secret.git", "committerName", "committer@address.org", "paasSecret");
         Context sharedContext = new Context();
-        GitProcessor paasTemplateProcessor = new GitProcessor("gituser", "gitsecret", "git://127.0.0.1:9418/paas-template.git", "committerName", "committer@address.org", "paasTemplate");
+        GitProcessor paasTemplateProcessor = new GitProcessor("gituser", "gitsecret", GIT_BASE_URL + "paas-template.git", "committerName", "committer@address.org", "paasTemplate");
 
         //then each processors coexist on the same context without overlapping
         addAndDeleteFilesForRepoAlias(paasSecretProcessor, sharedContext, "paasSecret");
         addAndDeleteFilesForRepoAlias(paasTemplateProcessor, sharedContext, "paasTemplate");
     }
+
+
 
     @Test
     public void rebases_during_push_conflicts() throws GitAPIException, IOException {
@@ -328,6 +388,33 @@ public class GitProcessorTest {
         Iterable<RevCommit> resultingCommits = processor.getGit(ctx).log().call();
         RevCommit commit = resultingCommits.iterator().next();
         assertThat(commit.getShortMessage()).isEqualTo("a custom message");
+    }
+
+    private void assertGetImplicitRemoteBranchToDisplay(Context context, String expectedBranchDisplayed) {
+        assertThat(processor.getImplicitRemoteBranchToDisplay(context)).isEqualTo(expectedBranchDisplayed);
+    }
+
+    protected void givenAnExistingRepoOnSpecifiedBranch(String branch) throws IOException, GitAPIException {
+        //given a clone of an empty repo on the master branch
+        GitProcessor processor = new GitProcessor("gituser", "gitsecret", GIT_URL, "committerName", "committer@address.org", null);
+
+        Context context = new Context();
+        context.contextKeys.put(GitProcessorContext.createBranchIfMissing.toString(), branch);
+        processor.cloneRepo(context);
+
+        //when adding files
+        //and asking to commit and push
+        addAFile(context, "hello.txt", "afile-in-" + branch + "-branch.txt", "");
+        processor.commitPushRepo(context, false);
+
+        //then file should be persisted in the branch
+        Context ctx1 = new Context();
+        processor = new GitProcessor("gituser", "gitsecret", GIT_URL, "committerName", "committer@address.org", null);
+        ctx1.contextKeys.put(GitProcessorContext.checkOutRemoteBranch.toString(), branch);
+        processor.preCreate(ctx1);
+        Path secondClone = getWorkDir(ctx1, "");
+        File secondCloneSameFile = secondClone.resolve("afile-in-" + branch + "-branch.txt").toFile();
+        assertThat(secondCloneSameFile).exists();
     }
 
 

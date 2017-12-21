@@ -70,7 +70,7 @@ public class GitServer {
                 git.close();
                 repositories.put(name, repo);
             } catch (Exception e) {
-                throw new RuntimeException();
+                throw new RuntimeException(e);
             }
         }
         return repo;

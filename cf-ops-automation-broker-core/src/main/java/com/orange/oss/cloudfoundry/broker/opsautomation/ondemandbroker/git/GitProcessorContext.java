@@ -9,6 +9,13 @@ public enum GitProcessorContext {
 	// Precreate
 
 	/**
+	 * This key should map to an array of String specifying the submodule path specs
+	 * (e.g."master-depls/bosh-expe/template/bosh-deployment" ) to fetch/update.
+	 * If this key is missing or empty, no submodule is fetched.
+	 */
+	submoduleListToFetch,
+
+	/**
 	 * In: When this key is specified, the gitProcessor will fail of the cloned repo does not contain
 	 * <pre>
 	 * git branch -rl service-instance-guid  # TODO: and fail if service-instance-guid displays

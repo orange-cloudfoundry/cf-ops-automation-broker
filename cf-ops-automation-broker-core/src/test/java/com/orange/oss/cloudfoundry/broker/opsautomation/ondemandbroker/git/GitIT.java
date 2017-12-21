@@ -109,38 +109,11 @@ public class GitIT {
     public void startGitServer() throws IOException, GitAPIException {
         gitServer = new GitServer();
 
-        Consumer<Git> initPaasTemplate = git -> {
-            File gitWorkDir = git.getRepository().getDirectory().getParentFile();
-            try {
-                git.commit().setMessage("Initial empty repo setup").call();
-                String repoName = git.getRepository().getDirectory().toPath().getParent().getFileName().toString();
-                if ("volatile-repo.git".equals(repoName)) {
-                    //In develop branch
-                    git.checkout().setName("develop").setCreateBranch(true).call();
-
-                    //root deployment
-                    Path coabDepls = gitWorkDir.toPath().resolve("coab-depls");
-                    createDir(coabDepls);
-                    //sub deployments
-                    createDir(coabDepls.resolve("cassandra"));
-
-                    AddCommand addC = git.add().addFilepattern(".");
-                    addC.call();
-
-                    git.submoduleInit().call();
-                    git.submoduleAdd().setPath("bosh-deployment").setURI(gitProperties.getReplicatedSubModuleBasePath() + "bosh-deployment.git").call();
-                    git.commit().setMessage("GitIT#startGitServer").call();
-
-                    git.checkout().setName("master").call();
-                }
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-        };
+        Consumer<Git> initPaasTemplate = this::initPaasTemplate;
         gitServer.startEphemeralReposServer(initPaasTemplate);
     }
 
-    void createDir(Path dir) throws IOException {
+    public static void createDir(Path dir) throws IOException {
         Files.createDirectories(dir);
         //TODO: create .gitignore
         try (Writer writer = new FileWriter(dir.resolve(".gitkeep").toFile())) {
@@ -153,4 +126,32 @@ public class GitIT {
         gitServer.stopAndCleanupReposServer();
     }
 
+    public void initPaasTemplate(Git git) {
+        File gitWorkDir = git.getRepository().getDirectory().getParentFile();
+        try {
+            git.commit().setMessage("Initial empty repo setup").call();
+            String repoName = git.getRepository().getDirectory().toPath().getParent().getFileName().toString();
+            if ("volatile-repo.git".equals(repoName)) {
+                //In develop branch
+                git.checkout().setName("develop").setCreateBranch(true).call();
+
+                //root deployment
+                Path coabDepls = gitWorkDir.toPath().resolve("coab-depls");
+                createDir(coabDepls);
+                //sub deployments
+                createDir(coabDepls.resolve("cassandra"));
+
+                AddCommand addC = git.add().addFilepattern(".");
+                addC.call();
+
+                git.submoduleInit().call();
+                git.submoduleAdd().setPath("bosh-deployment").setURI(gitProperties.getReplicatedSubModuleBasePath() + "bosh-deployment.git").call();
+                git.commit().setMessage("GitIT#startGitServer").call();
+
+                git.checkout().setName("master").call();
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
 }

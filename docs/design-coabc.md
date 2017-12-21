@@ -48,7 +48,9 @@
 
 ## sequence diagram of processor interactions
 
-### Phase 1: shared cassandra branch
+### Git and Cassandra Processor
+
+#### Phase 1: shared cassandra branch
 
 create service instance cassandra  (service plan small)
     precreate: 
@@ -109,7 +111,7 @@ delete service instance cassandra
 
 
 
-### Phase 2: per service instance branch
+#### Phase 2: per service instance branch
 
 create service instance cassandra  (service plan small)
     precreate: 
@@ -301,6 +303,46 @@ enable-deployment.yml:
 
 # Cassandra processor behaviour
 
+CC -> COAB:cassandra-processor PUT service_instance/guid (create-service instance) https://github.com/openservicebrokerapi/servicebroker/blob/master/spec.md#provisioning
+CC <- COAB:cassandra-processor 
+                requests a new bosh deployment through TemplateGenerator/SecretsGenerator
+                puts create-service-instance-response in context: 
+                    202 accepted 
+                    return operation: 
+                        {"lastOperationDate":"2017-11-14T17:24:08.007Z","operation":"create"})         
+                        // Extract from logic from TerraformCompletionTrackerTest )
+                clears create-service-instance-request from context        
+           git-processor commit & push, triggering asynchronously in concourse:
+             
+               
+CC -> COAB:cassandra-processor GET https://user:password@cassandra-guid-brokerURL/service-instance/get-last-operation
+           read state from credub:
+               - key = cassandra_deployment_guid_service_instance_provisionning value: json with
+                  - state= bosh 
+            
+           observes bosh manifest in paas-secret to infer bosh deployment success,
+                if bosh deployment success, 
+                    inserts create-service-instance-request in context with values:
+                        same service instance guid
+                        map service plan. either
+                            hardcoded in cassandra service broker manifest.yml 
+                            (later) ~~fetched from OSB processor catalog response~~
+                        propagate arbitrary params (e.g. cassandra-replication-factor) 
+                            (except ones driving bosh release: replicated-into-data-center=CW-FR2 )
+                        same context/org/space
+                    updates it state into credub:
+                        - key = cassandra_deployment_guid_service_instance_provisionning value: json with
+                           - state= creating 
+           otherwise timeout if elapsed w.r.t. operation.lastOperationDate > configured timeout
+           
+           
+COAB:osb-processor -> cassandra-broker:  PUT service_instance/guid (create-service instance) 
+COAB:osb-processor <- cassandra-broker:  201 Created
+
+CC -> COAB: get last operation https://github.com/openservicebrokerapi/servicebroker/blob/master/spec.md#polling-last-operation
+    osb-processor -> cassandra-broker:  get last operation
+
+
 # Git processor behaviour
 
 # Credhub processor behaviour
@@ -308,3 +350,29 @@ enable-deployment.yml:
 # Osb processor behaviour
 
 
+* waits for a key in context to start in any processorchain method (regardless of whether create, bind, unbind, delete)
+    * catalog-request: null value
+        * catalog-response: a org.springframework.cloud.servicebroker.model.Catalog object
+    * create-service-instance: a spring-cloud-cloudfoundry-service-broker object
+    * update-service-instance
+    * delete-service-instance
+    * create-service-binding
+    * delete-service-binding
+* maintains current state in context (for credhub processor to persist it)
+* polls service instance creation
+* pushes response in the context
+
+- osb-processor: for any pre method  
+    - reads
+        - credhub key: "credhub_cassandra_deployment"
+            - state=
+                - null
+                - creating
+                - created
+        - operation=mysql-provided-operation (i.e. the state usually persisted by the CC, as part of OSB, see https://github    - writes
+        - "credhub_osb-processor-serviceinstance_state"
+            - state=
+                - null
+                - creating
+                - created
+        - operation=mysql-provided-operation (i.e. the state usually persisted by the CC, as part of OSB, see https://github.com/openservicebrokerapi/servicebroker/blob/master/spec.md#parameters )

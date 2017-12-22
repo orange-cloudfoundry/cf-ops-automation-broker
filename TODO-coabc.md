@@ -17,11 +17,11 @@
     - CassandraServiceProvisionningTest inspired from CloudFlareServiceProvisionningTest. Potentially simulating concourse observable side effects in git, by driving the embedded GitServer
 
 - git processor
-    - integration test: paas-template create feature-COAB-cassandra-IT:
-        - assert pushed repo content ?
-
     - implement caching:
         pull --rebase instead of clone
+
+    - integration test: paas-template create feature-COAB-cassandra-IT:
+        - assert pushed repo content ?
 
     - add support for replicated submodules https://github.com/orange-cloudfoundry/cf-ops-automation/issues/69 maintain a ~/.giconfig of form
              - [url "https://gitlab.internal.paas"]
@@ -34,8 +34,19 @@
    
     - refactor git tests to initialize clones in the gitserver setup rather than using the gitprocessor in the test itself
 
-- osb processor: create service instance 
-    - credhub write support
+- osb processor: 
+    - osb client 
+        - copy/paste from sec-group-broker-filter (service instance, service binding) 
+            - FilteredBrokerFeignConfig: basic auth: 
+                - need rework to fetch from credhub context
+            - OkHttpClientConfig: to support self signed certs, may not be required anymore
+            - pom.xml
+                -  starter-feign
+                    - exclusion was designed for cf-java-client conflict 
+                - check if feign-okhttp still needed
+        - TBC integration tests using
+            - wiremock
+            - rest assured
     - waits for a key in context to start in any processorchain method 
         create-service-instance: a spring-cloud-cloudfoundry-service-broker object 
         update-service-instance 
@@ -45,6 +56,10 @@
         maintains current state in context (for credhub processor to persist it) 
         polls service instance creation 
         pushes response in the context
+
+     
+- credhub write support
+
 
 - core framework: create/delete service binding 
 

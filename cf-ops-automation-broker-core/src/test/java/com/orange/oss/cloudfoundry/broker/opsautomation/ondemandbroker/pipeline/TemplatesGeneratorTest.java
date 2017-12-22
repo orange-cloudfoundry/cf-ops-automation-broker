@@ -379,4 +379,14 @@ public class TemplatesGeneratorTest {
 
     }
 
+    @Test@Ignore
+    public void populatePaasTemplates() throws IOException {
+        Path workDir = Paths.get("/home/ijly7474/GIT/paas-templates");
+        String serviceInstanceId = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa10";
+        TemplatesGenerator templates = new TemplatesGenerator(workDir, serviceInstanceId);
+        templates.checkPrerequisites();
+        templates.generate();
+    }
+
+
 }

@@ -1,4 +1,5 @@
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -206,7 +207,17 @@ public class SecretsGeneratorTest {
     @Test
     public void check_if_files_content_are_correct() {
         //TODO
-
-
     }
+
+    @Test@Ignore
+    public void populatePaasTemplates() throws IOException {
+        Path workDir = Paths.get("/home/ijly7474/GIT/bosh-cloudwatt-secrets-pprod");
+        String serviceInstanceId = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa10";
+        SecretsGenerator secrets = new SecretsGenerator(workDir, serviceInstanceId);
+        secrets.checkPrerequisites();
+        secrets.generate();
+    }
+
+
+
 }

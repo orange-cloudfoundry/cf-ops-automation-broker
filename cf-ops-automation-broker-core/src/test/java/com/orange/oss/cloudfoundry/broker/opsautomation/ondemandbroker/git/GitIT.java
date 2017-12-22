@@ -20,6 +20,7 @@ import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -49,6 +50,7 @@ public class GitIT {
             public void preCreate(Context ctx) {
                 ctx.contextKeys.put(GitProcessorContext.checkOutRemoteBranch.toString(), "develop");
                 ctx.contextKeys.put(GitProcessorContext.createBranchIfMissing.toString(), "feature-COAB-cassandra-IT");
+                ctx.contextKeys.put(GitProcessorContext.submoduleListToFetch.toString(), Collections.singletonList("mysql-deployment"));
             }
 
         };
@@ -119,9 +121,22 @@ public class GitIT {
 
                 git.submoduleInit().call();
                 git.submoduleAdd().setPath("bosh-deployment").setURI(gitProperties.getReplicatedSubModuleBasePath() + "bosh-deployment.git").call();
+                git.submoduleAdd().setPath("mysql-deployment").setURI(gitProperties.getReplicatedSubModuleBasePath() + "mysql-deployment.git").call();
                 git.commit().setMessage("GitIT#startGitServer").call();
 
                 git.checkout().setName("master").call();
+            }
+            if ("mysql-deployment.git".equals(repoName)) {
+                createDir(gitWorkDir.toPath().resolve("mysql-templates"));
+                AddCommand addC = git.add().addFilepattern(".");
+                addC.call();
+                git.commit().setMessage("GitIT#startGitServer").call();
+            }
+            if ("bosh-deployment.git".equals(repoName)) {
+                createDir(gitWorkDir.toPath().resolve("bosh-templates"));
+                AddCommand addC = git.add().addFilepattern(".");
+                addC.call();
+                git.commit().setMessage("GitIT#startGitServer").call();
             }
         } catch (Exception e) {
             throw new RuntimeException(e);

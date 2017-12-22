@@ -276,7 +276,6 @@ public class GitProcessor extends DefaultBrokerProcessor {
             status = git.status().call();
             if (status.hasUncommittedChanges()) {
                 logger.info("staged commit:  deleted:" + status.getRemoved() + " added:" + status.getAdded() + " changed:" + status.getChanged());
-                logger.info("unstaged skipped commit: " + status.getUncommittedChanges());
                 CommitCommand commitC = git.commit().setMessage(getCommitMessage(ctx));
 
                 RevCommit revCommit = commitC.call();
@@ -300,19 +299,19 @@ public class GitProcessor extends DefaultBrokerProcessor {
     protected void stageMissingFilesExcludingSubModules(Context ctx, Git git, Set<String> missing) throws GitAPIException {
         @SuppressWarnings("unchecked")
         List<String> subModulesList = (List<String>) ctx.contextKeys.get(PRIVATE_SUBMODULES_LIST);
-        for (String file : missing) {
+        for (String missingFilePath : missing) {
             boolean fileMatchesSubModule = false;
             for (String submodulePath : subModulesList) {
-                if (file.startsWith(submodulePath)) {
+                if (missingFilePath.startsWith(submodulePath)) {
                     fileMatchesSubModule = true;
                     break;
                 }
             }
             if (fileMatchesSubModule) {
-                logger.debug("skipping modified submodule from staging: " + file);
+                logger.debug("skipping modified submodule from staging: " + missingFilePath);
             } else {
-                logger.info("staging as deleted: " + file);
-                git.rm().addFilepattern(file).call();
+                logger.info("staging as deleted: " + missingFilePath);
+                git.rm().addFilepattern(missingFilePath).call();
             }
         }
     }

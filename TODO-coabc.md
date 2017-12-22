@@ -17,23 +17,15 @@
     - CassandraServiceProvisionningTest inspired from CloudFlareServiceProvisionningTest. Potentially simulating concourse observable side effects in git, by driving the embedded GitServer
 
 - git processor
-    - Fix support for ignoring submodules: don't perform git submodule init if not instructed to
     - integration test: paas-template create feature-COAB-cassandra-IT:
         - assert pushed repo content ?
 
     - implement caching:
         pull --rebase instead of clone
 
-    - Complete support for fetching submodules
-        - fix ommited submodule side effect: removes submodules
-           - exclude remove submodules from staging: 
-              - save list of excluded module in context clone() method
-
-        - add support for replicated submodules https://github.com/orange-cloudfoundry/cf-ops-automation/issues/69 maintain a ~/.giconfig of form
+    - add support for replicated submodules https://github.com/orange-cloudfoundry/cf-ops-automation/issues/69 maintain a ~/.giconfig of form
              - [url "https://gitlab.internal.paas"]
                    insteadOf = "https://github.com"  
-                    
-       
     - refactor GitProcessorContext into PreGitProcessorContext and PostGitProcessorContext
         - and prefix keys with in and out
     - Implement failIfRemoteBranchExists key

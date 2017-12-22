@@ -268,7 +268,6 @@ public class TemplatesGeneratorTest {
     }
 
     @Test
-    @Ignore
     public void check_if_symlink_towards_manifest_file_is_generated() {
         try {
             //Given repository, root deployment,model deployment and template directory
@@ -295,8 +294,8 @@ public class TemplatesGeneratorTest {
                     CassandraProcessorConstants.SERVICE_INSTANCE_PREFIX_DIRECTORY + SERVICE_INSTANCE_ID,
                     CassandraProcessorConstants.TEMPLATE_DIRECTORY,
                     CassandraProcessorConstants.SERVICE_INSTANCE_PREFIX_DIRECTORY + SERVICE_INSTANCE_ID + CassandraProcessorConstants.MANIFEST_FILENAME_SUFFIX);
-            assertThat("Manifest file is not a symbolic link", Files.isSymbolicLink(manifestFile));
             assertThat("Symbolic link towards manifest file doesn't exist", Files.exists(manifestFile));
+            assertThat("Manifest file is not a symbolic link", Files.isSymbolicLink(manifestFile));
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -305,9 +304,38 @@ public class TemplatesGeneratorTest {
     }
 
     @Test
-    @Ignore
     public void check_if_symlink_towards_vars_file_is_generated() {
-        //TODO
+        try {
+            //Given repository, root deployment,model deployment and template directory
+            Path workDir = Files.createTempDirectory(REPOSITORY_DIRECTORY);
+            Path modelTemplateDir = StructureGeneratorHelper.generatePath(workDir,
+                    CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY,
+                    CassandraProcessorConstants.MODEL_DEPLOYMENT_DIRECTORY,
+                    CassandraProcessorConstants.TEMPLATE_DIRECTORY);
+            modelTemplateDir = Files.createDirectories(modelTemplateDir);
+            //Given model vars file and manifest file
+            Path modelVarsFile = StructureGeneratorHelper.generatePath(modelTemplateDir, CassandraProcessorConstants.MODEL_VARS_FILENAME);
+            modelVarsFile = Files.createFile(modelVarsFile);
+            Path modelManifestFile = StructureGeneratorHelper.generatePath(modelTemplateDir, CassandraProcessorConstants.MODEL_MANIFEST_FILENAME);
+            modelManifestFile = Files.createFile(modelManifestFile);
+
+            //When
+            TemplatesGenerator templates = new TemplatesGenerator(workDir, SERVICE_INSTANCE_ID);
+            templates.checkPrerequisites();
+            templates.generate();
+
+            //Then
+            Path varsFile = StructureGeneratorHelper.generatePath(workDir,
+                    CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY,
+                    CassandraProcessorConstants.SERVICE_INSTANCE_PREFIX_DIRECTORY + SERVICE_INSTANCE_ID,
+                    CassandraProcessorConstants.TEMPLATE_DIRECTORY,
+                    CassandraProcessorConstants.SERVICE_INSTANCE_PREFIX_DIRECTORY + SERVICE_INSTANCE_ID + CassandraProcessorConstants.VARS_FILENAME_SUFFIX);
+            assertThat("Symbolic link towards vars file doesn't exist", Files.exists(varsFile));
+            assertThat("Vars file is not a symbolic link", Files.isSymbolicLink(varsFile));
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     @Test
@@ -317,21 +345,38 @@ public class TemplatesGeneratorTest {
     }
 
     @Test
-    public void testPath() throws IOException {
-        Path targetPath = Paths.get("java/model/zoo.txt");
-        Path linkPath = Paths.get("java/bin/link.txt");
-        Path p2Top1 = linkPath.relativize(targetPath);
-        assertThat("","../../model/zoo.txt".equals(p2Top1.toString()));
+    @Ignore
+    public void testPathAdvanced() throws IOException {
+        //Given repository, root deployment,model deployment and template directory
+        Path workDir = Files.createTempDirectory(REPOSITORY_DIRECTORY);
+
+        Path modelTemplateDir = StructureGeneratorHelper.generatePath(workDir,
+                CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY,
+                CassandraProcessorConstants.MODEL_DEPLOYMENT_DIRECTORY,
+                CassandraProcessorConstants.TEMPLATE_DIRECTORY);
+        modelTemplateDir = Files.createDirectories(modelTemplateDir);
+
+        Path modelManifestFile = StructureGeneratorHelper.generatePath(modelTemplateDir, CassandraProcessorConstants.MODEL_MANIFEST_FILENAME);
+        modelManifestFile = Files.createFile(modelManifestFile);
+
+        Path serviceTemplateDir = StructureGeneratorHelper.generatePath(workDir,
+                CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY,
+                CassandraProcessorConstants.SERVICE_INSTANCE_PREFIX_DIRECTORY + SERVICE_INSTANCE_ID,
+                CassandraProcessorConstants.TEMPLATE_DIRECTORY);
+        serviceTemplateDir = Files.createDirectories(serviceTemplateDir);
+
+        Path serviceToModel = serviceTemplateDir.relativize(modelTemplateDir);
+        System.out.println(serviceToModel);
+        Path relativeModelManifestFile = StructureGeneratorHelper.generatePath(serviceToModel,
+                CassandraProcessorConstants.MODEL_MANIFEST_FILENAME);
+        System.out.println(relativeModelManifestFile);
+        Path serviceManifestFile = StructureGeneratorHelper.generatePath(workDir,
+                CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY,
+                CassandraProcessorConstants.SERVICE_INSTANCE_PREFIX_DIRECTORY + SERVICE_INSTANCE_ID,
+                CassandraProcessorConstants.TEMPLATE_DIRECTORY,
+                CassandraProcessorConstants.SERVICE_INSTANCE_PREFIX_DIRECTORY + SERVICE_INSTANCE_ID + CassandraProcessorConstants.MANIFEST_FILENAME_SUFFIX);
+        Files.createSymbolicLink(serviceManifestFile, relativeModelManifestFile);
+
     }
-
-    @Test
-    public void testPath2() throws IOException {
-        Path targetPath = Paths.get("coab-depls/cassandra/template/cassandra.yml");
-        Path linkPath = Paths.get("coab-depls/cassandra_aaa000/template/cassandra_aaa000.yml");
-        Path p2Top1 = linkPath.relativize(targetPath);
-        assertThat("","../../../cassandra/template/cassandra.yml".equals(p2Top1.toString()));
-    }
-
-
 
 }

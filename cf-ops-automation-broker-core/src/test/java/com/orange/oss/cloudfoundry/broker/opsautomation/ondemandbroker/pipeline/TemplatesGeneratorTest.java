@@ -27,7 +27,7 @@ public class TemplatesGeneratorTest {
     public TemporaryFolder temporaryFolder = new TemporaryFolder();
 
     @Test
-    public void raise_exception_if_root_deployment_directory_is_missing(){
+    public void raise_exception_if_root_deployment_directory_is_missing() {
         try {
             //Then
             thrown.expect(CassandraProcessorException.class);
@@ -43,7 +43,7 @@ public class TemplatesGeneratorTest {
     }
 
     @Test
-    public void raise_exception_if_model_deployment_directory_is_missing(){
+    public void raise_exception_if_model_deployment_directory_is_missing() {
         try {
             //Then
             thrown.expect(CassandraProcessorException.class);
@@ -62,7 +62,7 @@ public class TemplatesGeneratorTest {
     }
 
     @Test
-    public void raise_exception_if_model_template_directory_is_missing(){
+    public void raise_exception_if_model_template_directory_is_missing() {
         try {
             //Then
             thrown.expect(CassandraProcessorException.class);
@@ -82,7 +82,7 @@ public class TemplatesGeneratorTest {
     }
 
     @Test
-    public void raise_exception_if_model_vars_file_is_missing(){
+    public void raise_exception_if_model_vars_file_is_missing() {
         try {
             //Then
             thrown.expect(CassandraProcessorException.class);
@@ -105,7 +105,7 @@ public class TemplatesGeneratorTest {
     }
 
     @Test
-    public void raise_exception_if_model_manifest_file_is_missing(){
+    public void raise_exception_if_model_manifest_file_is_missing() {
         try {
             //Then
             thrown.expect(CassandraProcessorException.class);
@@ -267,7 +267,8 @@ public class TemplatesGeneratorTest {
         }
     }
 
-    @Test@Ignore
+    @Test
+    @Ignore
     public void check_if_symlink_towards_manifest_file_is_generated() {
         try {
             //Given repository, root deployment,model deployment and template directory
@@ -303,35 +304,34 @@ public class TemplatesGeneratorTest {
 
     }
 
-    @Test@Ignore
+    @Test
+    @Ignore
     public void check_if_symlink_towards_vars_file_is_generated() {
         //TODO
     }
 
-    @Test@Ignore
+    @Test
+    @Ignore
     public void check_if_files_content_are_correct() {
         //TODO
     }
 
     @Test
-    public void testPath(){
-        try {
-        Path workDir = Files.createTempDirectory(REPOSITORY_DIRECTORY);
-        Path targetPath = StructureGeneratorHelper.generatePath(workDir,
-                CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY,
-                CassandraProcessorConstants.MODEL_DEPLOYMENT_DIRECTORY,
-                CassandraProcessorConstants.TEMPLATE_DIRECTORY,
-                CassandraProcessorConstants.MODEL_MANIFEST_FILENAME);
-        Path linkPath = StructureGeneratorHelper.generatePath(workDir,
-                CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY,
-                CassandraProcessorConstants.SERVICE_INSTANCE_PREFIX_DIRECTORY + SERVICE_INSTANCE_ID,
-                CassandraProcessorConstants.TEMPLATE_DIRECTORY,
-                CassandraProcessorConstants.SERVICE_INSTANCE_PREFIX_DIRECTORY + SERVICE_INSTANCE_ID + CassandraProcessorConstants.MANIFEST_FILENAME_SUFFIX);
-        targetPath = targetPath.relativize(linkPath);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+    public void testPath() throws IOException {
+        Path targetPath = Paths.get("java/model/zoo.txt");
+        Path linkPath = Paths.get("java/bin/link.txt");
+        Path p2Top1 = linkPath.relativize(targetPath);
+        assertThat("","../../model/zoo.txt".equals(p2Top1.toString()));
     }
+
+    @Test
+    public void testPath2() throws IOException {
+        Path targetPath = Paths.get("coab-depls/cassandra/template/cassandra.yml");
+        Path linkPath = Paths.get("coab-depls/cassandra_aaa000/template/cassandra_aaa000.yml");
+        Path p2Top1 = linkPath.relativize(targetPath);
+        assertThat("","../../../cassandra/template/cassandra.yml".equals(p2Top1.toString()));
+    }
+
 
 
 }

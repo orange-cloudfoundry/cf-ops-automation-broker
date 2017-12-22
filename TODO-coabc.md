@@ -21,7 +21,6 @@
         pull --rebase instead of clone
     
     - for paas-template support:
-        - fix CRLF config creating pollution
         - fix ommited submodule side effect: removes submodules
         
         - integration test: paas-template create feature-COAB-cassandra-IT:

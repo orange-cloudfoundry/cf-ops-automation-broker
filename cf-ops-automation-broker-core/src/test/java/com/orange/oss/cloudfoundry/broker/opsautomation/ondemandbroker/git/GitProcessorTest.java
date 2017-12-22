@@ -9,6 +9,7 @@ import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.junit.*;
+import org.springframework.util.FileSystemUtils;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -197,7 +198,7 @@ public class GitProcessorTest {
         //and adding files
         //and asking to commit and push
         addAFile(this.ctx, "content in branch service-instance-guid", "another-file-in-service-instance-guid-branch.txt", "");
-        processor.commitPushRepo(this.ctx, false);
+        processor.commitPushRepo(this.ctx, true);
 
         Path secondClone = cloneRepoFromBranch("service-instance-guid");
         //then file should be persisted in the "service-instance-guid" branch
@@ -228,6 +229,34 @@ public class GitProcessorTest {
     @Test
     public void adds_and_deletes_files() throws GitAPIException, IOException {
         addAndDeleteFilesForRepoAlias(this.processor, this.ctx, "");
+    }
+
+    @Test
+    public void disables_git_linefeed_cleanups_if_any() throws IOException {
+        //given
+        Path tempDirectory = Files.createTempDirectory("GitProcessorTest_configures_autoclrf_to_false");
+        Path boshDeploymentRepo = tempDirectory.resolve("a_repo").resolve(".git");
+            Repository repository = FileRepositoryBuilder.create(boshDeploymentRepo.toFile());
+            repository.create();
+
+        //given tests run on a developer machine where the global config is
+        // "core.autocrlf = input" (which is the common case in the Orange elpaaso team
+
+        //when
+        processor.configureCrLf(repository.getConfig());
+
+        //then line feedchange are disabled, by setting the false option.
+
+        // https://stackoverflow.com/questions/3206843/how-line-ending-conversions-work-with-git-core-autocrlf-between-different-operat
+        // This is the default [...] The result of using false is that Git doesn’t ever
+        // mess with line endings on your file. You can check in files with LF or CRLF or
+        // CR or some random mix of those three and Git does not care.
+        //
+        // In other words, COAB does not attempt to clean up invalid CRLF in repos
+        // and leaves them as it.
+        assertThat(repository.getConfig().getString("core", null, "autocrlf")).isEqualTo("false");
+
+        FileSystemUtils.deleteRecursively(tempDirectory.toFile());
     }
 
     @Test
@@ -289,6 +318,8 @@ public class GitProcessorTest {
             addC.call();
 
             git.submoduleInit().call();
+// attempt to create local submodule to simulate missing submodule:
+// Failed due to https://bugs.eclipse.org/bugs/show_bug.cgi?id=467611
 //            Path boshDeploymentRepo = gitWorkDir.toPath().resolve("bosh-deployment").resolve(".git");
 //            Repository repository = FileRepositoryBuilder.create(boshDeploymentRepo.toFile());
 //            repository.create();

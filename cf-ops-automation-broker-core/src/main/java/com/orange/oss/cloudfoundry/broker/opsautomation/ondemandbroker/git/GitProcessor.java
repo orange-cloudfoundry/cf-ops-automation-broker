@@ -131,7 +131,9 @@ public class GitProcessor extends DefaultBrokerProcessor {
             Git git = cc.call();
             this.setGit(git, ctx);
 
-            setUserConfig(git);
+            Config config = git.getRepository().getConfig();
+            setUserConfig(config);
+            configureCrLf(config);
 
             checkoutRemoteBranchIfNeeded(git, ctx);
 
@@ -238,8 +240,12 @@ public class GitProcessor extends DefaultBrokerProcessor {
 
     }
 
-    protected void setUserConfig(Git git) {
-        Config config = git.getRepository().getConfig();
+    void configureCrLf(Config config) {
+        config.setString("core", null, "autocrlf", "false");
+    }
+
+
+    void setUserConfig(Config config) {
         if (this.committerName != null) {
             config.setString("user", null, "name", this.committerName);
         }
@@ -388,4 +394,5 @@ public class GitProcessor extends DefaultBrokerProcessor {
     private void setWorkDir(Path workDir, Context ctx) {
         ctx.contextKeys.put(getContextKey(GitProcessorContext.workDir), workDir);
     }
+
 }

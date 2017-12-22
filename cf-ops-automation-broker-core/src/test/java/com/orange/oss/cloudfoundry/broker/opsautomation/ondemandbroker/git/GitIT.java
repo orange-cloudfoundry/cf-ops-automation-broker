@@ -26,7 +26,10 @@ import java.util.function.Consumer;
 /**
  * This tests may work standalone, simulating a git server by embedding one.
  * It may otherwise also be run with a locally modified version of git.properties pointing to a private git server:
- * This supports asserting that clone of paas-template works well.
+ * This supports asserting that working with paas-template works well.
+ * 
+ * Hint: create a private fork of paas-template repo for running this test, to avoid pulluting the repo
+ * shared with the rest of the team members
  */
 @RunWith(SpringJUnit4ClassRunner.class)
 @TestPropertySource("classpath:git.properties")

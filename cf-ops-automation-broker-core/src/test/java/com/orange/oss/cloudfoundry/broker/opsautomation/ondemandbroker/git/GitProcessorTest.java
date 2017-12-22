@@ -18,6 +18,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 
 import static com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.GitIT.createDir;
 import static org.fest.assertions.Assertions.assertThat;
@@ -231,6 +232,36 @@ public class GitProcessorTest {
         addAndDeleteFilesForRepoAlias(this.processor, this.ctx, "");
     }
 
+    protected void addAndDeleteFilesForRepoAlias(GitProcessor processor, Context context, String repoAlias) throws IOException {
+        //given a clone of an empty repo
+        processor.cloneRepo(context);
+
+        //when adding files
+        //and asking to commit and push
+        addAFile(context, "hello.txt", "afile.txt", repoAlias);
+        processor.commitPushRepo(context, true);
+
+        //then file should be persisted
+        Context ctx1 = new Context();
+        processor.preCreate(ctx1);
+        Path secondClone = getWorkDir(ctx1, repoAlias);
+        File secondCloneSameFile = secondClone.resolve("afile.txt").toFile();
+        assertThat(secondCloneSameFile).exists();
+
+        //when deleting file
+        assertThat(secondCloneSameFile.delete()).isTrue();
+        //and committing
+        processor.commitPushRepo(ctx1, true);
+
+        //then file should be removed from repo
+        Path thirdClone = cloneRepo(processor, repoAlias);
+        File thirdCloneFile = thirdClone.resolve("afile.txt").toFile();
+        assertThat(thirdCloneFile).doesNotExist();
+
+        //cleanup
+        processor.deleteWorkingDir(ctx1);
+    }
+
     @Test
     public void disables_git_linefeed_cleanups_if_any() throws IOException {
         //given
@@ -258,7 +289,6 @@ public class GitProcessorTest {
 
         FileSystemUtils.deleteRecursively(tempDirectory.toFile());
     }
-
     @Test
     public void fetches_submodules_when_asked() {
         
@@ -298,6 +328,25 @@ public class GitProcessorTest {
         assertThat(workDir.resolve("bosh-deployment").toFile()).exists();
         assertThat(workDir.resolve("mysql-deployment").toFile()).exists();
 
+    }
+
+    @Test
+    public void ignores_fetches_submodules_from_staged_files() {
+
+        //given a repo with submodules configured
+        gitServer.initRepo("paas-template.git", this::initPaasTemplate);
+        processor = new GitProcessor("gituser", "gitsecret", GIT_BASE_URL + "paas-template.git", "committerName", "committer@address.org", null);
+        ctx.contextKeys.put(GitProcessorContext.checkOutRemoteBranch.toString(), "develop");
+
+        //when asking to clone it without opt-in for submodules
+        processor.cloneRepo(ctx);
+
+        //then the list of submodules to ignore from the staging list is pushed to the context
+        @SuppressWarnings("unchecked")
+        List<String> subModulesList = (List<String>) ctx.contextKeys.get(GitProcessor.PRIVATE_SUBMODULES_LIST);
+        assertThat(subModulesList).containsOnly("bosh-deployment", "mysql-deployment");
+
+        //so that submodules get excluded from commit list
     }
 
     public void initPaasTemplate(Git git) {
@@ -495,36 +544,6 @@ public class GitProcessorTest {
         context.contextKeys.put(GitProcessorContext.checkOutRemoteBranch.toString(), branch);
         processor.cloneRepo(context);
         return getWorkDir(context, "");
-    }
-
-    protected void addAndDeleteFilesForRepoAlias(GitProcessor processor, Context context, String repoAlias) throws IOException {
-        //given a clone of an empty repo
-        processor.cloneRepo(context);
-
-        //when adding files
-        //and asking to commit and push
-        addAFile(context, "hello.txt", "afile.txt", repoAlias);
-        processor.commitPushRepo(context, true);
-
-        //then file should be persisted
-        Context ctx1 = new Context();
-        processor.preCreate(ctx1);
-        Path secondClone = getWorkDir(ctx1, repoAlias);
-        File secondCloneSameFile = secondClone.resolve("afile.txt").toFile();
-        assertThat(secondCloneSameFile).exists();
-
-        //when deleting file
-        assertThat(secondCloneSameFile.delete()).isTrue();
-        //and committing
-        processor.commitPushRepo(ctx1, true);
-
-        //then file should be removed from repo
-        Path thirdClone = cloneRepo(processor, repoAlias);
-        File thirdCloneFile = thirdClone.resolve("afile.txt").toFile();
-        assertThat(thirdCloneFile).doesNotExist();
-
-        //cleanup
-        processor.deleteWorkingDir(ctx1);
     }
 
     public void addAFile(Context ctx) throws IOException {

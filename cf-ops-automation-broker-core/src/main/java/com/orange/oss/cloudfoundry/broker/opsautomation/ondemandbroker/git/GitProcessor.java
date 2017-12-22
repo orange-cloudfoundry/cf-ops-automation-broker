@@ -19,10 +19,7 @@ import org.springframework.util.FileSystemUtils;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -38,8 +35,9 @@ import java.util.stream.StreamSupport;
 public class GitProcessor extends DefaultBrokerProcessor {
 
 
-    private static final String PRIVATE_GIT_INSTANCE = "private-git-instance";
+    static final String PRIVATE_GIT_INSTANCE = "private-git-instance";
     private static final Logger logger = LoggerFactory.getLogger(GitProcessor.class.getName());
+    protected static final String PRIVATE_SUBMODULES_LIST = "private_submodules_list";
 
     private final String gitUrl;
     private final String committerName;
@@ -154,6 +152,8 @@ public class GitProcessor extends DefaultBrokerProcessor {
 
     private void fetchSubmodulesIfNeeded(Context ctx, Git git) throws GitAPIException {
         git.submoduleInit().call();
+        Map<String, SubmoduleStatus> submodules = git.submoduleStatus().call();
+        saveSubModuleListInContext(ctx, submodules);
 
         boolean fetchSubModules = false;
         if (Boolean.TRUE.equals(ctx.contextKeys.get(getContextKey(GitProcessorContext.fetchAllSubModules)))) {
@@ -163,7 +163,6 @@ public class GitProcessor extends DefaultBrokerProcessor {
         if (!fetchSubModules && selectiveModulesToFetch instanceof List) {
             @SuppressWarnings("unchecked")
             List<String> submodulesToFetch = (List<String>) selectiveModulesToFetch;
-            Map<String, SubmoduleStatus> submodules = git.submoduleStatus().call();
             submodules.keySet().stream()
                     .filter(s -> ! submodulesToFetch.contains(s))
                     .forEach(s -> excludeModuleFromSubModuleUpdate(git, s));
@@ -172,6 +171,11 @@ public class GitProcessor extends DefaultBrokerProcessor {
         if (fetchSubModules) {
             git.submoduleUpdate().call();
         }
+    }
+
+    private void saveSubModuleListInContext(Context ctx, Map<String, SubmoduleStatus> submodules) {
+        List<String> submoduleList = new ArrayList<>(submodules.keySet());
+        ctx.contextKeys.put(repoAliasName + PRIVATE_SUBMODULES_LIST, submoduleList);
     }
 
     private void excludeModuleFromSubModuleUpdate(Git git, String submodulePath) {
@@ -268,13 +272,11 @@ public class GitProcessor extends DefaultBrokerProcessor {
 
             Status status = git.status().call();
             Set<String> missing = status.getMissing();
-            for (String f : missing) {
-                logger.info("staging as deleted: " + f);
-                git.rm().addFilepattern(f).call();
-            }
+            stageMissingFilesExcludingSubModules(ctx, git, missing);
             status = git.status().call();
             if (status.hasUncommittedChanges()) {
-                logger.info("pending commit: " + status.getUncommittedChanges() + ". With deleted:" + status.getRemoved() + " added:" + status.getAdded() + " changed:" + status.getChanged());
+                logger.info("staged commit:  deleted:" + status.getRemoved() + " added:" + status.getAdded() + " changed:" + status.getChanged());
+                logger.info("unstaged skipped commit: " + status.getUncommittedChanges());
                 CommitCommand commitC = git.commit().setMessage(getCommitMessage(ctx));
 
                 RevCommit revCommit = commitC.call();
@@ -293,6 +295,26 @@ public class GitProcessor extends DefaultBrokerProcessor {
             throw new IllegalArgumentException(e);
         }
 
+    }
+
+    protected void stageMissingFilesExcludingSubModules(Context ctx, Git git, Set<String> missing) throws GitAPIException {
+        @SuppressWarnings("unchecked")
+        List<String> subModulesList = (List<String>) ctx.contextKeys.get(PRIVATE_SUBMODULES_LIST);
+        for (String file : missing) {
+            boolean fileMatchesSubModule = false;
+            for (String submodulePath : subModulesList) {
+                if (file.startsWith(submodulePath)) {
+                    fileMatchesSubModule = true;
+                    break;
+                }
+            }
+            if (fileMatchesSubModule) {
+                logger.debug("skipping modified submodule from staging: " + file);
+            } else {
+                logger.info("staging as deleted: " + file);
+                git.rm().addFilepattern(file).call();
+            }
+        }
     }
 
     void pushCommits(Git git, Context ctx) throws GitAPIException {

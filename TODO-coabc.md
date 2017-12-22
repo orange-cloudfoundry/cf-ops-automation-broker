@@ -21,8 +21,6 @@
         pull --rebase instead of clone
     
     - for paas-template support:
-        - URGENT: remove incorrect up master branch commit 
-        - refactor test for checkout branch and create branch ?
         - fix CRLF config creating pollution
         - fix ommited submodule side effect: removes submodules
         

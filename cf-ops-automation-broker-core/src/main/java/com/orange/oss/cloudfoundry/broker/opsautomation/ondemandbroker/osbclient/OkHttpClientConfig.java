@@ -37,8 +37,8 @@ import java.util.Arrays;
 import java.util.List;
 
 // Transiently comment out config support, until we move to proper location
-//@Configuration
-//@ConditionalOnClass(OkHttpClient.class)
+@Configuration
+@ConditionalOnClass(OkHttpClient.class)
 public class OkHttpClientConfig {
 
     private static final Logger log = LoggerFactory.getLogger(OkHttpClientConfig.class);

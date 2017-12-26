@@ -33,7 +33,7 @@ import org.springframework.context.annotation.Configuration;
  * @author Sebastien Bortolussi
  */
 // Transiently comment out config support, until we move to proper location
-//@Configuration
+@Configuration
 public class OsbClientFeignConfig {
 
     @Autowired

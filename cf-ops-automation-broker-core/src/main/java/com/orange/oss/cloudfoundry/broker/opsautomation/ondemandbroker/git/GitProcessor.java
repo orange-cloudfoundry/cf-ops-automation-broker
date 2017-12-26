@@ -298,7 +298,7 @@ public class GitProcessor extends DefaultBrokerProcessor {
 
     protected void stageMissingFilesExcludingSubModules(Context ctx, Git git, Set<String> missing) throws GitAPIException {
         @SuppressWarnings("unchecked")
-        List<String> subModulesList = (List<String>) ctx.contextKeys.get(PRIVATE_SUBMODULES_LIST);
+        List<String> subModulesList = (List<String>) ctx.contextKeys.get(repoAliasName + PRIVATE_SUBMODULES_LIST);
         for (String missingFilePath : missing) {
             boolean fileMatchesSubModule = false;
             for (String submodulePath : subModulesList) {

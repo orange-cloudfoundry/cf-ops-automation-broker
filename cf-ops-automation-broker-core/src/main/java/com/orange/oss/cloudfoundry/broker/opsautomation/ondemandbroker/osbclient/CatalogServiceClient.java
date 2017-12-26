@@ -28,8 +28,9 @@ import org.springframework.web.bind.annotation.RequestMethod;
  *
  * @author Sebastien Bortolussi
  */
+//@FeignClient(name = "catalog")
 public interface CatalogServiceClient {
 
-    @RequestLine("GET /v2/catalog")
+    @RequestMapping(value = "/v2/catalog", method = RequestMethod.GET) //unused variant
     Catalog getCatalog();
 }

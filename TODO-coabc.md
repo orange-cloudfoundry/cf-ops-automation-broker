@@ -37,7 +37,9 @@
 - osb processor: 
     - osb client
         - dynamically instanciate FeignClient (from broker url/login/password matching service instance) 
-            - manually instead of trying to share a single feign client in the spring context
+            - manually instead of trying to share a single feign client in the spring context https://cloud.spring.io/spring-cloud-netflix/single/spring-cloud-netflix.html#_creating_feign_clients_manually
+                - naive implementation prevents sharing of REST API annotation with spring-cloud-service-broker
+                    - solution is to also inject the springmvc contract. Hinted from https://github.com/spring-cloud/spring-cloud-netflix/issues/1834 
             - through spring leveraging the existing prototype scope assigned to some beans in FeignClientsConfiguration 
         - copy/paste from sec-group-broker-filter (service instance, service binding) 
             - FilteredBrokerFeignConfig: basic auth: 

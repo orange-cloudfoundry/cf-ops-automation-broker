@@ -27,7 +27,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
  *
  * @author Sebastien Bortolussi
  */
-@FeignClient(name = "catalog", url = "${broker.filter.url}", configuration = FilteredBrokerFeignConfig.class)
+@FeignClient(name = "catalog", url = "${broker.filter.url}", configuration = OsbClientFeignConfig.class)
 public interface CatalogServiceClient {
 
     @RequestMapping(value = "/v2/catalog", method = RequestMethod.GET)

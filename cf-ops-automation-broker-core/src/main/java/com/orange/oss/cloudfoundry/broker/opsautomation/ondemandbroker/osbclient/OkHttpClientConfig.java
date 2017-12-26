@@ -17,7 +17,6 @@
 
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.osbclient;
 
-import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.credhub.CredHubConnectorTest;
 import okhttp3.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,12 +36,12 @@ import java.security.cert.X509Certificate;
 import java.util.Arrays;
 import java.util.List;
 
-
-@Configuration
-@ConditionalOnClass(OkHttpClient.class)
+// Transiently comment out config support, until we move to proper location
+//@Configuration
+//@ConditionalOnClass(OkHttpClient.class)
 public class OkHttpClientConfig {
 
-    private static final Logger log = LoggerFactory.getLogger(CredHubConnectorTest.class);
+    private static final Logger log = LoggerFactory.getLogger(OkHttpClientConfig.class);
 
     private static final Interceptor LOGGING_INTERCEPTOR = new Interceptor() {
         @Override

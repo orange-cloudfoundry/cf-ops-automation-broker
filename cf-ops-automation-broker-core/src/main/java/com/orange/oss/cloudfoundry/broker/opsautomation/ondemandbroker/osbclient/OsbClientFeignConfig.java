@@ -32,18 +32,19 @@ import org.springframework.context.annotation.Configuration;
  *
  * @author Sebastien Bortolussi
  */
-@Configuration
-public class FilteredBrokerFeignConfig {
+// Transiently comment out config support, until we move to proper location
+//@Configuration
+public class OsbClientFeignConfig {
 
     @Autowired
-    BrokerFilterSettings brokerFilterSettings;
+    OsbClientProperties osbClientProperties;
 
     @Autowired
     okhttp3.OkHttpClient customOkHttpClient;
 
     @Bean
     public BasicAuthRequestInterceptor basicAuthRequestInterceptor() {
-        return new BasicAuthRequestInterceptor(brokerFilterSettings.getUser(), brokerFilterSettings.getPassword());
+        return new BasicAuthRequestInterceptor(osbClientProperties.getUser(), osbClientProperties.getPassword());
     }
 
     @Bean

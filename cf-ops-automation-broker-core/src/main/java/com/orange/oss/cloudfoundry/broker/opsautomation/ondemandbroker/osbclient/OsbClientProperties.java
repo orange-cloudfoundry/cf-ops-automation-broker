@@ -28,18 +28,18 @@ import java.net.URL;
  * @author Sebastien Bortolussi
  */
 @Component
-@ConfigurationProperties(BrokerFilterSettings.PREFIX)
-public class BrokerFilterSettings {
+@ConfigurationProperties(OsbClientProperties.PREFIX)
+public class OsbClientProperties {
 
-    public static final String PREFIX = "broker.filter";
+    public static final String PREFIX = "osbclient";
     private URL url;
     private String user;
     private String password;
 
-    public BrokerFilterSettings() {
+    public OsbClientProperties() {
     }
 
-    public BrokerFilterSettings(URL url, String user, String password) {
+    public OsbClientProperties(URL url, String user, String password) {
         this.url = url;
         this.user = user;
         this.password = password;

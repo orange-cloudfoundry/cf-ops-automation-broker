@@ -31,7 +31,7 @@ import javax.validation.Valid;
  *
  * @author Sebastien Bortolussi
  */
-@FeignClient(name = "bindings", url = "${osbclient.url}", configuration = OsbClientFeignConfig.class)
+//@FeignClient(name = "bindings", url = "${osbclient.url}", configuration = OsbClientFeignConfig.class)
 public interface ServiceInstanceBindingServiceClient {
 
     @RequestMapping(value = "/v2/service_instances/{instanceId}/service_bindings/{bindingId}", method = RequestMethod.PUT, produces = {MediaType.APPLICATION_JSON_VALUE})

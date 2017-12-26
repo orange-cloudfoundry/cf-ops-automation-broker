@@ -35,7 +35,10 @@
     - refactor git tests to initialize clones in the gitserver setup rather than using the gitprocessor in the test itself
 
 - osb processor: 
-    - osb client 
+    - osb client
+        - dynamically instanciate FeignClient (from broker url/login/password matching service instance) 
+            - manually instead of trying to share a single feign client in the spring context
+            - through spring leveraging the existing prototype scope assigned to some beans in FeignClientsConfiguration 
         - copy/paste from sec-group-broker-filter (service instance, service binding) 
             - FilteredBrokerFeignConfig: basic auth: 
                 - need rework to fetch from credhub context
@@ -47,6 +50,11 @@
         - TBC integration tests using
             - wiremock
             - rest assured
+            - springbootapp: 
+               - static-cred-broke
+               - inlined controller
+        - move feign out of broker-core into its own module
+           - more generally take appart broker-core into smaller units
     - waits for a key in context to start in any processorchain method 
         create-service-instance: a spring-cloud-cloudfoundry-service-broker object 
         update-service-instance 

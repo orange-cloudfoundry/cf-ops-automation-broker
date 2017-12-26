@@ -32,20 +32,11 @@ import org.springframework.context.annotation.Configuration;
  *
  * @author Sebastien Bortolussi
  */
-// Transiently comment out config support, until we move to proper location
 @Configuration
 public class OsbClientFeignConfig {
 
     @Autowired
-    OsbClientProperties osbClientProperties;
-
-    @Autowired
     okhttp3.OkHttpClient customOkHttpClient;
-
-    @Bean
-    public BasicAuthRequestInterceptor basicAuthRequestInterceptor() {
-        return new BasicAuthRequestInterceptor(osbClientProperties.getUser(), osbClientProperties.getPassword());
-    }
 
     @Bean
     Logger.Level customFeignLoggerLevel() {

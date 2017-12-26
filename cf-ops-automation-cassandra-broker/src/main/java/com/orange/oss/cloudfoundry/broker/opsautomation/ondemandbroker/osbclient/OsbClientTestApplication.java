@@ -7,10 +7,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.cloud.netflix.feign.EnableFeignClients;
+import org.springframework.cloud.netflix.feign.FeignClientsConfiguration;
 import org.springframework.cloud.servicebroker.model.Catalog;
 import org.springframework.cloud.servicebroker.model.Plan;
 import org.springframework.cloud.servicebroker.model.ServiceDefinition;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Import;
 
 import java.util.*;
 
@@ -19,17 +21,8 @@ import java.util.*;
  */
 @SpringBootApplication
 @EnableFeignClients
-@EnableConfigurationProperties({OsbClientProperties.class})
+@Import(FeignClientsConfiguration.class)
 public class OsbClientTestApplication {
-
-    @Autowired
-    OsbClientProperties osbClientProperties;
-    @Autowired
-    CatalogServiceClient catalogServiceClient;
-    @Autowired
-    ServiceInstanceServiceClient serviceInstanceServiceClient;
-    @Autowired
-    ServiceInstanceBindingServiceClient serviceInstanceBindingServiceClient;
 
 
     @Bean

@@ -23,9 +23,5 @@ servicebroker:
         providerDisplayName: Orange
         documentationUrl: https://orange.com/doc
         supportUrl: https://orange.com/support
-osbclient:
-  url: https://fake-url-for-test.paas.internal
-  user: fake-broker-auth-user
-  password: fake-broker-auth-password
 
 

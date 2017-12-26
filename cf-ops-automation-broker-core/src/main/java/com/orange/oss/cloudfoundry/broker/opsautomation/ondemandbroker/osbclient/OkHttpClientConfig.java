@@ -36,7 +36,6 @@ import java.security.cert.X509Certificate;
 import java.util.Arrays;
 import java.util.List;
 
-// Transiently comment out config support, until we move to proper location
 @Configuration
 @ConditionalOnClass(OkHttpClient.class)
 public class OkHttpClientConfig {

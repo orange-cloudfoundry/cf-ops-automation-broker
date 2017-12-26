@@ -4,6 +4,7 @@ import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.GitPr
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.Context;
 import com.orange.oss.ondemandbroker.ProcessorChainServiceInstanceService;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -28,6 +29,7 @@ public class CassandraProcessorTest {
     private final static String ROOT_DEPLOYMENT = "coab-depls";
 
     @Test
+    @Ignore
     public void shouldCreateDeploymentFolders() {
 
         //Given

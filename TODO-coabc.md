@@ -1,3 +1,20 @@
+
+- brainstorm alternative design than Processor chain.
+   - Identified weaknesses:
+      - weak untyped timing dependencies: 
+         - fragile sequencing of operations
+         - inflexible sequencing of operations
+      - weak untyped shared datastructures: lack of encapsulation
+   - make explicit design requirements
+      - based on functional requirements:
+         - new services
+      - Q: more async use-cases ?
+         - COAB based service instance/binding: terraform-based service instance/binding 
+   - flesh out alternative designs:
+      - pure event-based design
+      - simple OO design with FSM (finite state machine/ state pattern)
+   - detail migration step to new design
+        
    
 - cassandra processor: 
     - triggers new bosh deployment: writes paas-template/paas-secret
@@ -35,8 +52,6 @@
     - refactor git tests to initialize clones in the gitserver setup rather than using the gitprocessor in the test itself
 
 - osb processor:
-    - simplify state diagram
-       - import state diagram in markdown rendering 
     - waits for a key in context to start in any processorchain method 
         create-service-instance: a spring-cloud-cloudfoundry-service-broker object 
         update-service-instance 

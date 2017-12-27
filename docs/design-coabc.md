@@ -1,11 +1,18 @@
 # Global hypothesis
-- No evolutions on cf-ops-automation (asis)
+- No evolutions on cf-ops-automation (as-is)
 
 - Processor chain : 
-   - cassandra processor
+   - static git repo selector processor: specifies expected git repos, and branches
+   - dynamic git repo selector processor: specifies expected git repos, and branches (from OSB service instance guid)
+   - cassandra deployment templates processor: generates/updates/deletes files following create/update/delete OSB key in context
+   - bosh deployment completion processor: 
+      - observe bosh deployment completion (through manifest.yml)
+      - write OSB failed async create/update/delete response on timeout
+   - cassandra service broker processor: maps ingress OSB request to egress OSB requests  
    - git processor
    - credhub processor
-   - osb processor
+   - sync osb processor: make sync OSB 
+   - osb async operation context persistence processor: mux/demux state (creation time, request) into OSB operation field
 
 # Git
 

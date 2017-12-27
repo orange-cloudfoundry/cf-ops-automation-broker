@@ -36,6 +36,11 @@
 
 - osb processor: 
     - osb client
+        - suggest spring-cloud-netflix documentation improvement https://github.com/spring-cloud/spring-cloud-netflix/issues/2584
+        - fix depreciation 
+            Warning:(93, 17) java: sslSocketFactory(javax.net.ssl.SSLSocketFactory) in okhttp3.OkHttpClient.Builder has been deprecated
+            Warning:(88, 53) java: getSpaceGuid() in org.springframework.cloud.servicebroker.model.CreateServiceInstanceRequest has been deprecated
+        - fix OkHttpClientConfig warnings    
         - move feign out of broker-core into its own module
            - move OsbClientTestApplicationTest & associated TestApplication there 
            - more generally take appart broker-core into smaller units

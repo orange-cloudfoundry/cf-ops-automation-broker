@@ -19,10 +19,8 @@ package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.osbclien
 
 import feign.Feign;
 import feign.Logger;
-import feign.auth.BasicAuthRequestInterceptor;
 import feign.okhttp.OkHttpClient;
 import feign.slf4j.Slf4jLogger;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 

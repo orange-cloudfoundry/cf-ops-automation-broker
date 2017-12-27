@@ -35,9 +35,6 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class OsbClientFeignConfig {
 
-    @Autowired
-    okhttp3.OkHttpClient customOkHttpClient;
-
     @Bean
     Logger.Level customFeignLoggerLevel() {
         return Logger.Level.FULL;
@@ -49,7 +46,7 @@ public class OsbClientFeignConfig {
     }
 
     @Bean
-    Feign.Builder customFeignBuilder() {
+    Feign.Builder customFeignBuilder(okhttp3.OkHttpClient customOkHttpClient) {
         return Feign.builder().client(new OkHttpClient(customOkHttpClient));
     }
 

@@ -29,6 +29,12 @@ public class ProcessorChainServiceInstanceService implements ServiceInstanceServ
     public static final String UPDATE_SERVICE_INSTANCE_REQUEST = "UpdateServiceInstanceRequest";
     public static final String UPDATE_SERVICE_INSTANCE_RESPONSE = "UpdateServiceInstanceResponse";
 
+    public static final String OSB_PROFILE_ORGANIZATION_GUID = "organization_guid";
+    public static final String OSB_PROFILE_SPACE_GUID = "space_guid";
+
+
+
+
     private ProcessorChain processorChain;
 
     public ProcessorChainServiceInstanceService(ProcessorChain processorChain) {

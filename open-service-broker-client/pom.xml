@@ -25,7 +25,11 @@
             <groupId>org.springframework.cloud</groupId>
             <artifactId>spring-cloud-cloudfoundry-service-broker</artifactId>
         </dependency>
-        
+        <dependency>
+            <groupId>com.orange.oss.cloudfoundry.broker.opsautomation</groupId>
+            <artifactId>cf-ops-automation-broker-framework</artifactId>
+        </dependency>
+
         <dependency>
             <groupId>org.springframework.cloud</groupId>
             <artifactId>spring-cloud-starter-openfeign</artifactId>
@@ -48,6 +52,32 @@
             <groupId>com.google.code.gson</groupId>
             <artifactId>gson</artifactId>
             <version>${gson.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- supports end to end integration tests: uses ProcessorChainService -->
+        <dependency>
+            <groupId>com.orange.oss.cloudfoundry.broker.opsautomation</groupId>
+            <artifactId>cf-ops-automation-broker-core</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+            <scope>test</scope>
+        </dependency>
+        <!-- supports end to end integration tests: uses ProcessorChainService -->
+        <dependency>
+            <groupId>com.orange.oss.cloudfoundry.broker.opsautomation</groupId>
+            <artifactId>spring-boot-starter-servicebroker-catalog</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+            <scope>test</scope>
         </dependency>
 
     </dependencies>

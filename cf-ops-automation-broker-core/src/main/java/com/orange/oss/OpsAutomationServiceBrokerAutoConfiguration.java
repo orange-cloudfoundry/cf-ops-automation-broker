@@ -5,8 +5,7 @@ import org.springframework.context.annotation.Configuration;
 
 @Configuration
 @ComponentScan(basePackages = {
-        "com.orange.oss.ondemandbroker",
-        "com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.osbclient"})
+        "com.orange.oss.ondemandbroker"})
 public class OpsAutomationServiceBrokerAutoConfiguration {
 
 }

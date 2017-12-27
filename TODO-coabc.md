@@ -42,6 +42,8 @@
             Warning:(88, 53) java: getSpaceGuid() in org.springframework.cloud.servicebroker.model.CreateServiceInstanceRequest has been deprecated
         - fix OkHttpClientConfig warnings    
         - move feign out of broker-core into its own module
+           - understand why @Import(FeignClientsConfiguration.class) can't seem to take effect when specified in OsbClientFeignConfig (and only observed to work when specified in the springbootapp)
+
            - move OsbClientTestApplicationTest & associated TestApplication there 
            - more generally take appart broker-core into smaller units
     - waits for a key in context to start in any processorchain method 

@@ -5,11 +5,11 @@
 state BoshDeploymentCreation {
     [*] -> CR.Deploying : / write templates
     CR.Deploying -down-> CR.Deployed: [manifest generation observed] 
-    CR.Deployed -down-> SyncServiceInstanceProvisioning  
+    CR.Deployed -down-> SyncServiceInstanceProvisioning: [sync supported]
+    CR.Deployed -down-> ASyncServiceInstanceProvisioning: [async supported]
     CR.Deploying -down-> CR.Timeout
 }
 
-BoshDeploymentCreation -> SyncServiceInstanceProvisioning
 state SyncServiceInstanceProvisioning {
     [*] -> Idle: /OSB call create-service-instance\n [success] /OSB response: created
     [*] -> Idle: /OSB call create-service-instance\n [failed] /OSB response: failed

@@ -34,18 +34,9 @@
    
     - refactor git tests to initialize clones in the gitserver setup rather than using the gitprocessor in the test itself
 
-- osb processor: 
-    - osb client
-        - suggest spring-cloud-netflix documentation improvement https://github.com/spring-cloud/spring-cloud-netflix/issues/2584
-        - fix depreciation 
-            Warning:(93, 17) java: sslSocketFactory(javax.net.ssl.SSLSocketFactory) in okhttp3.OkHttpClient.Builder has been deprecated
-            Warning:(88, 53) java: getSpaceGuid() in org.springframework.cloud.servicebroker.model.CreateServiceInstanceRequest has been deprecated
-        - fix OkHttpClientConfig warnings    
-        - move feign out of broker-core into its own module
-           - understand why @Import(FeignClientsConfiguration.class) can't seem to take effect when specified in OsbClientFeignConfig (and only observed to work when specified in the springbootapp)
-
-           - move OsbClientTestApplicationTest & associated TestApplication there 
-           - more generally take appart broker-core into smaller units
+- osb processor:
+    - simplify state diagram
+       - import state diagram in markdown rendering 
     - waits for a key in context to start in any processorchain method 
         create-service-instance: a spring-cloud-cloudfoundry-service-broker object 
         update-service-instance 
@@ -56,6 +47,15 @@
         polls service instance creation 
         pushes response in the context
 
+    - osb client
+        - move feign out of broker-core into its own module
+           - understand why @Import(FeignClientsConfiguration.class) can't seem to take effect when specified in OsbClientFeignConfig (and only observed to work when specified in the springbootapp) + fix related failed tests https://circleci.com/gh/orange-cloudfoundry/cf-ops-automation-broker/326
+
+           - more generally take appart broker-core into smaller units
+        - fix depreciation 
+            Warning:(93, 17) java: sslSocketFactory(javax.net.ssl.SSLSocketFactory) in okhttp3.OkHttpClient.Builder has been deprecated
+               Actually check whether okHttpClient support for self signed certs and http proxy is still usefull, otherwise remove it
+        - fix OkHttpClientConfig warnings    
      
 - credhub write support
 

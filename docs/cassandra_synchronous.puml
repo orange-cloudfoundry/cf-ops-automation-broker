@@ -1,0 +1,26 @@
+@startuml
+
+Idle --> CR.Deploying: [OSB create-service-instance] / write templates
+
+CR.Deploying -down-> Idle: [manifest generation observed]\n /OSB call create-service-instance\n [success || failure]\n /OSB response: created || failed
+CR.Deploying -down-> Idle: [no manifest observed before timeout] \n/return error status
+
+CR.Deploying: CreateServiceInstanceRequest
+
+
+state Idle {
+}
+
+Idle -down-> Idle: [OSB bind] / OSB call & return status
+
+Idle --> UP.Deploying: [OSB update] / write templates
+UP.Deploying -down-> Idle: [manifest update observed]\n /OSB call: update-service-instance\n [success|failure]\n/OSB response: updated || failed
+UP.Deploying -down-> Idle: [no manifest update observed]\n /OSB response: failed timeout
+UP.Deploying: UpdateServiceInstanceRequest
+
+Idle -down-> Idle: [OSB unbind]/ OSB call & return status
+Idle -down-> DE.Deploying: [OSB delete]\n /OSB call delete-service-instance\n/ remove templates from git
+DE.Deploying -down-> Idle: [manifest generation observed]\n /OSB response: deleted
+DE.Deploying -down-> Idle: [no manifest observed before timeout] \n/return error status
+
+@enduml

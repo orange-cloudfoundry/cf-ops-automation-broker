@@ -68,6 +68,18 @@ public class ProcessorChainTest {
 				logger.info("post unbind 1");
 				
 			}
+
+			@Override
+			public void preUpdate(Context ctx) {
+				logger.info("pre update 1");
+
+			}
+
+			@Override
+			public void postUpdate(Context ctx) {
+				logger.info("post update 1");
+
+			}
 		});
 		
 		processors.add(new BrokerProcessor() {
@@ -121,6 +133,18 @@ public class ProcessorChainTest {
 			public void postUnBind(Context ctx) {
 				logger.info("post unbind 2");
 				
+			}
+
+			@Override
+			public void preUpdate(Context ctx) {
+				logger.info("pre update 2");
+
+			}
+
+			@Override
+			public void postUpdate(Context ctx) {
+				logger.info("pre update 2");
+
 			}
 		});
 

@@ -72,6 +72,18 @@ public class ProcessorChain {
 
 	}
 
+	public void update(Context ctx) {
+		for (BrokerProcessor m: processors) {
+			m.preUpdate(ctx);
+		}
+		sink.update(ctx);
+
+		for (int i = processors.size()-1; i>=0; i--) {
+			BrokerProcessor m= processors.get(i);
+			m.postUpdate(ctx);
+		}
+	}
+
 	public void delete(Context ctx) {
 		for (BrokerProcessor m: processors) {
 			m.preDelete(ctx);
@@ -82,6 +94,8 @@ public class ProcessorChain {
 			BrokerProcessor m= processors.get(i);
 			m.postDelete(ctx);
 		}
-
 	}
+
+
+
 }

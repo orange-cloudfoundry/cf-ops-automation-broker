@@ -26,6 +26,8 @@ public class ProcessorChainServiceInstanceService implements ServiceInstanceServ
     public static final String GET_LAST_SERVICE_OPERATION_RESPONSE = "GetLastServiceOperationResponse";
     public static final String DELETE_SERVICE_INSTANCE_REQUEST = "DeleteServiceInstanceRequest";
     public static final String DELETE_SERVICE_INSTANCE_RESPONSE = "DeleteServiceInstanceResponse";
+    public static final String UPDATE_SERVICE_INSTANCE_REQUEST = "UpdateServiceInstanceRequest";
+    public static final String UPDATE_SERVICE_INSTANCE_RESPONSE = "UpdateServiceInstanceResponse";
 
     private ProcessorChain processorChain;
 
@@ -54,6 +56,26 @@ public class ProcessorChainServiceInstanceService implements ServiceInstanceServ
     }
 
     @Override
+    public UpdateServiceInstanceResponse updateServiceInstance(UpdateServiceInstanceRequest request) {
+        try {
+            Context ctx = new Context();
+            ctx.contextKeys.put(UPDATE_SERVICE_INSTANCE_REQUEST, request);
+
+            processorChain.update(ctx);
+            UpdateServiceInstanceResponse response;
+            if (ctx.contextKeys.get(UPDATE_SERVICE_INSTANCE_RESPONSE) instanceof UpdateServiceInstanceResponse) {
+                response = (UpdateServiceInstanceResponse) ctx.contextKeys.get(UPDATE_SERVICE_INSTANCE_RESPONSE);
+            } else {
+                response = new UpdateServiceInstanceResponse();
+            }
+            return response;
+        } catch (RuntimeException e) {
+            logger.info("Unable to update service with request " + request + ", caught " + e, e);
+            throw processInternalException(e);
+        }
+    }
+
+    @Override
     public DeleteServiceInstanceResponse deleteServiceInstance(DeleteServiceInstanceRequest request) {
         try {
             Context ctx = new Context();
@@ -71,11 +93,6 @@ public class ProcessorChainServiceInstanceService implements ServiceInstanceServ
             logger.info("Unable to delete service with request " + request + ", caught " + e, e);
             throw processInternalException(e);
         }
-    }
-
-    @Override
-    public UpdateServiceInstanceResponse updateServiceInstance(UpdateServiceInstanceRequest request) {
-        throw new UnsupportedOperationException("not yet implemented");
     }
 
     @Override

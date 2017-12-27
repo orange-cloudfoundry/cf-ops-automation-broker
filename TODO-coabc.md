@@ -36,11 +36,6 @@
 
 - osb processor: 
     - osb client
-        - dynamically instanciate FeignClient (from broker url/login/password matching service instance) 
-            - use spring-boot-service-broker springMVC annotations
-               - currently only exposed as non abstract classes (i.e. not interfaces)
-               - currently including multiple mappings: not supported by spring-cloud-netflix (feign support): java.lang.IllegalStateException: Method createServiceInstance can only contain at most 1 value field. Found: [/{cfInstanceId}/v2/service_instances/{instanceId}, /v2/service_instances/{instanceId}]
-        - implement update support in ProcessorChainServiceInstanceService
         - move feign out of broker-core into its own module
            - move OsbClientTestApplicationTest & associated TestApplication there 
            - more generally take appart broker-core into smaller units

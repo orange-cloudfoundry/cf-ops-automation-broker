@@ -1,21 +1,27 @@
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.osbclient;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import feign.FeignException;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.embedded.LocalServerPort;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.cloud.servicebroker.model.*;
-import org.springframework.cloud.servicebroker.service.ServiceInstanceBindingService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.util.Base64Utils;
 
 import java.util.HashMap;
 import java.util.Map;
 
 import static org.fest.assertions.Assertions.assertThat;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
-import static org.springframework.http.HttpStatus.*;
+import static org.springframework.cloud.servicebroker.model.CloudFoundryContext.CLOUD_FOUNDRY_PLATFORM;
+import static org.springframework.http.HttpStatus.CREATED;
+import static org.springframework.http.HttpStatus.OK;
 
 /**
  * Starts the COAB application, and queries it using the OSB client.
@@ -32,7 +38,7 @@ public class OsbClientTestApplicationTest {
 
 
     @Test
-    public void constructs_feign_clients() {
+    public void constructs_feign_clients() throws JsonProcessingException {
         //given
         String url = "http://127.0.0.1:" + port;
         String user = "user";
@@ -60,7 +66,7 @@ public class OsbClientTestApplicationTest {
         cfContextProps.put("space_guid", "space_guid");
         Map<String, Object> serviceInstanceParams= new HashMap<>();
 
-        Context cfContext = new Context("cloudfoundry", cfContextProps);
+        Context cfContext = new Context(CLOUD_FOUNDRY_PLATFORM, cfContextProps);
         CreateServiceInstanceRequest createServiceInstanceRequest = new CreateServiceInstanceRequest(
                 serviceDefinition.getId(),
                 defaultPlan.getId(),
@@ -69,9 +75,30 @@ public class OsbClientTestApplicationTest {
                 cfContext,
                 serviceInstanceParams
         );
-        ResponseEntity<CreateServiceInstanceResponse> createResponse = serviceInstanceServiceClient.createServiceInstance("service_instance_guid", createServiceInstanceRequest, false);
+        String originatingIdentityHeader = buildOriginatingIdentityHeader("a_user_guid", CLOUD_FOUNDRY_PLATFORM);
+
+        @SuppressWarnings("unchecked")
+        ResponseEntity<CreateServiceInstanceResponse> createResponse = (ResponseEntity<CreateServiceInstanceResponse>) serviceInstanceServiceClient.createServiceInstance(
+                "service_instance_guid",
+                false,
+                null,
+                originatingIdentityHeader,
+                createServiceInstanceRequest
+        );
         assertThat(createResponse.getStatusCode()).isEqualTo(CREATED);
         assertThat(createResponse.getBody()).isNotNull();
+
+        @SuppressWarnings("unchecked")
+        ResponseEntity<GetLastServiceOperationResponse> lastOperationResponse = (ResponseEntity<GetLastServiceOperationResponse>) serviceInstanceServiceClient.getServiceInstanceLastOperation(
+                "service_instance_guid",
+                serviceDefinition.getId(),
+                defaultPlan.getId(),
+                "an opague operation string",
+                null,
+                originatingIdentityHeader
+        );
+        assertThat(lastOperationResponse.getStatusCode()).isEqualTo(OK);
+        assertThat(lastOperationResponse.getBody()).isNotNull();
 
         //when
         ServiceInstanceBindingServiceClient serviceInstanceBindingServiceClient = clientFactory.getClient(url, user, password, ServiceInstanceBindingServiceClient.class);
@@ -87,7 +114,13 @@ public class OsbClientTestApplicationTest {
                 cfContext,
                 serviceBindingParams
         );
-        ResponseEntity<CreateServiceInstanceAppBindingResponse> bindResponse = serviceInstanceBindingServiceClient.createServiceInstanceBinding("service_instance_guid", "service_binding_guid", createServiceInstanceBindingRequest);
+        @SuppressWarnings("unchecked")
+        ResponseEntity<CreateServiceInstanceAppBindingResponse> bindResponse = (ResponseEntity<CreateServiceInstanceAppBindingResponse>) serviceInstanceBindingServiceClient.createServiceInstanceBinding(
+                "service_instance_guid",
+                "service_binding_guid",
+                null,
+                originatingIdentityHeader,
+                createServiceInstanceBindingRequest);
         assertThat(bindResponse.getStatusCode()).isEqualTo(CREATED);
         assertThat(bindResponse.getBody()).isNotNull();
 
@@ -100,25 +133,60 @@ public class OsbClientTestApplicationTest {
                 new UpdateServiceInstanceRequest.PreviousValues(defaultPlan.getId()),
                 cfContext
                 );
-//        ResponseEntity<UpdateServiceInstanceResponse> updateResponse = serviceInstanceServiceClient.updateServiceInstance("service_instance_guid", updateServiceInstanceRequest, false);
-//        assertThat(updateResponse.getStatusCode()).isEqualTo(OK);
-//        assertThat(updateResponse.getBody()).isNotNull();
+        try {
+            @SuppressWarnings("unchecked")
+            ResponseEntity<UpdateServiceInstanceResponse> updateResponse = (ResponseEntity<UpdateServiceInstanceResponse>) serviceInstanceServiceClient.updateServiceInstance(
+                    "service_instance_guid",
+                    false,
+                    null,
+                    originatingIdentityHeader,
+                    updateServiceInstanceRequest);
+            assertThat(updateResponse.getStatusCode()).isEqualTo(OK);
+            assertThat(updateResponse.getBody()).isNotNull();
+        } catch (FeignException e) {
+            //ProcessorChainServiceInstanceService has not yet implemented update support
+            assertThat(e.status()).isEqualTo(500);
+            assertThat(e.getMessage()).contains("not yet implemented");
+        }
 
         ResponseEntity<String> deleteBindingResponse = serviceInstanceBindingServiceClient.deleteServiceInstanceBinding(
                 "service_instance_guid",
                 "service_binding_guid",
                 serviceDefinition.getId(),
-                defaultPlan.getId());
+                defaultPlan.getId(),
+                null,
+                originatingIdentityHeader);
         assertThat(deleteBindingResponse.getStatusCode()).isEqualTo(OK);
         assertThat(deleteBindingResponse.getBody()).isNotNull();
 
-        ResponseEntity<DeleteServiceInstanceResponse> deleteInstanceResponse = serviceInstanceServiceClient.deleteServiceInstance(
+        @SuppressWarnings("unchecked")
+        ResponseEntity<DeleteServiceInstanceResponse> deleteInstanceResponse = (ResponseEntity<DeleteServiceInstanceResponse>) serviceInstanceServiceClient.deleteServiceInstance(
                 "service_instance_guid",
                 serviceDefinition.getId(),
                 defaultPlan.getId(),
-                false);
+                false,
+                null,
+                originatingIdentityHeader);
         assertThat(deleteInstanceResponse.getStatusCode()).isEqualTo(OK);
         assertThat(deleteInstanceResponse.getBody()).isNotNull();
     }
+
+
+    protected static final String ORIGINATING_USER_KEY = "user_id";
+
+
+    /**
+     * Inspired from org.springframework.cloud.servicebroker.autoconfigure.web.servlet.ControllerIntegrationTest
+     * See https://github.com/spring-cloud/spring-cloud-cloudfoundry-service-broker/blob/c56080e5ec8ed97ba8fe4e15ac2031073fbc45ae/spring-cloud-open-service-broker-autoconfigure/src/test/java/org/springframework/cloud/servicebroker/autoconfigure/web/servlet/ControllerIntegrationTest.java#L36-L43
+     */
+    protected String buildOriginatingIdentityHeader(@SuppressWarnings("SameParameterValue") String originatingUserGuid, String originatingIdentityPlatform) throws JsonProcessingException {
+        Map<String, Object> propMap = new HashMap<>();
+        propMap.put(ORIGINATING_USER_KEY, originatingUserGuid);
+        ObjectMapper mapper = Jackson2ObjectMapperBuilder.json().build();
+        String properties = mapper.writeValueAsString(propMap);
+        String encodedProperties = new String(Base64Utils.encode(properties.getBytes()));
+        return originatingIdentityPlatform + " " + encodedProperties;
+    }
+
 
 }

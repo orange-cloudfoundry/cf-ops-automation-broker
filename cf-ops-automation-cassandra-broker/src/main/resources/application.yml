@@ -1,3 +1,4 @@
+
 security:
   user:
     password: secret
@@ -23,5 +24,8 @@ servicebroker:
         providerDisplayName: Orange
         documentationUrl: https://orange.com/doc
         supportUrl: https://orange.com/support
+logging:
+  level:
+    org.springframework.cloud.servicebroker: debug
 
 

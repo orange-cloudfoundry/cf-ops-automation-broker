@@ -17,35 +17,87 @@
 
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.osbclient;
 
-import org.springframework.cloud.netflix.feign.FeignClient;
-import org.springframework.cloud.servicebroker.model.*;
-import org.springframework.http.MediaType;
+import org.springframework.cloud.servicebroker.model.CreateServiceInstanceRequest;
+import org.springframework.cloud.servicebroker.model.UpdateServiceInstanceRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
 
+import static org.springframework.cloud.servicebroker.model.AsyncServiceInstanceRequest.ASYNC_REQUEST_PARAMETER;
+import static org.springframework.cloud.servicebroker.model.ServiceBrokerRequest.API_INFO_LOCATION_HEADER;
+import static org.springframework.cloud.servicebroker.model.ServiceBrokerRequest.ORIGINATING_IDENTITY_HEADER;
+
 /**
- * @author Sebastien Bortolussi
+ * SpringMVC annotations for the OSB client.
+ * Extracted from ServiceInstanceController
+ *
+ * ServiceInstanceController does not expose interfaces, and its annotation have two variants,
+ * which is not supported by spring-cloud-netflix (feign support) and triggers the following exception
+ * <pre>
+ * java.lang.IllegalStateException: Method createServiceInstance can only contain at most 1 value field. Found: [/{cfInstanceId}/v2/service_instances/{instanceId}, /v2/service_instances/{instanceId}]
+ * </pre>
+ * As a result, we duplicate ServiceInstanceController annotations, commenting out the support for multiple CF instances
+ * to keep a single annotation
+ * @see org.springframework.cloud.servicebroker.controller.ServiceInstanceController
  */
+@SuppressWarnings("UnnecessaryInterfaceModifier")
 public interface ServiceInstanceServiceClient {
 
-    @RequestMapping(value = "/v2/service_instances/{instanceId}", method = RequestMethod.PUT, produces = {MediaType.APPLICATION_JSON_VALUE})
-    ResponseEntity<CreateServiceInstanceResponse> createServiceInstance(@PathVariable("instanceId") String serviceInstanceId,
-                                                                        @Valid @RequestBody CreateServiceInstanceRequest request,
-                                                                        @RequestParam(value = "accepts_incomplete", required = false) boolean acceptsIncomplete);
+    @RequestMapping(value = {
+//            "/{cfInstanceId}/v2/service_instances/{instanceId}",
+            "/v2/service_instances/{instanceId}"
+    }, method = RequestMethod.PUT)
+    ResponseEntity<?> createServiceInstance(
+//            @PathVariable Map<String, String> pathVariables,
+            @PathVariable("instanceId") String serviceInstanceId,
+            @RequestParam(value = ASYNC_REQUEST_PARAMETER, required = false) boolean acceptsIncomplete,
+            @RequestHeader(value = API_INFO_LOCATION_HEADER, required = false) String apiInfoLocation,
+            @RequestHeader(value = ORIGINATING_IDENTITY_HEADER, required = false) String originatingIdentityString,
+            @Valid @RequestBody CreateServiceInstanceRequest request);
 
-    @RequestMapping(value = "/v2/service_instances/{instanceId}/last_operation", method = RequestMethod.GET, produces = {MediaType.APPLICATION_JSON_VALUE})
-    ResponseEntity<GetLastServiceOperationResponse> getServiceInstanceLastOperation(@PathVariable("instanceId") String serviceInstanceId);
+    @RequestMapping(value = {
+//            "/{cfInstanceId}/v2/service_instances/{instanceId}/last_operation",
+            "/v2/service_instances/{instanceId}/last_operation"
+    }, method = RequestMethod.GET)
+    public ResponseEntity<?> getServiceInstanceLastOperation(
+//            @PathVariable Map<String, String> pathVariables,
+            @PathVariable("instanceId") String serviceInstanceId,
+            @RequestParam("service_id") String serviceDefinitionId,
+            @RequestParam("plan_id") String planId,
+            @RequestParam(value = "operation", required = false) String operation,
+            @RequestHeader(value = API_INFO_LOCATION_HEADER, required = false) String apiInfoLocation,
+            @RequestHeader(value = ORIGINATING_IDENTITY_HEADER, required = false) String originatingIdentityString);
 
-    @RequestMapping(value = "/v2/service_instances/{instanceId}", method = RequestMethod.DELETE, produces = {MediaType.APPLICATION_JSON_VALUE})
-    ResponseEntity<DeleteServiceInstanceResponse> deleteServiceInstance(@PathVariable("instanceId") String serviceInstanceId,
-                                                                        @RequestParam("service_id") String serviceDefinitionId,
-                                                                        @RequestParam("plan_id") String planId,
-                                                                        @RequestParam(value = "accepts_incomplete", required = false) boolean acceptsIncomplete);
 
-    @RequestMapping(value = "/v2/service_instances/{instanceId}", method = RequestMethod.PATCH, produces = {MediaType.APPLICATION_JSON_VALUE})
-    ResponseEntity<UpdateServiceInstanceResponse> updateServiceInstance(@PathVariable("instanceId") String serviceInstanceId,
-                                                                        @Valid @RequestBody UpdateServiceInstanceRequest request,
-                                                                        @RequestParam(value = "accepts_incomplete", required = false) boolean acceptsIncomplete);
+    @RequestMapping(value = {
+//            "/{cfInstanceId}/v2/service_instances/{instanceId}",
+            "/v2/service_instances/{instanceId}"
+    }, method = RequestMethod.DELETE)
+    public ResponseEntity<?> deleteServiceInstance(
+//            @PathVariable Map<String, String> pathVariables,
+            @PathVariable("instanceId") String serviceInstanceId,
+            @RequestParam("service_id") String serviceDefinitionId,
+            @RequestParam("plan_id") String planId,
+            @RequestParam(value = ASYNC_REQUEST_PARAMETER, required = false) boolean acceptsIncomplete,
+            @RequestHeader(value = API_INFO_LOCATION_HEADER, required = false) String apiInfoLocation,
+            @RequestHeader(value = ORIGINATING_IDENTITY_HEADER, required = false) String originatingIdentityString);
+
+
+    @RequestMapping(value = {
+//            "/{cfInstanceId}/v2/service_instances/{instanceId}",
+            "/v2/service_instances/{instanceId}"
+    }, method = RequestMethod.PATCH)
+    public ResponseEntity<?> updateServiceInstance(
+//            @PathVariable Map<String, String> pathVariables,
+            @PathVariable("instanceId") String serviceInstanceId,
+            @RequestParam(value = ASYNC_REQUEST_PARAMETER, required = false) boolean acceptsIncomplete,
+            @RequestHeader(value = API_INFO_LOCATION_HEADER, required = false) String apiInfoLocation,
+            @RequestHeader(value = ORIGINATING_IDENTITY_HEADER, required = false) String originatingIdentityString,
+            @Valid @RequestBody UpdateServiceInstanceRequest request);
+
+//    @RequestMapping(value = "/v2/service_instances/{instanceId}", method = RequestMethod.PATCH, produces = {MediaType.APPLICATION_JSON_VALUE})
+//    ResponseEntity<UpdateServiceInstanceResponse> updateServiceInstance(@PathVariable("instanceId") String serviceInstanceId,
+//                                                                        @Valid @RequestBody UpdateServiceInstanceRequest request,
+//                                                                        @RequestParam(value = "accepts_incomplete", required = false) boolean acceptsIncomplete);
 }

@@ -17,30 +17,54 @@
 
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.osbclient;
 
-import org.springframework.cloud.netflix.feign.FeignClient;
-import org.springframework.cloud.servicebroker.model.CreateServiceInstanceAppBindingResponse;
 import org.springframework.cloud.servicebroker.model.CreateServiceInstanceBindingRequest;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
 
+import static org.springframework.cloud.servicebroker.model.ServiceBrokerRequest.API_INFO_LOCATION_HEADER;
+import static org.springframework.cloud.servicebroker.model.ServiceBrokerRequest.ORIGINATING_IDENTITY_HEADER;
+
 /**
- * Declarative web client of ServiceInstanceBindingService using {@link <a href="http://projects.spring.io/spring-cloud/spring-cloud.html#spring-cloud-feign">Feign</a>}
+ * SpringMVC annotations for the OSB client.
+ * Extracted from ServiceInstanceBindingController
  *
- * @author Sebastien Bortolussi
+ * ServiceInstanceBindingController does not expose interfaces, and its annotation have two variants,
+ * which is not supported by spring-cloud-netflix (feign support) and triggers the following exception
+ * <pre>
+ * java.lang.IllegalStateException: Method createServiceInstanceBinding can only contain at most 1 value field. Found:
+ * [/{cfInstanceId}/v2/service_instances/{instanceId}/service_bindings/{bindingId}, /v2/service_instances/{instanceId}/service_bindings/{bindingId}]
+ * </pre>
+ * As a result, we duplicate ServiceInstanceBindingController annotations, commenting out the support for multiple CF instances to keep a single annotation
+ * @see org.springframework.cloud.servicebroker.controller.ServiceInstanceBindingController
  */
+@SuppressWarnings("UnnecessaryInterfaceModifier")
 public interface ServiceInstanceBindingServiceClient {
 
-    @RequestMapping(value = "/v2/service_instances/{instanceId}/service_bindings/{bindingId}", method = RequestMethod.PUT, produces = {MediaType.APPLICATION_JSON_VALUE})
-    ResponseEntity<CreateServiceInstanceAppBindingResponse> createServiceInstanceBinding(@PathVariable("instanceId") String serviceInstanceId,
-                                                                                         @PathVariable("bindingId") String bindingId,
-                                                                                         @Valid @RequestBody CreateServiceInstanceBindingRequest request);
+    @RequestMapping(value = {
+//            "/{cfInstanceId}/v2/service_instances/{instanceId}/service_bindings/{bindingId}",
+            "/v2/service_instances/{instanceId}/service_bindings/{bindingId}"
+    }, method = RequestMethod.PUT)
+    public ResponseEntity<?> createServiceInstanceBinding(
+//            @PathVariable Map<String, String> pathVariables,
+            @PathVariable("instanceId") String serviceInstanceId,
+            @PathVariable("bindingId") String bindingId,
+            @RequestHeader(value = API_INFO_LOCATION_HEADER, required = false) String apiInfoLocation,
+            @RequestHeader(value = ORIGINATING_IDENTITY_HEADER, required = false) String originatingIdentityString,
+            @Valid @RequestBody CreateServiceInstanceBindingRequest request);
 
-    @RequestMapping(value = "/v2/service_instances/{instanceId}/service_bindings/{bindingId}", method = RequestMethod.DELETE, produces = {MediaType.APPLICATION_JSON_VALUE})
-    ResponseEntity<String> deleteServiceInstanceBinding(@PathVariable("instanceId") String serviceInstanceId,
-                                                        @PathVariable("bindingId") String bindingId,
-                                                        @RequestParam("service_id") String serviceDefinitionId,
-                                                        @RequestParam("plan_id") String planId);
+    @RequestMapping(value = {
+//            "/{cfInstanceId}/v2/service_instances/{instanceId}/service_bindings/{bindingId}",
+            "/v2/service_instances/{instanceId}/service_bindings/{bindingId}"
+    }, method = RequestMethod.DELETE)
+    public ResponseEntity<String> deleteServiceInstanceBinding(
+//            @PathVariable Map<String, String> pathVariables,
+            @PathVariable("instanceId") String serviceInstanceId,
+            @PathVariable("bindingId") String bindingId,
+            @RequestParam("service_id") String serviceDefinitionId,
+            @RequestParam("plan_id") String planId,
+            @RequestHeader(value = API_INFO_LOCATION_HEADER, required = false) String apiInfoLocation,
+            @RequestHeader(value = ORIGINATING_IDENTITY_HEADER, required = false) String originatingIdentityString);
+
 }

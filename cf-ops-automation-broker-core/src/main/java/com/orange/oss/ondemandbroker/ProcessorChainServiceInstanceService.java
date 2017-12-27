@@ -90,6 +90,7 @@ public class ProcessorChainServiceInstanceService implements ServiceInstanceServ
                 response = (GetLastServiceOperationResponse) ctx.contextKeys.get(GET_LAST_SERVICE_OPERATION_RESPONSE);
             } else {
                 response = new GetLastServiceOperationResponse();
+                response.withOperationState(OperationState.SUCCEEDED);
             }
             return response;
         } catch (RuntimeException e) {

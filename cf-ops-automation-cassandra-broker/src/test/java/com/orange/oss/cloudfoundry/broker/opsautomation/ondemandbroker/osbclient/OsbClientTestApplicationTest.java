@@ -133,21 +133,15 @@ public class OsbClientTestApplicationTest {
                 new UpdateServiceInstanceRequest.PreviousValues(defaultPlan.getId()),
                 cfContext
                 );
-        try {
-            @SuppressWarnings("unchecked")
-            ResponseEntity<UpdateServiceInstanceResponse> updateResponse = (ResponseEntity<UpdateServiceInstanceResponse>) serviceInstanceServiceClient.updateServiceInstance(
-                    "service_instance_guid",
-                    false,
-                    null,
-                    originatingIdentityHeader,
-                    updateServiceInstanceRequest);
-            assertThat(updateResponse.getStatusCode()).isEqualTo(OK);
-            assertThat(updateResponse.getBody()).isNotNull();
-        } catch (FeignException e) {
-            //ProcessorChainServiceInstanceService has not yet implemented update support
-            assertThat(e.status()).isEqualTo(500);
-            assertThat(e.getMessage()).contains("not yet implemented");
-        }
+        @SuppressWarnings("unchecked")
+        ResponseEntity<UpdateServiceInstanceResponse> updateResponse = (ResponseEntity<UpdateServiceInstanceResponse>) serviceInstanceServiceClient.updateServiceInstance(
+                "service_instance_guid",
+                false,
+                null,
+                originatingIdentityHeader,
+                updateServiceInstanceRequest);
+        assertThat(updateResponse.getStatusCode()).isEqualTo(OK);
+        assertThat(updateResponse.getBody()).isNotNull();
 
         ResponseEntity<String> deleteBindingResponse = serviceInstanceBindingServiceClient.deleteServiceInstanceBinding(
                 "service_instance_guid",

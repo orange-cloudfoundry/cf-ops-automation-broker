@@ -30,7 +30,7 @@ import org.springframework.context.annotation.Configuration;
  *
  * @author Sebastien Bortolussi
  */
-//@Configuration
+@Configuration
 public class OsbClientFeignConfig {
 
     @Bean

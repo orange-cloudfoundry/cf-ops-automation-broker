@@ -17,7 +17,6 @@
 
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.osbclient;
 
-import org.springframework.cloud.netflix.feign.FeignClient;
 import org.springframework.cloud.servicebroker.model.CreateServiceInstanceRequest;
 import org.springframework.cloud.servicebroker.model.UpdateServiceInstanceRequest;
 import org.springframework.http.ResponseEntity;
@@ -43,7 +42,6 @@ import static org.springframework.cloud.servicebroker.model.ServiceBrokerRequest
  * @see org.springframework.cloud.servicebroker.controller.ServiceInstanceController
  */
 @SuppressWarnings("UnnecessaryInterfaceModifier")
-@FeignClient(name = "provisioning", configuration = OsbClientFeignConfig.class)
 public interface ServiceInstanceServiceClient {
 
     @RequestMapping(value = {

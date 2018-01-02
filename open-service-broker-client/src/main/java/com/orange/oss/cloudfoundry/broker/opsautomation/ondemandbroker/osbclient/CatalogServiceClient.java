@@ -17,7 +17,6 @@
 
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.osbclient;
 
-import org.springframework.cloud.netflix.feign.FeignClient;
 import org.springframework.cloud.servicebroker.model.Catalog;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -27,7 +26,6 @@ import org.springframework.web.bind.annotation.RequestMethod;
  *
  * @author Sebastien Bortolussi
  */
-@FeignClient(name = "catalog", configuration = OsbClientFeignConfig.class)
 public interface CatalogServiceClient {
 
     @RequestMapping(value = "/v2/catalog", method = RequestMethod.GET)

@@ -28,11 +28,13 @@
             <artifactId>cf-ops-automation-broker-core</artifactId>
             <version>0.0.1-SNAPSHOT</version>
         </dependency>
+<!--
         <dependency>
             <groupId>com.orange.oss.cloudfoundry.broker.opsautomation</groupId>
             <artifactId>open-service-broker-client</artifactId>
             <version>0.0.1-SNAPSHOT</version>
         </dependency>
+-->
         <dependency>
             <groupId>com.orange.oss.cloudfoundry.broker.opsautomation</groupId>
             <artifactId>spring-boot-starter-servicebroker-catalog</artifactId>

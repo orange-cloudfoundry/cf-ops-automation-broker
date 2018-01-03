@@ -23,6 +23,7 @@ public class CassandraProcessorConstants {
     public static final String MANIFEST_FILE_EXCEPTION = "Model manifest file doesn't exist";
     public static final String VARS_FILE_EXCEPTION = "Model vars file doesn't exist";
     public static final String GENERATION_EXCEPTION = "Generation fails";
+    public static final String REMOVAL_EXCEPTION = "Removal fails";
     public static final String DEPLOYMENT_DEPENDENCIES_FILENAME = "deployment-dependencies.yml";
     public static final String OPERATORS_FILENAME = "coab-operators.yml";
     public static final String SERVICE_INSTANCE_PATTERN = "@service_instance@";

@@ -59,4 +59,39 @@ public class SecretsGenerator extends StructureGeneratorImpl {
             throw new CassandraProcessorException(CassandraProcessorConstants.GENERATION_EXCEPTION);
         }
     }
+
+    public void remove() {
+
+        try {
+
+            //Remove meta file
+            Path metaFile = StructureGeneratorHelper.generatePath(workDir,
+                    CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY,
+                    CassandraProcessorConstants.SERVICE_INSTANCE_PREFIX_DIRECTORY + serviceInstanceId,
+                    CassandraProcessorConstants.SECRETS_DIRECTORY,
+                    CassandraProcessorConstants.META_FILENAME);
+            Files.deleteIfExists(metaFile);
+
+            //Remove secrets file
+            Path secretsFile = StructureGeneratorHelper.generatePath(workDir,
+                    CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY,
+                    CassandraProcessorConstants.SERVICE_INSTANCE_PREFIX_DIRECTORY + serviceInstanceId,
+                    CassandraProcessorConstants.SECRETS_DIRECTORY,
+                    CassandraProcessorConstants.SECRETS_FILENAME);
+            Files.deleteIfExists(secretsFile);
+
+            //Remove enable deployment file
+            Path enableDeploymentFile = StructureGeneratorHelper.generatePath(workDir,
+                    CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY,
+                    CassandraProcessorConstants.SERVICE_INSTANCE_PREFIX_DIRECTORY + serviceInstanceId,
+                    CassandraProcessorConstants.ENABLE_DEPLOYMENT_FILENAME);
+            Files.deleteIfExists(enableDeploymentFile);
+
+
+        } catch (IOException e) {
+            e.printStackTrace();
+            throw new CassandraProcessorException(CassandraProcessorConstants.REMOVAL_EXCEPTION);
+        }
+
+    }
 }

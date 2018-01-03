@@ -7,10 +7,14 @@ import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 
+import static junit.framework.TestCase.assertFalse;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 public class SecretsGeneratorTest {
@@ -203,6 +207,105 @@ public class SecretsGeneratorTest {
         }
 
     }
+
+    @Test
+    public void check_if_enable_deployment_file_is_removed() {
+
+        try {
+
+            //Given
+            Path workDir = Files.createTempDirectory(REPOSITORY_DIRECTORY);
+            Path serviceInstanceDir = StructureGeneratorHelper.generatePath(workDir,
+                    CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY,
+                    CassandraProcessorConstants.SERVICE_INSTANCE_PREFIX_DIRECTORY + SERVICE_INSTANCE_ID);
+            serviceInstanceDir = Files.createDirectories(serviceInstanceDir);
+            Path enableDeploymentFile = StructureGeneratorHelper.generatePath(workDir,
+                    CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY,
+                    CassandraProcessorConstants.SERVICE_INSTANCE_PREFIX_DIRECTORY + SERVICE_INSTANCE_ID,
+                    CassandraProcessorConstants.ENABLE_DEPLOYMENT_FILENAME);
+            Files.write(enableDeploymentFile, Arrays.asList(CassandraProcessorConstants.ENABLE_DEPLOYMENT_CONTENT), Charset.forName(StandardCharsets.UTF_8.name()));
+
+            //When
+            SecretsGenerator secrets = new SecretsGenerator(workDir, SERVICE_INSTANCE_ID);
+            secrets.remove();
+
+            //Then
+            assertThat("Enable deployment file exists", Files.notExists(enableDeploymentFile));
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+    }
+
+    @Test
+    public void check_if_meta_file_is_removed() {
+
+        try {
+
+            //Given
+            Path workDir = Files.createTempDirectory(REPOSITORY_DIRECTORY);
+            Path secretsDir = StructureGeneratorHelper.generatePath(workDir,
+                    CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY,
+                    CassandraProcessorConstants.SERVICE_INSTANCE_PREFIX_DIRECTORY + SERVICE_INSTANCE_ID,
+                    CassandraProcessorConstants.SECRETS_DIRECTORY);
+            secretsDir = Files.createDirectories(secretsDir);
+
+            Path metaFile = StructureGeneratorHelper.generatePath(workDir,
+                    CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY,
+                    CassandraProcessorConstants.SERVICE_INSTANCE_PREFIX_DIRECTORY + SERVICE_INSTANCE_ID,
+                    CassandraProcessorConstants.SECRETS_DIRECTORY,
+                    CassandraProcessorConstants.META_FILENAME);
+            Files.write(metaFile, Arrays.asList(CassandraProcessorConstants.META_CONTENT), Charset.forName(StandardCharsets.UTF_8.name()));
+
+            //When
+            SecretsGenerator secrets = new SecretsGenerator(workDir, SERVICE_INSTANCE_ID);
+            secrets.remove();
+
+            //Then
+            assertThat("Meta file exists", Files.notExists(metaFile));
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+    }
+
+    @Test
+    public void check_if_secrets_file_is_removed() {
+
+        try {
+
+            //Given
+            Path workDir = Files.createTempDirectory(REPOSITORY_DIRECTORY);
+            Path secretsDir = StructureGeneratorHelper.generatePath(workDir,
+                    CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY,
+                    CassandraProcessorConstants.SERVICE_INSTANCE_PREFIX_DIRECTORY + SERVICE_INSTANCE_ID,
+                    CassandraProcessorConstants.SECRETS_DIRECTORY);
+            secretsDir = Files.createDirectories(secretsDir);
+
+            Path secretsFile = StructureGeneratorHelper.generatePath(workDir,
+                    CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY,
+                    CassandraProcessorConstants.SERVICE_INSTANCE_PREFIX_DIRECTORY + SERVICE_INSTANCE_ID,
+                    CassandraProcessorConstants.SECRETS_DIRECTORY,
+                    CassandraProcessorConstants.SECRETS_FILENAME);
+            Files.write(secretsFile, Arrays.asList(CassandraProcessorConstants.SECRETS_CONTENT), Charset.forName(StandardCharsets.UTF_8.name()));
+
+            //When
+            SecretsGenerator secrets = new SecretsGenerator(workDir, SERVICE_INSTANCE_ID);
+            secrets.remove();
+
+            //Then
+            assertThat("Secrets file exists", Files.notExists(secretsFile));
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+
+
+
 
     @Test
     public void check_if_files_content_are_correct() {

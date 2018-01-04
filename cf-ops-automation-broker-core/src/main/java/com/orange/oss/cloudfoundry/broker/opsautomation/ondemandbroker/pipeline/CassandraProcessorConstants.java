@@ -28,4 +28,5 @@ public class CassandraProcessorConstants {
     public static final String OPERATORS_FILENAME = "coab-operators.yml";
     public static final String SERVICE_INSTANCE_PATTERN = "@service_instance@";
     public static final String URL_PATTERN = "@url@";
+    public static final String YML_SUFFIX = ".yml";
 }

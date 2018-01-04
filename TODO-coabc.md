@@ -17,21 +17,25 @@
         
    
 - cassandra processor: 
-    - triggers new bosh deployment: writes paas-template/paas-secret
-        - checks prerequisites (root deployment, model deployment, ...)
-        - generates paas-secrets structure (directory and files)
-        - generates paas-template structure (directory, files and symbolic links) and adapts content
-        - improves tests readability (JUnit rules)
-        - improves tests coverage (file content)
-    
-    - tracks completion of bosh deployment: watches rendered manifest file 
+    - generates new bosh deployment: writes paas-template/paas-secrets (*Generator classes)
+        - improve tests readability (JUnit rules)
+        - improve tests coverage (file content)
+        - improve consistency between secrets and template (files vs symbolic links)
+        - bean spring ?
+
+    - removes bosh deployment: deletes paas-secrets (*Generator classes)
+   
+    - tracks completion of bosh deployment: watches rendered manifest file (PipelineCompletionTracker class) 
+        - bean spring ?
+
+
     - IT with paas-template/paas-secret: Inspired from GitIT
     - (later once broker password are specific to each instance): specify credhub keys to fetch broker password 
-       - woarkaround: broker password passed to coab as env in its manifest.yml
+       - workaround: broker password passed to coab as env in its manifest.yml
 
 - cassandra service broker:
     - inspired from CloudFlareBrokerApplication
-    - CassandraServiceProvisionningTest inspired from CloudFlareServiceProvisionningTest. Potentially simulating concourse observable side effects in git, by driving the embedded GitServer
+    - CassandraServiceProvisioningTest inspired from CloudFlareServiceProvisioningTest. Potentially simulating concourse observable side effects in git, by driving the embedded GitServer
 
 - git processor
     - implement caching:

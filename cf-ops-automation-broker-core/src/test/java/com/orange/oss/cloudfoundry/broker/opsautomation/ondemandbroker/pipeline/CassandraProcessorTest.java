@@ -18,57 +18,52 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.HashMap;
+import java.util.Map;
 
 import static junit.framework.TestCase.assertTrue;
 
-@RunWith(MockitoJUnitRunner.class)
 public class CassandraProcessorTest {
 
     private static final Logger logger = LoggerFactory.getLogger(CassandraProcessorTest.class);
-
-    private final static String ROOT_DEPLOYMENT = "coab-depls";
+    public static final String SERVICE_INSTANCE_ID = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa0";
 
     @Test
-    @Ignore
-    public void shouldCreateDeploymentFolders() {
-
+    public void creates_structures_and_returns_response() {
+        //TODO
         //Given
-        String tmpdir = System.getProperty("java.io.tmpdir");
-        System.out.println("The default value of the java.io.tmpdir system property is: \"" + tmpdir + "\"\n");
-
-        Path workDir = null;
-        try {
-            Context ctx = new Context();
-            workDir = Files.createTempDirectory("paas-secrets");
-            ctx.contextKeys.put(GitProcessorContext.workDir.toString(),workDir);
-            CreateServiceInstanceRequest request = new CreateServiceInstanceRequest("service_definition_id",
-                    "plan_id",
-                    "org_id",
-                    "space_id",
-                    null
-            );
-            request.withServiceInstanceId("guid");
-
-            //and the context being injected to a cloudflare processor
-            ctx.contextKeys.put(ProcessorChainServiceInstanceService.CREATE_SERVICE_INSTANCE_REQUEST, request);
-
-            File deploymentDirectory=new File(String.valueOf(workDir)+"/"+ ROOT_DEPLOYMENT +"/"+ "cassandra_" + "guid");
-            File deploymentSecretsDirectory=new File(String.valueOf(workDir)+"/"+ ROOT_DEPLOYMENT +"/"+ "cassandra_" + "guid" +"/" + "secrets");
-
-
-            CassandraProcessor cassandraProcessor = new CassandraProcessor();
-
-            //When
-            cassandraProcessor.preCreate(ctx);
-
-            //Then
-            assertTrue(deploymentDirectory.exists());
-
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-
+        //When
+        //Then
     }
+
+    @Test
+    public void responds_to_get_last_service_operation() {
+        //TODO
+        //Given
+        //When
+        //Then
+    }
+
+
+    private Context aContextWithCreateRequest(String key, String value) {
+        Map<String, Object> parameters = new HashMap<>();
+        parameters.put(key, value);
+        CreateServiceInstanceRequest request = new CreateServiceInstanceRequest("service_definition_id",
+                "plan_id",
+                "org_id",
+                "space_id",
+                parameters
+        );
+        request.withServiceInstanceId(SERVICE_INSTANCE_ID);
+        Context context = new Context();
+        context.contextKeys.put(ProcessorChainServiceInstanceService.CREATE_SERVICE_INSTANCE_REQUEST, request);
+        return context;
+    }
+
+    private Context aContextWithOperationRequest(String key, String value) {
+        //TODO
+        return null;
+    }
+
+
 }

@@ -21,9 +21,6 @@ public class PipelineCompletionTrackerTest {
     public static final String SERVICE_INSTANCE_ID = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa0";
     public static final String REPOSITORY_DIRECTORY = "paas-secrets";
     public static final String ZONE = "Europe/Paris";
-    public static final String CREATE_OPERATION = "create";
-    public static final String DELETE_OPERATION = "delete";
-
 
     @Test
     public void returns_succeeded_state_if_manifest_is_present_and_last_operation_is_create(){
@@ -41,7 +38,7 @@ public class PipelineCompletionTrackerTest {
 
             //When
             PipelineCompletionTracker tracker = new PipelineCompletionTracker(clock, workDir, SERVICE_INSTANCE_ID);
-            GetLastServiceOperationResponse response = tracker.getDeploymentExecStatus(CREATE_OPERATION);
+            GetLastServiceOperationResponse response = tracker.getDeploymentExecStatus(CassandraProcessorConstants.OSB_OPERATION_CREATE);
 
             //Then
             Assertions.assertThat(response.getState()).isEqualTo(OperationState.SUCCEEDED);
@@ -60,7 +57,7 @@ public class PipelineCompletionTrackerTest {
 
             //When
             PipelineCompletionTracker tracker = new PipelineCompletionTracker(clock, workDir, SERVICE_INSTANCE_ID);
-            GetLastServiceOperationResponse response = tracker.getDeploymentExecStatus(CREATE_OPERATION);
+            GetLastServiceOperationResponse response = tracker.getDeploymentExecStatus(CassandraProcessorConstants.OSB_OPERATION_CREATE);
 
             //Then
             Assertions.assertThat(response.getState()).isEqualTo(OperationState.IN_PROGRESS);
@@ -81,7 +78,7 @@ public class PipelineCompletionTrackerTest {
 
             //When
             PipelineCompletionTracker tracker = new PipelineCompletionTracker(clock, workDir, SERVICE_INSTANCE_ID);
-            GetLastServiceOperationResponse response = tracker.getDeploymentExecStatus(DELETE_OPERATION);
+            GetLastServiceOperationResponse response = tracker.getDeploymentExecStatus(CassandraProcessorConstants.OSB_OPERATION_DELETE);
 
             //Then
             Assertions.assertThat(response.getState()).isEqualTo(OperationState.SUCCEEDED);
@@ -109,7 +106,7 @@ public class PipelineCompletionTrackerTest {
 
             //When
             PipelineCompletionTracker tracker = new PipelineCompletionTracker(clock, workDir, SERVICE_INSTANCE_ID);
-            GetLastServiceOperationResponse response = tracker.getDeploymentExecStatus(DELETE_OPERATION);
+            GetLastServiceOperationResponse response = tracker.getDeploymentExecStatus(CassandraProcessorConstants.OSB_OPERATION_DELETE);
 
             //Then
             Assertions.assertThat(response.getState()).isEqualTo(OperationState.IN_PROGRESS);

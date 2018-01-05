@@ -20,10 +20,6 @@ public class PipelineCompletionTracker {
     protected Clock clock;
     protected Path workDir;
     protected String serviceInstanceId;
-    private static final String CREATE = "create";
-    private static final String DELETE = "delete";
-    private static final String UPDATE = "update";
-
 
     public PipelineCompletionTracker(Clock clock, Path workDir, String serviceInstanceId) {
         this.clock = clock;
@@ -39,7 +35,7 @@ public class PipelineCompletionTracker {
         boolean isTargetManifestFilePresent = Files.exists(targetManifestFile);
 
         GetLastServiceOperationResponse response = new GetLastServiceOperationResponse();
-        if (CREATE.equals(lastServiceOperation)){
+        if (CassandraProcessorConstants.OSB_OPERATION_CREATE.equals(lastServiceOperation)){
             if (isTargetManifestFilePresent){
                 response.withOperationState(OperationState.SUCCEEDED);
                 response.withDescription("Creation is succeeded");
@@ -48,10 +44,10 @@ public class PipelineCompletionTracker {
                 response.withDescription("Creation is in progress");
             }
 
-        }else if (UPDATE.equals(lastServiceOperation)){
+        }else if (CassandraProcessorConstants.OSB_OPERATION_UPDATE.equals(lastServiceOperation)){
             //Don't know what to do
 
-        }else if (DELETE.equals(lastServiceOperation)) {
+        }else if (CassandraProcessorConstants.OSB_OPERATION_DELETE.equals(lastServiceOperation)) {
             if (isTargetManifestFilePresent){
                 response.withOperationState(OperationState.IN_PROGRESS);
                 response.withDescription("Deletion is in progress");

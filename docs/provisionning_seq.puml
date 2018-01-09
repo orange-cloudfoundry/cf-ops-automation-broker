@@ -16,18 +16,18 @@ participant "ProcessorChain\nServiceInstanceService" as PCSIS
 PCSIS -> PCSIS: preCreate(): CSIReq
 StaticGitRepoSelector -> GitProcessor: clone git repos \ncreate branch si_guid
 GitProcessor -> GitProcessor: preCreate: clone, checkout
-GitProcessor -> TemplateProcessor: clone avail in workDir
-TemplateProcessor -> TemplateProcessor: preCreate: write files\n in workdir
+GitProcessor -> CassandraProcessor: clone avail in workDir
+CassandraProcessor -> CassandraProcessor: preCreate: write files\n in workdir
 note right
     See GitIT
 end note
 participant "OsbContext\nPersistenceProcessor" as OsbContextPersistence
-TemplateProcessor -> OsbContextPersistence: preCreate:\n persist timestamp + CSIReq
-TemplateProcessor <- OsbContextPersistence: postCreate:\n OSB last operation=\n timestamp + CSIReq
+CassandraProcessor -> OsbContextPersistence: preCreate:\n persist timestamp + CSIReq
+CassandraProcessor <- OsbContextPersistence: postCreate:\n OSB last operation=\n timestamp + CSIReq
 GitProcessor -> GitProcessor: postCreate(): push files from workDir
-TemplateProcessor <- TemplateProcessor: postCreate(): CSIResp: 201 accepted,  \nlast operation
+CassandraProcessor <- CassandraProcessor: postCreate(): CSIResp: 201 accepted,  \nlast operation
 PCSIS <- PCSIS: postCreate(): send CSIResp
-participant "BoshDeployment\nCompletionProcessor" as BoshDeploymentCompletionProcessor
+participant "Pipeline\nCompletionTracker" as BoshDeploymentCompletionProcessor
 PCSIS -> PCSIS: preGetLastOperation(): GLSOReq
 OsbContextPersistence -> OsbContextPersistence: preGetLastOp:\n timestamp+\nCISReq
 GitProcessor -> GitProcessor: preGetLastOperation: clone, checkout\npull manifest from git

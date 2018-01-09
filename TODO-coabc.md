@@ -1,3 +1,34 @@
+- rebase and merge PR
+
+- Release on-demand cassandra bosh deployment
+    - Cassandra Processor:
+       - implement timeout support: store timestamp in last operation. 
+    - CassandraBrokerApplication:
+        - inspired from CloudFlareBrokerApplication:
+           - BoshDeploymentProperties: path     
+        - CassandraServiceProvisioningTest inspired from CloudFlareServiceProvisioningTest. 
+           - Potentially simulating concourse observable side effects in git, by driving the embedded GitServer
+    - mvn release / github release
+    - automate broker deployment in paas-template from binary in github release
+    
+- Implement OSB provision delegation to nested cassandra broker
+   - store full OSB request in operation field
+   - refine CassandraProcessor to call OSB client create/delete/bind/unbind
+      - refine PipelineCompletionTracker
+      - add component to map OSB request (serviceid, planid, in future strip out some arbitrary params)
+
+- Implement OSB binding delegation to nested cassandra broker
+   - core framework: create/delete service binding 
+
+
+
+
+--------------------------------
+
+- Refactor to generalize to another deployment (e.g. mysql)
+   - convert constants from CassandraProcessorConstants into Properties
+   
+
 
 - brainstorm alternative design than Processor chain.
    - Identified weaknesses:
@@ -33,10 +64,6 @@
     - (later once broker password are specific to each instance): specify credhub keys to fetch broker password 
        - workaround: broker password passed to coab as env in its manifest.yml
 
-- cassandra service broker:
-    - inspired from CloudFlareBrokerApplication
-    - CassandraServiceProvisioningTest inspired from CloudFlareServiceProvisioningTest. Potentially simulating concourse observable side effects in git, by driving the embedded GitServer
-
 - git processor
     - implement caching:
         pull --rebase instead of clone
@@ -67,10 +94,6 @@
         pushes response in the context
 
     - osb client
-        - move feign out of broker-core into its own module
-           - understand why @Import(FeignClientsConfiguration.class) can't seem to take effect when specified in OsbClientFeignConfig (and only observed to work when specified in the springbootapp) + fix related failed tests https://circleci.com/gh/orange-cloudfoundry/cf-ops-automation-broker/326
-
-           - more generally take appart broker-core into smaller units
         - fix depreciation 
             Warning:(93, 17) java: sslSocketFactory(javax.net.ssl.SSLSocketFactory) in okhttp3.OkHttpClient.Builder has been deprecated
                Actually check whether okHttpClient support for self signed certs and http proxy is still usefull, otherwise remove it
@@ -78,8 +101,6 @@
      
 - credhub write support
 
-
-- core framework: create/delete service binding 
 
 - osb processor: create/delete service binding
 

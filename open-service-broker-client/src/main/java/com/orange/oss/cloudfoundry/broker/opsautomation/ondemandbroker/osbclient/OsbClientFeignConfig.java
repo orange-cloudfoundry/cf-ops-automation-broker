@@ -21,8 +21,10 @@ import feign.Feign;
 import feign.Logger;
 import feign.okhttp.OkHttpClient;
 import feign.slf4j.Slf4jLogger;
+import org.springframework.cloud.netflix.feign.FeignClientsConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
 
 /**
  * Overrides  {@link <a href="http://projects.spring.io/spring-cloud/spring-cloud.html#spring-cloud-feign">Feign</a>} Defaults
@@ -31,6 +33,7 @@ import org.springframework.context.annotation.Configuration;
  * @author Sebastien Bortolussi
  */
 @Configuration
+@Import(FeignClientsConfiguration.class)
 public class OsbClientFeignConfig {
 
     @Bean

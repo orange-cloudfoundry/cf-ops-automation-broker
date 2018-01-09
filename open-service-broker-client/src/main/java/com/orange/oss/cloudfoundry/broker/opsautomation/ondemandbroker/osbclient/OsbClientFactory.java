@@ -7,6 +7,7 @@ import feign.auth.BasicAuthRequestInterceptor;
 import feign.codec.Decoder;
 import feign.codec.Encoder;
 import okhttp3.OkHttpClient;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
 /**
@@ -25,7 +26,12 @@ public class OsbClientFactory {
     Decoder decoder;
     Contract springMvcContract;
 
-    public OsbClientFactory(Feign.Builder builder, Client client, OkHttpClient okHttpClient, Encoder encoder, Decoder decoder, Contract springMvcContract) {
+    public OsbClientFactory(@Qualifier(value = "customFeignBuilder") Feign.Builder builder,
+                            Client client,
+                            OkHttpClient okHttpClient,
+                            Encoder encoder,
+                            Decoder decoder,
+                            Contract springMvcContract) {
         this.builder = builder;
         this.client = client;
         this.okHttpClient = okHttpClient;

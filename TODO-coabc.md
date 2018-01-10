@@ -1,16 +1,12 @@
 - Release on-demand cassandra bosh deployment
     - Cassandra Processor:
+       - fix parsing of lastoperation field: 
+          - contains  {"lastOperationDate":"2017-11-14T17:24:08.007Z","operation":"create"}
+          - expects create or update or delete 
        - implement timeout support: store timestamp in last operation. 
-    - CassandraBrokerApplication:
-        - inspired from CloudFlareBrokerApplication:
-           - BoshDeploymentProperties: path     
-        - CassandraServiceProvisioningTest inspired from CloudFlareServiceProvisioningTest. 
+     - CassandraServiceProvisioningTest: 
            - Potentially simulating concourse observable side effects in git, by driving the embedded GitServer
-              - set up paas-template prereqs. 
-                 - manually in the test ?
-                 - by including a public extract of paas-template on github ?
-                    - requires http-proxy support in GitProcessor to be able to run this from our desktops 
-    - mvn release / github release
+- mvn release / github release
     - automate broker deployment in paas-template from binary in github release
     
 - Implement OSB provision delegation to nested cassandra broker

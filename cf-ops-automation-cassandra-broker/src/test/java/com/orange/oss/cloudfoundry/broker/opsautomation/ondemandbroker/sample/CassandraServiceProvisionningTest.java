@@ -74,6 +74,7 @@ public class CassandraServiceProvisionningTest {
         };
         gitServer.startEphemeralReposServer(initPaasSecret);
         gitServer.initRepo("paas-template.git", this::initPaasTemplate);
+        gitServer.initRepo("paas-secrets.git", this::initPaasSecret);
     }
 
     public void initPaasTemplate(Git git) {
@@ -86,9 +87,41 @@ public class CassandraServiceProvisionningTest {
 
             //root deployment
             Path coabDepls = gitWorkDir.toPath().resolve(CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY);
-            createDir(coabDepls);
             //sub deployments
-            createDir(coabDepls.resolve(CassandraProcessorConstants.MODEL_DEPLOYMENT_DIRECTORY));
+            Path templateDir = coabDepls
+                    .resolve(CassandraProcessorConstants.MODEL_DEPLOYMENT_DIRECTORY)
+                    .resolve(CassandraProcessorConstants.TEMPLATE_DIRECTORY);
+            createDir(templateDir);
+            createDummyFile(templateDir.resolve(CassandraProcessorConstants.MODEL_MANIFEST_FILENAME));
+            createDummyFile(templateDir.resolve(CassandraProcessorConstants.MODEL_VARS_FILENAME));
+
+            AddCommand addC = git.add().addFilepattern(".");
+            addC.call();
+
+// potentially submodule public template extract
+//            git.submoduleInit().call();
+//            git.submoduleAdd().setPath("bosh-deployment").setURI(GIT_BASE_URL + "bosh-deployment.git").call();
+//            git.submoduleAdd().setPath("mysql-deployment").setURI(GIT_BASE_URL + "mysql-deployment").call();
+            git.commit().setMessage("CassandraServiceProvisionningTest#startGitServer").call();
+
+            git.checkout().setName("master").call();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public void initPaasSecret(Git git) {
+        File gitWorkDir = git.getRepository().getDirectory().getParentFile();
+        try {
+            git.commit().setMessage("Initial empty repo setup").call();
+
+            //root deployment
+            Path coabDepls = gitWorkDir.toPath().resolve(CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY);
+            //sub deployments
+            Path templateDir = coabDepls
+                    .resolve(CassandraProcessorConstants.MODEL_DEPLOYMENT_DIRECTORY)
+                    .resolve(CassandraProcessorConstants.TEMPLATE_DIRECTORY);
+            createDir(templateDir);
 
             AddCommand addC = git.add().addFilepattern(".");
             addC.call();
@@ -112,6 +145,14 @@ public class CassandraServiceProvisionningTest {
             writer.write("Please keep me");
         }
     }
+
+    public static void createDummyFile(Path path) throws IOException {
+        try (Writer writer = new FileWriter(path.toFile())) {
+            writer.write("dummy content");
+        }
+    }
+
+
 
     @After
     public void stopGitServer() throws InterruptedException {

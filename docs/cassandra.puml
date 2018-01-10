@@ -1,0 +1,55 @@
+@startuml
+
+[*] --> BoshDeploymentCreation: [OSB create-service-instance] 
+
+state BoshDeploymentCreation {
+    [*] -> CR.Deploying : / write templates
+    CR.Deploying -down-> CR.Deployed: [manifest generation observed] 
+    CR.Deployed -down-> SyncServiceInstanceProvisioning: [sync supported]
+    CR.Deployed -down-> ASyncServiceInstanceProvisioning: [async supported]
+    CR.Deploying -down-> CR.Timeout
+}
+
+state SyncServiceInstanceProvisioning {
+    [*] -> Idle: /OSB call create-service-instance\n [success] /OSB response: created
+    [*] -> Idle: /OSB call create-service-instance\n [failed] /OSB response: failed
+}
+state ASyncServiceInstanceProvisioning {
+    [*] -> ASP.Creating: /OSB call create-service-instance
+    ASP.Creating -> ASP.Creating: /OSB call: get-last-operation [created]
+    ASP.Creating -> ASP.Creating: /OSB call: get-last-operation [pending]
+    ASP.Creating -down-> Idle: /OSB response: created
+    ASP.Creating -down-> Idle: /OSB response: failed
+}
+
+state Idle {
+}
+
+Idle -down-> SyncServiceInstanceBinding: [OSB bind]
+
+Idle -down-> BoshDeploymentUpdate: [OSB update]
+state BoshDeploymentUpdate {
+    [*] -> UP.Deploying : / write templates
+    UP.Deploying -down-> UP.Deployed: [manifest update observed] 
+    UP.Deployed -down-> ServiceInstanceUpdating  
+    UP.Deploying -down-> UP.Timeout
+}
+
+state ServiceInstanceUpdating {
+    [*] -> SP.Updating 
+    SP.Updating -> SP.Updating: /OSB call: get-last-operation [created] 
+    SP.Updating -> SP.Updating: /OSB call: get-last-operation [pending] 
+    SP.Updating -down-> Idle: /OSB response: updated
+    SP.Updating -down-> Idle: /OSB response: failed 
+}
+
+
+Idle -down-> ServiceInstanceUnBinding: [OSB unbind]
+Idle -down-> ServiceInstanceDeProvisionning: [OSB delete]
+ServiceInstanceDeProvisionning -down-> BoshDeploymentDeletion
+state BoshDeploymentDeletion {
+    [*] -> Idle: / remove templates\nfrom git
+} 
+BoshDeploymentDeletion -down-> [*] 
+
+@enduml

@@ -10,12 +10,13 @@ public interface BrokerProcessor {
 
 	void preBind(Context ctx);
 	void postBind(Context ctx);
-	
-	
-	void preDelete(Context ctx);
-	void postDelete(Context ctx);
-	
+
 	void preUnBind(Context ctx);
 	void postUnBind(Context ctx);
-	
+
+	void preUpdate(Context ctx);
+	void postUpdate(Context ctx);
+
+	void preDelete(Context ctx);
+	void postDelete(Context ctx);
 }

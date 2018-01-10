@@ -14,6 +14,7 @@ import org.springframework.cloud.servicebroker.model.*;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 import static org.fest.assertions.Assertions.assertThat;
@@ -124,7 +125,9 @@ public class ProcessorChainServiceInstanceServiceTest {
 
         //then call is properly chained
         ArgumentCaptor<Context> argument = ArgumentCaptor.forClass(Context.class);
-        Assertions.assertThat(response).isEqualTo(new GetLastServiceOperationResponse());
+        GetLastServiceOperationResponse expected = new GetLastServiceOperationResponse();
+        expected.withOperationState(OperationState.SUCCEEDED);
+        Assertions.assertThat(response).isEqualTo(expected);
         Mockito.verify(processorChain).getLastOperation(argument.capture());
 
         //and context is populated with the request
@@ -208,6 +211,58 @@ public class ProcessorChainServiceInstanceServiceTest {
 
         //when
         DeleteServiceInstanceResponse response = processorChainServiceInstanceService.deleteServiceInstance(request);
+
+        //then
+        Assertions.assertThat(response).isEqualTo(customResponse);
+    }
+
+    @Test
+    public void should_chain_update_processors_on_service_instance_update() throws Exception {
+        //given
+        UpdateServiceInstanceRequest request = new UpdateServiceInstanceRequest(
+                "service_id",
+                "plan_id",
+                new HashMap<>());
+
+        //when
+        UpdateServiceInstanceResponse response = processorChainServiceInstanceService.updateServiceInstance(request);
+
+        //then call is properly chained
+        ArgumentCaptor<Context> argument = ArgumentCaptor.forClass(Context.class);
+        Assertions.assertThat(response).isEqualTo(new UpdateServiceInstanceResponse());
+        Mockito.verify(processorChain).update(argument.capture());
+
+        //and context is populated with the request
+        Context ctx=argument.getValue();
+        assertThat(ctx.contextKeys.get(ProcessorChainServiceInstanceService.UPDATE_SERVICE_INSTANCE_REQUEST)).isEqualTo(request);
+
+    }
+
+    @Test
+    public void should_use_update_response_from_context_when_set() {
+        //given
+        UpdateServiceInstanceRequest request = new UpdateServiceInstanceRequest(
+                "service_id",
+                "plan_id",
+                new HashMap<>());
+
+        //given a processor that generates a response into the context
+        final UpdateServiceInstanceResponse customResponse = new UpdateServiceInstanceResponse()
+                .withAsync(true)
+                .withOperation("state");
+
+        BrokerProcessor processor = new DefaultBrokerProcessor() {
+            @Override
+            public void preUpdate(Context ctx) {
+                ctx.contextKeys.put(ProcessorChainServiceInstanceService.UPDATE_SERVICE_INSTANCE_RESPONSE, customResponse);
+            }
+        };
+        processorChain = aProcessorChain(processor);
+        processorChainServiceInstanceService = new ProcessorChainServiceInstanceService(processorChain);
+
+
+        //when
+        UpdateServiceInstanceResponse response = processorChainServiceInstanceService.updateServiceInstance(request);
 
         //then
         Assertions.assertThat(response).isEqualTo(customResponse);

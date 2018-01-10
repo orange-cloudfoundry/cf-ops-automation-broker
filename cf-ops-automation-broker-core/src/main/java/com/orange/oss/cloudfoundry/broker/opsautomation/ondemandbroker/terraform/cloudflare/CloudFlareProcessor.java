@@ -14,6 +14,9 @@ import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 
+import static com.orange.oss.ondemandbroker.ProcessorChainServiceInstanceService.OSB_PROFILE_ORGANIZATION_GUID;
+import static com.orange.oss.ondemandbroker.ProcessorChainServiceInstanceService.OSB_PROFILE_SPACE_GUID;
+
 /**
  *
  */
@@ -78,14 +81,29 @@ public class CloudFlareProcessor extends DefaultBrokerProcessor {
     }
 
     public ImmutableTerraformModule constructModule(CreateServiceInstanceRequest request) {
-        //noinspection deprecation
+        String orgGuid = null;
+        if (request.getContext() != null) {
+            orgGuid = (String) request.getContext().getProperty(OSB_PROFILE_ORGANIZATION_GUID);
+        }
+        if (orgGuid == null) {
+            //noinspection deprecation
+            orgGuid = request.getOrganizationGuid();
+        }
+        String spaceGuid = null;
+        if (request.getContext() != null) {
+            spaceGuid = (String) request.getContext().getProperty(OSB_PROFILE_SPACE_GUID);
+        }
+        if (spaceGuid == null) {
+            //noinspection deprecation
+            spaceGuid = request.getSpaceGuid();
+        }
         return ImmutableTerraformModule.builder()
                 .from(cloudFlareConfig.getTemplate())
                 .moduleName(request.getServiceInstanceId())
-                .putProperties("org_guid", request.getOrganizationGuid())
+                .putProperties("org_guid", orgGuid)
                 .putProperties(ROUTE_PREFIX, (String) request.getParameters().get(ROUTE_PREFIX))
                 .putProperties("service_instance_guid", request.getServiceInstanceId())
-                .putProperties("space_guid", request.getSpaceGuid())
+                .putProperties("space_guid", spaceGuid)
                 .outputs(new HashMap<>()) //clear sample outputs
                 .putOutputs(
                         request.getServiceInstanceId() + ".started",

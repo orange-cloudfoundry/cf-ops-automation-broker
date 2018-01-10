@@ -29,11 +29,14 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Consumer;
 
+import static com.orange.oss.ondemandbroker.ProcessorChainServiceInstanceService.OSB_PROFILE_ORGANIZATION_GUID;
+import static com.orange.oss.ondemandbroker.ProcessorChainServiceInstanceService.OSB_PROFILE_SPACE_GUID;
 import static io.restassured.RestAssured.basic;
 import static io.restassured.RestAssured.given;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
+import static org.springframework.cloud.servicebroker.model.CloudFoundryContext.CLOUD_FOUNDRY_PLATFORM;
 
 /**
  * Will detect all components present in classpath, including CloudFlareBrokerApplication
@@ -96,10 +99,19 @@ public class CloudFlareServiceProvisionningTest {
 
         Map<String, Object> params = new HashMap<>();
         params.put("route-prefix", "a-valid-route");
+
+        Map<String, Object> contextProperties = new HashMap<>();
+        contextProperties.put(OSB_PROFILE_ORGANIZATION_GUID, "org_id");
+        contextProperties.put(OSB_PROFILE_SPACE_GUID, "space_id");
+        org.springframework.cloud.servicebroker.model.Context createServiceInstanceContext = new org.springframework.cloud.servicebroker.model.Context(
+                CLOUD_FOUNDRY_PLATFORM,
+                contextProperties
+        );
         CreateServiceInstanceRequest request = new CreateServiceInstanceRequest("cloudflare-route",
                 "cloudflare-default",
                 "org_id",
                 "space_id",
+                createServiceInstanceContext,
                 params
         );
 

@@ -1,0 +1,44 @@
+@startuml
+' - static git repo selector processor: specifies expected git repos, and branches
+' - dynamic git repo selector processor: specifies expected git repos, and branches (from OSB service instance guid)
+' - cassandra deployment templates processor: generates/updates/deletes files following create/update/delete OSB key in context
+' - bosh deployment completion processor:
+'    - observe bosh deployment completion (through manifest.yml)
+'    - write OSB failed async create/update/delete response on timeout
+' - cassandra service broker processor: maps ingress OSB request to egress OSB requests
+' - git processor
+' - credhub processor
+' - sync osb processor: make sync OSB
+' - osb async operation context persistence processor: mux/demux state (creation time, request) into OSB operation field
+' ProcessorChainServiceInstanceService = PCSIS
+
+participant "ProcessorChain\nServiceInstanceService" as PCSIS
+PCSIS -> PCSIS: preCreate(): CSIReq
+StaticGitRepoSelector -> GitProcessor: clone git repos \ncreate branch si_guid
+GitProcessor -> GitProcessor: preCreate: clone, checkout
+GitProcessor -> CassandraProcessor: clone avail in workDir
+CassandraProcessor -> CassandraProcessor: preCreate: write files\n in workdir
+note right
+    See GitIT
+end note
+participant "OsbContext\nPersistenceProcessor" as OsbContextPersistence
+CassandraProcessor -> OsbContextPersistence: preCreate:\n persist timestamp + CSIReq
+CassandraProcessor <- OsbContextPersistence: postCreate:\n OSB last operation=\n timestamp + CSIReq
+GitProcessor -> GitProcessor: postCreate(): push files from workDir
+CassandraProcessor <- CassandraProcessor: postCreate(): CSIResp: 201 accepted,  \nlast operation
+PCSIS <- PCSIS: postCreate(): send CSIResp
+participant "Pipeline\nCompletionTracker" as BoshDeploymentCompletionProcessor
+PCSIS -> PCSIS: preGetLastOperation(): GLSOReq
+OsbContextPersistence -> OsbContextPersistence: preGetLastOp:\n timestamp+\nCISReq
+GitProcessor -> GitProcessor: preGetLastOperation: clone, checkout\npull manifest from git
+participant "Cassandra\nBrokerProcessor" as CassBrokerProcessor
+BoshDeploymentCompletionProcessor ->BoshDeploymentCompletionProcessor : postGetLastOp:\n [check manifest in workdir]
+BoshDeploymentCompletionProcessor <- BoshDeploymentCompletionProcessor:  GLSOResp \noperation=create\nstate=in-progress
+CassBrokerProcessor -> CassBrokerProcessor: preGetLastOp:\n- map CISReq \nto broker CISReq\n- set Feign client Url
+participant "Sync\nOSBProcessor" as OSBProcessor
+OSBProcessor -> OSBProcessor: pre*:\n-create FeignClient\n-send broker CISReq async\n-save broker CISResp
+CassBrokerProcessor -> CassBrokerProcessor: postGetLastOp:\n-map broker CISResp\n to GLSOResp\n\nGLSOResp \noperation=create\nstate=in-progress
+PCSIS <- PCSIS:  return GLSOResp
+
+
+@enduml

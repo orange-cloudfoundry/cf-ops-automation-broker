@@ -17,7 +17,6 @@ public class DefaultBrokerProcessor implements BrokerProcessor {
 	@Override
 	public void preCreate(Context ctx) {
 		logger.debug("noop default preCreate");
-		
 	}
 
 	@Override
@@ -33,41 +32,45 @@ public class DefaultBrokerProcessor implements BrokerProcessor {
 	@Override
 	public void postCreate(Context ctx) {
 		logger.debug("noop default postCreate");
-		
 	}
 
 	@Override
 	public void preBind(Context ctx) {
 		logger.debug("noop default preBind");
-		
 	}
 
 	@Override
 	public void postBind(Context ctx) {
 		logger.debug("noop default postBind");
-		
 	}
 
 	@Override
 	public void preDelete(Context ctx) {
-		logger.debug("noop default preDelete");		
+		logger.debug("noop default preDelete");
 	}
 
 	@Override
 	public void postDelete(Context ctx) {
 		logger.debug("noop default postDelete");
-		
 	}
 
 	@Override
 	public void preUnBind(Context ctx) {
 		logger.debug("noop default preUnbind");
-		
 	}
 
 	@Override
 	public void postUnBind(Context ctx) {
 		logger.debug("noop default postUnbind");
-		
+	}
+
+	@Override
+	public void preUpdate(Context ctx) {
+		logger.debug("noop default preUpdate");
+	}
+
+	@Override
+	public void postUpdate(Context ctx) {
+		logger.debug("noop default postUpdate");
 	}
 }

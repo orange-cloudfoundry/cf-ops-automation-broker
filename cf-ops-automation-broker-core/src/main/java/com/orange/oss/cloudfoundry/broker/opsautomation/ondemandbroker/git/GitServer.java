@@ -53,6 +53,29 @@ public class GitServer {
         this.server.start();
     }
 
+
+    public Repository initRepo(String name, Consumer<Git> repoInitializer) {
+        Repository repo = repositories.get(name);
+        if (repo == null) {
+            try {
+                Path workDir = Files.createTempDirectory("GitTestSetup");
+                //Note: we use local disk because RepositoryBuilder does the heavy lifting of repository init
+                //and we can debug using local disk more easily if needed
+                repo = FileRepositoryBuilder.create(new File(workDir.resolve(name).toFile(), ".git"));
+                repo.create();
+                Git git = new Git(repo);
+
+                repoInitializer.accept(git);
+
+                git.close();
+                repositories.put(name, repo);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
+        return repo;
+    }
+
     public void stopAndCleanupReposServer() throws InterruptedException {
         cleanUpRepos();
         this.server.stopAndWait();
@@ -65,14 +88,14 @@ public class GitServer {
         }
         repositories.clear();
     }
-
     private final class RepositoryResolverImplementation implements
             RepositoryResolver<DaemonClient> {
 
+
         Consumer<Git> repoInitStep;
 
-        public RepositoryResolverImplementation(Consumer<Git> repoInitStep) {
-            this.repoInitStep = repoInitStep;
+        public RepositoryResolverImplementation(Consumer<Git> clientRepoInitStep) {
+            this.repoInitStep = ((Consumer<Git>) this::addInitialCommit).andThen(clientRepoInitStep);
         }
 
         @Override
@@ -80,26 +103,8 @@ public class GitServer {
                 throws RepositoryNotFoundException,
                 ServiceNotAuthorizedException, ServiceNotEnabledException,
                 ServiceMayNotContinueException {
-            Repository repo = repositories.get(name);
-            if (repo == null) {
-                try {
-                    Path workDir = Files.createTempDirectory("GitTestSetup");
-                    //Note: we use local disk because RepositoryBuilder does the heavy lifting of repository init
-                    //and we can debug using local disk more easily if needed
-                    repo = FileRepositoryBuilder.create(new File(workDir.resolve(name).toFile(), ".git"));
-                    repo.create();
-                    Git git = new Git(repo);
-
-                    Consumer<Git> combinedConsumer = repoInitStep.andThen(this::addInitialCommit);
-                    combinedConsumer.accept(git);
-
-                    git.close();
-                    repositories.put(name, repo);
-                } catch (Exception e) {
-                    throw new RuntimeException();
-                }
-            }
-            return repo;
+            Consumer<Git> repoInitSteps = repoInitStep;
+            return GitServer.this.initRepo(name, repoInitSteps);
         }
 
         /**

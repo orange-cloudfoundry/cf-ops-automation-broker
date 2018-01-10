@@ -23,12 +23,15 @@ import java.time.ZoneId;
 import java.util.HashMap;
 import java.util.Map;
 
+import static com.orange.oss.ondemandbroker.ProcessorChainServiceInstanceService.OSB_PROFILE_ORGANIZATION_GUID;
+import static com.orange.oss.ondemandbroker.ProcessorChainServiceInstanceService.OSB_PROFILE_SPACE_GUID;
 import static org.fest.assertions.Assertions.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.cloud.servicebroker.model.CloudFoundryContext.CLOUD_FOUNDRY_PLATFORM;
 import static org.springframework.cloud.servicebroker.model.OperationState.IN_PROGRESS;
 
 /**
@@ -176,10 +179,20 @@ public class CloudFlareProcessorTest {
         //given a user request with a route
         Map<String, Object> parameters = new HashMap<>();
         parameters.put(CloudFlareProcessor.ROUTE_PREFIX, "avalidroute");
-        CreateServiceInstanceRequest request = new CreateServiceInstanceRequest("service_definition_id",
+
+        Map<String, Object> contextProperties = new HashMap<>();
+        contextProperties.put(OSB_PROFILE_ORGANIZATION_GUID, "org_id");
+        contextProperties.put(OSB_PROFILE_SPACE_GUID, "space_id");
+        org.springframework.cloud.servicebroker.model.Context createServiceInstanceContext = new org.springframework.cloud.servicebroker.model.Context(
+                CLOUD_FOUNDRY_PLATFORM,
+                contextProperties
+        );
+        CreateServiceInstanceRequest request = new CreateServiceInstanceRequest(
+                "service_definition_id",
                 "plan_id",
                 "org_id",
                 "space_id",
+                createServiceInstanceContext,
                 parameters
         );
         request.withServiceInstanceId("serviceinstance_guid");

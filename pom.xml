@@ -13,7 +13,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>1.5.6.RELEASE</version>
+        <version>1.5.9.RELEASE</version>
         <relativePath /> <!-- lookup parent from repository -->
     </parent>
 
@@ -50,6 +50,8 @@
         <module>cf-ops-automation-broker-framework</module>
         <module>cf-ops-automation-sample-broker</module>
         <module>cf-ops-automation-cloudflare-broker</module>
+        <module>open-service-broker-client</module>
+        <module>cf-ops-automation-cassandra-broker</module>
         <module>spring-boot-starter-servicebroker-catalog</module>
     </modules>
 
@@ -114,6 +116,13 @@
 
     <dependencyManagement>
         <dependencies>
+            <dependency>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-dependencies</artifactId>
+                <version>Edgware.RELEASE</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
             <dependency>
                 <groupId>org.springframework.cloud</groupId>
                 <artifactId>spring-cloud-cloudfoundry-service-broker</artifactId>

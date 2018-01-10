@@ -1,4 +1,4 @@
-- rebase and merge PR
+- rebase master and merge PR
 
 - Release on-demand cassandra bosh deployment
     - Cassandra Processor:
@@ -12,7 +12,7 @@
     - automate broker deployment in paas-template from binary in github release
     
 - Implement OSB provision delegation to nested cassandra broker
-   - store full OSB request in operation field
+   - store full OSB request in operation field ?
    - refine CassandraProcessor to call OSB client create/delete/bind/unbind
       - refine PipelineCompletionTracker
       - add component to map OSB request (serviceid, planid, in future strip out some arbitrary params)
@@ -26,6 +26,9 @@
 --------------------------------
 
 - Refactor to generalize to another deployment (e.g. mysql)
+   - Bosh templates refactoring
+       - static operators instead of cassandra specific operators
+       - propagate OSB data as bosh vars
    - convert constants from CassandraProcessorConstants into Properties
    
 
@@ -82,7 +85,7 @@
    
     - refactor git tests to initialize clones in the gitserver setup rather than using the gitprocessor in the test itself
 
-- osb processor:
+- ~~osb processor:~~
     - waits for a key in context to start in any processorchain method 
         create-service-instance: a spring-cloud-cloudfoundry-service-broker object 
         update-service-instance 
@@ -102,8 +105,8 @@
 - credhub write support
 
 
-- osb processor: create/delete service binding
+- ~~osb processor: create/delete service binding~~
 
-- credhub processor
+- ~~credhub processor~~
     - integration test
 

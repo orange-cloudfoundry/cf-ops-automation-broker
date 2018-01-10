@@ -1,8 +1,12 @@
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.sample;
 
 
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.GitProcessor;
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.GitProcessorContext;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.GitServer;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.CassandraProcessorConstants;
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.PipelineCompletionTracker;
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.Context;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.terraform.TerraformModuleHelper;
 import io.restassured.RestAssured;
 import org.apache.http.HttpStatus;
@@ -13,6 +17,8 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.embedded.LocalServerPort;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.cloud.servicebroker.model.CreateServiceInstanceRequest;
@@ -24,10 +30,13 @@ import java.io.IOException;
 import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Clock;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Consumer;
 
+import static com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.GitServer.NO_OP_INITIALIZER;
+import static com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.sample.CassandraBrokerApplication.SECRETS_REPOSITORY_ALIAS_NAME;
 import static com.orange.oss.ondemandbroker.ProcessorChainServiceInstanceService.OSB_PROFILE_ORGANIZATION_GUID;
 import static com.orange.oss.ondemandbroker.ProcessorChainServiceInstanceService.OSB_PROFILE_SPACE_GUID;
 import static io.restassured.RestAssured.basic;
@@ -44,12 +53,14 @@ import static org.springframework.cloud.servicebroker.model.CloudFoundryContext.
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 public class CassandraServiceProvisionningTest {
 
+    protected static final String SERVICE_INSTANCE_ID = "111";
     @LocalServerPort
     int port;
     GitServer gitServer;
 
-    public static final String GIT_BASE_URL = "git://127.0.0.1:9418/";
-    private static final String GIT_URL = GIT_BASE_URL + "volatile-repo.git";
+    @Autowired
+    @Qualifier(value = "secretsGitProcessor")
+    GitProcessor secretsGitProcessor;
 
     @Before
     public void startHttpClient() {
@@ -72,7 +83,7 @@ public class CassandraServiceProvisionningTest {
                 throw new RuntimeException(e);
             }
         };
-        gitServer.startEphemeralReposServer(initPaasSecret);
+        gitServer.startEphemeralReposServer(NO_OP_INITIALIZER);
         gitServer.initRepo("paas-template.git", this::initPaasTemplate);
         gitServer.initRepo("paas-secrets.git", this::initPaasSecret);
     }
@@ -102,7 +113,7 @@ public class CassandraServiceProvisionningTest {
 //            git.submoduleInit().call();
 //            git.submoduleAdd().setPath("bosh-deployment").setURI(GIT_BASE_URL + "bosh-deployment.git").call();
 //            git.submoduleAdd().setPath("mysql-deployment").setURI(GIT_BASE_URL + "mysql-deployment").call();
-            git.commit().setMessage("CassandraServiceProvisionningTest#startGitServer").call();
+            git.commit().setMessage("CassandraServiceProvisionningTest#initPaasTemplate").call();
 
             git.checkout().setName("master").call();
         } catch (Exception e) {
@@ -130,12 +141,25 @@ public class CassandraServiceProvisionningTest {
 //            git.submoduleInit().call();
 //            git.submoduleAdd().setPath("bosh-deployment").setURI(GIT_BASE_URL + "bosh-deployment.git").call();
 //            git.submoduleAdd().setPath("mysql-deployment").setURI(GIT_BASE_URL + "mysql-deployment").call();
-            git.commit().setMessage("CassandraServiceProvisionningTest#startGitServer").call();
+            git.commit().setMessage("CassandraServiceProvisionningTest#initPaasSecret").call();
 
             git.checkout().setName("master").call();
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public void simulateManifestGeneration(GitProcessor gitProcessor) throws IOException {
+        Context context = new Context();
+        gitProcessor.preCreate(context);
+
+        Path workDirPath = (Path) context.contextKeys.get(SECRETS_REPOSITORY_ALIAS_NAME + GitProcessorContext.workDir.toString());
+        PipelineCompletionTracker tracker = new PipelineCompletionTracker(Clock.systemUTC());
+        Path targetManifestFilePath = tracker.getTargetManifestFilePath(workDirPath, SERVICE_INSTANCE_ID);
+        createDir(targetManifestFilePath.getParent());
+        createDummyFile(targetManifestFilePath);
+
+        gitProcessor.postCreate(context);
     }
 
     public static void createDir(Path dir) throws IOException {
@@ -153,18 +177,20 @@ public class CassandraServiceProvisionningTest {
     }
 
 
-
     @After
     public void stopGitServer() throws InterruptedException {
         gitServer.stopAndCleanupReposServer();
     }
 
     @Test
-    public void supports_crud_lifecycle() {
+    public void supports_crud_lifecycle() throws IOException {
         create_async_service_instance();
-        polls_last_operation("create", HttpStatus.SC_OK, "failed", "timeout");
-        delete_a_service_instance();
-        polls_last_operation("delete", 410, "succeeded", "succeeded");
+        polls_last_operation("create", HttpStatus.SC_OK, "in progress", "Creation is in progress");
+        simulateManifestGeneration(secretsGitProcessor);
+        polls_last_operation("create", HttpStatus.SC_OK, "succeeded", "Creation is succeeded");
+
+//        delete_a_service_instance();
+//        polls_last_operation("delete", 410, "succeeded", "succeeded");
     }
 
 
@@ -193,7 +219,7 @@ public class CassandraServiceProvisionningTest {
                 .contentType("application/json")
                 .body(request).
                 when()
-                .put("/service_instances/{id}", "111").
+                .put("/service_instances/{id}", SERVICE_INSTANCE_ID).
                 then()
                 .statusCode(HttpStatus.SC_ACCEPTED);
 
@@ -205,11 +231,11 @@ public class CassandraServiceProvisionningTest {
         given()
                 .basePath("/v2")
                 .contentType("application/json")
-                .param("operation", "{\"lastOperationDate\":\"2017-11-14T17:24:08.007Z\",\"operation\":\"" + operation + "\"}")
-                .param("plan_id", "cloudflare-default")
-                .param("service_id", "cloudflare-route").
+                .param("operation", CassandraProcessorConstants.OSB_OPERATION_CREATE)
+                .param("plan_id", "cassandra-ondemand-plan")
+                .param("service_id", "cassandra-ondemand-service").
                 when()
-                .get("/service_instances/{id}/last_operation", "111").
+                .get("/service_instances/{id}/last_operation", SERVICE_INSTANCE_ID).
                 then()
                 .statusCode(expectedStatusCode)
                 .body(containsString(firstExpectedKeyword))
@@ -220,11 +246,11 @@ public class CassandraServiceProvisionningTest {
 
         given()
                 .basePath("/v2")
-                .param("service_id", "ondemand-service")
-                .param("plan_id", "ondemand-plan")
+                .param("service_id", "cassandra-ondemand-service")
+                .param("plan_id", "cassandra-ondemand-plan")
                 .param("accepts_incomplete", true).
                 when()
-                .delete("/service_instances/{id}", "111").
+                .delete("/service_instances/{id}", SERVICE_INSTANCE_ID).
                 then()
                 .statusCode(HttpStatus.SC_ACCEPTED);
 

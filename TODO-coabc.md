@@ -1,23 +1,18 @@
 - Release on-demand cassandra bosh deployment
-    - Cassandra Processor:
-       - fix parsing of lastoperation field: 
-          - pb:
-              - contains  {"lastOperationDate":"2017-11-14T17:24:08.007Z","operation":"create"}
-              - expects create or update or delete
-          - solutions:
-             - Store a JSON-serialiazed POJO in the last operation
-                - POJO will contain:
-                    - timestamp
-                    - operation type ?
-                    - received OSB request: ServiceBrokerRequest subclasses
-                - GSon parser is expensive, so need to keep that in a spring bean
-                => refactor PipelineCompletionTracker to become a spring bean
-                
-       - implement timeout support: store timestamp in last operation. 
-     - CassandraServiceProvisioningTest: 
-           - Potentially simulating concourse observable side effects in git, by driving the embedded GitServer
-- mvn release / github release
+    - mvn release / github release
     - automate broker deployment in paas-template from binary in github release
+
+- Refine cassandra impl: timeout + delete support
+    - Cassandra Processor:
+       - implement timeout support: store timestamp in last operation.
+         - Store a JSON-serialiazed POJO in the last operation
+            - POJO will contain:
+                - timestamp
+                - operation type ?
+                - received OSB request: ServiceBrokerRequest subclasses
+            - GSon parser is expensive, so need to keep that in a spring bean
+            => refactor PipelineCompletionTracker to become a spring bean
+ 
     
 - Implement OSB provision delegation to nested cassandra broker
    - store full OSB request in operation field ?
@@ -68,8 +63,6 @@
     - removes bosh deployment: deletes paas-secrets (*Generator classes)
    
     - tracks completion of bosh deployment: watches rendered manifest file (PipelineCompletionTracker class) 
-        - bean spring ?
-
 
     - IT with paas-template/paas-secret: Inspired from GitIT
     - (later once broker password are specific to each instance): specify credhub keys to fetch broker password 

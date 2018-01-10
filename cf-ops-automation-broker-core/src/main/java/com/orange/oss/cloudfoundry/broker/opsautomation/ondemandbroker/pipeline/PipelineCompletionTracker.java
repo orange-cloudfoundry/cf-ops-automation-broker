@@ -23,10 +23,7 @@ public class PipelineCompletionTracker {
     }
 
     public GetLastServiceOperationResponse getDeploymentExecStatus(Path workDir, String serviceInstanceId, String lastServiceOperation) {
-        Path targetManifestFile = StructureGeneratorHelper.generatePath(workDir,
-                CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY,
-                CassandraProcessorConstants.SERVICE_INSTANCE_PREFIX_DIRECTORY + serviceInstanceId,
-                CassandraProcessorConstants.SERVICE_INSTANCE_PREFIX_DIRECTORY + serviceInstanceId + CassandraProcessorConstants.YML_SUFFIX);
+        Path targetManifestFile = getTargetManifestFilePath(workDir, serviceInstanceId);
         boolean isTargetManifestFilePresent = Files.exists(targetManifestFile);
 
         GetLastServiceOperationResponse response = new GetLastServiceOperationResponse();
@@ -52,6 +49,13 @@ public class PipelineCompletionTracker {
             }
         }
         return response;
+    }
+
+    public Path getTargetManifestFilePath(Path workDir, String serviceInstanceId) {
+        return StructureGeneratorHelper.generatePath(workDir,
+                    CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY,
+                    CassandraProcessorConstants.SERVICE_INSTANCE_PREFIX_DIRECTORY + serviceInstanceId,
+                    CassandraProcessorConstants.SERVICE_INSTANCE_PREFIX_DIRECTORY + serviceInstanceId + CassandraProcessorConstants.YML_SUFFIX);
     }
 
 }

@@ -50,8 +50,8 @@ public class CassandraBrokerApplication {
     }
 
     @Bean
-    public BrokerProcessor cassandraProcessor() {
-        return new CassandraProcessor(TEMPLATES_REPOSITORY_ALIAS_NAME, SECRETS_REPOSITORY_ALIAS_NAME);
+    public BrokerProcessor cassandraProcessor(Clock clock) {
+        return new CassandraProcessor(TEMPLATES_REPOSITORY_ALIAS_NAME, SECRETS_REPOSITORY_ALIAS_NAME, clock);
     }
 
 

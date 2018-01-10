@@ -23,6 +23,11 @@ public class PipelineCompletionTrackerTest {
     public static final String ZONE = "Europe/Paris";
 
     @Test
+    public void stores_operation_state_in_a_json_serialized_pojo() {
+
+    }
+
+    @Test
     public void returns_succeeded_state_if_manifest_is_present_and_last_operation_is_create(){
         try {
             //Given
@@ -37,8 +42,8 @@ public class PipelineCompletionTrackerTest {
             Clock clock = Clock.fixed(Instant.now(), ZoneId.of(ZONE));
 
             //When
-            PipelineCompletionTracker tracker = new PipelineCompletionTracker(clock, workDir, SERVICE_INSTANCE_ID);
-            GetLastServiceOperationResponse response = tracker.getDeploymentExecStatus(CassandraProcessorConstants.OSB_OPERATION_CREATE);
+            PipelineCompletionTracker tracker = new PipelineCompletionTracker(clock);
+            GetLastServiceOperationResponse response = tracker.getDeploymentExecStatus(workDir, SERVICE_INSTANCE_ID, CassandraProcessorConstants.OSB_OPERATION_CREATE);
 
             //Then
             Assertions.assertThat(response.getState()).isEqualTo(OperationState.SUCCEEDED);
@@ -56,8 +61,8 @@ public class PipelineCompletionTrackerTest {
             Clock clock = Clock.fixed(Instant.now(), ZoneId.of(ZONE));
 
             //When
-            PipelineCompletionTracker tracker = new PipelineCompletionTracker(clock, workDir, SERVICE_INSTANCE_ID);
-            GetLastServiceOperationResponse response = tracker.getDeploymentExecStatus(CassandraProcessorConstants.OSB_OPERATION_CREATE);
+            PipelineCompletionTracker tracker = new PipelineCompletionTracker(clock);
+            GetLastServiceOperationResponse response = tracker.getDeploymentExecStatus(workDir, SERVICE_INSTANCE_ID, CassandraProcessorConstants.OSB_OPERATION_CREATE);
 
             //Then
             Assertions.assertThat(response.getState()).isEqualTo(OperationState.IN_PROGRESS);
@@ -77,8 +82,8 @@ public class PipelineCompletionTrackerTest {
             Clock clock = Clock.fixed(Instant.now(), ZoneId.of(ZONE));
 
             //When
-            PipelineCompletionTracker tracker = new PipelineCompletionTracker(clock, workDir, SERVICE_INSTANCE_ID);
-            GetLastServiceOperationResponse response = tracker.getDeploymentExecStatus(CassandraProcessorConstants.OSB_OPERATION_DELETE);
+            PipelineCompletionTracker tracker = new PipelineCompletionTracker(clock);
+            GetLastServiceOperationResponse response = tracker.getDeploymentExecStatus(workDir, SERVICE_INSTANCE_ID, CassandraProcessorConstants.OSB_OPERATION_DELETE);
 
             //Then
             Assertions.assertThat(response.getState()).isEqualTo(OperationState.SUCCEEDED);
@@ -105,8 +110,8 @@ public class PipelineCompletionTrackerTest {
             Clock clock = Clock.fixed(Instant.now(), ZoneId.of(ZONE));
 
             //When
-            PipelineCompletionTracker tracker = new PipelineCompletionTracker(clock, workDir, SERVICE_INSTANCE_ID);
-            GetLastServiceOperationResponse response = tracker.getDeploymentExecStatus(CassandraProcessorConstants.OSB_OPERATION_DELETE);
+            PipelineCompletionTracker tracker = new PipelineCompletionTracker(clock);
+            GetLastServiceOperationResponse response = tracker.getDeploymentExecStatus(workDir, SERVICE_INSTANCE_ID, CassandraProcessorConstants.OSB_OPERATION_DELETE);
 
             //Then
             Assertions.assertThat(response.getState()).isEqualTo(OperationState.IN_PROGRESS);

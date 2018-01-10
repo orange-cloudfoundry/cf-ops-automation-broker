@@ -1,6 +1,5 @@
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline;
 
-import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.terraform.TerraformState;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cloud.servicebroker.model.GetLastServiceOperationResponse;
@@ -18,16 +17,12 @@ public class PipelineCompletionTracker {
     private static Logger logger = LoggerFactory.getLogger(PipelineCompletionTracker.class.getName());
 
     protected Clock clock;
-    protected Path workDir;
-    protected String serviceInstanceId;
 
-    public PipelineCompletionTracker(Clock clock, Path workDir, String serviceInstanceId) {
+    public PipelineCompletionTracker(Clock clock) {
         this.clock = clock;
-        this.workDir = workDir;
-        this.serviceInstanceId = serviceInstanceId;
     }
 
-    public GetLastServiceOperationResponse getDeploymentExecStatus(String lastServiceOperation) {
+    public GetLastServiceOperationResponse getDeploymentExecStatus(Path workDir, String serviceInstanceId, String lastServiceOperation) {
         Path targetManifestFile = StructureGeneratorHelper.generatePath(workDir,
                 CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY,
                 CassandraProcessorConstants.SERVICE_INSTANCE_PREFIX_DIRECTORY + serviceInstanceId,
@@ -46,7 +41,7 @@ public class PipelineCompletionTracker {
 
         }else if (CassandraProcessorConstants.OSB_OPERATION_UPDATE.equals(lastServiceOperation)){
             //Don't know what to do
-
+            throw new RuntimeException("update is currently unsupported");
         }else if (CassandraProcessorConstants.OSB_OPERATION_DELETE.equals(lastServiceOperation)) {
             if (isTargetManifestFilePresent){
                 response.withOperationState(OperationState.IN_PROGRESS);

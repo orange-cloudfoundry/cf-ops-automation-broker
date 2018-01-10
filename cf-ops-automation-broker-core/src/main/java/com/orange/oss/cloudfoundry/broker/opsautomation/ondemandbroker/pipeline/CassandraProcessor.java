@@ -3,8 +3,6 @@ package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.GitProcessorContext;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.Context;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.DefaultBrokerProcessor;
-import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.UserFacingRuntimeException;
-import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.terraform.TerraformCompletionTracker;
 import com.orange.oss.ondemandbroker.ProcessorChainServiceInstanceService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,9 +11,8 @@ import org.springframework.cloud.servicebroker.model.CreateServiceInstanceRespon
 import org.springframework.cloud.servicebroker.model.GetLastServiceOperationRequest;
 import org.springframework.cloud.servicebroker.model.GetLastServiceOperationResponse;
 
-import java.io.File;
 import java.nio.file.Path;
-import java.util.Map;
+import java.time.Clock;
 
 public class CassandraProcessor extends DefaultBrokerProcessor {
 
@@ -23,10 +20,13 @@ public class CassandraProcessor extends DefaultBrokerProcessor {
 
 	private String templatesRepositoryAliasName;
 	private String secretsRepositoryAliasName;
+	private PipelineCompletionTracker tracker;
 
-	public CassandraProcessor(String templatesRepositoryAliasName, String secretsRepositoryAliasName) {
+
+	public CassandraProcessor(String templatesRepositoryAliasName, String secretsRepositoryAliasName, Clock clock) {
 		this.templatesRepositoryAliasName = templatesRepositoryAliasName;
 		this.secretsRepositoryAliasName = secretsRepositoryAliasName;
+		tracker = new PipelineCompletionTracker(clock);
 	}
 
 	@Override
@@ -76,8 +76,7 @@ public class CassandraProcessor extends DefaultBrokerProcessor {
 				ctx.contextKeys.get(ProcessorChainServiceInstanceService.GET_LAST_SERVICE_OPERATION_REQUEST);
 
 		//Get deployment execution status through response
-		PipelineCompletionTracker tracker = new PipelineCompletionTracker(null, secretsWorkDir, operationRequest.getServiceInstanceId());
-		GetLastServiceOperationResponse operationResponse = tracker.getDeploymentExecStatus(operationRequest.getOperation());
+		GetLastServiceOperationResponse operationResponse = tracker.getDeploymentExecStatus(secretsWorkDir, operationRequest.getServiceInstanceId(), operationRequest.getOperation());
 
 		//Put the response into context
 		ctx.contextKeys.put(ProcessorChainServiceInstanceService.GET_LAST_SERVICE_OPERATION_RESPONSE, operationResponse);

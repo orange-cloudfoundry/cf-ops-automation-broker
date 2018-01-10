@@ -2,6 +2,7 @@ package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.sample;
 
 
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.GitServer;
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.CassandraProcessorConstants;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.terraform.TerraformModuleHelper;
 import io.restassured.RestAssured;
 import org.apache.http.HttpStatus;
@@ -18,7 +19,11 @@ import org.springframework.cloud.servicebroker.model.CreateServiceInstanceReques
 import org.springframework.test.context.junit4.SpringRunner;
 
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.Writer;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Consumer;
@@ -43,6 +48,9 @@ public class CassandraServiceProvisionningTest {
     int port;
     GitServer gitServer;
 
+    public static final String GIT_BASE_URL = "git://127.0.0.1:9418/";
+    private static final String GIT_URL = GIT_BASE_URL + "volatile-repo.git";
+
     @Before
     public void startHttpClient() {
         RestAssured.port = port;
@@ -65,8 +73,45 @@ public class CassandraServiceProvisionningTest {
             }
         };
         gitServer.startEphemeralReposServer(initPaasSecret);
+        gitServer.initRepo("paas-template.git", this::initPaasTemplate);
     }
 
+    public void initPaasTemplate(Git git) {
+        File gitWorkDir = git.getRepository().getDirectory().getParentFile();
+        try {
+            git.commit().setMessage("Initial empty repo setup").call();
+
+            //In develop branch
+            git.checkout().setName("develop").setCreateBranch(true).call();
+
+            //root deployment
+            Path coabDepls = gitWorkDir.toPath().resolve(CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY);
+            createDir(coabDepls);
+            //sub deployments
+            createDir(coabDepls.resolve(CassandraProcessorConstants.MODEL_DEPLOYMENT_DIRECTORY));
+
+            AddCommand addC = git.add().addFilepattern(".");
+            addC.call();
+
+// potentially submodule public template extract
+//            git.submoduleInit().call();
+//            git.submoduleAdd().setPath("bosh-deployment").setURI(GIT_BASE_URL + "bosh-deployment.git").call();
+//            git.submoduleAdd().setPath("mysql-deployment").setURI(GIT_BASE_URL + "mysql-deployment").call();
+            git.commit().setMessage("CassandraServiceProvisionningTest#startGitServer").call();
+
+            git.checkout().setName("master").call();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static void createDir(Path dir) throws IOException {
+        Files.createDirectories(dir);
+        //TODO: create .gitignore
+        try (Writer writer = new FileWriter(dir.resolve(".gitkeep").toFile())) {
+            writer.write("Please keep me");
+        }
+    }
 
     @After
     public void stopGitServer() throws InterruptedException {

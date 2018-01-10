@@ -6,7 +6,10 @@
            - BoshDeploymentProperties: path     
         - CassandraServiceProvisioningTest inspired from CloudFlareServiceProvisioningTest. 
            - Potentially simulating concourse observable side effects in git, by driving the embedded GitServer
-              - set up paas-template prereqs. Probably refactor TemplatesGenerator 
+              - set up paas-template prereqs. 
+                 - manually in the test ?
+                 - by including a public extract of paas-template on github ?
+                    - requires http-proxy support in GitProcessor to be able to run this from our desktops 
     - mvn release / github release
     - automate broker deployment in paas-template from binary in github release
     

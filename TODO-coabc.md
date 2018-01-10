@@ -1,5 +1,3 @@
-- rebase master and merge PR
-
 - Release on-demand cassandra bosh deployment
     - Cassandra Processor:
        - implement timeout support: store timestamp in last operation. 
@@ -8,6 +6,7 @@
            - BoshDeploymentProperties: path     
         - CassandraServiceProvisioningTest inspired from CloudFlareServiceProvisioningTest. 
            - Potentially simulating concourse observable side effects in git, by driving the embedded GitServer
+              - set up paas-template prereqs. Probably refactor TemplatesGenerator 
     - mvn release / github release
     - automate broker deployment in paas-template from binary in github release
     

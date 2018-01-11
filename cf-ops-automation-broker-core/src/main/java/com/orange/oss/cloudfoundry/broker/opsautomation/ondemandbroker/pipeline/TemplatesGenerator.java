@@ -1,6 +1,7 @@
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline;
 
 import org.apache.commons.collections.map.HashedMap;
+import org.apache.commons.io.IOUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -112,8 +113,7 @@ public class TemplatesGenerator extends StructureGeneratorImpl{
         try {
             //Read source file content
             List<String> lines = null;
-            //TODO : Change path building
-            lines = Files.readAllLines(Paths.get(getClass().getClassLoader().getResource(CassandraProcessorConstants.MODEL_DEPLOYMENT_DIRECTORY + File.separator + sourceFileName).toURI()));
+            lines = IOUtils.readLines(getClass().getResourceAsStream(File.separator + CassandraProcessorConstants.MODEL_DEPLOYMENT_DIRECTORY + File.separator + sourceFileName), StandardCharsets.UTF_8);
 
             //Update file content
             List<String> resultLines = StructureGeneratorHelper.findAndReplace(lines, findAndReplace);
@@ -121,9 +121,6 @@ public class TemplatesGenerator extends StructureGeneratorImpl{
             //Generate target file
             Files.write(targetFile, resultLines, Charset.forName(StandardCharsets.UTF_8.name()));
         } catch (IOException e) {
-            e.printStackTrace();
-            throw new CassandraProcessorException(CassandraProcessorConstants.GENERATION_EXCEPTION);
-        } catch (URISyntaxException e) {
             e.printStackTrace();
             throw new CassandraProcessorException(CassandraProcessorConstants.GENERATION_EXCEPTION);
         }

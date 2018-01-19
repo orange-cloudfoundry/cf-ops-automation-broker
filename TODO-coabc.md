@@ -2,10 +2,12 @@
     - mvn release / github release
     - automate broker deployment in paas-template from binary in github release
 
+- Improve *Generator design in order to enable CassandraProcessorTests 
+
 - Refine cassandra impl: timeout + delete support
     - Cassandra Processor:
        - implement timeout support: store timestamp in last operation.
-         - Store a JSON-serialiazed POJO in the last operation
+         - Store a JSON-serialized POJO in the last operation
             - POJO will contain:
                 - timestamp
                 - operation type ?

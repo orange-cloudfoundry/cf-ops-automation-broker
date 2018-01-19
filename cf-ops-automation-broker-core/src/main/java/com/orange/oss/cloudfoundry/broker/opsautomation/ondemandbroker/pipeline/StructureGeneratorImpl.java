@@ -14,6 +14,13 @@ public class StructureGeneratorImpl implements StructureGenerator {
     protected Path workDir;
     protected String serviceInstanceId;
 
+    public void setWorkDir(Path workDir){
+        this.workDir = workDir;
+    }
+
+    public void setServiceInstanceId(String serviceInstanceId){
+        this.serviceInstanceId = serviceInstanceId;
+    }
 
     public StructureGeneratorImpl(Path workDir, String serviceInstanceId){
         this.workDir = workDir;

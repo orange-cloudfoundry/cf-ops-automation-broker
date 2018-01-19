@@ -1,6 +1,7 @@
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline;
 
 import org.fest.assertions.Assertions;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.springframework.cloud.servicebroker.model.GetLastServiceOperationResponse;
 import org.springframework.cloud.servicebroker.model.OperationState;
@@ -74,7 +75,7 @@ public class PipelineCompletionTrackerTest {
         }
     }
 
-    @Test
+    @Test@Ignore//Delete is now synchronous
     public void returns_succeeded_state_if_manifest_is_not_present_and_last_operation_is_delete(){
         try {
             //Given
@@ -95,7 +96,7 @@ public class PipelineCompletionTrackerTest {
         }
     }
 
-    @Test
+    @Test@Ignore //Delete is now synchronous
     public void returns_inprogress_state_if_manifest_is_present_and_last_operation_is_delete(){
         try {
             //Given

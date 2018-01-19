@@ -43,11 +43,11 @@ public class CassandraBrokerApplication {
     }
 
 
-
     @Bean
     public Clock clock() {
         return Clock.systemDefaultZone();
     }
+
 
     @Bean
     public BrokerProcessor cassandraProcessor(Clock clock) {

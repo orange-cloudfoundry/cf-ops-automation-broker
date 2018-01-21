@@ -11,6 +11,7 @@ import java.nio.file.Paths;
  */
 public class StructureGeneratorImpl implements StructureGenerator {
 
+/*
     protected Path workDir;
     protected String serviceInstanceId;
 
@@ -26,8 +27,9 @@ public class StructureGeneratorImpl implements StructureGenerator {
         this.workDir = workDir;
         this.serviceInstanceId = serviceInstanceId;
     }
+*/
 
-    public void checkPrerequisites() {
+    public void checkPrerequisites(Path workDir) {
         Path rootDeploymentDir = StructureGeneratorHelper.generatePath(workDir,
                 CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY);
         if (Files.notExists(rootDeploymentDir)){
@@ -41,7 +43,7 @@ public class StructureGeneratorImpl implements StructureGenerator {
         }
     }
 
-    public void generate() {
+    public void generate(Path workDir, String serviceInstanceId) {
         try {
             //Generate service directory
             Path serviceInstanceDir = StructureGeneratorHelper.generatePath(workDir,

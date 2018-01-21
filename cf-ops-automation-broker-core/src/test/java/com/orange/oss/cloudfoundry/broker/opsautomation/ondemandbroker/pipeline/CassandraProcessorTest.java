@@ -38,7 +38,7 @@ public class CassandraProcessorTest {
     protected static final String TEMPLATES_REPOSITORY_ALIAS_NAME = "paas-template.";
     protected static final String SECRETS_REPOSITORY_ALIAS_NAME = "paas-secrets.";
 
-    @Test@Ignore
+    @Test
     public void creates_structures_and_returns_response() {
         //Given a creation request
         CreateServiceInstanceRequest creationRequest = new CreateServiceInstanceRequest("service_definition_id",
@@ -59,11 +59,11 @@ public class CassandraProcessorTest {
         ArgumentCaptor<Path> pathValueCapture = ArgumentCaptor.forClass(Path.class);
         ArgumentCaptor<String> stringValueCapture = ArgumentCaptor.forClass(String.class);
         TemplatesGenerator templatesGenerator = mock(TemplatesGenerator.class);
-        doNothing().when(templatesGenerator).setWorkDir(pathValueCapture.capture());
-        doNothing().when(templatesGenerator).setServiceInstanceId(stringValueCapture.capture());
+        doNothing().when(templatesGenerator).checkPrerequisites(pathValueCapture.capture());
+        doNothing().when(templatesGenerator).generate(pathValueCapture.capture(), stringValueCapture.capture());
         SecretsGenerator secretsGenerator = mock(SecretsGenerator.class);
-        doNothing().when(secretsGenerator).setWorkDir(pathValueCapture.capture());
-        doNothing().when(secretsGenerator).setServiceInstanceId(stringValueCapture.capture());
+        doNothing().when(secretsGenerator).checkPrerequisites(pathValueCapture.capture());
+        doNothing().when(secretsGenerator).generate(pathValueCapture.capture(), stringValueCapture.capture());
 
         //When
         CassandraProcessor cassandraProcessor = new CassandraProcessor(TEMPLATES_REPOSITORY_ALIAS_NAME, SECRETS_REPOSITORY_ALIAS_NAME, null, templatesGenerator, secretsGenerator, null);
@@ -76,10 +76,10 @@ public class CassandraProcessorTest {
         List<String> capturedStrings = stringValueCapture.getAllValues();
         assertEquals(SERVICE_INSTANCE_ID, capturedStrings.get(0).toString());
         assertEquals(SERVICE_INSTANCE_ID, capturedStrings.get(1).toString());
-        verify(templatesGenerator, times(1)).checkPrerequisites();
-        verify(templatesGenerator, times(1)).generate();
-        verify(secretsGenerator, times(1)).checkPrerequisites();
-        verify(secretsGenerator, times(1)).generate();
+        verify(templatesGenerator, times(1)).checkPrerequisites(aGitRepoWorkDir());
+        verify(templatesGenerator, times(1)).generate(aGitRepoWorkDir(), SERVICE_INSTANCE_ID);
+        verify(secretsGenerator, times(1)).checkPrerequisites(aGitRepoWorkDir());
+        verify(secretsGenerator, times(1)).generate(aGitRepoWorkDir(), SERVICE_INSTANCE_ID);
 
         //Then verify populated context
         CreateServiceInstanceResponse serviceInstanceResponse = (CreateServiceInstanceResponse) context.contextKeys.get(ProcessorChainServiceInstanceService.CREATE_SERVICE_INSTANCE_RESPONSE);
@@ -155,7 +155,7 @@ public class CassandraProcessorTest {
         assertThat(operationResponse).isEqualTo(expectedResponse);
     }
 
-    @Test@Ignore
+    @Test
     public void removes_secrets_structures_and_returns_response() {
         //Given a delete request
         DeleteServiceInstanceRequest request = new DeleteServiceInstanceRequest(SERVICE_INSTANCE_ID,
@@ -173,8 +173,8 @@ public class CassandraProcessorTest {
         ArgumentCaptor<Path> pathValueCapture = ArgumentCaptor.forClass(Path.class);
         ArgumentCaptor<String> stringValueCapture = ArgumentCaptor.forClass(String.class);
         SecretsGenerator secretsGenerator = mock(SecretsGenerator.class);
-        doNothing().when(secretsGenerator).setWorkDir(pathValueCapture.capture());
-        doNothing().when(secretsGenerator).setServiceInstanceId(stringValueCapture.capture());
+        doNothing().when(secretsGenerator).checkPrerequisites(pathValueCapture.capture());
+        doNothing().when(secretsGenerator).remove(pathValueCapture.capture(), stringValueCapture.capture());
 
         //When
         CassandraProcessor cassandraProcessor = new CassandraProcessor(TEMPLATES_REPOSITORY_ALIAS_NAME, SECRETS_REPOSITORY_ALIAS_NAME, null, null, secretsGenerator, null);
@@ -185,8 +185,8 @@ public class CassandraProcessorTest {
         assertEquals(aGitRepoWorkDir().toString(), capturedPaths.get(0).toString());
         List<String> capturedStrings = stringValueCapture.getAllValues();
         assertEquals(SERVICE_INSTANCE_ID, capturedStrings.get(0).toString());
-        verify(secretsGenerator, times(1)).checkPrerequisites();
-        verify(secretsGenerator, times(1)).remove();
+        verify(secretsGenerator, times(1)).checkPrerequisites(aGitRepoWorkDir());
+        verify(secretsGenerator, times(1)).remove(aGitRepoWorkDir(), SERVICE_INSTANCE_ID);
 
         //Then verify populated context
         DeleteServiceInstanceResponse serviceInstanceResponse = (DeleteServiceInstanceResponse) context.contextKeys.get(ProcessorChainServiceInstanceService.DELETE_SERVICE_INSTANCE_RESPONSE);

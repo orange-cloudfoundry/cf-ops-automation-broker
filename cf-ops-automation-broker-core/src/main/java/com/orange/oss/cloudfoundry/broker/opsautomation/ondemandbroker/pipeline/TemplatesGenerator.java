@@ -21,14 +21,16 @@ import java.util.Map;
  */
 public class TemplatesGenerator extends StructureGeneratorImpl{
 
+/*
     public TemplatesGenerator(Path workDir, String serviceInstanceId) {
         super(workDir, serviceInstanceId);
     }
+*/
 
     @Override
-    public void checkPrerequisites() {
+    public void checkPrerequisites(Path workDir) {
         //Check common pre-requisites
-        super.checkPrerequisites();
+        super.checkPrerequisites(workDir);
 
         //Check specific pre-requisites
         Path templateDir = StructureGeneratorHelper.generatePath(workDir,
@@ -57,12 +59,12 @@ public class TemplatesGenerator extends StructureGeneratorImpl{
     }
 
     @Override
-    public void generate() {
+    public void generate(Path workDir, String serviceInstanceId) {
 
         try {
 
             //Generate service directory
-            super.generate();
+            super.generate(workDir, serviceInstanceId);
 
             //Generate template directory
             Path deploymentTemplateDir = StructureGeneratorHelper.generatePath(workDir,
@@ -96,10 +98,10 @@ public class TemplatesGenerator extends StructureGeneratorImpl{
                     mapOperatorsFile);
 
             //Generate manifest file as symlink
-            this.generateFileAsSymbolicLink(CassandraProcessorConstants.MODEL_MANIFEST_FILENAME, CassandraProcessorConstants.MANIFEST_FILENAME_SUFFIX);
+            this.generateFileAsSymbolicLink(CassandraProcessorConstants.MODEL_MANIFEST_FILENAME, CassandraProcessorConstants.MANIFEST_FILENAME_SUFFIX, workDir, serviceInstanceId);
 
             //Generate vars file as symlink
-            this.generateFileAsSymbolicLink(CassandraProcessorConstants.MODEL_VARS_FILENAME, CassandraProcessorConstants.VARS_FILENAME_SUFFIX);
+            this.generateFileAsSymbolicLink(CassandraProcessorConstants.MODEL_VARS_FILENAME, CassandraProcessorConstants.VARS_FILENAME_SUFFIX, workDir, serviceInstanceId);
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -126,7 +128,7 @@ public class TemplatesGenerator extends StructureGeneratorImpl{
         }
     }
 
-    private void generateFileAsSymbolicLink(String modelFileName, String modelFileNameSuffix) {
+    private void generateFileAsSymbolicLink(String modelFileName, String modelFileNameSuffix, Path workDir, String serviceInstanceId) {
         try {
 
             //Compute relative path on directories with relativize method otherwise doesn't work

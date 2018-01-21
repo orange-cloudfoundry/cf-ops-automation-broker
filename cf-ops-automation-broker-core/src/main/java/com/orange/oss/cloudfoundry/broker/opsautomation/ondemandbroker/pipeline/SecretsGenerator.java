@@ -14,15 +14,17 @@ import java.util.Arrays;
  */
 public class SecretsGenerator extends StructureGeneratorImpl {
 
+/*
     public SecretsGenerator(Path workDir, String serviceInstanceId) {
         super(workDir, serviceInstanceId);
     }
+*/
 
-    public void generate() {
+    public void generate(Path workDir, String serviceInstanceId) {
 
         try {
             //Generate service directory
-            super.generate();
+            super.generate(workDir, serviceInstanceId);
 
             //Generate secrets directory
             Path deploymentSecretsDir = StructureGeneratorHelper.generatePath(workDir,
@@ -60,7 +62,7 @@ public class SecretsGenerator extends StructureGeneratorImpl {
         }
     }
 
-    public void remove() {
+    public void remove(Path workDir, String serviceInstanceId) {
 
         try {
 

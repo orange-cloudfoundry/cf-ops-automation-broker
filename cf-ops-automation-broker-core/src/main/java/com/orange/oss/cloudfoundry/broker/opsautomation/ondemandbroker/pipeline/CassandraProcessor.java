@@ -24,6 +24,8 @@ public class CassandraProcessor extends DefaultBrokerProcessor {
 	public CassandraProcessor(String templatesRepositoryAliasName, String secretsRepositoryAliasName, Clock clock) {
 		this.templatesRepositoryAliasName = templatesRepositoryAliasName;
 		this.secretsRepositoryAliasName = secretsRepositoryAliasName;
+		this.templatesGenerator = new TemplatesGenerator();
+		this.secretsGenerator = new SecretsGenerator();
 		this.tracker = new PipelineCompletionTracker(clock); //TODO : Remove
 	}
 
@@ -49,18 +51,16 @@ public class CassandraProcessor extends DefaultBrokerProcessor {
 		logger.debug("service instance id is " + serviceInstanceId);
 
 		//Check pre-requisites and generate paas-template structure
-		this.templatesGenerator = new TemplatesGenerator(templatesWorkDir, serviceInstanceId);
-		//this.templatesGenerator.setWorkDir(templatesWorkDir);
-		//this.templatesGenerator.setServiceInstanceId(serviceInstanceId);
-		this.templatesGenerator.checkPrerequisites();
-		this.templatesGenerator.generate();
+		//this.templatesGenerator = new TemplatesGenerator(templatesWorkDir, serviceInstanceId);
+		//this.templatesGenerator = new TemplatesGenerator();
+		this.templatesGenerator.checkPrerequisites(templatesWorkDir);
+		this.templatesGenerator.generate(templatesWorkDir, serviceInstanceId);
 
 		//Check pre-requisites and generate paas-secrets structure
-		this.secretsGenerator = new SecretsGenerator(secretsWorkDir, serviceInstanceId);
-		//this.secretsGenerator.setWorkDir(secretsWorkDir);
-		//this.secretsGenerator.setServiceInstanceId(serviceInstanceId);
-		this.secretsGenerator.checkPrerequisites();
-		this.secretsGenerator.generate();
+		//this.secretsGenerator = new SecretsGenerator(secretsWorkDir, serviceInstanceId);
+		//this.secretsGenerator = new SecretsGenerator();
+		this.secretsGenerator.checkPrerequisites(secretsWorkDir);
+		this.secretsGenerator.generate(secretsWorkDir, serviceInstanceId);
 
 		//Create response and put it into context
 		CreateServiceInstanceResponse creationResponse = new CreateServiceInstanceResponse();
@@ -104,11 +104,10 @@ public class CassandraProcessor extends DefaultBrokerProcessor {
 		String serviceInstanceId = request.getServiceInstanceId();
 
 		//Check pre-requisites and generate paas-secrets structure
-		this.secretsGenerator = new SecretsGenerator(secretsWorkDir, serviceInstanceId);
-		//this.secretsGenerator.setWorkDir(secretsWorkDir);
-		//this.secretsGenerator.setServiceInstanceId(serviceInstanceId);
-		this.secretsGenerator.checkPrerequisites();
-		this.secretsGenerator.remove();
+		//this.secretsGenerator = new SecretsGenerator(secretsWorkDir, serviceInstanceId);
+		//this.secretsGenerator = new SecretsGenerator();
+		this.secretsGenerator.checkPrerequisites(secretsWorkDir);
+		this.secretsGenerator.remove(secretsWorkDir, serviceInstanceId);
 
 		//Create response and put it into context
 		DeleteServiceInstanceResponse deletionResponse = new DeleteServiceInstanceResponse();

@@ -65,7 +65,8 @@ public class CassandraProcessor extends DefaultBrokerProcessor {
 		//Create response and put it into context
 		CreateServiceInstanceResponse creationResponse = new CreateServiceInstanceResponse();
 		creationResponse.withAsync(true);
-		//TODO : Must pass the serialized pipeline operation state
+		//TODO : Must uncomment to pass the serialized pipeline operation state
+		//creationResponse.withOperation(tracker.getOperationStateAsJson(creationRequest));
 		creationResponse.withOperation(CassandraProcessorConstants.OSB_OPERATION_CREATE);
 		ctx.contextKeys.put(ProcessorChainServiceInstanceService.CREATE_SERVICE_INSTANCE_RESPONSE, creationResponse);
 

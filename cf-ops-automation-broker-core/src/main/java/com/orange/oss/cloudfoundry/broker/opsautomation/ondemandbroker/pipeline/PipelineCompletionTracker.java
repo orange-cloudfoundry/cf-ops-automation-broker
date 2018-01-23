@@ -7,6 +7,8 @@ import org.springframework.cloud.servicebroker.model.OperationState;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Clock;
+import java.time.Instant;
+
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.springframework.cloud.servicebroker.model.ServiceBrokerRequest;
@@ -24,7 +26,25 @@ public class PipelineCompletionTracker {
 
     public PipelineCompletionTracker(Clock clock) {
         this.clock = clock;
+        final GsonBuilder gsonBuilder = new GsonBuilder();
+        gsonBuilder.registerTypeAdapter(PipelineCompletionTracker.PipelineOperationState.class, new PipelineOperationStateGsonAdapter());
+        this.gson = gsonBuilder.create();
     }
+
+    public String getOperationStateAsJson(ServiceBrokerRequest serviceBrokerRequest) {
+        PipelineCompletionTracker.PipelineOperationState pipelineOperationState = new PipelineCompletionTracker.PipelineOperationState(
+                getCurrentDate(),
+                serviceBrokerRequest
+        );
+        return formatAsJson(pipelineOperationState);
+    }
+
+    public String getCurrentDate() {
+        Instant now = Instant.now(clock);
+        return now.toString();
+    }
+
+
 
     public GetLastServiceOperationResponse getDeploymentExecStatus(Path workDir, String serviceInstanceId, String lastServiceOperation) {
         Path targetManifestFile = getTargetManifestFilePath(workDir, serviceInstanceId);
@@ -71,35 +91,47 @@ public class PipelineCompletionTracker {
     }
 
     static class PipelineOperationState {
+        private ServiceBrokerRequest serviceBrokerRequest;
         private String lastOperationDate;
-        private ServiceBrokerRequest serverBrokerRequest;
-        private String operation;
+        //private String operation;
 
         public PipelineOperationState() {
         }
 
-        public PipelineOperationState(String lastOperationDate, ServiceBrokerRequest serverBrokerRequest, String operation) {
+        public PipelineOperationState(String lastOperationDate, ServiceBrokerRequest serviceBrokerRequest) {
             this.lastOperationDate = lastOperationDate;
-            this.serverBrokerRequest = serverBrokerRequest;
-            this.operation = operation;
+            this.serviceBrokerRequest = serviceBrokerRequest;
+            //this.operation = operation;
+        }
+
+        public ServiceBrokerRequest getServiceBrokerRequest(){
+            return this.serviceBrokerRequest;
+        }
+
+        public String getLastOperationDate(){
+            return this.lastOperationDate;
         }
 
         @SuppressWarnings("SimplifiableIfStatement")
         @Override
         public boolean equals(Object o) {
+            //TODO complete with ServiceBrokerRequest
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
 
             PipelineOperationState that = (PipelineOperationState) o;
 
-            if (!lastOperationDate.equals(that.lastOperationDate)) return false;
-            return operation.equals(that.operation);
+            //if (!lastOperationDate.equals(that.lastOperationDate)) return false;
+            //return operation.equals(that.operation);
+            return lastOperationDate.equals(that.lastOperationDate);
+
+
         }
 
         @Override
         public int hashCode() {
-            int result = lastOperationDate.hashCode();
-            result = 31 * result + operation.hashCode();
+            int result = 31 * lastOperationDate.hashCode();
+            //result = 31 * result + operation.hashCode();
             return result;
         }
     }

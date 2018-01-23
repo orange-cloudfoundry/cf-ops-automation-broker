@@ -3,6 +3,7 @@ package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline
 import org.fest.assertions.Assertions;
 import org.junit.Ignore;
 import org.junit.Test;
+import org.springframework.cloud.servicebroker.model.CreateServiceInstanceRequest;
 import org.springframework.cloud.servicebroker.model.GetLastServiceOperationResponse;
 import org.springframework.cloud.servicebroker.model.OperationState;
 
@@ -12,6 +13,11 @@ import java.nio.file.Path;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneId;
+import java.util.HashMap;
+import java.util.Map;
+
+import static org.fest.assertions.Assertions.assertThat;
+import static org.junit.Assert.assertEquals;
 
 
 /**
@@ -47,8 +53,8 @@ public class PipelineCompletionTrackerTest {
             GetLastServiceOperationResponse response = tracker.getDeploymentExecStatus(workDir, SERVICE_INSTANCE_ID, CassandraProcessorConstants.OSB_OPERATION_CREATE);
 
             //Then
-            Assertions.assertThat(response.getState()).isEqualTo(OperationState.SUCCEEDED);
-            Assertions.assertThat(response.getDescription()).describedAs("Creation is succeeded");
+            assertThat(response.getState()).isEqualTo(OperationState.SUCCEEDED);
+            assertThat(response.getDescription()).describedAs("Creation is succeeded");
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -66,8 +72,8 @@ public class PipelineCompletionTrackerTest {
             GetLastServiceOperationResponse response = tracker.getDeploymentExecStatus(workDir, SERVICE_INSTANCE_ID, CassandraProcessorConstants.OSB_OPERATION_CREATE);
 
             //Then
-            Assertions.assertThat(response.getState()).isEqualTo(OperationState.IN_PROGRESS);
-            Assertions.assertThat(response.getDescription()).describedAs("Creation is in progress");
+            assertThat(response.getState()).isEqualTo(OperationState.IN_PROGRESS);
+            assertThat(response.getDescription()).describedAs("Creation is in progress");
 
             //Then
         } catch (IOException e) {
@@ -87,8 +93,8 @@ public class PipelineCompletionTrackerTest {
             GetLastServiceOperationResponse response = tracker.getDeploymentExecStatus(workDir, SERVICE_INSTANCE_ID, CassandraProcessorConstants.OSB_OPERATION_DELETE);
 
             //Then
-            Assertions.assertThat(response.getState()).isEqualTo(OperationState.SUCCEEDED);
-            Assertions.assertThat(response.getDescription()).describedAs("Creation is suceeded");
+            assertThat(response.getState()).isEqualTo(OperationState.SUCCEEDED);
+            assertThat(response.getDescription()).describedAs("Creation is suceeded");
 
             //Then
         } catch (IOException e) {
@@ -115,10 +121,67 @@ public class PipelineCompletionTrackerTest {
             GetLastServiceOperationResponse response = tracker.getDeploymentExecStatus(workDir, SERVICE_INSTANCE_ID, CassandraProcessorConstants.OSB_OPERATION_DELETE);
 
             //Then
-            Assertions.assertThat(response.getState()).isEqualTo(OperationState.IN_PROGRESS);
-            Assertions.assertThat(response.getDescription()).describedAs("Creation is in progress");
+            assertThat(response.getState()).isEqualTo(OperationState.IN_PROGRESS);
+            assertThat(response.getDescription()).describedAs("Creation is in progress");
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
+
+    @Test
+    public void check_java2json_conversion() {
+        //given
+        PipelineCompletionTracker.PipelineOperationState pipelineOperationState = new PipelineCompletionTracker.PipelineOperationState("2018-01-22T14:00:00.000Z", aCreateServiceInstanceRequest());
+
+        //when
+        PipelineCompletionTracker tracker = new PipelineCompletionTracker(Clock.systemUTC());
+        String actualJson = tracker.formatAsJson(pipelineOperationState);
+        System.out.println(actualJson);
+
+        //then
+        String expectedJson = "{\"createServiceInstanceRequest\":{\"serviceDefinitionId\":\"service_definition_id\",\"planId\":\"plan_id\",\"organizationGuid\":\"org_id\",\"spaceGuid\":\"space_id\",\"parameters\":{\"parameterName\":\"parameterValue\"},\"asyncAccepted\":false},\"lastOperationDate\":\"2018-01-22T14:00:00.000Z\"}";
+        assertEquals(expectedJson, actualJson);
+    }
+
+    @Test
+    public void check_json2java_conversion() {
+        //given //CreateServiceInstanceRequest
+        String json = "{\"createServiceInstanceRequest\":{\"serviceDefinitionId\":\"service_definition_id\",\"planId\":\"plan_id\",\"organizationGuid\":\"org_id\",\"spaceGuid\":\"space_id\",\"parameters\":{\"parameterName\":\"parameterValue\"},\"asyncAccepted\":false},\"lastOperationDate\":\"2018-01-22T14:00:00.000Z\"}";
+
+        //when
+        PipelineCompletionTracker tracker = new PipelineCompletionTracker(Clock.systemUTC());
+        PipelineCompletionTracker.PipelineOperationState actualPipelineOperationState= tracker.parseFromJson(json);
+
+        //then
+        PipelineCompletionTracker.PipelineOperationState expectedPipelineOperationState = new PipelineCompletionTracker.PipelineOperationState("2018-01-22T14:00:00.000Z", aCreateServiceInstanceRequest());
+        assertEquals(actualPipelineOperationState, expectedPipelineOperationState);
+    }
+
+
+
+
+
+
+
+
+    private CreateServiceInstanceRequest aCreateServiceInstanceRequest(){
+
+        //Given a parameter request
+        Map<String, Object> parameters = new HashMap<>();
+        parameters.put("parameterName", "parameterValue");
+
+        CreateServiceInstanceRequest request = new CreateServiceInstanceRequest("service_definition_id",
+                "plan_id",
+                "org_id",
+                "space_id",
+                parameters
+        );
+        request.withServiceInstanceId("service-instance-guid");
+        return request;
+    }
+
+
+
+
+
 }

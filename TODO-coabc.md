@@ -10,7 +10,6 @@
          - Store a JSON-serialized POJO in the last operation
             - POJO will contain:
                 - timestamp
-                - operation type ?
                 - received OSB request: ServiceBrokerRequest subclasses
             - GSon parser is expensive, so need to keep that in a spring bean
             => refactor PipelineCompletionTracker to become a spring bean

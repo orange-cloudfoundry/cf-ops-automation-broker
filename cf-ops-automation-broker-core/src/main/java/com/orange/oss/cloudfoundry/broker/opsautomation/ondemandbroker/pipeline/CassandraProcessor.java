@@ -51,23 +51,18 @@ public class CassandraProcessor extends DefaultBrokerProcessor {
 		logger.debug("service instance id is " + serviceInstanceId);
 
 		//Check pre-requisites and generate paas-template structure
-		//this.templatesGenerator = new TemplatesGenerator(templatesWorkDir, serviceInstanceId);
-		//this.templatesGenerator = new TemplatesGenerator();
 		this.templatesGenerator.checkPrerequisites(templatesWorkDir);
 		this.templatesGenerator.generate(templatesWorkDir, serviceInstanceId);
 
 		//Check pre-requisites and generate paas-secrets structure
-		//this.secretsGenerator = new SecretsGenerator(secretsWorkDir, serviceInstanceId);
-		//this.secretsGenerator = new SecretsGenerator();
 		this.secretsGenerator.checkPrerequisites(secretsWorkDir);
 		this.secretsGenerator.generate(secretsWorkDir, serviceInstanceId);
 
 		//Create response and put it into context
 		CreateServiceInstanceResponse creationResponse = new CreateServiceInstanceResponse();
 		creationResponse.withAsync(true);
-		//TODO : Must uncomment to pass the serialized pipeline operation state
-		//creationResponse.withOperation(tracker.getOperationStateAsJson(creationRequest));
-		creationResponse.withOperation(CassandraProcessorConstants.OSB_OPERATION_CREATE);
+		creationResponse.withOperation(this.tracker.getPipelineOperationStateAsJson(creationRequest));
+		//creationResponse.withOperation(CassandraProcessorConstants.OSB_OPERATION_CREATE);
 		ctx.contextKeys.put(ProcessorChainServiceInstanceService.CREATE_SERVICE_INSTANCE_RESPONSE, creationResponse);
 
 		//Generate commit message and put it into context
@@ -105,8 +100,6 @@ public class CassandraProcessor extends DefaultBrokerProcessor {
 		String serviceInstanceId = request.getServiceInstanceId();
 
 		//Check pre-requisites and generate paas-secrets structure
-		//this.secretsGenerator = new SecretsGenerator(secretsWorkDir, serviceInstanceId);
-		//this.secretsGenerator = new SecretsGenerator();
 		this.secretsGenerator.checkPrerequisites(secretsWorkDir);
 		this.secretsGenerator.remove(secretsWorkDir, serviceInstanceId);
 
@@ -120,8 +113,6 @@ public class CassandraProcessor extends DefaultBrokerProcessor {
 		ctx.contextKeys.put(GitProcessorContext.commitMessage.toString(), msg);
 
 	}
-
-
 
 }
 

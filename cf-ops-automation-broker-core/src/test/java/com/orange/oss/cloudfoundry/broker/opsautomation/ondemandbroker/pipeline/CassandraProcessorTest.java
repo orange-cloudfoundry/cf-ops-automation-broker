@@ -22,6 +22,9 @@ import java.io.IOException;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneId;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -37,6 +40,7 @@ public class CassandraProcessorTest {
     public static final String SERVICE_INSTANCE_ID = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa0";
     protected static final String TEMPLATES_REPOSITORY_ALIAS_NAME = "paas-template.";
     protected static final String SECRETS_REPOSITORY_ALIAS_NAME = "paas-secrets.";
+    private Clock clock = Clock.fixed(Instant.now(), ZoneId.of("Europe/Paris"));
 
     @Test
     public void creates_structures_and_returns_response() {
@@ -66,7 +70,10 @@ public class CassandraProcessorTest {
         doNothing().when(secretsGenerator).generate(pathValueCapture.capture(), stringValueCapture.capture());
 
         //When
-        CassandraProcessor cassandraProcessor = new CassandraProcessor(TEMPLATES_REPOSITORY_ALIAS_NAME, SECRETS_REPOSITORY_ALIAS_NAME, null, templatesGenerator, secretsGenerator, null);
+        //given a configured timeout (TODO => must mock tracker)
+        Clock clock = Clock.fixed(Instant.ofEpochMilli(1510680248007L), ZoneId.of("Europe/Paris"));
+        PipelineCompletionTracker tracker = new PipelineCompletionTracker(clock);
+        CassandraProcessor cassandraProcessor = new CassandraProcessor(TEMPLATES_REPOSITORY_ALIAS_NAME, SECRETS_REPOSITORY_ALIAS_NAME, null, templatesGenerator, secretsGenerator, tracker);
         cassandraProcessor.preCreate(context);
 
         //Then verify parameters and delegation on calls
@@ -85,9 +92,10 @@ public class CassandraProcessorTest {
         CreateServiceInstanceResponse serviceInstanceResponse = (CreateServiceInstanceResponse) context.contextKeys.get(ProcessorChainServiceInstanceService.CREATE_SERVICE_INSTANCE_RESPONSE);
         // specifying asynchronous creations
         assertThat(serviceInstanceResponse.isAsync()).isTrue();
-        // with a timestamp used to timeout on too long responses
-        assertThat(serviceInstanceResponse.getOperation()).isEqualTo(CassandraProcessorConstants.OSB_OPERATION_CREATE);
-        // and with a proper commit message
+        //TODO : Uncomment assertion (use json string?)
+        String expectedJsonPipelineOperationState = "{\"org.springframework.cloud.servicebroker.model.CreateServiceInstanceRequest\":{\"serviceDefinitionId\":\"service_definition_id\",\"planId\":\"plan_id\",\"organizationGuid\":\"org_id\",\"spaceGuid\":\"space_id\",\"asyncAccepted\":false},\"startRequestDate\":\"2017-11-14T17:24:08.007Z\"}";
+        assertThat(serviceInstanceResponse.getOperation()).isEqualTo(expectedJsonPipelineOperationState);
+         // and with a proper commit message
         String customMessage = (String) context.contextKeys.get(GitProcessorContext.commitMessage.toString());
         assertThat(customMessage).isEqualTo("Cassandra broker" + ": "+ CassandraProcessorConstants.OSB_OPERATION_CREATE + " instance id=" + SERVICE_INSTANCE_ID);
 

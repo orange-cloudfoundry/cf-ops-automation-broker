@@ -31,6 +31,8 @@ import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneId;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Consumer;
@@ -53,6 +55,7 @@ import static org.springframework.cloud.servicebroker.model.CloudFoundryContext.
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 public class CassandraServiceProvisionningTest {
 
+    private Clock clock = Clock.fixed(Instant.now(), ZoneId.of("Europe/Paris"));
     protected static final String SERVICE_INSTANCE_ID = "111";
     @LocalServerPort
     int port;
@@ -185,9 +188,15 @@ public class CassandraServiceProvisionningTest {
     @Test
     public void supports_crud_lifecycle() throws IOException {
         create_async_service_instance();
-        polls_last_operation("create", HttpStatus.SC_OK, "in progress", "Creation is in progress");
+        PipelineCompletionTracker tracker = new PipelineCompletionTracker(clock);
+        String jsonPipelineOperationState = tracker.getPipelineOperationStateAsJson(aCreateServiceInstanceRequest());
+
+        polls_last_operation(jsonPipelineOperationState, HttpStatus.SC_OK, "in progress", "Creation is in progress");
+
+
         simulateManifestGeneration(secretsGitProcessor);
-        polls_last_operation("create", HttpStatus.SC_OK, "succeeded", "Creation is succeeded");
+
+        polls_last_operation(jsonPipelineOperationState, HttpStatus.SC_OK, "succeeded", "Creation is succeeded");
 
 //        delete_a_service_instance();
 //        polls_last_operation("delete", 410, "succeeded", "succeeded");
@@ -196,28 +205,11 @@ public class CassandraServiceProvisionningTest {
 
     public void create_async_service_instance() {
 
-        Map<String, Object> params = new HashMap<>();
-        params.put("route-prefix", "a-valid-route");
-
-        Map<String, Object> contextProperties = new HashMap<>();
-        contextProperties.put(OSB_PROFILE_ORGANIZATION_GUID, "org_id");
-        contextProperties.put(OSB_PROFILE_SPACE_GUID, "space_id");
-        org.springframework.cloud.servicebroker.model.Context createServiceInstanceContext = new org.springframework.cloud.servicebroker.model.Context(
-                CLOUD_FOUNDRY_PLATFORM,
-                contextProperties
-        );
-        CreateServiceInstanceRequest request = new CreateServiceInstanceRequest("cassandra-ondemand-service",
-                "cassandra-ondemand-plan",
-                "org_id",
-                "space_id",
-                createServiceInstanceContext,
-                params
-        );
 
         given()
                 .basePath("/v2")
                 .contentType("application/json")
-                .body(request).
+                .body(aCreateServiceInstanceRequest()).
                 when()
                 .put("/service_instances/{id}", SERVICE_INSTANCE_ID).
                 then()
@@ -231,7 +223,7 @@ public class CassandraServiceProvisionningTest {
         given()
                 .basePath("/v2")
                 .contentType("application/json")
-                .param("operation", CassandraProcessorConstants.OSB_OPERATION_CREATE)
+                .param("operation", operation)
                 .param("plan_id", "cassandra-ondemand-plan")
                 .param("service_id", "cassandra-ondemand-service").
                 when()
@@ -264,5 +256,26 @@ public class CassandraServiceProvisionningTest {
         return tfStateFile;
     }
 
+    private CreateServiceInstanceRequest aCreateServiceInstanceRequest() {
+
+        Map<String, Object> params = new HashMap<>();
+        params.put("route-prefix", "a-valid-route");
+
+        Map<String, Object> contextProperties = new HashMap<>();
+        contextProperties.put(OSB_PROFILE_ORGANIZATION_GUID, "org_id");
+        contextProperties.put(OSB_PROFILE_SPACE_GUID, "space_id");
+        org.springframework.cloud.servicebroker.model.Context createServiceInstanceContext = new org.springframework.cloud.servicebroker.model.Context(
+                CLOUD_FOUNDRY_PLATFORM,
+                contextProperties
+        );
+        CreateServiceInstanceRequest request = new CreateServiceInstanceRequest("cassandra-ondemand-service",
+                "cassandra-ondemand-plan",
+                "org_id",
+                "space_id",
+                createServiceInstanceContext,
+                params
+        );
+        return request;
+    }
 
 }

@@ -1,11 +1,9 @@
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline;
 
-import org.fest.assertions.Assertions;
-import org.junit.Ignore;
+import org.junit.Rule;
 import org.junit.Test;
-import org.springframework.cloud.servicebroker.model.CreateServiceInstanceRequest;
-import org.springframework.cloud.servicebroker.model.GetLastServiceOperationResponse;
-import org.springframework.cloud.servicebroker.model.OperationState;
+import org.junit.rules.ExpectedException;
+import org.springframework.cloud.servicebroker.model.*;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -19,7 +17,6 @@ import java.util.Map;
 import static org.fest.assertions.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
 
-
 /**
  * Created by ijly7474 on 04/01/18.
  */
@@ -28,16 +25,56 @@ public class PipelineCompletionTrackerTest {
     public static final String SERVICE_INSTANCE_ID = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa0";
     public static final String REPOSITORY_DIRECTORY = "paas-secrets";
     public static final String ZONE = "Europe/Paris";
+    private Clock clock = Clock.fixed(Instant.now(), ZoneId.of(ZONE));
+
+    @Rule
+    public ExpectedException thrown = ExpectedException.none();
 
     @Test
-    public void stores_operation_state_in_a_json_serialized_pojo() {
+    public void raise_exception_because_delete_pipeline_operation_state_is_not_supported() {
+        try {
+            //Then
+            thrown.expect(RuntimeException.class);
+            thrown.expectMessage("Get Deployment Execution status fails (unhandled request class)");
 
+            //Given pipeline completion tracker with a "delete pipeline operation state"
+            Path workDir = Files.createTempDirectory(REPOSITORY_DIRECTORY);
+            PipelineCompletionTracker tracker = new PipelineCompletionTracker(clock);
+            String jsonPipelineOperationState = tracker.getPipelineOperationStateAsJson(aDeleteServiceInstanceRequest());
+
+            //When
+            GetLastServiceOperationResponse response = tracker.getDeploymentExecStatus(workDir, SERVICE_INSTANCE_ID, jsonPipelineOperationState);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     @Test
-    public void returns_succeeded_state_if_manifest_is_present_and_last_operation_is_create(){
+    public void returns_failed_state_if_create_operation_state_is_timed_out() {
+        //TODO : Test with null work dir
         try {
-            //Given
+            //Given a missing manifest file and a create operation state in the pass
+            Path workDir = Files.createTempDirectory(REPOSITORY_DIRECTORY);
+            Clock clock = Clock.fixed(Instant.now(), ZoneId.of(ZONE));
+            PipelineCompletionTracker tracker = new PipelineCompletionTracker(clock);
+            String jsonPipelineOperationState = "{\"org.springframework.cloud.servicebroker.model.CreateServiceInstanceRequest\":{\"serviceDefinitionId\":\"service_definition_id\",\"planId\":\"plan_id\",\"organizationGuid\":\"org_id\",\"spaceGuid\":\"space_id\",\"parameters\":{\"parameterName\":\"parameterValue\"},\"asyncAccepted\":false},\"startRequestDate\":\"2018-01-22T14:00:00.000Z\"}";
+
+            //When
+            GetLastServiceOperationResponse response = tracker.getDeploymentExecStatus(workDir, SERVICE_INSTANCE_ID, jsonPipelineOperationState);
+
+            //Then
+            assertThat(response.getState()).isEqualTo(OperationState.FAILED);
+            assertThat(response.getDescription()).startsWith("execution timeout after ");
+
+        }catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Test
+    public void returns_succeeded_state_if_manifest_is_present_and_create_operation_state_without_timeout(){
+        try {
+            //Given an existing manifest file and a create operation state without timeout
             Path workDir = Files.createTempDirectory(REPOSITORY_DIRECTORY);
             Path serviceInstanceDir = StructureGeneratorHelper.generatePath(workDir,
                     CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY,
@@ -46,11 +83,11 @@ public class PipelineCompletionTrackerTest {
             Path targetManifestFile = StructureGeneratorHelper.generatePath(serviceInstanceDir,
                     CassandraProcessorConstants.SERVICE_INSTANCE_PREFIX_DIRECTORY + SERVICE_INSTANCE_ID + CassandraProcessorConstants.YML_SUFFIX);
             Files.createFile(targetManifestFile);
-            Clock clock = Clock.fixed(Instant.now(), ZoneId.of(ZONE));
+            PipelineCompletionTracker tracker = new PipelineCompletionTracker(clock);
+            String jsonPipelineOperationState = tracker.getPipelineOperationStateAsJson(aCreateServiceInstanceRequest());
 
             //When
-            PipelineCompletionTracker tracker = new PipelineCompletionTracker(clock);
-            GetLastServiceOperationResponse response = tracker.getDeploymentExecStatus(workDir, SERVICE_INSTANCE_ID, CassandraProcessorConstants.OSB_OPERATION_CREATE);
+            GetLastServiceOperationResponse response = tracker.getDeploymentExecStatus(workDir, SERVICE_INSTANCE_ID, jsonPipelineOperationState);
 
             //Then
             assertThat(response.getState()).isEqualTo(OperationState.SUCCEEDED);
@@ -61,77 +98,30 @@ public class PipelineCompletionTrackerTest {
     }
 
     @Test
-    public void returns_inprogress_state_if_manifest_is_not_present_and_last_operation_is_create(){
+    public void returns_inprogress_state_if_manifest_is_not_present_and_create_operation_state_without_timeout(){
         try {
-            //Given
+            //Given a missing manifest file and a create operation state without timeout
             Path workDir = Files.createTempDirectory(REPOSITORY_DIRECTORY);
             Clock clock = Clock.fixed(Instant.now(), ZoneId.of(ZONE));
+            PipelineCompletionTracker tracker = new PipelineCompletionTracker(clock);
+            String jsonPipelineOperationState = tracker.getPipelineOperationStateAsJson(aCreateServiceInstanceRequest());
 
             //When
-            PipelineCompletionTracker tracker = new PipelineCompletionTracker(clock);
-            GetLastServiceOperationResponse response = tracker.getDeploymentExecStatus(workDir, SERVICE_INSTANCE_ID, CassandraProcessorConstants.OSB_OPERATION_CREATE);
+            GetLastServiceOperationResponse response = tracker.getDeploymentExecStatus(workDir, SERVICE_INSTANCE_ID, jsonPipelineOperationState);
 
             //Then
             assertThat(response.getState()).isEqualTo(OperationState.IN_PROGRESS);
             assertThat(response.getDescription()).describedAs("Creation is in progress");
 
-            //Then
-        } catch (IOException e) {
+         } catch (IOException e) {
                 e.printStackTrace();
-        }
-    }
-
-    @Test@Ignore//Delete is now synchronous
-    public void returns_succeeded_state_if_manifest_is_not_present_and_last_operation_is_delete(){
-        try {
-            //Given
-            Path workDir = Files.createTempDirectory(REPOSITORY_DIRECTORY);
-            Clock clock = Clock.fixed(Instant.now(), ZoneId.of(ZONE));
-
-            //When
-            PipelineCompletionTracker tracker = new PipelineCompletionTracker(clock);
-            GetLastServiceOperationResponse response = tracker.getDeploymentExecStatus(workDir, SERVICE_INSTANCE_ID, CassandraProcessorConstants.OSB_OPERATION_DELETE);
-
-            //Then
-            assertThat(response.getState()).isEqualTo(OperationState.SUCCEEDED);
-            assertThat(response.getDescription()).describedAs("Creation is suceeded");
-
-            //Then
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    @Test@Ignore //Delete is now synchronous
-    public void returns_inprogress_state_if_manifest_is_present_and_last_operation_is_delete(){
-        try {
-            //Given
-            Path workDir = Files.createTempDirectory(REPOSITORY_DIRECTORY);
-            Path serviceInstanceDir = StructureGeneratorHelper.generatePath(workDir,
-                    CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY,
-                    CassandraProcessorConstants.SERVICE_INSTANCE_PREFIX_DIRECTORY + SERVICE_INSTANCE_ID);
-            serviceInstanceDir = Files.createDirectories(serviceInstanceDir);
-            Path targetManifestFile = StructureGeneratorHelper.generatePath(serviceInstanceDir,
-                    CassandraProcessorConstants.SERVICE_INSTANCE_PREFIX_DIRECTORY + SERVICE_INSTANCE_ID + CassandraProcessorConstants.YML_SUFFIX);
-            Files.createFile(targetManifestFile);
-            Clock clock = Clock.fixed(Instant.now(), ZoneId.of(ZONE));
-
-            //When
-            PipelineCompletionTracker tracker = new PipelineCompletionTracker(clock);
-            GetLastServiceOperationResponse response = tracker.getDeploymentExecStatus(workDir, SERVICE_INSTANCE_ID, CassandraProcessorConstants.OSB_OPERATION_DELETE);
-
-            //Then
-            assertThat(response.getState()).isEqualTo(OperationState.IN_PROGRESS);
-            assertThat(response.getDescription()).describedAs("Creation is in progress");
-        } catch (IOException e) {
-            e.printStackTrace();
         }
     }
 
     @Test
     public void check_java2json_conversion() {
         //given
-        PipelineCompletionTracker.PipelineOperationState pipelineOperationState = new PipelineCompletionTracker.PipelineOperationState("2018-01-22T14:00:00.000Z", aCreateServiceInstanceRequest());
+        PipelineCompletionTracker.PipelineOperationState pipelineOperationState = new PipelineCompletionTracker.PipelineOperationState( aCreateServiceInstanceRequest(), "2018-01-22T14:00:00.000Z");
 
         //when
         PipelineCompletionTracker tracker = new PipelineCompletionTracker(Clock.systemUTC());
@@ -139,30 +129,23 @@ public class PipelineCompletionTrackerTest {
         System.out.println(actualJson);
 
         //then
-        String expectedJson = "{\"createServiceInstanceRequest\":{\"serviceDefinitionId\":\"service_definition_id\",\"planId\":\"plan_id\",\"organizationGuid\":\"org_id\",\"spaceGuid\":\"space_id\",\"parameters\":{\"parameterName\":\"parameterValue\"},\"asyncAccepted\":false},\"lastOperationDate\":\"2018-01-22T14:00:00.000Z\"}";
+        String expectedJson = "{\"org.springframework.cloud.servicebroker.model.CreateServiceInstanceRequest\":{\"serviceDefinitionId\":\"service_definition_id\",\"planId\":\"plan_id\",\"organizationGuid\":\"org_id\",\"spaceGuid\":\"space_id\",\"parameters\":{\"parameterName\":\"parameterValue\"},\"asyncAccepted\":false},\"startRequestDate\":\"2018-01-22T14:00:00.000Z\"}";
         assertEquals(expectedJson, actualJson);
     }
 
     @Test
     public void check_json2java_conversion() {
         //given //CreateServiceInstanceRequest
-        String json = "{\"createServiceInstanceRequest\":{\"serviceDefinitionId\":\"service_definition_id\",\"planId\":\"plan_id\",\"organizationGuid\":\"org_id\",\"spaceGuid\":\"space_id\",\"parameters\":{\"parameterName\":\"parameterValue\"},\"asyncAccepted\":false},\"lastOperationDate\":\"2018-01-22T14:00:00.000Z\"}";
+        String json = "{\"org.springframework.cloud.servicebroker.model.CreateServiceInstanceRequest\":{\"serviceDefinitionId\":\"service_definition_id\",\"planId\":\"plan_id\",\"organizationGuid\":\"org_id\",\"spaceGuid\":\"space_id\",\"parameters\":{\"parameterName\":\"parameterValue\"},\"asyncAccepted\":false},\"startRequestDate\":\"2018-01-22T14:00:00.000Z\"}";
 
         //when
         PipelineCompletionTracker tracker = new PipelineCompletionTracker(Clock.systemUTC());
         PipelineCompletionTracker.PipelineOperationState actualPipelineOperationState= tracker.parseFromJson(json);
 
         //then
-        PipelineCompletionTracker.PipelineOperationState expectedPipelineOperationState = new PipelineCompletionTracker.PipelineOperationState("2018-01-22T14:00:00.000Z", aCreateServiceInstanceRequest());
+        PipelineCompletionTracker.PipelineOperationState expectedPipelineOperationState = new PipelineCompletionTracker.PipelineOperationState(aCreateServiceInstanceRequest(), "2018-01-22T14:00:00.000Z");
         assertEquals(actualPipelineOperationState, expectedPipelineOperationState);
     }
-
-
-
-
-
-
-
 
     private CreateServiceInstanceRequest aCreateServiceInstanceRequest(){
 
@@ -180,8 +163,17 @@ public class PipelineCompletionTrackerTest {
         return request;
     }
 
+    private DeleteServiceInstanceRequest aDeleteServiceInstanceRequest() {
 
+        //Given an incoming delete request
+        DeleteServiceInstanceRequest request = new DeleteServiceInstanceRequest("instance_id",
+                "service_id",
+                "plan_id",
+                new ServiceDefinition(),
+                true);
 
+        return request;
+    }
 
 
 }

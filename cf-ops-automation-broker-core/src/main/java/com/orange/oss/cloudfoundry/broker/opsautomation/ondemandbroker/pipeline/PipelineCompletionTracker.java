@@ -8,6 +8,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Clock;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -23,6 +24,7 @@ public class PipelineCompletionTracker {
 
     protected Clock clock;
     private Gson gson;
+    private long maxExecutionDurationSeconds = 600L;
 
     public PipelineCompletionTracker(Clock clock) {
         this.clock = clock;
@@ -31,47 +33,38 @@ public class PipelineCompletionTracker {
         this.gson = gsonBuilder.create();
     }
 
-    public String getOperationStateAsJson(ServiceBrokerRequest serviceBrokerRequest) {
-        PipelineCompletionTracker.PipelineOperationState pipelineOperationState = new PipelineCompletionTracker.PipelineOperationState(
-                getCurrentDate(),
-                serviceBrokerRequest
-        );
-        return formatAsJson(pipelineOperationState);
-    }
+    public GetLastServiceOperationResponse getDeploymentExecStatus(Path workDir, String serviceInstanceId, String jsonPipelineOperationState) {
 
-    public String getCurrentDate() {
-        Instant now = Instant.now(clock);
-        return now.toString();
-    }
-
-
-
-    public GetLastServiceOperationResponse getDeploymentExecStatus(Path workDir, String serviceInstanceId, String lastServiceOperation) {
-        Path targetManifestFile = getTargetManifestFilePath(workDir, serviceInstanceId);
+        //Check if target manifest file is present
+        Path targetManifestFile = this.getTargetManifestFilePath(workDir, serviceInstanceId);
         boolean isTargetManifestFilePresent = Files.exists(targetManifestFile);
 
+        //Initialize response and determine the appropriate values based on pipelineOperationState
         GetLastServiceOperationResponse response = new GetLastServiceOperationResponse();
-        if (CassandraProcessorConstants.OSB_OPERATION_CREATE.equals(lastServiceOperation)){
-            if (isTargetManifestFilePresent){
-                response.withOperationState(OperationState.SUCCEEDED);
-                response.withDescription("Creation is succeeded");
-            }else{
-                response.withOperationState(OperationState.IN_PROGRESS);
-                response.withDescription("Creation is in progress");
+        PipelineOperationState pipelineOperationState = this.parseFromJson(jsonPipelineOperationState);
+        long elapsedTimeSecsSinceStartRequestDate = this.getElapsedTimeSecsSinceStartRequestDate(pipelineOperationState.getStartRequestDate());
+        boolean isRequestTimedOut = this.isRequestTimedOut(elapsedTimeSecsSinceStartRequestDate);
+        if (isRequestTimedOut){
+            response.withOperationState(OperationState.FAILED);
+            response.withDescription("execution timeout after " + elapsedTimeSecsSinceStartRequestDate + "s max is " + maxExecutionDurationSeconds);
+        }else{
+            ServiceBrokerRequest serviceBrokerRequest = pipelineOperationState.getServiceBrokerRequest();
+            String classFullyQualifiedName = serviceBrokerRequest.getClass().getName();
+            switch(classFullyQualifiedName)
+            {
+                case CassandraProcessorConstants.OSB_CREATE_REQUEST_CLASS_NAME:
+                    if (isTargetManifestFilePresent){
+                        response.withOperationState(OperationState.SUCCEEDED);
+                        response.withDescription("Creation is succeeded");
+                    }else{
+                        response.withOperationState(OperationState.IN_PROGRESS);
+                        response.withDescription("Creation is in progress");
+                    }
+                    break;
+                default:
+                    throw new RuntimeException("Get Deployment Execution status fails (unhandled request class)");
             }
-
-        }else if (CassandraProcessorConstants.OSB_OPERATION_UPDATE.equals(lastServiceOperation)){
-            //Don't know what to do
-            throw new RuntimeException("update is currently unsupported");
-        }/*else if (CassandraProcessorConstants.OSB_OPERATION_DELETE.equals(lastServiceOperation)) {
-            if (isTargetManifestFilePresent){
-                response.withOperationState(OperationState.IN_PROGRESS);
-                response.withDescription("Deletion is in progress");
-            }else{
-                response.withOperationState(OperationState.SUCCEEDED);
-                response.withDescription("Deletion is succeeded");
-            }
-        }TODO : Remove branch since delete is now synchronous*/
+        }
         return response;
     }
 
@@ -80,6 +73,38 @@ public class PipelineCompletionTracker {
                     CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY,
                     CassandraProcessorConstants.SERVICE_INSTANCE_PREFIX_DIRECTORY + serviceInstanceId,
                     CassandraProcessorConstants.SERVICE_INSTANCE_PREFIX_DIRECTORY + serviceInstanceId + CassandraProcessorConstants.YML_SUFFIX);
+    }
+
+    private String getCurrentDate() {
+        Instant now = Instant.now(clock);
+        return now.toString();
+    }
+
+    private boolean isRequestTimedOut(long elapsedTimeSecsSinceStartRequestDate){
+        if (elapsedTimeSecsSinceStartRequestDate < this.maxExecutionDurationSeconds)
+            return false;
+        else
+            return true;
+    }
+
+    long getElapsedTimeSecsSinceStartRequestDate(String startRequestDate) {
+        Instant start = Instant.parse(startRequestDate);
+        Instant now = Instant.now(clock);
+        long elapsedSeconds = start.until(now, ChronoUnit.SECONDS);
+        if (elapsedSeconds < 0) {
+            logger.error("Unexpected start request date in future:" + startRequestDate + " Is there a clock desynchronized around ?");
+            //We don't know who's wrong so, so we don't trigger a service instance failure.
+        }
+        return elapsedSeconds;
+    }
+
+    public String getPipelineOperationStateAsJson(ServiceBrokerRequest serviceBrokerRequest) {
+        PipelineCompletionTracker.PipelineOperationState pipelineOperationState = new PipelineCompletionTracker.PipelineOperationState(
+                serviceBrokerRequest,
+                getCurrentDate()
+
+        );
+        return formatAsJson(pipelineOperationState);
     }
 
     String formatAsJson(PipelineCompletionTracker.PipelineOperationState pipelineOperationState) {
@@ -92,46 +117,36 @@ public class PipelineCompletionTracker {
 
     static class PipelineOperationState {
         private ServiceBrokerRequest serviceBrokerRequest;
-        private String lastOperationDate;
-        //private String operation;
+        private String startRequestDate;
 
-        public PipelineOperationState() {
-        }
-
-        public PipelineOperationState(String lastOperationDate, ServiceBrokerRequest serviceBrokerRequest) {
-            this.lastOperationDate = lastOperationDate;
+        public PipelineOperationState(ServiceBrokerRequest serviceBrokerRequest, String startRequestDate) {
             this.serviceBrokerRequest = serviceBrokerRequest;
-            //this.operation = operation;
+            this.startRequestDate = startRequestDate;
         }
 
         public ServiceBrokerRequest getServiceBrokerRequest(){
             return this.serviceBrokerRequest;
         }
 
-        public String getLastOperationDate(){
-            return this.lastOperationDate;
+        public String getStartRequestDate(){
+            return this.startRequestDate;
         }
 
         @SuppressWarnings("SimplifiableIfStatement")
         @Override
         public boolean equals(Object o) {
-            //TODO complete with ServiceBrokerRequest
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
 
             PipelineOperationState that = (PipelineOperationState) o;
 
-            //if (!lastOperationDate.equals(that.lastOperationDate)) return false;
-            //return operation.equals(that.operation);
-            return lastOperationDate.equals(that.lastOperationDate);
-
-
+            if (!startRequestDate.equals(that.startRequestDate)) return false;
+            return serviceBrokerRequest.equals(that.serviceBrokerRequest);
         }
 
         @Override
         public int hashCode() {
-            int result = 31 * lastOperationDate.hashCode();
-            //result = 31 * result + operation.hashCode();
+            int result = 31 * startRequestDate.hashCode();
             return result;
         }
     }

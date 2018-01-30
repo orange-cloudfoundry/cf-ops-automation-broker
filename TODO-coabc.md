@@ -7,6 +7,11 @@
 - Implement OSB provision delegation to nested cassandra broker
    - refine CassandraProcessor to call OSB client create/delete/bind/unbind
       - refine PipelineCompletionTracker
+         - check timeout after manifest presence
+            - refactor test to properly assert timeout first
+                - remove Json litteral and manual date editing ?  
+                - refactor Time support to manipulate duration instead of dates
+                - extract fixture step which creates manifest file  
       - add component to map OSB request (serviceid, planid, in future strip out some arbitrary params)
          - takes a Catalog bean from which it fetches serviceid and planid
 

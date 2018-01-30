@@ -33,10 +33,10 @@ public class PipelineCompletionTracker {
         this.gson = gsonBuilder.create();
     }
 
-    public GetLastServiceOperationResponse getDeploymentExecStatus(Path workDir, String serviceInstanceId, String jsonPipelineOperationState) {
+    public GetLastServiceOperationResponse getDeploymentExecStatus(Path secretsWorkDir, String serviceInstanceId, String jsonPipelineOperationState) {
 
         //Check if target manifest file is present
-        Path targetManifestFile = this.getTargetManifestFilePath(workDir, serviceInstanceId);
+        Path targetManifestFile = this.getTargetManifestFilePath(secretsWorkDir, serviceInstanceId);
         boolean isTargetManifestFilePresent = Files.exists(targetManifestFile);
 
         //Initialize response and determine the appropriate values based on pipelineOperationState

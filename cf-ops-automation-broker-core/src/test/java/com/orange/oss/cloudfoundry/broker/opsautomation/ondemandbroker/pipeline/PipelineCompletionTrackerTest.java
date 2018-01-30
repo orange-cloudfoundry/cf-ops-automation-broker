@@ -31,91 +31,74 @@ public class PipelineCompletionTrackerTest {
     public ExpectedException thrown = ExpectedException.none();
 
     @Test
-    public void raise_exception_because_delete_pipeline_operation_state_is_not_supported() {
-        try {
-            //Then
-            thrown.expect(RuntimeException.class);
-            thrown.expectMessage("Get Deployment Execution status fails (unhandled request class)");
+    public void raise_exception_because_delete_pipeline_operation_state_is_not_supported() throws IOException {
+        //Then
+        thrown.expect(RuntimeException.class);
+        thrown.expectMessage("Get Deployment Execution status fails (unhandled request class)");
 
-            //Given pipeline completion tracker with a "delete pipeline operation state"
-            Path workDir = Files.createTempDirectory(REPOSITORY_DIRECTORY);
-            PipelineCompletionTracker tracker = new PipelineCompletionTracker(clock);
-            String jsonPipelineOperationState = tracker.getPipelineOperationStateAsJson(aDeleteServiceInstanceRequest());
+        //Given pipeline completion tracker with a "delete pipeline operation state"
+        Path workDir = Files.createTempDirectory(REPOSITORY_DIRECTORY);
+        PipelineCompletionTracker tracker = new PipelineCompletionTracker(clock);
+        String jsonPipelineOperationState = tracker.getPipelineOperationStateAsJson(aDeleteServiceInstanceRequest());
 
-            //When
-            GetLastServiceOperationResponse response = tracker.getDeploymentExecStatus(workDir, SERVICE_INSTANCE_ID, jsonPipelineOperationState);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        //When
+        tracker.getDeploymentExecStatus(workDir, SERVICE_INSTANCE_ID, jsonPipelineOperationState);
     }
 
     @Test
-    public void returns_failed_state_if_create_operation_state_is_timed_out() {
+    public void returns_failed_state_if_create_operation_state_is_timed_out() throws IOException {
         //TODO : Test with null work dir
-        try {
-            //Given a missing manifest file and a create operation state in the pass
-            Path workDir = Files.createTempDirectory(REPOSITORY_DIRECTORY);
-            Clock clock = Clock.fixed(Instant.now(), ZoneId.of(ZONE));
-            PipelineCompletionTracker tracker = new PipelineCompletionTracker(clock);
-            String jsonPipelineOperationState = "{\"org.springframework.cloud.servicebroker.model.CreateServiceInstanceRequest\":{\"serviceDefinitionId\":\"service_definition_id\",\"planId\":\"plan_id\",\"organizationGuid\":\"org_id\",\"spaceGuid\":\"space_id\",\"parameters\":{\"parameterName\":\"parameterValue\"},\"asyncAccepted\":false},\"startRequestDate\":\"2018-01-22T14:00:00.000Z\"}";
+        //Given a missing manifest file and a create operation state in the pass
+        Path workDir = Files.createTempDirectory(REPOSITORY_DIRECTORY);
+        Clock clock = Clock.fixed(Instant.now(), ZoneId.of(ZONE));
+        PipelineCompletionTracker tracker = new PipelineCompletionTracker(clock);
+        String jsonPipelineOperationState = "{\"org.springframework.cloud.servicebroker.model.CreateServiceInstanceRequest\":{\"serviceDefinitionId\":\"service_definition_id\",\"planId\":\"plan_id\",\"organizationGuid\":\"org_id\",\"spaceGuid\":\"space_id\",\"parameters\":{\"parameterName\":\"parameterValue\"},\"asyncAccepted\":false},\"startRequestDate\":\"2018-01-22T14:00:00.000Z\"}";
 
-            //When
-            GetLastServiceOperationResponse response = tracker.getDeploymentExecStatus(workDir, SERVICE_INSTANCE_ID, jsonPipelineOperationState);
+        //When
+        GetLastServiceOperationResponse response = tracker.getDeploymentExecStatus(workDir, SERVICE_INSTANCE_ID, jsonPipelineOperationState);
 
-            //Then
-            assertThat(response.getState()).isEqualTo(OperationState.FAILED);
-            assertThat(response.getDescription()).startsWith("execution timeout after ");
+        //Then
+        assertThat(response.getState()).isEqualTo(OperationState.FAILED);
+        assertThat(response.getDescription()).startsWith("execution timeout after ");
 
-        }catch (IOException e) {
-            e.printStackTrace();
-        }
     }
 
     @Test
-    public void returns_succeeded_state_if_manifest_is_present_and_create_operation_state_without_timeout(){
-        try {
-            //Given an existing manifest file and a create operation state without timeout
-            Path workDir = Files.createTempDirectory(REPOSITORY_DIRECTORY);
-            Path serviceInstanceDir = StructureGeneratorHelper.generatePath(workDir,
-                    CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY,
-                    CassandraProcessorConstants.SERVICE_INSTANCE_PREFIX_DIRECTORY + SERVICE_INSTANCE_ID);
-            serviceInstanceDir = Files.createDirectories(serviceInstanceDir);
-            Path targetManifestFile = StructureGeneratorHelper.generatePath(serviceInstanceDir,
-                    CassandraProcessorConstants.SERVICE_INSTANCE_PREFIX_DIRECTORY + SERVICE_INSTANCE_ID + CassandraProcessorConstants.YML_SUFFIX);
-            Files.createFile(targetManifestFile);
-            PipelineCompletionTracker tracker = new PipelineCompletionTracker(clock);
-            String jsonPipelineOperationState = tracker.getPipelineOperationStateAsJson(aCreateServiceInstanceRequest());
+    public void returns_succeeded_state_if_manifest_is_present_and_create_operation_state_without_timeout() throws IOException {
+        //Given an existing manifest file and a create operation state without timeout
+        Path workDir = Files.createTempDirectory(REPOSITORY_DIRECTORY);
+        Path serviceInstanceDir = StructureGeneratorHelper.generatePath(workDir,
+                CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY,
+                CassandraProcessorConstants.SERVICE_INSTANCE_PREFIX_DIRECTORY + SERVICE_INSTANCE_ID);
+        serviceInstanceDir = Files.createDirectories(serviceInstanceDir);
+        Path targetManifestFile = StructureGeneratorHelper.generatePath(serviceInstanceDir,
+                CassandraProcessorConstants.SERVICE_INSTANCE_PREFIX_DIRECTORY + SERVICE_INSTANCE_ID + CassandraProcessorConstants.YML_SUFFIX);
+        Files.createFile(targetManifestFile);
+        PipelineCompletionTracker tracker = new PipelineCompletionTracker(clock);
+        String jsonPipelineOperationState = tracker.getPipelineOperationStateAsJson(aCreateServiceInstanceRequest());
 
-            //When
-            GetLastServiceOperationResponse response = tracker.getDeploymentExecStatus(workDir, SERVICE_INSTANCE_ID, jsonPipelineOperationState);
+        //When
+        GetLastServiceOperationResponse response = tracker.getDeploymentExecStatus(workDir, SERVICE_INSTANCE_ID, jsonPipelineOperationState);
 
-            //Then
-            assertThat(response.getState()).isEqualTo(OperationState.SUCCEEDED);
-            assertThat(response.getDescription()).describedAs("Creation is succeeded");
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        //Then
+        assertThat(response.getState()).isEqualTo(OperationState.SUCCEEDED);
+        assertThat(response.getDescription()).describedAs("Creation is succeeded");
     }
 
     @Test
-    public void returns_inprogress_state_if_manifest_is_not_present_and_create_operation_state_without_timeout(){
-        try {
-            //Given a missing manifest file and a create operation state without timeout
-            Path workDir = Files.createTempDirectory(REPOSITORY_DIRECTORY);
-            Clock clock = Clock.fixed(Instant.now(), ZoneId.of(ZONE));
-            PipelineCompletionTracker tracker = new PipelineCompletionTracker(clock);
-            String jsonPipelineOperationState = tracker.getPipelineOperationStateAsJson(aCreateServiceInstanceRequest());
+    public void returns_inprogress_state_if_manifest_is_not_present_and_create_operation_state_without_timeout() throws IOException {
+        //Given a missing manifest file and a create operation state without timeout
+        Path workDir = Files.createTempDirectory(REPOSITORY_DIRECTORY);
+        Clock clock = Clock.fixed(Instant.now(), ZoneId.of(ZONE));
+        PipelineCompletionTracker tracker = new PipelineCompletionTracker(clock);
+        String jsonPipelineOperationState = tracker.getPipelineOperationStateAsJson(aCreateServiceInstanceRequest());
 
-            //When
-            GetLastServiceOperationResponse response = tracker.getDeploymentExecStatus(workDir, SERVICE_INSTANCE_ID, jsonPipelineOperationState);
+        //When
+        GetLastServiceOperationResponse response = tracker.getDeploymentExecStatus(workDir, SERVICE_INSTANCE_ID, jsonPipelineOperationState);
 
-            //Then
-            assertThat(response.getState()).isEqualTo(OperationState.IN_PROGRESS);
-            assertThat(response.getDescription()).describedAs("Creation is in progress");
-
-         } catch (IOException e) {
-                e.printStackTrace();
-        }
+        //Then
+        assertThat(response.getState()).isEqualTo(OperationState.IN_PROGRESS);
+        assertThat(response.getDescription()).describedAs("Creation is in progress");
     }
 
     @Test
@@ -164,15 +147,12 @@ public class PipelineCompletionTrackerTest {
     }
 
     private DeleteServiceInstanceRequest aDeleteServiceInstanceRequest() {
-
-        //Given an incoming delete request
-        DeleteServiceInstanceRequest request = new DeleteServiceInstanceRequest("instance_id",
+        // Given an incoming delete request
+        return new DeleteServiceInstanceRequest("instance_id",
                 "service_id",
                 "plan_id",
                 new ServiceDefinition(),
                 true);
-
-        return request;
     }
 
 

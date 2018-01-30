@@ -64,7 +64,7 @@ public class CassandraProcessor extends DefaultBrokerProcessor {
 
 		//Generate commit message and put it into context
 		String msg = "Cassandra broker" + ": "+ CassandraProcessorConstants.OSB_OPERATION_CREATE + " instance id=" + serviceInstanceId;
-		ctx.contextKeys.put(GitProcessorContext.commitMessage.toString(), msg);
+		setCommitMsg(ctx, msg);
 	}
 
 	@Override
@@ -105,7 +105,7 @@ public class CassandraProcessor extends DefaultBrokerProcessor {
 
 		//Generate commit message and put it into context
 		String msg = "Cassandra broker" + ": "+ CassandraProcessorConstants.OSB_OPERATION_DELETE + " instance id=" + serviceInstanceId;
-		ctx.contextKeys.put(GitProcessorContext.commitMessage.toString(), msg);
+		ctx.contextKeys.put(templatesRepositoryAliasName + GitProcessorContext.commitMessage.toString(), msg);
 
 	}
 
@@ -119,6 +119,14 @@ public class CassandraProcessor extends DefaultBrokerProcessor {
 		Path templatesWorkDir = (Path) ctx.contextKeys.get(templatesRepositoryAliasName + GitProcessorContext.workDir.toString());
 		logger.debug("templates workDir is " + templatesWorkDir.toString());
 		return templatesWorkDir;
+	}
+
+	/**
+	 * Set commmit msg for both secrets and template repos. Template repos commit msg will be ignored if not changes
+	 */
+	protected void setCommitMsg(Context ctx, String msg) {
+		ctx.contextKeys.put(templatesRepositoryAliasName + GitProcessorContext.commitMessage.toString(), msg);
+		ctx.contextKeys.put(secretsRepositoryAliasName + GitProcessorContext.commitMessage.toString(), msg);
 	}
 
 }

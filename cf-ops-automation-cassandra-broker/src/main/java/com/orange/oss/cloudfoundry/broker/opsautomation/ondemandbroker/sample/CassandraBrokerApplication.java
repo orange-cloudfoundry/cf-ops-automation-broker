@@ -67,7 +67,7 @@ public class CassandraBrokerApplication {
                                               TemplatesGenerator templatesGenerator,
                                               SecretsGenerator secretsGenerator,
                                               PipelineCompletionTracker pipelineCompletionTracker) {
-        return new CassandraProcessor(TEMPLATES_REPOSITORY_ALIAS_NAME, SECRETS_REPOSITORY_ALIAS_NAME, clock, templatesGenerator, secretsGenerator, pipelineCompletionTracker);
+        return new CassandraProcessor(TEMPLATES_REPOSITORY_ALIAS_NAME, SECRETS_REPOSITORY_ALIAS_NAME, templatesGenerator, secretsGenerator, pipelineCompletionTracker);
     }
 
     @Bean

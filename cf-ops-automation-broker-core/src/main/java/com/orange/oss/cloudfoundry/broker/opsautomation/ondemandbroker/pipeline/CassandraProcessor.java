@@ -9,7 +9,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.cloud.servicebroker.model.*;
 
 import java.nio.file.Path;
-import java.time.Clock;
 
 public class CassandraProcessor extends DefaultBrokerProcessor {
 
@@ -21,12 +20,9 @@ public class CassandraProcessor extends DefaultBrokerProcessor {
 	private TemplatesGenerator templatesGenerator;
 	private SecretsGenerator secretsGenerator;
 
-    public CassandraProcessor(String templatesRepositoryAliasName, String secretsRepositoryAliasName, Clock clock, TemplatesGenerator templatesGenerator, SecretsGenerator secretsGenerator, PipelineCompletionTracker tracker) {
+    public CassandraProcessor(String templatesRepositoryAliasName, String secretsRepositoryAliasName, TemplatesGenerator templatesGenerator, SecretsGenerator secretsGenerator, PipelineCompletionTracker tracker) {
         this.templatesRepositoryAliasName = templatesRepositoryAliasName;
         this.secretsRepositoryAliasName = secretsRepositoryAliasName;
-        this.templatesGenerator = new TemplatesGenerator();
-        this.secretsGenerator = new SecretsGenerator();
-        this.tracker = new PipelineCompletionTracker(clock); //TODO : Remove
         this.templatesGenerator = templatesGenerator;
 		this.secretsGenerator = secretsGenerator;
 		this.tracker = tracker;

@@ -2,7 +2,9 @@
     - mvn release / github release
     - automate broker deployment in paas-template from binary in github release
 
-- Improve *Generator design in order to enable CassandraProcessorTests 
+- Improve *Generator design in order to enable CassandraProcessorTests ?? 
+
+- Configure IDE template to avoid noisy class headers
 
 - Implement OSB provision delegation to nested cassandra broker
    - refine CassandraProcessor to call OSB client create/delete/bind/unbind
@@ -18,6 +20,7 @@
 - Implement OSB binding delegation to nested cassandra broker
    - core framework: create/delete service binding 
 
+- Refine timeout implementation: support configuring timeout in the broker (currently hardcoded)
 
 
 

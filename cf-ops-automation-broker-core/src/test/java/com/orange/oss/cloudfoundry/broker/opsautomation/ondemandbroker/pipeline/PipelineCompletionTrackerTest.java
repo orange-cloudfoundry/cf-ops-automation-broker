@@ -20,9 +20,6 @@ import java.util.Map;
 import static org.fest.assertions.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
 
-/**
- * Created by ijly7474 on 04/01/18.
- */
 public class PipelineCompletionTrackerTest {
 
     public static final String SERVICE_INSTANCE_ID = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa0";
@@ -48,7 +45,7 @@ public class PipelineCompletionTrackerTest {
     }
 
     @Test
-    public void raise_exception_because_delete_pipeline_operation_state_is_not_supported() throws IOException {
+    public void raises_exception_when_receiving_unsupported_operation_state() throws IOException {
         //Then
         thrown.expect(RuntimeException.class);
         thrown.expectMessage("Get Deployment Execution status fails (unhandled request class)");
@@ -63,8 +60,8 @@ public class PipelineCompletionTrackerTest {
     @Test
     public void returns_failed_state_if_create_operation_state_is_timed_out() throws IOException {
         //TODO : Test with null work dir
-        //Given a missing manifest file and a create operation state in the pass
-        String jsonPipelineOperationState = "{\"org.springframework.cloud.servicebroker.model.CreateServiceInstanceRequest\":{\"serviceDefinitionId\":\"service_definition_id\",\"planId\":\"plan_id\",\"organizationGuid\":\"org_id\",\"spaceGuid\":\"space_id\",\"parameters\":{\"parameterName\":\"parameterValue\"},\"asyncAccepted\":false},\"startRequestDate\":\"2018-01-22T14:00:00.000Z\"}";
+        //Given a missing manifest file and a create operation state in the past
+        String jsonPipelineOperationState = createOperationStateInThePast();
 
         //When
         GetLastServiceOperationResponse response = tracker.getDeploymentExecStatus(workDir, SERVICE_INSTANCE_ID, jsonPipelineOperationState);
@@ -72,6 +69,20 @@ public class PipelineCompletionTrackerTest {
         //Then
         assertThat(response.getState()).isEqualTo(OperationState.FAILED);
         assertThat(response.getDescription()).startsWith("execution timeout after ");
+    }
+
+    @Test
+    public void returns_succeeded_state_if_manifest_is_present_regardless_of_elapsed_time() throws IOException {
+        //Given an existing manifest file
+        generateSampleManifest();
+        String jsonPipelineOperationState = createOperationStateInThePast();
+
+        //When
+        GetLastServiceOperationResponse response = tracker.getDeploymentExecStatus(workDir, SERVICE_INSTANCE_ID, jsonPipelineOperationState);
+
+        //Then
+        assertThat(response.getState()).isEqualTo(OperationState.SUCCEEDED);
+        assertThat(response.getDescription()).describedAs("Creation is succeeded");
     }
 
     @Test
@@ -89,7 +100,7 @@ public class PipelineCompletionTrackerTest {
     }
 
     @Test
-    public void returns_inprogress_state_if_manifest_is_not_present_and_create_operation_state_without_timeout() throws IOException {
+    public void returns_inprogress_state_if_manifest_is_not_present_and_create_operation_state_before_timeout() throws IOException {
         //Given a missing manifest file and a create operation state without timeout
         String jsonPipelineOperationState = tracker.getPipelineOperationStateAsJson(aCreateServiceInstanceRequest());
 
@@ -99,6 +110,12 @@ public class PipelineCompletionTrackerTest {
         //Then
         assertThat(response.getState()).isEqualTo(OperationState.IN_PROGRESS);
         assertThat(response.getDescription()).describedAs("Creation is in progress");
+    }
+
+
+    
+    protected String createOperationStateInThePast() {
+        return "{\"org.springframework.cloud.servicebroker.model.CreateServiceInstanceRequest\":{\"serviceDefinitionId\":\"service_definition_id\",\"planId\":\"plan_id\",\"organizationGuid\":\"org_id\",\"spaceGuid\":\"space_id\",\"parameters\":{\"parameterName\":\"parameterValue\"},\"asyncAccepted\":false},\"startRequestDate\":\"2018-01-22T14:00:00.000Z\"}";
     }
 
     @Test

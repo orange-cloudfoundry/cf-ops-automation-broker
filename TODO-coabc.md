@@ -4,22 +4,11 @@
 
 - Improve *Generator design in order to enable CassandraProcessorTests 
 
-- Refine cassandra impl: timeout + delete support
-    - Cassandra Processor:
-       - implement timeout support: store timestamp in last operation.
-         - Store a JSON-serialized POJO in the last operation
-            - POJO will contain:
-                - timestamp
-                - received OSB request: ServiceBrokerRequest subclasses
-            - GSon parser is expensive, so need to keep that in a spring bean
-            => refactor PipelineCompletionTracker to become a spring bean
- 
-    
 - Implement OSB provision delegation to nested cassandra broker
-   - store full OSB request in operation field ?
    - refine CassandraProcessor to call OSB client create/delete/bind/unbind
       - refine PipelineCompletionTracker
       - add component to map OSB request (serviceid, planid, in future strip out some arbitrary params)
+         - takes a Catalog bean from which it fetches serviceid and planid
 
 - Implement OSB binding delegation to nested cassandra broker
    - core framework: create/delete service binding 

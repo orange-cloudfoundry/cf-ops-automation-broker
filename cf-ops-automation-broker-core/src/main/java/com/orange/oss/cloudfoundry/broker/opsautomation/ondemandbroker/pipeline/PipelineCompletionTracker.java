@@ -1,18 +1,18 @@
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cloud.servicebroker.model.GetLastServiceOperationResponse;
 import org.springframework.cloud.servicebroker.model.OperationState;
+import org.springframework.cloud.servicebroker.model.ServiceBrokerRequest;
+
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import org.springframework.cloud.servicebroker.model.ServiceBrokerRequest;
 
 
 /**
@@ -76,15 +76,11 @@ public class PipelineCompletionTracker {
     }
 
     private String getCurrentDate() {
-        Instant now = Instant.now(clock);
-        return now.toString();
+        return Instant.now(clock).toString();
     }
 
     private boolean isRequestTimedOut(long elapsedTimeSecsSinceStartRequestDate){
-        if (elapsedTimeSecsSinceStartRequestDate < this.maxExecutionDurationSeconds)
-            return false;
-        else
-            return true;
+        return elapsedTimeSecsSinceStartRequestDate >= this.maxExecutionDurationSeconds;
     }
 
     long getElapsedTimeSecsSinceStartRequestDate(String startRequestDate) {
@@ -144,6 +140,7 @@ public class PipelineCompletionTracker {
             return serviceBrokerRequest.equals(that.serviceBrokerRequest);
         }
 
+        @SuppressWarnings("UnnecessaryLocalVariable")
         @Override
         public int hashCode() {
             int result = 31 * startRequestDate.hashCode();

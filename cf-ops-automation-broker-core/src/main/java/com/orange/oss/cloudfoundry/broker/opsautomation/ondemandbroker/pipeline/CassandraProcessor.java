@@ -39,11 +39,8 @@ public class CassandraProcessor extends DefaultBrokerProcessor {
 	@Override
 	public void preCreate(Context ctx) {
 		//Need to retrieve workdirs from context (one for secrets and one for template)
-		Path templatesWorkDir = (Path) ctx.contextKeys.get(templatesRepositoryAliasName + GitProcessorContext.workDir.toString());
-		logger.debug("templates workDir is " + templatesWorkDir.toString());
-
-		Path secretsWorkDir = (Path) ctx.contextKeys.get(secretsRepositoryAliasName + GitProcessorContext.workDir.toString());
-		logger.debug("secrets workDir is " + secretsWorkDir.toString());
+		Path templatesWorkDir = getPaasTemplate(ctx);
+		Path secretsWorkDir = getPaasSecret(ctx);
 
 		//Need to retrieve service instance id from  context
 		CreateServiceInstanceRequest creationRequest = (CreateServiceInstanceRequest) ctx.contextKeys.get(ProcessorChainServiceInstanceService.CREATE_SERVICE_INSTANCE_REQUEST);
@@ -74,8 +71,7 @@ public class CassandraProcessor extends DefaultBrokerProcessor {
 	public void preGetLastOperation(Context ctx) {
 
 		//Need to retrieve workdir from context
-		Path secretsWorkDir = (Path) ctx.contextKeys.get(secretsRepositoryAliasName + GitProcessorContext.workDir.toString());
-		logger.debug("secrets workDir is " + secretsWorkDir.toString());
+		Path secretsWorkDir = getPaasSecret(ctx);
 
 		//Need to retrieve operation request from context
 		GetLastServiceOperationRequest operationRequest = (GetLastServiceOperationRequest)
@@ -92,8 +88,7 @@ public class CassandraProcessor extends DefaultBrokerProcessor {
 	public void preDelete(Context ctx) {
 
 		//Need to retrieve workdir from context
-		Path secretsWorkDir = (Path) ctx.contextKeys.get(secretsRepositoryAliasName + GitProcessorContext.workDir.toString());
-		logger.debug("secrets workDir is " + secretsWorkDir.toString());
+		Path secretsWorkDir = getPaasSecret(ctx);
 
 		//Need to retrieve delete request from context
 		DeleteServiceInstanceRequest request = (DeleteServiceInstanceRequest) ctx.contextKeys.get(ProcessorChainServiceInstanceService.DELETE_SERVICE_INSTANCE_REQUEST);
@@ -112,6 +107,18 @@ public class CassandraProcessor extends DefaultBrokerProcessor {
 		String msg = "Cassandra broker" + ": "+ CassandraProcessorConstants.OSB_OPERATION_DELETE + " instance id=" + serviceInstanceId;
 		ctx.contextKeys.put(GitProcessorContext.commitMessage.toString(), msg);
 
+	}
+
+	protected Path getPaasSecret(Context ctx) {
+		Path secretsWorkDir = (Path) ctx.contextKeys.get(secretsRepositoryAliasName + GitProcessorContext.workDir.toString());
+		logger.debug("secrets workDir is " + secretsWorkDir.toString());
+		return secretsWorkDir;
+	}
+
+	protected Path getPaasTemplate(Context ctx) {
+		Path templatesWorkDir = (Path) ctx.contextKeys.get(templatesRepositoryAliasName + GitProcessorContext.workDir.toString());
+		logger.debug("templates workDir is " + templatesWorkDir.toString());
+		return templatesWorkDir;
 	}
 
 }

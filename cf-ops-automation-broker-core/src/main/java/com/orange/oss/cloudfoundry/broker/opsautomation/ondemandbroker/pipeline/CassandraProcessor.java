@@ -59,7 +59,6 @@ public class CassandraProcessor extends DefaultBrokerProcessor {
 		CreateServiceInstanceResponse creationResponse = new CreateServiceInstanceResponse();
 		creationResponse.withAsync(true);
 		creationResponse.withOperation(this.tracker.getPipelineOperationStateAsJson(creationRequest));
-		//creationResponse.withOperation(CassandraProcessorConstants.OSB_OPERATION_CREATE);
 		ctx.contextKeys.put(ProcessorChainServiceInstanceService.CREATE_SERVICE_INSTANCE_RESPONSE, creationResponse);
 
 		//Generate commit message and put it into context

@@ -63,8 +63,7 @@ public class CassandraProcessor extends DefaultBrokerProcessor {
 		ctx.contextKeys.put(ProcessorChainServiceInstanceService.CREATE_SERVICE_INSTANCE_RESPONSE, creationResponse);
 
 		//Generate commit message and put it into context
-		String msg = "Cassandra broker" + ": "+ CassandraProcessorConstants.OSB_OPERATION_CREATE + " instance id=" + serviceInstanceId;
-		setCommitMsg(ctx, msg);
+        setCommitMsg(ctx, "Cassandra broker: create instance id=" + serviceInstanceId);
 	}
 
 	@Override
@@ -104,9 +103,7 @@ public class CassandraProcessor extends DefaultBrokerProcessor {
 		ctx.contextKeys.put(ProcessorChainServiceInstanceService.DELETE_SERVICE_INSTANCE_RESPONSE, deletionResponse);
 
 		//Generate commit message and put it into context
-		String msg = "Cassandra broker" + ": "+ CassandraProcessorConstants.OSB_OPERATION_DELETE + " instance id=" + serviceInstanceId;
-		ctx.contextKeys.put(templatesRepositoryAliasName + GitProcessorContext.commitMessage.toString(), msg);
-
+        setCommitMsg(ctx,"Cassandra broker: delete instance id=" + serviceInstanceId);
 	}
 
 	protected Path getPaasSecret(Context ctx) {

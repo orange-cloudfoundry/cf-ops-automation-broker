@@ -3,8 +3,7 @@ package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.sample;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.GitProcessor;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.GitProcessorContext;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.GitProperties;
-import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.CassandraProcessor;
-import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.PipelineProperties;
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.*;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.*;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -48,12 +47,28 @@ public class CassandraBrokerApplication {
         return Clock.systemDefaultZone();
     }
 
-
     @Bean
-    public BrokerProcessor cassandraProcessor(Clock clock) {
-        return new CassandraProcessor(TEMPLATES_REPOSITORY_ALIAS_NAME, SECRETS_REPOSITORY_ALIAS_NAME, clock);
+    public PipelineCompletionTracker pipelineCompletionTracker(Clock clock) {
+        return new PipelineCompletionTracker(clock);
     }
 
+    @Bean
+    public SecretsGenerator secretsGenerator() {
+        return new SecretsGenerator();
+    }
+
+    @Bean
+    public TemplatesGenerator templatesGenerator() {
+        return new TemplatesGenerator();
+    }
+
+    @Bean
+    public BrokerProcessor cassandraProcessor(Clock clock,
+                                              TemplatesGenerator templatesGenerator,
+                                              SecretsGenerator secretsGenerator,
+                                              PipelineCompletionTracker pipelineCompletionTracker) {
+        return new CassandraProcessor(TEMPLATES_REPOSITORY_ALIAS_NAME, SECRETS_REPOSITORY_ALIAS_NAME, clock, templatesGenerator, secretsGenerator, pipelineCompletionTracker);
+    }
 
     @Bean
     public BrokerProcessor secretsGitProcessor(GitProperties secretsGitProperties) {

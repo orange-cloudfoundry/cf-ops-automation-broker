@@ -21,17 +21,13 @@ public class CassandraProcessor extends DefaultBrokerProcessor {
 	private TemplatesGenerator templatesGenerator;
 	private SecretsGenerator secretsGenerator;
 
-	public CassandraProcessor(String templatesRepositoryAliasName, String secretsRepositoryAliasName, Clock clock) {
-		this.templatesRepositoryAliasName = templatesRepositoryAliasName;
-		this.secretsRepositoryAliasName = secretsRepositoryAliasName;
-		this.templatesGenerator = new TemplatesGenerator();
-		this.secretsGenerator = new SecretsGenerator();
-		this.tracker = new PipelineCompletionTracker(clock); //TODO : Remove
-	}
-
-	public CassandraProcessor(String templatesRepositoryAliasName, String secretsRepositoryAliasName, Clock clock, TemplatesGenerator templatesGenerator, SecretsGenerator secretsGenerator, PipelineCompletionTracker tracker) {
-		this(templatesRepositoryAliasName, secretsRepositoryAliasName, clock);
-		this.templatesGenerator = templatesGenerator;
+    public CassandraProcessor(String templatesRepositoryAliasName, String secretsRepositoryAliasName, Clock clock, TemplatesGenerator templatesGenerator, SecretsGenerator secretsGenerator, PipelineCompletionTracker tracker) {
+        this.templatesRepositoryAliasName = templatesRepositoryAliasName;
+        this.secretsRepositoryAliasName = secretsRepositoryAliasName;
+        this.templatesGenerator = new TemplatesGenerator();
+        this.secretsGenerator = new SecretsGenerator();
+        this.tracker = new PipelineCompletionTracker(clock); //TODO : Remove
+        this.templatesGenerator = templatesGenerator;
 		this.secretsGenerator = secretsGenerator;
 		this.tracker = tracker;
 	}

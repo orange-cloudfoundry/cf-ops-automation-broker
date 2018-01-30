@@ -77,13 +77,7 @@ public class PipelineCompletionTrackerTest {
     @Test
     public void returns_succeeded_state_if_manifest_is_present_and_create_operation_state_without_timeout() throws IOException {
         //Given an existing manifest file and a create operation state without timeout
-        Path serviceInstanceDir = StructureGeneratorHelper.generatePath(workDir,
-                CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY,
-                CassandraProcessorConstants.SERVICE_INSTANCE_PREFIX_DIRECTORY + SERVICE_INSTANCE_ID);
-        serviceInstanceDir = Files.createDirectories(serviceInstanceDir);
-        Path targetManifestFile = StructureGeneratorHelper.generatePath(serviceInstanceDir,
-                CassandraProcessorConstants.SERVICE_INSTANCE_PREFIX_DIRECTORY + SERVICE_INSTANCE_ID + CassandraProcessorConstants.YML_SUFFIX);
-        Files.createFile(targetManifestFile);
+        generateSampleManifest();
         String jsonPipelineOperationState = tracker.getPipelineOperationStateAsJson(aCreateServiceInstanceRequest());
 
         //When
@@ -158,6 +152,16 @@ public class PipelineCompletionTrackerTest {
                 "plan_id",
                 new ServiceDefinition(),
                 true);
+    }
+
+    protected void generateSampleManifest() throws IOException {
+        Path serviceInstanceDir = StructureGeneratorHelper.generatePath(workDir,
+                CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY,
+                CassandraProcessorConstants.SERVICE_INSTANCE_PREFIX_DIRECTORY + SERVICE_INSTANCE_ID);
+        serviceInstanceDir = Files.createDirectories(serviceInstanceDir);
+        Path targetManifestFile = StructureGeneratorHelper.generatePath(serviceInstanceDir,
+                CassandraProcessorConstants.SERVICE_INSTANCE_PREFIX_DIRECTORY + SERVICE_INSTANCE_ID + CassandraProcessorConstants.YML_SUFFIX);
+        Files.createFile(targetManifestFile);
     }
 
 

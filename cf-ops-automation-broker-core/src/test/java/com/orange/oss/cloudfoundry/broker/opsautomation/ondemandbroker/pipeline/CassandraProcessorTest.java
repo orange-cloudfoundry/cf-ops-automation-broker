@@ -4,9 +4,6 @@ import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.GitPr
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.Context;
 import com.orange.oss.ondemandbroker.ProcessorChainServiceInstanceService;
 import org.junit.Test;
-import org.mockito.ArgumentCaptor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.cloud.servicebroker.model.*;
 
 import java.nio.file.FileSystems;
@@ -14,19 +11,15 @@ import java.nio.file.Path;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneId;
-import java.util.List;
 
 import static org.fest.assertions.Assertions.assertThat;
-import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.*;
 
 public class CassandraProcessorTest {
 
-    private static final Logger logger = LoggerFactory.getLogger(CassandraProcessorTest.class);
     public static final String SERVICE_INSTANCE_ID = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa0";
     protected static final String TEMPLATES_REPOSITORY_ALIAS_NAME = "paas-template.";
     protected static final String SECRETS_REPOSITORY_ALIAS_NAME = "paas-secrets.";
-    private Clock clock = Clock.fixed(Instant.now(), ZoneId.of("Europe/Paris"));
 
     @Test
     public void creates_structures_and_returns_response() {
@@ -46,14 +39,8 @@ public class CassandraProcessorTest {
         context.contextKeys.put(SECRETS_REPOSITORY_ALIAS_NAME + GitProcessorContext.workDir.toString(), aGitRepoWorkDir());
 
         //Given a mock behaviour
-        ArgumentCaptor<Path> pathValueCapture = ArgumentCaptor.forClass(Path.class);
-        ArgumentCaptor<String> stringValueCapture = ArgumentCaptor.forClass(String.class);
         TemplatesGenerator templatesGenerator = mock(TemplatesGenerator.class);
-        doNothing().when(templatesGenerator).checkPrerequisites(pathValueCapture.capture());
-        doNothing().when(templatesGenerator).generate(pathValueCapture.capture(), stringValueCapture.capture());
         SecretsGenerator secretsGenerator = mock(SecretsGenerator.class);
-        doNothing().when(secretsGenerator).checkPrerequisites(pathValueCapture.capture());
-        doNothing().when(secretsGenerator).generate(pathValueCapture.capture(), stringValueCapture.capture());
 
         //When
         //given a configured timeout (TODO => must mock tracker)
@@ -63,16 +50,10 @@ public class CassandraProcessorTest {
         cassandraProcessor.preCreate(context);
 
         //Then verify parameters and delegation on calls
-        List<Path> capturedPaths = pathValueCapture.getAllValues();
-        assertEquals(aGitRepoWorkDir().toString(), capturedPaths.get(0).toString());
-        assertEquals(aGitRepoWorkDir().toString(), capturedPaths.get(1).toString());
-        List<String> capturedStrings = stringValueCapture.getAllValues();
-        assertEquals(SERVICE_INSTANCE_ID, capturedStrings.get(0).toString());
-        assertEquals(SERVICE_INSTANCE_ID, capturedStrings.get(1).toString());
-        verify(templatesGenerator, times(1)).checkPrerequisites(aGitRepoWorkDir());
-        verify(templatesGenerator, times(1)).generate(aGitRepoWorkDir(), SERVICE_INSTANCE_ID);
-        verify(secretsGenerator, times(1)).checkPrerequisites(aGitRepoWorkDir());
-        verify(secretsGenerator, times(1)).generate(aGitRepoWorkDir(), SERVICE_INSTANCE_ID);
+        verify(templatesGenerator).checkPrerequisites(aGitRepoWorkDir());
+        verify(templatesGenerator).generate(aGitRepoWorkDir(), SERVICE_INSTANCE_ID);
+        verify(secretsGenerator).checkPrerequisites(aGitRepoWorkDir());
+        verify(secretsGenerator).generate(aGitRepoWorkDir(), SERVICE_INSTANCE_ID);
 
         //Then verify populated context
         CreateServiceInstanceResponse serviceInstanceResponse = (CreateServiceInstanceResponse) context.contextKeys.get(ProcessorChainServiceInstanceService.CREATE_SERVICE_INSTANCE_RESPONSE);
@@ -164,23 +145,15 @@ public class CassandraProcessorTest {
         context.contextKeys.put(SECRETS_REPOSITORY_ALIAS_NAME + GitProcessorContext.workDir.toString(), aGitRepoWorkDir());
 
         //Given a mock behaviour
-        ArgumentCaptor<Path> pathValueCapture = ArgumentCaptor.forClass(Path.class);
-        ArgumentCaptor<String> stringValueCapture = ArgumentCaptor.forClass(String.class);
         SecretsGenerator secretsGenerator = mock(SecretsGenerator.class);
-        doNothing().when(secretsGenerator).checkPrerequisites(pathValueCapture.capture());
-        doNothing().when(secretsGenerator).remove(pathValueCapture.capture(), stringValueCapture.capture());
 
         //When
         CassandraProcessor cassandraProcessor = new CassandraProcessor(TEMPLATES_REPOSITORY_ALIAS_NAME, SECRETS_REPOSITORY_ALIAS_NAME, null, secretsGenerator, null);
         cassandraProcessor.preDelete(context);
 
         //Then verify parameters and delegation on calls
-        List<Path> capturedPaths = pathValueCapture.getAllValues();
-        assertEquals(aGitRepoWorkDir().toString(), capturedPaths.get(0).toString());
-        List<String> capturedStrings = stringValueCapture.getAllValues();
-        assertEquals(SERVICE_INSTANCE_ID, capturedStrings.get(0).toString());
-        verify(secretsGenerator, times(1)).checkPrerequisites(aGitRepoWorkDir());
-        verify(secretsGenerator, times(1)).remove(aGitRepoWorkDir(), SERVICE_INSTANCE_ID);
+        verify(secretsGenerator).checkPrerequisites(aGitRepoWorkDir());
+        verify(secretsGenerator).remove(aGitRepoWorkDir(), SERVICE_INSTANCE_ID);
 
         //Then verify populated context
         DeleteServiceInstanceResponse serviceInstanceResponse = (DeleteServiceInstanceResponse) context.contextKeys.get(ProcessorChainServiceInstanceService.DELETE_SERVICE_INSTANCE_RESPONSE);

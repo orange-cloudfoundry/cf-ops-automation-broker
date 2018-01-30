@@ -1,9 +1,12 @@
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline;
 
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.springframework.cloud.servicebroker.model.*;
+import org.springframework.util.FileSystemUtils;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -30,6 +33,20 @@ public class PipelineCompletionTrackerTest {
     @Rule
     public ExpectedException thrown = ExpectedException.none();
 
+    Path workDir;
+    PipelineCompletionTracker tracker = new PipelineCompletionTracker(clock);
+
+
+    @Before
+    public void preparePaasSecretWorkDir() throws IOException {
+        workDir = Files.createTempDirectory(REPOSITORY_DIRECTORY);
+    }
+
+    @After
+    public void cleanUpPaasSecretWorkDir() {
+        FileSystemUtils.deleteRecursively(workDir.toFile());
+    }
+
     @Test
     public void raise_exception_because_delete_pipeline_operation_state_is_not_supported() throws IOException {
         //Then
@@ -37,8 +54,6 @@ public class PipelineCompletionTrackerTest {
         thrown.expectMessage("Get Deployment Execution status fails (unhandled request class)");
 
         //Given pipeline completion tracker with a "delete pipeline operation state"
-        Path workDir = Files.createTempDirectory(REPOSITORY_DIRECTORY);
-        PipelineCompletionTracker tracker = new PipelineCompletionTracker(clock);
         String jsonPipelineOperationState = tracker.getPipelineOperationStateAsJson(aDeleteServiceInstanceRequest());
 
         //When
@@ -49,9 +64,6 @@ public class PipelineCompletionTrackerTest {
     public void returns_failed_state_if_create_operation_state_is_timed_out() throws IOException {
         //TODO : Test with null work dir
         //Given a missing manifest file and a create operation state in the pass
-        Path workDir = Files.createTempDirectory(REPOSITORY_DIRECTORY);
-        Clock clock = Clock.fixed(Instant.now(), ZoneId.of(ZONE));
-        PipelineCompletionTracker tracker = new PipelineCompletionTracker(clock);
         String jsonPipelineOperationState = "{\"org.springframework.cloud.servicebroker.model.CreateServiceInstanceRequest\":{\"serviceDefinitionId\":\"service_definition_id\",\"planId\":\"plan_id\",\"organizationGuid\":\"org_id\",\"spaceGuid\":\"space_id\",\"parameters\":{\"parameterName\":\"parameterValue\"},\"asyncAccepted\":false},\"startRequestDate\":\"2018-01-22T14:00:00.000Z\"}";
 
         //When
@@ -60,13 +72,11 @@ public class PipelineCompletionTrackerTest {
         //Then
         assertThat(response.getState()).isEqualTo(OperationState.FAILED);
         assertThat(response.getDescription()).startsWith("execution timeout after ");
-
     }
 
     @Test
     public void returns_succeeded_state_if_manifest_is_present_and_create_operation_state_without_timeout() throws IOException {
         //Given an existing manifest file and a create operation state without timeout
-        Path workDir = Files.createTempDirectory(REPOSITORY_DIRECTORY);
         Path serviceInstanceDir = StructureGeneratorHelper.generatePath(workDir,
                 CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY,
                 CassandraProcessorConstants.SERVICE_INSTANCE_PREFIX_DIRECTORY + SERVICE_INSTANCE_ID);
@@ -74,7 +84,6 @@ public class PipelineCompletionTrackerTest {
         Path targetManifestFile = StructureGeneratorHelper.generatePath(serviceInstanceDir,
                 CassandraProcessorConstants.SERVICE_INSTANCE_PREFIX_DIRECTORY + SERVICE_INSTANCE_ID + CassandraProcessorConstants.YML_SUFFIX);
         Files.createFile(targetManifestFile);
-        PipelineCompletionTracker tracker = new PipelineCompletionTracker(clock);
         String jsonPipelineOperationState = tracker.getPipelineOperationStateAsJson(aCreateServiceInstanceRequest());
 
         //When
@@ -88,9 +97,6 @@ public class PipelineCompletionTrackerTest {
     @Test
     public void returns_inprogress_state_if_manifest_is_not_present_and_create_operation_state_without_timeout() throws IOException {
         //Given a missing manifest file and a create operation state without timeout
-        Path workDir = Files.createTempDirectory(REPOSITORY_DIRECTORY);
-        Clock clock = Clock.fixed(Instant.now(), ZoneId.of(ZONE));
-        PipelineCompletionTracker tracker = new PipelineCompletionTracker(clock);
         String jsonPipelineOperationState = tracker.getPipelineOperationStateAsJson(aCreateServiceInstanceRequest());
 
         //When
@@ -131,7 +137,6 @@ public class PipelineCompletionTrackerTest {
     }
 
     private CreateServiceInstanceRequest aCreateServiceInstanceRequest(){
-
         //Given a parameter request
         Map<String, Object> parameters = new HashMap<>();
         parameters.put("parameterName", "parameterValue");

@@ -383,3 +383,26 @@ CC -> COAB: get last operation https://github.com/openservicebrokerapi/servicebr
                 - creating
                 - created
         - operation=mysql-provided-operation (i.e. the state usually persisted by the CC, as part of OSB, see https://github.com/openservicebrokerapi/servicebroker/blob/master/spec.md#parameters )
+
+
+# faq
+
+## Why delegating provisionning nested broker call within outter provision call (and not binding)
+
+A: this enables COAB to delegate the full provision request without requiring statefull support.
+
+provisionning request params:
+* [x] service_id* 	string 	MUST be the ID of a service from the catalog for this Service Broker.
+* [x] plan_id* 	string 	MUST be the ID of a plan from the service that has been requested.
+* [x] context 	object 	Platform specific contextual information under which the Service Instance is to be provisioned. Although most Service Brokers will not use this field, it could be helpful in determining data placement or applying custom business rules. context will replace organization_guid and space_guid in future versions of the specification - in the interim both SHOULD be used to ensure interoperability with old and new implementations.
+* [x] organization_guid* 	string 	Deprecated in favor of context. The Platform GUID for the organization under which the Service Instance is to be provisioned. Although most Service Brokers will not use this field, it might be helpful for executing operations on a user's behalf. MUST be a non-empty string.
+* [x] space_guid* 	string 	Deprecated in favor of context. The identifier for the project space within the Platform organization. Although most Service Brokers will not use this field, it might be helpful for executing operations on a user's behalf. MUST be a non-empty string.
+* [ ] parameters 	object 	Configuration options for the Service Instance. Service Brokers SHOULD ensure that the client has provided valid configuration parameters and values for the operation.
+
+Extract of https://github.com/openservicebrokerapi/servicebroker/blob/master/profile.md#cloud-foundry-context-object
+| Request API | Properties | | --- | --- | --- | 
+| PUT /v2/service_instances/:instance_id | organization_guid, space_guid | 
+| PATCH /v2/service_instances/:instance_id | organization_guid, space_guid | 
+| PUT /v2/service_instances/:instance_id/service_bindings/:binding_id | organization_guid, space_guid |
+
+cf cs cassandra -c '{"keyspacename"="mykeyspace"}'

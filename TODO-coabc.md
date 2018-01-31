@@ -2,12 +2,10 @@
     - mvn release / github release
     - automate broker deployment in paas-template from binary in github release
 
-- Improve *Generator design in order to enable CassandraProcessorTests ?? 
-
-- Configure IDE template to avoid noisy class headers
+- Smoke tests: create service instance, get service instance (wait for success), delete service instance
 
 - Implement OSB provision delegation to nested cassandra broker
-   - refine CassandraProcessor to call OSB client create/delete/bind/unbind
+   - refine PipelineCompletionTracker to call OSB client create/delete/bind/unbind
       - refine PipelineCompletionTracker
          - check timeout after manifest presence
             - refactor test to properly assert timeout first

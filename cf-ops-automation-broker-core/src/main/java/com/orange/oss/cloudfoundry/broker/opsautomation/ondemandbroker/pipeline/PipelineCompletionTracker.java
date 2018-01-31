@@ -39,31 +39,38 @@ public class PipelineCompletionTracker {
         Path targetManifestFile = this.getTargetManifestFilePath(secretsWorkDir, serviceInstanceId);
         boolean isTargetManifestFilePresent = Files.exists(targetManifestFile);
 
-        //Initialize response and determine the appropriate values based on pipelineOperationState
-        GetLastServiceOperationResponse response = new GetLastServiceOperationResponse();
+        //Check if timeout is reached
         PipelineOperationState pipelineOperationState = this.parseFromJson(jsonPipelineOperationState);
         long elapsedTimeSecsSinceStartRequestDate = this.getElapsedTimeSecsSinceStartRequestDate(pipelineOperationState.getStartRequestDate());
         boolean isRequestTimedOut = this.isRequestTimedOut(elapsedTimeSecsSinceStartRequestDate);
-        if (isRequestTimedOut){
-            response.withOperationState(OperationState.FAILED);
-            response.withDescription("execution timeout after " + elapsedTimeSecsSinceStartRequestDate + "s max is " + maxExecutionDurationSeconds);
-        }else{
-            ServiceBrokerRequest serviceBrokerRequest = pipelineOperationState.getServiceBrokerRequest();
-            String classFullyQualifiedName = serviceBrokerRequest.getClass().getName();
-            switch(classFullyQualifiedName)
-            {
-                case CassandraProcessorConstants.OSB_CREATE_REQUEST_CLASS_NAME:
-                    if (isTargetManifestFilePresent){
-                        response.withOperationState(OperationState.SUCCEEDED);
-                        response.withDescription("Creation is succeeded");
-                    }else{
+
+        //Build response based on the appropriate values and return it
+        ServiceBrokerRequest serviceBrokerRequest = pipelineOperationState.getServiceBrokerRequest();
+        String classFullyQualifiedName = serviceBrokerRequest.getClass().getName();
+        GetLastServiceOperationResponse response = this.buildResponse(classFullyQualifiedName, isTargetManifestFilePresent, isRequestTimedOut, elapsedTimeSecsSinceStartRequestDate);
+        return response;
+    }
+
+    private GetLastServiceOperationResponse buildResponse(String classFullyQualifiedName, boolean isTargetManifestFilePresent, boolean isRequestTimedOut, long elapsedTimeSecsSinceStartRequestDate){
+        GetLastServiceOperationResponse response = new GetLastServiceOperationResponse();
+        switch(classFullyQualifiedName)
+        {
+            case CassandraProcessorConstants.OSB_CREATE_REQUEST_CLASS_NAME:
+                if (isTargetManifestFilePresent){
+                    response.withOperationState(OperationState.SUCCEEDED);
+                    response.withDescription("Creation is succeeded");
+                }else{
+                    if (isRequestTimedOut){
+                        response.withOperationState(OperationState.FAILED);
+                        response.withDescription("Execution timeout after " + elapsedTimeSecsSinceStartRequestDate + "s max is " + maxExecutionDurationSeconds);
+                    }else {
                         response.withOperationState(OperationState.IN_PROGRESS);
                         response.withDescription("Creation is in progress");
                     }
-                    break;
-                default:
-                    throw new RuntimeException("Get Deployment Execution status fails (unhandled request class)");
-            }
+                }
+                break;
+            default:
+                throw new RuntimeException("Get Deployment Execution status fails (unhandled request class)");
         }
         return response;
     }
@@ -83,7 +90,7 @@ public class PipelineCompletionTracker {
         return elapsedTimeSecsSinceStartRequestDate >= this.maxExecutionDurationSeconds;
     }
 
-    long getElapsedTimeSecsSinceStartRequestDate(String startRequestDate) {
+    private long getElapsedTimeSecsSinceStartRequestDate(String startRequestDate) {
         Instant start = Instant.parse(startRequestDate);
         Instant now = Instant.now(clock);
         long elapsedSeconds = start.until(now, ChronoUnit.SECONDS);

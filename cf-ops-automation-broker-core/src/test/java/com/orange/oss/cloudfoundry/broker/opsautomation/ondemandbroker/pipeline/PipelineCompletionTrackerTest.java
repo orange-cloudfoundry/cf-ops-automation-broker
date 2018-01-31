@@ -68,7 +68,7 @@ public class PipelineCompletionTrackerTest {
 
         //Then
         assertThat(response.getState()).isEqualTo(OperationState.FAILED);
-        assertThat(response.getDescription()).startsWith("execution timeout after ");
+        assertThat(response.getDescription()).startsWith("Execution timeout after ");
     }
 
     @Test

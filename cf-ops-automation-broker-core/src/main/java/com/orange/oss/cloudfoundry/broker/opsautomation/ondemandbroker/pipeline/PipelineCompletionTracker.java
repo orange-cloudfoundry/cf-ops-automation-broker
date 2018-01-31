@@ -4,9 +4,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.cloud.servicebroker.model.GetLastServiceOperationResponse;
-import org.springframework.cloud.servicebroker.model.OperationState;
-import org.springframework.cloud.servicebroker.model.ServiceBrokerRequest;
+import org.springframework.cloud.servicebroker.model.*;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -20,17 +18,19 @@ public class PipelineCompletionTracker {
     private static Logger logger = LoggerFactory.getLogger(PipelineCompletionTracker.class.getName());
 
     protected Clock clock;
+    private OsbProxy<CreateServiceInstanceRequest> createServiceInstanceOsbProxy;
     private Gson gson;
     private long maxExecutionDurationSeconds = 600L;
 
-    public PipelineCompletionTracker(Clock clock) {
+    public PipelineCompletionTracker(Clock clock, OsbProxy<CreateServiceInstanceRequest> createServiceInstanceOsbProxy) {
         this.clock = clock;
+        this.createServiceInstanceOsbProxy = createServiceInstanceOsbProxy;
         final GsonBuilder gsonBuilder = new GsonBuilder();
         gsonBuilder.registerTypeAdapter(PipelineCompletionTracker.PipelineOperationState.class, new PipelineOperationStateGsonAdapter());
         this.gson = gsonBuilder.create();
     }
 
-    public GetLastServiceOperationResponse getDeploymentExecStatus(Path secretsWorkDir, String serviceInstanceId, String jsonPipelineOperationState) {
+    public GetLastServiceOperationResponse getDeploymentExecStatus(Path secretsWorkDir, String serviceInstanceId, String jsonPipelineOperationState, GetLastServiceOperationRequest pollingRequest) {
 
         //Check if target manifest file is present
         Path targetManifestFile = this.getTargetManifestFilePath(secretsWorkDir, serviceInstanceId);
@@ -44,11 +44,10 @@ public class PipelineCompletionTracker {
         //Build response based on the appropriate values and return it
         ServiceBrokerRequest serviceBrokerRequest = pipelineOperationState.getServiceBrokerRequest();
         String classFullyQualifiedName = serviceBrokerRequest.getClass().getName();
-        GetLastServiceOperationResponse response = this.buildResponse(classFullyQualifiedName, isTargetManifestFilePresent, isRequestTimedOut, elapsedTimeSecsSinceStartRequestDate);
-        return response;
+        return this.buildResponse(classFullyQualifiedName, isTargetManifestFilePresent, isRequestTimedOut, elapsedTimeSecsSinceStartRequestDate, pollingRequest, (CreateServiceInstanceRequest) serviceBrokerRequest);
     }
 
-    private GetLastServiceOperationResponse buildResponse(String classFullyQualifiedName, boolean asyncTaskCompleted, boolean isRequestTimedOut, long elapsedTimeSecsSinceStartRequestDate){
+    private GetLastServiceOperationResponse buildResponse(String classFullyQualifiedName, boolean asyncTaskCompleted, boolean isRequestTimedOut, long elapsedTimeSecsSinceStartRequestDate, GetLastServiceOperationRequest pollingRequest, CreateServiceInstanceRequest storedRequest){
         GetLastServiceOperationResponse response = new GetLastServiceOperationResponse();
         switch(classFullyQualifiedName)
         {
@@ -56,6 +55,10 @@ public class PipelineCompletionTracker {
                 if (asyncTaskCompleted){
                     response.withOperationState(OperationState.SUCCEEDED);
                     response.withDescription("Creation is succeeded");
+                    if (createServiceInstanceOsbProxy != null) {
+                        return createServiceInstanceOsbProxy.delegate(pollingRequest, storedRequest, response);
+                    }
+
                 }else{
                     if (isRequestTimedOut){
                         response.withOperationState(OperationState.FAILED);

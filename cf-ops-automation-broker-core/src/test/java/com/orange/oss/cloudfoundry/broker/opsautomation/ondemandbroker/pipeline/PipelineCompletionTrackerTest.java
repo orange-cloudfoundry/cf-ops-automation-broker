@@ -19,19 +19,25 @@ import java.util.Map;
 
 import static org.fest.assertions.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.*;
 
 public class PipelineCompletionTrackerTest {
 
     public static final String SERVICE_INSTANCE_ID = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa0";
     public static final String REPOSITORY_DIRECTORY = "paas-secrets";
     public static final String ZONE = "Europe/Paris";
+    private final GetLastServiceOperationRequest pollingRequest = mock(GetLastServiceOperationRequest.class);
     private Clock clock = Clock.fixed(Instant.now(), ZoneId.of(ZONE));
 
     @Rule
     public ExpectedException thrown = ExpectedException.none();
 
     Path workDir;
-    PipelineCompletionTracker tracker = new PipelineCompletionTracker(clock);
+    @SuppressWarnings("unchecked")
+    OsbProxy<CreateServiceInstanceRequest> createServiceInstanceOsbProxy = mock(OsbProxy.class);
+
+    PipelineCompletionTracker tracker = new PipelineCompletionTracker(clock, createServiceInstanceOsbProxy);
 
 
     @Before
@@ -54,7 +60,7 @@ public class PipelineCompletionTrackerTest {
         String jsonPipelineOperationState = tracker.getPipelineOperationStateAsJson(aDeleteServiceInstanceRequest());
 
         //When
-        tracker.getDeploymentExecStatus(workDir, SERVICE_INSTANCE_ID, jsonPipelineOperationState);
+        tracker.getDeploymentExecStatus(workDir, SERVICE_INSTANCE_ID, jsonPipelineOperationState, pollingRequest);
     }
 
     @Test
@@ -64,11 +70,12 @@ public class PipelineCompletionTrackerTest {
         String jsonPipelineOperationState = createOperationStateInThePast();
 
         //When
-        GetLastServiceOperationResponse response = tracker.getDeploymentExecStatus(workDir, SERVICE_INSTANCE_ID, jsonPipelineOperationState);
+        GetLastServiceOperationResponse response = tracker.getDeploymentExecStatus(workDir, SERVICE_INSTANCE_ID, jsonPipelineOperationState, pollingRequest);
 
         //Then
         assertThat(response.getState()).isEqualTo(OperationState.FAILED);
         assertThat(response.getDescription()).startsWith("Execution timeout after ");
+        verify(createServiceInstanceOsbProxy, never()).delegate(any(), any(), any());
     }
 
     @Test
@@ -78,11 +85,34 @@ public class PipelineCompletionTrackerTest {
         String jsonPipelineOperationState = createOperationStateInThePast();
 
         //When
-        GetLastServiceOperationResponse response = tracker.getDeploymentExecStatus(workDir, SERVICE_INSTANCE_ID, jsonPipelineOperationState);
+        GetLastServiceOperationResponse response = tracker.getDeploymentExecStatus(workDir, SERVICE_INSTANCE_ID, jsonPipelineOperationState, pollingRequest);
 
         //Then
         assertThat(response.getState()).isEqualTo(OperationState.SUCCEEDED);
-        assertThat(response.getDescription()).describedAs("Creation is succeeded");
+        assertThat(response.getDescription()).isEqualTo("Creation is succeeded");
+        //and proxy is invoked
+        verify(createServiceInstanceOsbProxy).delegate(any(), any(), any());
+    }
+
+    @Test
+    public void delegates_to_osb_proxy_when_manifest_is_present() throws IOException {
+        //Given an existing manifest file
+        generateSampleManifest();
+        String jsonPipelineOperationState = createOperationStateInThePast();
+        //Given a proxy that returns a custom response message
+        GetLastServiceOperationResponse proxiedResponse = new GetLastServiceOperationResponse();
+        proxiedResponse.withOperationState(OperationState.SUCCEEDED);
+        proxiedResponse.withDescription("osb proxied");
+
+        when(createServiceInstanceOsbProxy.delegate(any(), any(), any())).thenReturn(proxiedResponse);
+
+
+        //When
+        GetLastServiceOperationResponse response = tracker.getDeploymentExecStatus(workDir, SERVICE_INSTANCE_ID, jsonPipelineOperationState, pollingRequest);
+
+        //Then
+        assertThat(response.getState()).isEqualTo(OperationState.SUCCEEDED);
+        assertThat(response.getDescription()).isEqualTo("osb proxied");
     }
 
     @Test
@@ -92,7 +122,7 @@ public class PipelineCompletionTrackerTest {
         String jsonPipelineOperationState = tracker.getPipelineOperationStateAsJson(aCreateServiceInstanceRequest());
 
         //When
-        GetLastServiceOperationResponse response = tracker.getDeploymentExecStatus(workDir, SERVICE_INSTANCE_ID, jsonPipelineOperationState);
+        GetLastServiceOperationResponse response = tracker.getDeploymentExecStatus(workDir, SERVICE_INSTANCE_ID, jsonPipelineOperationState, pollingRequest);
 
         //Then
         assertThat(response.getState()).isEqualTo(OperationState.SUCCEEDED);
@@ -105,7 +135,7 @@ public class PipelineCompletionTrackerTest {
         String jsonPipelineOperationState = tracker.getPipelineOperationStateAsJson(aCreateServiceInstanceRequest());
 
         //When
-        GetLastServiceOperationResponse response = tracker.getDeploymentExecStatus(workDir, SERVICE_INSTANCE_ID, jsonPipelineOperationState);
+        GetLastServiceOperationResponse response = tracker.getDeploymentExecStatus(workDir, SERVICE_INSTANCE_ID, jsonPipelineOperationState, pollingRequest);
 
         //Then
         assertThat(response.getState()).isEqualTo(OperationState.IN_PROGRESS);
@@ -124,7 +154,7 @@ public class PipelineCompletionTrackerTest {
         PipelineCompletionTracker.PipelineOperationState pipelineOperationState = new PipelineCompletionTracker.PipelineOperationState( aCreateServiceInstanceRequest(), "2018-01-22T14:00:00.000Z");
 
         //when
-        PipelineCompletionTracker tracker = new PipelineCompletionTracker(Clock.systemUTC());
+        @SuppressWarnings("unchecked") PipelineCompletionTracker tracker = new PipelineCompletionTracker(Clock.systemUTC(), mock(OsbProxy.class));
         String actualJson = tracker.formatAsJson(pipelineOperationState);
         System.out.println(actualJson);
 
@@ -139,7 +169,7 @@ public class PipelineCompletionTrackerTest {
         String json = "{\"org.springframework.cloud.servicebroker.model.CreateServiceInstanceRequest\":{\"serviceDefinitionId\":\"service_definition_id\",\"planId\":\"plan_id\",\"organizationGuid\":\"org_id\",\"spaceGuid\":\"space_id\",\"parameters\":{\"parameterName\":\"parameterValue\"},\"asyncAccepted\":false},\"startRequestDate\":\"2018-01-22T14:00:00.000Z\"}";
 
         //when
-        PipelineCompletionTracker tracker = new PipelineCompletionTracker(Clock.systemUTC());
+        @SuppressWarnings("unchecked") PipelineCompletionTracker tracker = new PipelineCompletionTracker(Clock.systemUTC(), mock(OsbProxy.class));
         PipelineCompletionTracker.PipelineOperationState actualPipelineOperationState= tracker.parseFromJson(json);
 
         //then

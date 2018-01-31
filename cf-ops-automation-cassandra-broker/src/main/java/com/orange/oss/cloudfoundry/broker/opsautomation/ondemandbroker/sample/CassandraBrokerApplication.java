@@ -9,6 +9,7 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.cloud.servicebroker.model.CreateServiceInstanceRequest;
 import org.springframework.context.annotation.Bean;
 
 import java.time.Clock;
@@ -16,7 +17,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @SpringBootApplication
-@EnableConfigurationProperties({GitProperties.class, PipelineProperties.class})
+@EnableConfigurationProperties({GitProperties.class, OsbProxyProperties.class})
 public class CassandraBrokerApplication {
 
     protected static final String TEMPLATES_REPOSITORY_ALIAS_NAME = "paas-template.";
@@ -41,15 +42,25 @@ public class CassandraBrokerApplication {
         return new GitProperties();
     }
 
+    @Bean
+    public OsbProxyProperties pipelineProperties() {
+        return new OsbProxyProperties();
+    }
+
 
     @Bean
     public Clock clock() {
         return Clock.systemDefaultZone();
     }
 
+    public OsbProxy<CreateServiceInstanceRequest> createServiceInstanceResponseOsbProxy(
+            OsbProxyProperties osbProxyProperties) {
+        return new OsbProxyImpl<>(osbProxyProperties.getOsbDelegateUser(), osbProxyProperties.getOsbDelegatePassword());
+    }
+
     @Bean
-    public PipelineCompletionTracker pipelineCompletionTracker(Clock clock) {
-        return new PipelineCompletionTracker(clock);
+    public PipelineCompletionTracker pipelineCompletionTracker(Clock clock, OsbProxy<CreateServiceInstanceRequest> createServiceInstanceResponseOsbProxy) {
+        return new PipelineCompletionTracker(clock, createServiceInstanceResponseOsbProxy);
     }
 
     @Bean

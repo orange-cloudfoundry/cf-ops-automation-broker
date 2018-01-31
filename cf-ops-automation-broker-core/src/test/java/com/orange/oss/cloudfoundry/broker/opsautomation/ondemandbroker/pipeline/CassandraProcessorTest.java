@@ -4,6 +4,7 @@ import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.GitPr
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.Context;
 import com.orange.oss.ondemandbroker.ProcessorChainServiceInstanceService;
 import org.junit.Test;
+import org.mockito.Mockito;
 import org.springframework.cloud.servicebroker.model.*;
 
 import java.nio.file.FileSystems;
@@ -45,7 +46,7 @@ public class CassandraProcessorTest {
         //When
         //given a configured timeout (TODO => must mock tracker)
         Clock clock = Clock.fixed(Instant.ofEpochMilli(1510680248007L), ZoneId.of("Europe/Paris"));
-        PipelineCompletionTracker tracker = new PipelineCompletionTracker(clock);
+        @SuppressWarnings("unchecked") PipelineCompletionTracker tracker = new PipelineCompletionTracker(clock, Mockito.mock(OsbProxy.class));
         CassandraProcessor cassandraProcessor = new CassandraProcessor(TEMPLATES_REPOSITORY_ALIAS_NAME, SECRETS_REPOSITORY_ALIAS_NAME, templatesGenerator, secretsGenerator, tracker);
         cassandraProcessor.preCreate(context);
 
@@ -88,7 +89,7 @@ public class CassandraProcessorTest {
         expectedResponse.withDescription("Creation is in progress");
         expectedResponse.withOperationState(OperationState.IN_PROGRESS);
         PipelineCompletionTracker tracker = mock(PipelineCompletionTracker.class);
-        when(tracker.getDeploymentExecStatus(any(Path.class), eq(SERVICE_INSTANCE_ID), eq(CassandraProcessorConstants.OSB_OPERATION_CREATE))).thenReturn(expectedResponse);
+        when(tracker.getDeploymentExecStatus(any(Path.class), eq(SERVICE_INSTANCE_ID), eq(CassandraProcessorConstants.OSB_OPERATION_CREATE), any(GetLastServiceOperationRequest.class))).thenReturn(expectedResponse);
 
 
         //When
@@ -119,7 +120,7 @@ public class CassandraProcessorTest {
         expectedResponse.withDescription("Creation is succeeded");
         expectedResponse.withOperationState(OperationState.SUCCEEDED);
         PipelineCompletionTracker tracker = mock(PipelineCompletionTracker.class);
-        when(tracker.getDeploymentExecStatus(any(Path.class), eq(SERVICE_INSTANCE_ID), eq(CassandraProcessorConstants.OSB_OPERATION_CREATE))).thenReturn(expectedResponse);
+        when(tracker.getDeploymentExecStatus(any(Path.class), eq(SERVICE_INSTANCE_ID), eq(CassandraProcessorConstants.OSB_OPERATION_CREATE), any(GetLastServiceOperationRequest.class))).thenReturn(expectedResponse);
 
         //When
         CassandraProcessor cassandraProcessor = new CassandraProcessor(TEMPLATES_REPOSITORY_ALIAS_NAME, SECRETS_REPOSITORY_ALIAS_NAME, null, null, tracker);

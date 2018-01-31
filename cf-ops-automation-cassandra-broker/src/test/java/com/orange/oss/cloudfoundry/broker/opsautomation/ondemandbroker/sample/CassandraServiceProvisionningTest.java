@@ -5,6 +5,7 @@ import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.GitPr
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.GitProcessorContext;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.GitServer;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.CassandraProcessorConstants;
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.OsbProxy;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.PipelineCompletionTracker;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.Context;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.terraform.TerraformModuleHelper;
@@ -17,6 +18,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.embedded.LocalServerPort;
@@ -157,7 +159,7 @@ public class CassandraServiceProvisionningTest {
         gitProcessor.preCreate(context);
 
         Path workDirPath = (Path) context.contextKeys.get(SECRETS_REPOSITORY_ALIAS_NAME + GitProcessorContext.workDir.toString());
-        PipelineCompletionTracker tracker = new PipelineCompletionTracker(Clock.systemUTC());
+        @SuppressWarnings("unchecked") PipelineCompletionTracker tracker = new PipelineCompletionTracker(Clock.systemUTC(), Mockito.mock(OsbProxy.class));
         Path targetManifestFilePath = tracker.getTargetManifestFilePath(workDirPath, SERVICE_INSTANCE_ID);
         createDir(targetManifestFilePath.getParent());
         createDummyFile(targetManifestFilePath);
@@ -188,7 +190,7 @@ public class CassandraServiceProvisionningTest {
     @Test
     public void supports_crud_lifecycle() throws IOException {
         create_async_service_instance();
-        PipelineCompletionTracker tracker = new PipelineCompletionTracker(clock);
+        @SuppressWarnings("unchecked") PipelineCompletionTracker tracker = new PipelineCompletionTracker(clock, Mockito.mock(OsbProxy.class));
         String jsonPipelineOperationState = tracker.getPipelineOperationStateAsJson(aCreateServiceInstanceRequest());
 
         polls_last_operation(jsonPipelineOperationState, HttpStatus.SC_OK, "in progress", "Creation is in progress");
@@ -268,14 +270,13 @@ public class CassandraServiceProvisionningTest {
                 CLOUD_FOUNDRY_PLATFORM,
                 contextProperties
         );
-        CreateServiceInstanceRequest request = new CreateServiceInstanceRequest("cassandra-ondemand-service",
+        return new CreateServiceInstanceRequest("cassandra-ondemand-service",
                 "cassandra-ondemand-plan",
                 "org_id",
                 "space_id",
                 createServiceInstanceContext,
                 params
         );
-        return request;
     }
 
 }

@@ -1,9 +1,11 @@
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline;
 
-import org.springframework.cloud.servicebroker.model.AsyncServiceInstanceResponse;
+import org.springframework.cloud.servicebroker.model.CreateServiceInstanceRequest;
+import org.springframework.cloud.servicebroker.model.GetLastServiceOperationRequest;
+import org.springframework.cloud.servicebroker.model.GetLastServiceOperationResponse;
 import org.springframework.cloud.servicebroker.model.ServiceBrokerRequest;
 
-public interface OsbProxy<Q extends ServiceBrokerRequest, P extends AsyncServiceInstanceResponse> {
+public interface OsbProxy<Q extends ServiceBrokerRequest> {
 
-    P delegate(Q request, P response);
+    GetLastServiceOperationResponse delegate(GetLastServiceOperationRequest pollingRequest, CreateServiceInstanceRequest request, GetLastServiceOperationResponse response);
 }

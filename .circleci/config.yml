@@ -30,7 +30,7 @@ jobs:
             find . -path '**/target/*.jar' -exec cp {} ./artefacts/ \;
           when: always
       - store_artifacts:
-          path: artefacts/*
+          path: ./artefacts
       - store_test_results:
           path: ~/junit
   build_n_deploy:
@@ -59,7 +59,7 @@ jobs:
       - store_test_results:
           path: ~/junit
       - store_artifacts:
-          path: artefacts/*
+          path: ./artefacts
       - persist_to_workspace:
           root: .
           paths:

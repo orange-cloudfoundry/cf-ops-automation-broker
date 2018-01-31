@@ -15,9 +15,6 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 
 
-/**
- * Created by ijly7474 on 04/01/18.
- */
 public class PipelineCompletionTracker {
 
     private static Logger logger = LoggerFactory.getLogger(PipelineCompletionTracker.class.getName());
@@ -51,12 +48,12 @@ public class PipelineCompletionTracker {
         return response;
     }
 
-    private GetLastServiceOperationResponse buildResponse(String classFullyQualifiedName, boolean isTargetManifestFilePresent, boolean isRequestTimedOut, long elapsedTimeSecsSinceStartRequestDate){
+    private GetLastServiceOperationResponse buildResponse(String classFullyQualifiedName, boolean asyncTaskCompleted, boolean isRequestTimedOut, long elapsedTimeSecsSinceStartRequestDate){
         GetLastServiceOperationResponse response = new GetLastServiceOperationResponse();
         switch(classFullyQualifiedName)
         {
             case CassandraProcessorConstants.OSB_CREATE_REQUEST_CLASS_NAME:
-                if (isTargetManifestFilePresent){
+                if (asyncTaskCompleted){
                     response.withOperationState(OperationState.SUCCEEDED);
                     response.withDescription("Creation is succeeded");
                 }else{

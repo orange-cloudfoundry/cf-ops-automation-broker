@@ -23,6 +23,14 @@ jobs:
             mkdir -p ~/junit/
             find . -type f -regex ".*/target/surefire-reports/.*xml" -exec cp {} ~/junit/ \;
           when: always
+      - run:
+          name: save jar artefacts
+          command: |
+            mkdir -p ./artefacts/
+            find . -path '**/target/*.jar' -exec cp {} ./artefacts/ \;
+          when: always
+      - store_artifacts:
+          path: artefacts/*
       - store_test_results:
           path: ~/junit
   build_n_deploy:
@@ -50,6 +58,8 @@ jobs:
           when: always
       - store_test_results:
           path: ~/junit
+      - store_artifacts:
+          path: artefacts/*
       - persist_to_workspace:
           root: .
           paths:

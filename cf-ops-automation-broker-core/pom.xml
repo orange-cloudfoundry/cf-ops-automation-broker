@@ -62,8 +62,7 @@
 		  <groupId>com.orange.oss.cloudfoundry.broker.opsautomation</groupId>
 		  <artifactId>cf-ops-automation-broker-framework</artifactId>
 		</dependency>
-		
-		
+
 		<dependency>
 		  <groupId>org.eclipse.jgit</groupId>
 		  <artifactId>org.eclipse.jgit</artifactId>
@@ -141,6 +140,26 @@
 			<groupId>commons-validator</groupId>
 			<artifactId>commons-validator</artifactId>
 			<version>1.6</version>
+		</dependency>
+
+
+		<!-- for OSB client -->
+		<dependency>
+			<groupId>org.springframework.cloud</groupId>
+			<artifactId>spring-cloud-starter-openfeign</artifactId>
+		</dependency>
+
+		<!-- for feign http proxy setting -->
+		<dependency>
+			<groupId>io.github.openfeign</groupId>
+			<artifactId>feign-okhttp</artifactId>
+			<version>9.5.1</version>
+		</dependency>
+
+		<dependency>
+			<groupId>com.squareup.okhttp3</groupId>
+			<artifactId>okhttp</artifactId>
+			<version>3.9.1</version>
 		</dependency>
 	</dependencies>
 

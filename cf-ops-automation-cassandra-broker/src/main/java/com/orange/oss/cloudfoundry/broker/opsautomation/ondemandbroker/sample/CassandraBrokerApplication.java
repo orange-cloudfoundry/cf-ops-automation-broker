@@ -3,6 +3,7 @@ package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.sample;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.GitProcessor;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.GitProcessorContext;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.GitProperties;
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.osbclient.OsbClientFactory;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.*;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.*;
 import org.springframework.boot.SpringApplication;
@@ -50,8 +51,8 @@ public class CassandraBrokerApplication {
 
     @Bean
     public OsbProxy<CreateServiceInstanceRequest> createServiceInstanceResponseOsbProxy(
-            OsbProxyProperties osbProxyProperties) {
-        return new OsbProxyImpl<>(osbProxyProperties.getOsbDelegateUser(), osbProxyProperties.getOsbDelegatePassword());
+            OsbProxyProperties osbProxyProperties, OsbClientFactory clientFactory) {
+        return new OsbProxyImpl<>(osbProxyProperties.getOsbDelegateUser(), osbProxyProperties.getOsbDelegatePassword(), osbProxyProperties.getBrokerUrlPattern(), clientFactory);
     }
 
     @Bean

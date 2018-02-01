@@ -1,2 +1,0 @@
-org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
-com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.OsbClientAutoConfiguration

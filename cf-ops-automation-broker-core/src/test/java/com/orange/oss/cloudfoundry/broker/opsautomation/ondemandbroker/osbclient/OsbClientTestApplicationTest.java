@@ -165,14 +165,14 @@ public class OsbClientTestApplicationTest {
     }
 
 
-    protected static final String ORIGINATING_USER_KEY = "user_id";
+    private static final String ORIGINATING_USER_KEY = "user_id";
 
 
     /**
      * Inspired from org.springframework.cloud.servicebroker.autoconfigure.web.servlet.ControllerIntegrationTest
      * See https://github.com/spring-cloud/spring-cloud-cloudfoundry-service-broker/blob/c56080e5ec8ed97ba8fe4e15ac2031073fbc45ae/spring-cloud-open-service-broker-autoconfigure/src/test/java/org/springframework/cloud/servicebroker/autoconfigure/web/servlet/ControllerIntegrationTest.java#L36-L43
      */
-    protected String buildOriginatingIdentityHeader(@SuppressWarnings("SameParameterValue") String originatingUserGuid, String originatingIdentityPlatform) throws JsonProcessingException {
+    private String buildOriginatingIdentityHeader(@SuppressWarnings("SameParameterValue") String originatingUserGuid, String originatingIdentityPlatform) throws JsonProcessingException {
         Map<String, Object> propMap = new HashMap<>();
         propMap.put(ORIGINATING_USER_KEY, originatingUserGuid);
         ObjectMapper mapper = Jackson2ObjectMapperBuilder.json().build();

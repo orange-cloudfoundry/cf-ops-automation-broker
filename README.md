@@ -113,6 +113,8 @@ See [catalog.yml](cf-ops-automation-sample-broker/catalog.yml) for details.
 ## Contributions
 
  ### Releasing
+
+Prereqs: checkout the branch to release, and make sure it is up-to-date w.r.t. the github remote.
  
 Releasing is made using [maven release plugin](http://maven.apache.org/maven-release/maven-release-plugin/) as follows :
  
@@ -124,13 +126,16 @@ Releasing is made using [maven release plugin](http://maven.apache.org/maven-rel
  
  ```
  
- Circle CI build will proceed, and will trigger the execution of `mvn release:perform`, and upload artifacts to both github and https://bintray.com/elpaaso
+ Circle CI build will proceed, and will trigger the execution of `mvn release:perform`, and upload artifacts to both github and https://bintray.com/elpaaso 
  
  For further details, see [release:prepare goals](http://maven.apache.org/maven-release/maven-release-plugin/prepare-mojo.html)
 
-In case of issues, revert the commits in git, fix the root cause and retry.
+Following the release, clean up your local workspace using `mvn release:clean`
+
+In case of issues, try:
+* `mvn release:rollback` 
+    * possibly revert the commits in git (`git reset --hard commitid`), 
+* clean up the git tag `git tag -d vXX && git push --delete origin vXX`, 
+* `mvn release:clean`
+* fix the root cause and retry.
  
-
-
-
-

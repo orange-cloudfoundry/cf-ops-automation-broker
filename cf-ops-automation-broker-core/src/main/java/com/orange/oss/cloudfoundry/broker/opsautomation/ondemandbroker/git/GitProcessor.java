@@ -112,7 +112,7 @@ public class GitProcessor extends DefaultBrokerProcessor {
     void cloneRepo(Context ctx) {
         try {
 
-            logger.info("cloning repo");
+            logger.info(prefixLog("cloning repo from {}"), this.gitUrl);
 
 
             String prefix = "broker-";
@@ -139,12 +139,12 @@ public class GitProcessor extends DefaultBrokerProcessor {
 
             fetchSubmodulesIfNeeded(ctx, git);
 
-            logger.info("git repo is ready at {}", workDir);
+            logger.info(prefixLog("git repo is ready at {}"), workDir);
             //push the work dir in invokation context
             setWorkDir(workDir, ctx);
 
         } catch (Exception e) {
-            logger.warn("caught " + e, e);
+            logger.warn(prefixLog("caught ") + e, e);
             throw new IllegalArgumentException(e);
         }
 
@@ -215,7 +215,7 @@ public class GitProcessor extends DefaultBrokerProcessor {
             git.checkout()
                     .setName(branch)
                     .call();
-            logger.info("created and checked out branch {}", branch);
+            logger.info(prefixLog("created and checked out branch {}"), branch);
         }
     }
 
@@ -239,7 +239,7 @@ public class GitProcessor extends DefaultBrokerProcessor {
                     .setUpstreamMode(CreateBranchCommand.SetupUpstreamMode.SET_UPSTREAM)
                     .setStartPoint("origin/" + branch)
                     .call();
-            logger.info("checked out branch {}", branch);
+            logger.info(prefixLog("checked out branch {}"), branch);
         }
 
     }
@@ -263,7 +263,7 @@ public class GitProcessor extends DefaultBrokerProcessor {
      */
     void commitPushRepo(Context ctx, boolean deleteRepo) {
         try {
-            logger.info("commit push");
+            logger.info(prefixLog("commit push"));
 
 
             Git git = getGit(ctx);
@@ -275,22 +275,22 @@ public class GitProcessor extends DefaultBrokerProcessor {
             stageMissingFilesExcludingSubModules(ctx, git, missing);
             status = git.status().call();
             if (status.hasUncommittedChanges()) {
-                logger.info("staged commit:  deleted:" + status.getRemoved() + " added:" + status.getAdded() + " changed:" + status.getChanged());
+                logger.info(prefixLog("staged commit:  deleted:") + status.getRemoved() + " added:" + status.getAdded() + " changed:" + status.getChanged());
                 CommitCommand commitC = git.commit().setMessage(getCommitMessage(ctx));
 
                 RevCommit revCommit = commitC.call();
-                logger.info("commited files in " + revCommit.toString());
+                logger.info(prefixLog("commited files in " + revCommit.toString()));
 
                 pushCommits(git, ctx);
             } else {
-                logger.info("No changes to commit, skipping push");
+                logger.info(prefixLog("No changes to commit, skipping push"));
             }
 
             if (deleteRepo) {
                 deleteWorkingDir(ctx);
             }
         } catch (Exception e) {
-            logger.warn("caught " + e, e);
+            logger.warn(prefixLog("caught ") + e, e);
             throw new IllegalArgumentException(e);
         }
 
@@ -308,46 +308,46 @@ public class GitProcessor extends DefaultBrokerProcessor {
                 }
             }
             if (fileMatchesSubModule) {
-                logger.debug("skipping modified submodule from staging: " + missingFilePath);
+                logger.debug(prefixLog("skipping modified submodule from staging: ") + missingFilePath);
             } else {
-                logger.info("staging as deleted: " + missingFilePath);
+                logger.info(prefixLog("staging as deleted: ") + missingFilePath);
                 git.rm().addFilepattern(missingFilePath).call();
             }
         }
     }
 
     void pushCommits(Git git, Context ctx) throws GitAPIException {
-        logger.info("pushing to {} ...", getImplicitRemoteBranchToDisplay(ctx));
+        logger.info(prefixLog("pushing to {} ..."), getImplicitRemoteBranchToDisplay(ctx));
         PushCommand pushCommand = git.push().setCredentialsProvider(cred);
 
         Iterable<PushResult> pushResults = pushCommand.call();
-        logger.info("pushed ...");
+        logger.info(prefixLog("pushed ..."));
         List<RemoteRefUpdate.Status> failedStatuses = extractFailedStatuses(pushResults);
 
         if (failedStatuses.contains(RemoteRefUpdate.Status.REJECTED_NONFASTFORWARD)) {
-            logger.info("Failed to push with status {}", failedStatuses);
-            logger.info("pull and rebasing from origin/{} ...", getImplicitRemoteBranchToDisplay(ctx));
+            logger.info(prefixLog("Failed to push with status {}"), failedStatuses);
+            logger.info(prefixLog("pull and rebasing from origin/{} ..."), getImplicitRemoteBranchToDisplay(ctx));
             PullResult pullRebaseResult = git.pull().call();
             if (!pullRebaseResult.isSuccessful()) {
-                logger.info("Failed to pull rebase: " + pullRebaseResult);
+                logger.info(prefixLog("Failed to pull rebase: ") + pullRebaseResult);
                 throw new RuntimeException("failed to push: remote conflict. pull rebased failed:" + pullRebaseResult);
             }
-            logger.info("rebased from origin/{}", getImplicitRemoteBranchToDisplay(ctx));
-            logger.debug("pull details:" + ToStringBuilder.reflectionToString(pullRebaseResult));
+            logger.info(prefixLog("rebased from origin/{}"), getImplicitRemoteBranchToDisplay(ctx));
+            logger.debug(prefixLog("pull details:") + ToStringBuilder.reflectionToString(pullRebaseResult));
 
-            logger.info("re-pushing ...");
+            logger.info(prefixLog("re-pushing ..."));
             pushCommand = git.push().setCredentialsProvider(cred);
             pushResults = pushCommand.call();
-            logger.info("re-pushed ...");
+            logger.info(prefixLog("re-pushed ..."));
             List<RemoteRefUpdate.Status> secondPushFailures = extractFailedStatuses(pushResults);
             if (!secondPushFailures.isEmpty()) {
-                logger.info("Failed to re-push with status {}", failedStatuses);
+                logger.info(prefixLog("Failed to re-push with status {}"), failedStatuses);
                 throw new RuntimeException("failed to push: remote conflict. pull rebased failed:" + pullRebaseResult);
             }
         }
 
         if (logger.isDebugEnabled()) {
-            logger.debug("push details: " + prettyPrint(pushResults));
+            logger.debug(prefixLog("push details: ") + prettyPrint(pushResults));
         }
     }
 
@@ -384,9 +384,9 @@ public class GitProcessor extends DefaultBrokerProcessor {
         if (workDir != null) {
             boolean deletesuccessful = FileSystemUtils.deleteRecursively(workDir.toFile());
             if (deletesuccessful) {
-                logger.info("cleaned-up {} work directory", workDir);
+                logger.info(prefixLog("cleaned-up {} work directory"), workDir);
             } else {
-                logger.error("unable to clean up {}", workDir);
+                logger.error(prefixLog("unable to clean up {}"), workDir);
             }
             setWorkDir(null, ctx);
         }
@@ -416,4 +416,11 @@ public class GitProcessor extends DefaultBrokerProcessor {
         ctx.contextKeys.put(getContextKey(GitProcessorContext.workDir), workDir);
     }
 
+    public String prefixLog(String logMessage) {
+        if ("".equals(this.repoAliasName)) {
+            return logMessage;
+        } else {
+            return "[" + this.repoAliasName + "] " + logMessage;
+        }
+    }
 }

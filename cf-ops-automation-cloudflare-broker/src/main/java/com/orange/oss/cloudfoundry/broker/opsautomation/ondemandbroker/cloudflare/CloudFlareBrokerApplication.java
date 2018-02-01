@@ -1,7 +1,7 @@
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.cloudflare;
 
-import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.GitProperties;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.GitProcessor;
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.GitProperties;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.BrokerProcessor;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.DefaultBrokerSink;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.ProcessorChain;

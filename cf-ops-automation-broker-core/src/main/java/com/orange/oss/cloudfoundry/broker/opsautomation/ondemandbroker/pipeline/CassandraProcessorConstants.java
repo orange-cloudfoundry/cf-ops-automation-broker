@@ -32,4 +32,9 @@ public class CassandraProcessorConstants {
     public static final String OSB_OPERATION_CREATE = "create";
     public static final String OSB_OPERATION_DELETE = "delete";
     public static final String OSB_OPERATION_UPDATE = "update";
+    public static final String OSB_CREATE_REQUEST_CLASS_NAME = "org.springframework.cloud.servicebroker.model.CreateServiceInstanceRequest";
+    public static final String OSB_DELETE_REQUEST_CLASS_NAME = "org.springframework.cloud.servicebroker.model.DeleteServiceInstanceRequest";
+    public static final String OSB_UPDATE_REQUEST_CLASS_NAME = "org.springframework.cloud.servicebroker.model.UpdateServiceInstanceRequest";
+
+
 }

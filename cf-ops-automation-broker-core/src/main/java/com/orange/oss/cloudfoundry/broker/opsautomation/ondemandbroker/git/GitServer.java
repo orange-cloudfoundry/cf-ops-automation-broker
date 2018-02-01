@@ -54,6 +54,9 @@ public class GitServer {
     }
 
 
+    /**
+     * Initialize a repo. Note that we surprisingly failed trying to modify an existing repo directly
+     */
     public Repository initRepo(String name, Consumer<Git> repoInitializer) {
         Repository repo = repositories.get(name);
         if (repo == null) {
@@ -75,6 +78,7 @@ public class GitServer {
         }
         return repo;
     }
+
 
     public void stopAndCleanupReposServer() throws InterruptedException {
         cleanUpRepos();
@@ -103,8 +107,7 @@ public class GitServer {
                 throws RepositoryNotFoundException,
                 ServiceNotAuthorizedException, ServiceNotEnabledException,
                 ServiceMayNotContinueException {
-            Consumer<Git> repoInitSteps = repoInitStep;
-            return GitServer.this.initRepo(name, repoInitSteps);
+            return GitServer.this.initRepo(name, repoInitStep);
         }
 
         /**

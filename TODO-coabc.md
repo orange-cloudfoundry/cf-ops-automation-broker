@@ -1,25 +1,29 @@
-- rebase master and merge PR
-
 - Release on-demand cassandra bosh deployment
-    - Cassandra Processor:
-       - implement timeout support: store timestamp in last operation. 
-    - CassandraBrokerApplication:
-        - inspired from CloudFlareBrokerApplication:
-           - BoshDeploymentProperties: path     
-        - CassandraServiceProvisioningTest inspired from CloudFlareServiceProvisioningTest. 
-           - Potentially simulating concourse observable side effects in git, by driving the embedded GitServer
     - mvn release / github release
     - automate broker deployment in paas-template from binary in github release
-    
+
+- Smoke tests: create service instance, get service instance (wait for success), delete service instance
+
 - Implement OSB provision delegation to nested cassandra broker
-   - store full OSB request in operation field ?
-   - refine CassandraProcessor to call OSB client create/delete/bind/unbind
-      - refine PipelineCompletionTracker
+   - refine PipelineCompletionTracker to call OSB client create/delete/bind/unbind
+      - introduce OSBProxy
+         - pull OsbClientFactory in
+            - pb: circular maven dependencies
+            - solution: 
+               - move back open-service-broker-client classes to cf-ops-automation-broker-core 
+                  - run integration tests 
+               - remove open-service-broker-client dependences and delete open-service-broker-client   
+           
       - add component to map OSB request (serviceid, planid, in future strip out some arbitrary params)
+         - takes a Catalog bean from which it fetches serviceid and planid
 
 - Implement OSB binding delegation to nested cassandra broker
    - core framework: create/delete service binding 
 
+- Refine timeout implementation: support configuring timeout in the broker (currently hardcoded)
+    - refactor test to properly assert timeout first
+        - remove Json litteral and manual date editing ?  
+        - refactor Time support to manipulate duration instead of dates
 
 
 
@@ -60,8 +64,6 @@
     - removes bosh deployment: deletes paas-secrets (*Generator classes)
    
     - tracks completion of bosh deployment: watches rendered manifest file (PipelineCompletionTracker class) 
-        - bean spring ?
-
 
     - IT with paas-template/paas-secret: Inspired from GitIT
     - (later once broker password are specific to each instance): specify credhub keys to fetch broker password 

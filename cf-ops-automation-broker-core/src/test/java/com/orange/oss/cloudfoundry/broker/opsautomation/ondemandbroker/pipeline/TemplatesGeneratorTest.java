@@ -35,8 +35,8 @@ public class TemplatesGeneratorTest {
             //Given repository directory
             File file = temporaryFolder.newFolder(REPOSITORY_DIRECTORY);
             //When
-            TemplatesGenerator templates = new TemplatesGenerator(file.toPath(), "");
-            templates.checkPrerequisites();
+            TemplatesGenerator templates = new TemplatesGenerator();
+            templates.checkPrerequisites(file.toPath());
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -54,8 +54,8 @@ public class TemplatesGeneratorTest {
             rootDeploymentDir = Files.createDirectory(rootDeploymentDir);
 
             //When
-            TemplatesGenerator templates = new TemplatesGenerator(file.toPath(), "");
-            templates.checkPrerequisites();
+            TemplatesGenerator templates = new TemplatesGenerator();
+            templates.checkPrerequisites(file.toPath());
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -74,8 +74,8 @@ public class TemplatesGeneratorTest {
                     CassandraProcessorConstants.MODEL_DEPLOYMENT_DIRECTORY);
             modelDeploymentDir = Files.createDirectories(modelDeploymentDir);
             //When
-            TemplatesGenerator templates = new TemplatesGenerator(file.toPath(), "");
-            templates.checkPrerequisites();
+            TemplatesGenerator templates = new TemplatesGenerator();
+            templates.checkPrerequisites(file.toPath());
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -97,8 +97,8 @@ public class TemplatesGeneratorTest {
             Path modelManifestFile = StructureGeneratorHelper.generatePath(modelTemplateDir, CassandraProcessorConstants.MODEL_MANIFEST_FILENAME);
             modelManifestFile = Files.createFile(modelManifestFile);
             //When
-            TemplatesGenerator templates = new TemplatesGenerator(file.toPath(), "");
-            templates.checkPrerequisites();
+            TemplatesGenerator templates = new TemplatesGenerator();
+            templates.checkPrerequisites(file.toPath());
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -121,8 +121,8 @@ public class TemplatesGeneratorTest {
             modelVarsFile = Files.createFile(modelVarsFile);
 
             //When
-            TemplatesGenerator templates = new TemplatesGenerator(file.toPath(), "");
-            templates.checkPrerequisites();
+            TemplatesGenerator templates = new TemplatesGenerator();
+            templates.checkPrerequisites(file.toPath());
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -146,9 +146,9 @@ public class TemplatesGeneratorTest {
             modelManifestFile = Files.createFile(modelManifestFile);
 
             //When
-            TemplatesGenerator templates = new TemplatesGenerator(workDir, SERVICE_INSTANCE_ID);
-            templates.checkPrerequisites();
-            templates.generate();
+            TemplatesGenerator templates = new TemplatesGenerator();
+            templates.checkPrerequisites(workDir);
+            templates.generate(workDir, SERVICE_INSTANCE_ID);
 
             //Then
             Path serviceInstanceDir = StructureGeneratorHelper.generatePath(workDir,
@@ -180,9 +180,9 @@ public class TemplatesGeneratorTest {
             modelManifestFile = Files.createFile(modelManifestFile);
 
             //When
-            TemplatesGenerator templates = new TemplatesGenerator(workDir, SERVICE_INSTANCE_ID);
-            templates.checkPrerequisites();
-            templates.generate();
+            TemplatesGenerator templates = new TemplatesGenerator();
+            templates.checkPrerequisites(workDir);
+            templates.generate(workDir, SERVICE_INSTANCE_ID);
 
             //Then
             Path templateDir = StructureGeneratorHelper.generatePath(workDir,
@@ -215,9 +215,9 @@ public class TemplatesGeneratorTest {
             modelManifestFile = Files.createFile(modelManifestFile);
 
             //When
-            TemplatesGenerator templates = new TemplatesGenerator(workDir, SERVICE_INSTANCE_ID);
-            templates.checkPrerequisites();
-            templates.generate();
+            TemplatesGenerator templates = new TemplatesGenerator();
+            templates.checkPrerequisites(workDir);
+            templates.generate(workDir, SERVICE_INSTANCE_ID);
 
             //Then
             Path deploymentDependenciesFile = StructureGeneratorHelper.generatePath(workDir,
@@ -249,9 +249,9 @@ public class TemplatesGeneratorTest {
             modelManifestFile = Files.createFile(modelManifestFile);
 
             //When
-            TemplatesGenerator templates = new TemplatesGenerator(workDir, SERVICE_INSTANCE_ID);
-            templates.checkPrerequisites();
-            templates.generate();
+            TemplatesGenerator templates = new TemplatesGenerator();
+            templates.checkPrerequisites(workDir);
+            templates.generate(workDir, SERVICE_INSTANCE_ID);
 
             //Then
             Path operatorsFile = StructureGeneratorHelper.generatePath(workDir,
@@ -284,9 +284,9 @@ public class TemplatesGeneratorTest {
             modelManifestFile = Files.createFile(modelManifestFile);
 
             //When
-            TemplatesGenerator templates = new TemplatesGenerator(workDir, SERVICE_INSTANCE_ID);
-            templates.checkPrerequisites();
-            templates.generate();
+            TemplatesGenerator templates = new TemplatesGenerator();
+            templates.checkPrerequisites(workDir);
+            templates.generate(workDir, SERVICE_INSTANCE_ID);
 
             //Then
             Path manifestFile = StructureGeneratorHelper.generatePath(workDir,
@@ -320,9 +320,9 @@ public class TemplatesGeneratorTest {
             modelManifestFile = Files.createFile(modelManifestFile);
 
             //When
-            TemplatesGenerator templates = new TemplatesGenerator(workDir, SERVICE_INSTANCE_ID);
-            templates.checkPrerequisites();
-            templates.generate();
+            TemplatesGenerator templates = new TemplatesGenerator();
+            templates.checkPrerequisites(workDir);
+            templates.generate(workDir, SERVICE_INSTANCE_ID);
 
             //Then
             Path varsFile = StructureGeneratorHelper.generatePath(workDir,
@@ -383,9 +383,9 @@ public class TemplatesGeneratorTest {
     public void populatePaasTemplates() throws IOException {
         Path workDir = Paths.get("/home/ijly7474/GIT/paas-templates");
         String serviceInstanceId = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa10";
-        TemplatesGenerator templates = new TemplatesGenerator(workDir, serviceInstanceId);
-        templates.checkPrerequisites();
-        templates.generate();
+        TemplatesGenerator templates = new TemplatesGenerator();
+        templates.checkPrerequisites(workDir);
+        templates.generate(workDir, SERVICE_INSTANCE_ID);
     }
 
 

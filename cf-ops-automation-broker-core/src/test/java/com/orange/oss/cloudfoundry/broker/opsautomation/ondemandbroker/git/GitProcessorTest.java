@@ -16,7 +16,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -145,6 +144,27 @@ public class GitProcessorTest {
         context2.contextKeys.put(GitProcessorContext.checkOutRemoteBranch.toString(), "develop");
         context2.contextKeys.put(GitProcessorContext.createBranchIfMissing.toString(), "service-instance-guid");
         assertGetImplicitRemoteBranchToDisplay(context2, "service-instance-guid");
+    }
+
+    @Test
+    public void displays_logs_prefixed_by_the_repo_alias() {
+        //given a processor with an alias specified
+        GitProcessor processor = new GitProcessor("gituser", "gitsecret", GIT_URL, "committerName", "committer@address.org", "paasSecret");
+
+        //when
+        String prefixedLog = processor.prefixLog("cloning repo");
+        //then
+        assertThat(prefixedLog).isEqualTo("[paasSecret] cloning repo");
+
+
+        //given a processor without an alias specified
+        processor = new GitProcessor("gituser", "gitsecret", GIT_URL, "committerName", "committer@address.org", null);
+
+        //when
+        String nonPrefixedLog = processor.prefixLog("cloning repo");
+        //then
+        assertThat(nonPrefixedLog).isEqualTo("cloning repo");
+
     }
 
     @Test

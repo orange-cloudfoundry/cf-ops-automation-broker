@@ -6,12 +6,12 @@ security:
 servicebroker:
   catalog:
     services:
-    - id: ondemand-service
-      name: ondemand
-      description: A simple ondemand service broker implementation
+    - id: cassandra-ondemand-service
+      name: cassandra-ondemand
+      description: On demand cassandra dedicated clusters
       bindable: true
       plans:
-        - id: ondemand-plan
+        - id: cassandra-ondemand-plan
           name: default
           description: This is a default ondemand plan.  All services are created equally.
       tags:
@@ -27,5 +27,8 @@ servicebroker:
 logging:
   level:
     org.springframework.cloud.servicebroker: debug
+#    com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git: debug
+#    org.springframework.boot.context.properties.ConfigurationPropertiesBindingPostProcessor: debug
+#    org.springframework.boot.bind.PropertiesConfigurationFactory: trace
 
 

@@ -38,8 +38,8 @@ public class SecretsGeneratorTest {
             File file = temporaryFolder.newFolder(REPOSITORY_DIRECTORY);
             Path workDir = file.toPath();
             //When
-            SecretsGenerator secrets = new SecretsGenerator(workDir, "");
-            secrets.checkPrerequisites();
+            SecretsGenerator secrets = new SecretsGenerator();
+            secrets.checkPrerequisites(workDir);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -57,8 +57,8 @@ public class SecretsGeneratorTest {
             Path rootDeploymentDir = StructureGeneratorHelper.generatePath(file.toPath(), CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY);
             rootDeploymentDir = Files.createDirectory(rootDeploymentDir);
             //When
-            SecretsGenerator secrets = new SecretsGenerator(workDir, "");
-            secrets.checkPrerequisites();
+            SecretsGenerator secrets = new SecretsGenerator();
+            secrets.checkPrerequisites(workDir);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -75,9 +75,9 @@ public class SecretsGeneratorTest {
             modelDeploymentDir = Files.createDirectories(modelDeploymentDir);
 
             //When
-            SecretsGenerator secrets = new SecretsGenerator(workDir, SERVICE_INSTANCE_ID);
-            secrets.checkPrerequisites();
-            secrets.generate();
+            SecretsGenerator secrets = new SecretsGenerator();
+            secrets.checkPrerequisites(workDir);
+            secrets.generate(workDir, SERVICE_INSTANCE_ID);
 
             //Then
             Path serviceInstanceDir = StructureGeneratorHelper.generatePath(workDir,
@@ -101,9 +101,9 @@ public class SecretsGeneratorTest {
             modelDeploymentDir = Files.createDirectories(modelDeploymentDir);
 
             //When
-            SecretsGenerator secrets = new SecretsGenerator(workDir, SERVICE_INSTANCE_ID);
-            secrets.checkPrerequisites();
-            secrets.generate();
+            SecretsGenerator secrets = new SecretsGenerator();
+            secrets.checkPrerequisites(workDir);
+            secrets.generate(workDir, SERVICE_INSTANCE_ID);
 
             //Then
             Path secretsDir = StructureGeneratorHelper.generatePath(workDir,
@@ -129,9 +129,9 @@ public class SecretsGeneratorTest {
             modelDeploymentDir = Files.createDirectories(modelDeploymentDir);
 
             //When
-            SecretsGenerator secrets = new SecretsGenerator(workDir, SERVICE_INSTANCE_ID);
-            secrets.checkPrerequisites();
-            secrets.generate();
+            SecretsGenerator secrets = new SecretsGenerator();
+            secrets.checkPrerequisites(workDir);
+            secrets.generate(workDir, SERVICE_INSTANCE_ID);
 
             //Then
             Path metaFile = StructureGeneratorHelper.generatePath(workDir,
@@ -160,9 +160,9 @@ public class SecretsGeneratorTest {
             modelDeploymentDir = Files.createDirectories(modelDeploymentDir);
 
             //When
-            SecretsGenerator secrets = new SecretsGenerator(workDir, SERVICE_INSTANCE_ID);
-            secrets.checkPrerequisites();
-            secrets.generate();
+            SecretsGenerator secrets = new SecretsGenerator();
+            secrets.checkPrerequisites(workDir);
+            secrets.generate(workDir, SERVICE_INSTANCE_ID);
 
             //Then
             Path secretsFile = StructureGeneratorHelper.generatePath(workDir,
@@ -190,9 +190,9 @@ public class SecretsGeneratorTest {
             modelDeploymentDir = Files.createDirectories(modelDeploymentDir);
 
             //When
-            SecretsGenerator secrets = new SecretsGenerator(workDir, SERVICE_INSTANCE_ID);
-            secrets.checkPrerequisites();
-            secrets.generate();
+            SecretsGenerator secrets = new SecretsGenerator();
+            secrets.checkPrerequisites(workDir);
+            secrets.generate(workDir, SERVICE_INSTANCE_ID);
 
             //Then
             Path enableDeploymentFile = StructureGeneratorHelper.generatePath(workDir,
@@ -226,8 +226,8 @@ public class SecretsGeneratorTest {
             Files.write(enableDeploymentFile, Arrays.asList(CassandraProcessorConstants.ENABLE_DEPLOYMENT_CONTENT), Charset.forName(StandardCharsets.UTF_8.name()));
 
             //When
-            SecretsGenerator secrets = new SecretsGenerator(workDir, SERVICE_INSTANCE_ID);
-            secrets.remove();
+            SecretsGenerator secrets = new SecretsGenerator();
+            secrets.remove(workDir, SERVICE_INSTANCE_ID);
 
             //Then
             assertThat("Enable deployment file exists", Files.notExists(enableDeploymentFile));
@@ -259,8 +259,8 @@ public class SecretsGeneratorTest {
             Files.write(metaFile, Arrays.asList(CassandraProcessorConstants.META_CONTENT), Charset.forName(StandardCharsets.UTF_8.name()));
 
             //When
-            SecretsGenerator secrets = new SecretsGenerator(workDir, SERVICE_INSTANCE_ID);
-            secrets.remove();
+            SecretsGenerator secrets = new SecretsGenerator();
+            secrets.remove(workDir, SERVICE_INSTANCE_ID);
 
             //Then
             assertThat("Meta file exists", Files.notExists(metaFile));
@@ -292,8 +292,8 @@ public class SecretsGeneratorTest {
             Files.write(secretsFile, Arrays.asList(CassandraProcessorConstants.SECRETS_CONTENT), Charset.forName(StandardCharsets.UTF_8.name()));
 
             //When
-            SecretsGenerator secrets = new SecretsGenerator(workDir, SERVICE_INSTANCE_ID);
-            secrets.remove();
+            SecretsGenerator secrets = new SecretsGenerator();
+            secrets.remove(workDir, SERVICE_INSTANCE_ID);
 
             //Then
             assertThat("Secrets file exists", Files.notExists(secretsFile));
@@ -316,9 +316,9 @@ public class SecretsGeneratorTest {
     public void populatePaasTemplates() throws IOException {
         Path workDir = Paths.get("/home/ijly7474/GIT/bosh-cloudwatt-secrets-pprod");
         String serviceInstanceId = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa10";
-        SecretsGenerator secrets = new SecretsGenerator(workDir, serviceInstanceId);
-        secrets.checkPrerequisites();
-        secrets.generate();
+        SecretsGenerator secrets = new SecretsGenerator();
+        secrets.checkPrerequisites(workDir);
+        secrets.generate(workDir, serviceInstanceId);
     }
 
 

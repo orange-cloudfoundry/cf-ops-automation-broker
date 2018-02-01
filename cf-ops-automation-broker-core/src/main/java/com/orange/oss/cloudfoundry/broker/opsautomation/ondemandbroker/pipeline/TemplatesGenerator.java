@@ -1,6 +1,7 @@
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline;
 
 import org.apache.commons.collections.map.HashedMap;
+import org.apache.commons.io.IOUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -20,14 +21,16 @@ import java.util.Map;
  */
 public class TemplatesGenerator extends StructureGeneratorImpl{
 
+/*
     public TemplatesGenerator(Path workDir, String serviceInstanceId) {
         super(workDir, serviceInstanceId);
     }
+*/
 
     @Override
-    public void checkPrerequisites() {
+    public void checkPrerequisites(Path workDir) {
         //Check common pre-requisites
-        super.checkPrerequisites();
+        super.checkPrerequisites(workDir);
 
         //Check specific pre-requisites
         Path templateDir = StructureGeneratorHelper.generatePath(workDir,
@@ -56,12 +59,12 @@ public class TemplatesGenerator extends StructureGeneratorImpl{
     }
 
     @Override
-    public void generate() {
+    public void generate(Path workDir, String serviceInstanceId) {
 
         try {
 
             //Generate service directory
-            super.generate();
+            super.generate(workDir, serviceInstanceId);
 
             //Generate template directory
             Path deploymentTemplateDir = StructureGeneratorHelper.generatePath(workDir,
@@ -95,10 +98,10 @@ public class TemplatesGenerator extends StructureGeneratorImpl{
                     mapOperatorsFile);
 
             //Generate manifest file as symlink
-            this.generateFileAsSymbolicLink(CassandraProcessorConstants.MODEL_MANIFEST_FILENAME, CassandraProcessorConstants.MANIFEST_FILENAME_SUFFIX);
+            this.generateFileAsSymbolicLink(CassandraProcessorConstants.MODEL_MANIFEST_FILENAME, CassandraProcessorConstants.MANIFEST_FILENAME_SUFFIX, workDir, serviceInstanceId);
 
             //Generate vars file as symlink
-            this.generateFileAsSymbolicLink(CassandraProcessorConstants.MODEL_VARS_FILENAME, CassandraProcessorConstants.VARS_FILENAME_SUFFIX);
+            this.generateFileAsSymbolicLink(CassandraProcessorConstants.MODEL_VARS_FILENAME, CassandraProcessorConstants.VARS_FILENAME_SUFFIX, workDir, serviceInstanceId);
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -112,8 +115,7 @@ public class TemplatesGenerator extends StructureGeneratorImpl{
         try {
             //Read source file content
             List<String> lines = null;
-            //TODO : Change path building
-            lines = Files.readAllLines(Paths.get(getClass().getClassLoader().getResource(CassandraProcessorConstants.MODEL_DEPLOYMENT_DIRECTORY + File.separator + sourceFileName).toURI()));
+            lines = IOUtils.readLines(getClass().getResourceAsStream(File.separator + CassandraProcessorConstants.MODEL_DEPLOYMENT_DIRECTORY + File.separator + sourceFileName), StandardCharsets.UTF_8);
 
             //Update file content
             List<String> resultLines = StructureGeneratorHelper.findAndReplace(lines, findAndReplace);
@@ -123,13 +125,10 @@ public class TemplatesGenerator extends StructureGeneratorImpl{
         } catch (IOException e) {
             e.printStackTrace();
             throw new CassandraProcessorException(CassandraProcessorConstants.GENERATION_EXCEPTION);
-        } catch (URISyntaxException e) {
-            e.printStackTrace();
-            throw new CassandraProcessorException(CassandraProcessorConstants.GENERATION_EXCEPTION);
         }
     }
 
-    private void generateFileAsSymbolicLink(String modelFileName, String modelFileNameSuffix) {
+    private void generateFileAsSymbolicLink(String modelFileName, String modelFileNameSuffix, Path workDir, String serviceInstanceId) {
         try {
 
             //Compute relative path on directories with relativize method otherwise doesn't work

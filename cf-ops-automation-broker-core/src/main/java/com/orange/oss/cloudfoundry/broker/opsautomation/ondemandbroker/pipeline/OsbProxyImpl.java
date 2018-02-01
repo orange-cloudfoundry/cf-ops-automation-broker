@@ -2,9 +2,11 @@ package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline
 
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.osbclient.CatalogServiceClient;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.osbclient.OsbClientFactory;
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.osbclient.ServiceInstanceServiceClient;
 import org.springframework.cloud.servicebroker.model.*;
 
 import java.text.MessageFormat;
+import java.util.Map;
 
 public class OsbProxyImpl<Q extends ServiceBrokerRequest, P extends AsyncServiceInstanceResponse> implements OsbProxy<Q> {
     private final String osbDelegateUser;
@@ -21,7 +23,27 @@ public class OsbProxyImpl<Q extends ServiceBrokerRequest, P extends AsyncService
 
     @Override
     public GetLastServiceOperationResponse delegate(GetLastServiceOperationRequest pollingRequest, CreateServiceInstanceRequest request, GetLastServiceOperationResponse response) {
+        String brokerUrl = getBrokerUrl(request);
+        CatalogServiceClient catalogServiceClient = constructCatalogClient(brokerUrl);
+        Catalog catalog = catalogServiceClient.getCatalog();
+        CreateServiceInstanceRequest mappedRequest = mapRequest(request, catalog);
+        ServiceInstanceServiceClient serviceInstanceServiceClient = constructServiceInstanceServiceClient(brokerUrl);
         return response;
+    }
+
+    CreateServiceInstanceRequest mapRequest(CreateServiceInstanceRequest r, Catalog catalog) {
+        ServiceDefinition mappedService = catalog.getServiceDefinitions().get(0);
+        Plan mappedPlan = mappedService.getPlans().get(0);
+        Map<String, Object> mappedParameters = r.getParameters();
+
+        //noinspection deprecation
+        return new CreateServiceInstanceRequest(
+                mappedService.getId(),
+                mappedPlan.getId(),
+                r.getOrganizationGuid(),
+                r.getSpaceGuid(),
+                r.getContext(),
+                mappedParameters);
     }
 
     String getBrokerUrl(CreateServiceInstanceRequest request) {
@@ -33,5 +55,8 @@ public class OsbProxyImpl<Q extends ServiceBrokerRequest, P extends AsyncService
 
     CatalogServiceClient constructCatalogClient(@SuppressWarnings("SameParameterValue") String brokerUrl) {
         return clientFactory.getClient(brokerUrl, osbDelegateUser, osbDelegatePassword, CatalogServiceClient.class);
+    }
+    ServiceInstanceServiceClient constructServiceInstanceServiceClient(@SuppressWarnings("SameParameterValue") String brokerUrl) {
+        return clientFactory.getClient(brokerUrl, osbDelegateUser, osbDelegatePassword, ServiceInstanceServiceClient.class);
     }
 }

@@ -349,6 +349,28 @@ COAB:osb-processor <- cassandra-broker:  201 Created
 CC -> COAB: get last operation https://github.com/openservicebrokerapi/servicebroker/blob/master/spec.md#polling-last-operation
     osb-processor -> cassandra-broker:  get last operation
 
+## PipelineCompletionTracker design
+
+         - investigate refactoring (to merge with TF support, support credhub)
+            - 1 PendingAsyncProcessing: isCompleted(): boolean
+               - terraform module impl:   isCompleted(Path gitWorkDir,     String moduleName=serviceInstanceId) (respectively for provision and unprovision)
+               - pipeline processor impl: isCompleted(Path secretsWorkDir, String serviceInstanceId) 
+            - 0-N: SyncProcessing: apply(ServiceBrokerReq req, ServiceBrokerResponse resp): ServiceBrokerResponse 
+               - OSB client sync delegate impl
+                  - construct OSB client: construct url from serviceInstanceId, and configured static pwd
+                  - fetch catalog
+                  - map req
+                  - provisionning instance
+                  - map resp
+            - 0-N: ASyncProcessing: apply(ServiceBrokerReq req, ServiceBrokerResponse resp): void
+               - OSB client async delegate impl
+               - TF module binding impl 
+                  
+           Challenges and differences:
+              - TerraformCompletionTracker uses async delete
+              - TerraformCompletionTracker does not yet support binding
+           => too early to refactor, keep duplication for now, try to keep impls close
+
 
 # Git processor behaviour
 

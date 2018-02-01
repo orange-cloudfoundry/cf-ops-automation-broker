@@ -6,26 +6,13 @@
 
 - Implement OSB provision delegation to nested cassandra broker
    - refine PipelineCompletionTracker to call OSB client create/delete/bind/unbind
-      - refine PipelineCompletionTracker
-         - investigate refactoring (to merge with TF support, support credhub)
-            - 1 PendingAsyncProcessing: isCompleted(): boolean
-               - terraform module impl:   isCompleted(Path gitWorkDir,     String moduleName=serviceInstanceId) (respectively for provision and unprovision)
-               - pipeline processor impl: isCompleted(Path secretsWorkDir, String serviceInstanceId) 
-            - 0-N: SyncProcessing: apply(ServiceBrokerReq req, ServiceBrokerResponse resp): ServiceBrokerResponse 
-               - OSB client sync delegate impl
-                  - construct OSB client: construct url from serviceInstanceId, and configured static pwd
-                  - fetch catalog
-                  - map req
-                  - provisionning instance
-                  - map resp
-            - 0-N: ASyncProcessing: apply(ServiceBrokerReq req, ServiceBrokerResponse resp): void
-               - OSB client async delegate impl
-               - TF module binding impl 
-                  
-           Challenges and differences:
-              - TerraformCompletionTracker uses async delete
-              - TerraformCompletionTracker does not yet support binding
-           => too early to refactor, keep duplication for now, try to keep impls close
+      - introduce OSBProxy
+         - pull OsbClientFactory in
+            - pb: circular maven dependencies
+            - solution: 
+               - move back open-service-broker-client classes to cf-ops-automation-broker-core 
+                  - run integration tests 
+               - remove open-service-broker-client dependences and delete open-service-broker-client   
            
       - add component to map OSB request (serviceid, planid, in future strip out some arbitrary params)
          - takes a Catalog bean from which it fetches serviceid and planid

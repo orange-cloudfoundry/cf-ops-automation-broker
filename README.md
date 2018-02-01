@@ -128,7 +128,7 @@ Releasing is made using [maven release plugin](http://maven.apache.org/maven-rel
  
  For further details, see [release:prepare goals](http://maven.apache.org/maven-release/maven-release-plugin/prepare-mojo.html)
 
-
+In case of issues, revert the commits in git, fix the root cause and retry.
  
 
 

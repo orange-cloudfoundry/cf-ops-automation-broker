@@ -17,7 +17,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @SpringBootApplication
-@EnableConfigurationProperties({GitProperties.class, OsbProxyProperties.class})
+@EnableConfigurationProperties({GitProperties.class, PipelineProperties.class, OsbProxyProperties.class})
 public class CassandraBrokerApplication {
 
     protected static final String TEMPLATES_REPOSITORY_ALIAS_NAME = "paas-template.";
@@ -42,17 +42,13 @@ public class CassandraBrokerApplication {
         return new GitProperties();
     }
 
-    @Bean
-    public OsbProxyProperties pipelineProperties() {
-        return new OsbProxyProperties();
-    }
-
 
     @Bean
     public Clock clock() {
         return Clock.systemDefaultZone();
     }
 
+    @Bean
     public OsbProxy<CreateServiceInstanceRequest> createServiceInstanceResponseOsbProxy(
             OsbProxyProperties osbProxyProperties) {
         return new OsbProxyImpl<>(osbProxyProperties.getOsbDelegateUser(), osbProxyProperties.getOsbDelegatePassword());

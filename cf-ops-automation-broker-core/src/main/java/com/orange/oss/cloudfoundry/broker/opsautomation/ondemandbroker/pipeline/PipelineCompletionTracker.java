@@ -44,10 +44,10 @@ public class PipelineCompletionTracker {
         //Build response based on the appropriate values and return it
         ServiceBrokerRequest serviceBrokerRequest = pipelineOperationState.getServiceBrokerRequest();
         String classFullyQualifiedName = serviceBrokerRequest.getClass().getName();
-        return this.buildResponse(classFullyQualifiedName, isTargetManifestFilePresent, isRequestTimedOut, elapsedTimeSecsSinceStartRequestDate, pollingRequest, (CreateServiceInstanceRequest) serviceBrokerRequest);
+        return this.buildResponse(classFullyQualifiedName, isTargetManifestFilePresent, isRequestTimedOut, elapsedTimeSecsSinceStartRequestDate, pollingRequest, serviceBrokerRequest);
     }
 
-    private GetLastServiceOperationResponse buildResponse(String classFullyQualifiedName, boolean asyncTaskCompleted, boolean isRequestTimedOut, long elapsedTimeSecsSinceStartRequestDate, GetLastServiceOperationRequest pollingRequest, CreateServiceInstanceRequest storedRequest){
+    private GetLastServiceOperationResponse buildResponse(String classFullyQualifiedName, boolean asyncTaskCompleted, boolean isRequestTimedOut, long elapsedTimeSecsSinceStartRequestDate, GetLastServiceOperationRequest pollingRequest, ServiceBrokerRequest storedRequest){
         GetLastServiceOperationResponse response = new GetLastServiceOperationResponse();
         switch(classFullyQualifiedName)
         {
@@ -56,7 +56,7 @@ public class PipelineCompletionTracker {
                     response.withOperationState(OperationState.SUCCEEDED);
                     response.withDescription("Creation is succeeded");
                     if (createServiceInstanceOsbProxy != null) {
-                        return createServiceInstanceOsbProxy.delegate(pollingRequest, storedRequest, response);
+                        return createServiceInstanceOsbProxy.delegate(pollingRequest, (CreateServiceInstanceRequest) storedRequest, response);
                     }
 
                 }else{

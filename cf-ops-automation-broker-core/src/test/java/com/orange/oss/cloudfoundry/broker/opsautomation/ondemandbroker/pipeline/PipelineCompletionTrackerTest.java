@@ -19,6 +19,7 @@ import java.util.Map;
 
 import static org.fest.assertions.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
+import static org.mockito.AdditionalAnswers.returnsLastArg;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
 
@@ -44,6 +45,13 @@ public class PipelineCompletionTrackerTest {
     public void preparePaasSecretWorkDir() throws IOException {
         workDir = Files.createTempDirectory(REPOSITORY_DIRECTORY);
     }
+
+    @Before
+    public void setUpOsbProxy() {
+        doAnswer(returnsLastArg()).when(createServiceInstanceOsbProxy).delegate(any(), any(), any());
+    }
+
+
 
     @After
     public void cleanUpPaasSecretWorkDir() {

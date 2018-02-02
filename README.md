@@ -126,11 +126,11 @@ Releasing is made using [maven release plugin](http://maven.apache.org/maven-rel
  
  ```
  
- Circle CI build will proceed, and will trigger the execution of `mvn release:perform`, and upload artifacts to both github and https://bintray.com/elpaaso 
- 
- For further details, see [release:prepare goals](http://maven.apache.org/maven-release/maven-release-plugin/prepare-mojo.html)
+ Circle CI build will proceed, and will trigger the execution of `mvn release:perform`, and upload artifacts to both github and https://bintray.com/elpaaso. For further details, see [release:prepare goals](http://maven.apache.org/maven-release/maven-release-plugin/prepare-mojo.html)
 
-Following the release, clean up your local workspace using `mvn release:clean`
+Following the release:
+- edit the release notes in github
+- clean up your local workspace using `mvn release:clean`
 
 In case of issues, try:
 * `mvn release:rollback` 

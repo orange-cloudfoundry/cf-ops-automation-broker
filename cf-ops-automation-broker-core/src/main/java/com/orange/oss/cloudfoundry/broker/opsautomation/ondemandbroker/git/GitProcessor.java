@@ -274,8 +274,19 @@ public class GitProcessor extends DefaultBrokerProcessor {
             Set<String> missing = status.getMissing();
             stageMissingFilesExcludingSubModules(ctx, git, missing);
             status = git.status().call();
-            if (status.hasUncommittedChanges()) {
-                logger.info(prefixLog("staged commit:  deleted:") + status.getRemoved() + " added:" + status.getAdded() + " changed:" + status.getChanged());
+            if (! status.getConflicting().isEmpty()) {
+                logger.error("Unexpected conflicting files:" + status.getConflicting());
+                throw new RuntimeException("Unexpected conflicting files, skipping commit and push");
+            } else if (status.hasUncommittedChanges() && (
+                            !status.getAdded().isEmpty() ||
+                            !status.getChanged().isEmpty() ||
+                            !status.getRemoved().isEmpty()
+                    )) {
+                logger.info(prefixLog("staged commit: "
+                        + " added:" + status.getAdded()
+                        + " changed:" + status.getChanged()
+                        + " deleted:" + status.getRemoved()
+                        ));
                 CommitCommand commitC = git.commit().setMessage(getCommitMessage(ctx));
 
                 RevCommit revCommit = commitC.call();

@@ -35,9 +35,9 @@ import java.util.stream.StreamSupport;
 public class GitProcessor extends DefaultBrokerProcessor {
 
 
-    static final String PRIVATE_GIT_INSTANCE = "private-git-instance";
+    private static final String PRIVATE_GIT_INSTANCE = "private-git-instance";
     private static final Logger logger = LoggerFactory.getLogger(GitProcessor.class.getName());
-    protected static final String PRIVATE_SUBMODULES_LIST = "private_submodules_list";
+    static final String PRIVATE_SUBMODULES_LIST = "private_submodules_list";
 
     private final String gitUrl;
     private final String committerName;
@@ -120,13 +120,13 @@ public class GitProcessor extends DefaultBrokerProcessor {
             Path workDir = Files.createTempDirectory(prefix);
 
             int timeoutSeconds = 60; //git timeout
-            CloneCommand cc = new CloneCommand()
+            CloneCommand clone = new CloneCommand()
                     .setCredentialsProvider(cred)
                     .setDirectory(workDir.toFile())
                     .setTimeout(timeoutSeconds)
                     .setURI(this.gitUrl);
 
-            Git git = cc.call();
+            Git git = clone.call();
             this.setGit(git, ctx);
 
             Config config = git.getRepository().getConfig();
@@ -169,7 +169,7 @@ public class GitProcessor extends DefaultBrokerProcessor {
             fetchSubModules = ! submodulesToFetch.isEmpty();
         }
         if (fetchSubModules) {
-            git.submoduleUpdate().call();
+            git.submoduleUpdate().setCredentialsProvider(cred).call();
         }
     }
 
@@ -249,7 +249,7 @@ public class GitProcessor extends DefaultBrokerProcessor {
     }
 
 
-    void setUserConfig(Config config) {
+    private void setUserConfig(Config config) {
         if (this.committerName != null) {
             config.setString("user", null, "name", this.committerName);
         }
@@ -296,7 +296,7 @@ public class GitProcessor extends DefaultBrokerProcessor {
 
     }
 
-    protected void stageMissingFilesExcludingSubModules(Context ctx, Git git, Set<String> missing) throws GitAPIException {
+    private void stageMissingFilesExcludingSubModules(Context ctx, Git git, Set<String> missing) throws GitAPIException {
         @SuppressWarnings("unchecked")
         List<String> subModulesList = (List<String>) ctx.contextKeys.get(repoAliasName + PRIVATE_SUBMODULES_LIST);
         for (String missingFilePath : missing) {
@@ -316,7 +316,7 @@ public class GitProcessor extends DefaultBrokerProcessor {
         }
     }
 
-    void pushCommits(Git git, Context ctx) throws GitAPIException {
+    private void pushCommits(Git git, Context ctx) throws GitAPIException {
         logger.info(prefixLog("pushing to {} ..."), getImplicitRemoteBranchToDisplay(ctx));
         PushCommand pushCommand = git.push().setCredentialsProvider(cred);
 
@@ -327,7 +327,7 @@ public class GitProcessor extends DefaultBrokerProcessor {
         if (failedStatuses.contains(RemoteRefUpdate.Status.REJECTED_NONFASTFORWARD)) {
             logger.info(prefixLog("Failed to push with status {}"), failedStatuses);
             logger.info(prefixLog("pull and rebasing from origin/{} ..."), getImplicitRemoteBranchToDisplay(ctx));
-            PullResult pullRebaseResult = git.pull().call();
+            PullResult pullRebaseResult = git.pull().setCredentialsProvider(cred).call();
             if (!pullRebaseResult.isSuccessful()) {
                 logger.info(prefixLog("Failed to pull rebase: ") + pullRebaseResult);
                 throw new RuntimeException("failed to push: remote conflict. pull rebased failed:" + pullRebaseResult);
@@ -351,7 +351,7 @@ public class GitProcessor extends DefaultBrokerProcessor {
         }
     }
 
-    List<RemoteRefUpdate.Status> extractFailedStatuses(Iterable<PushResult> pushResults) {
+    private List<RemoteRefUpdate.Status> extractFailedStatuses(Iterable<PushResult> pushResults) {
         return StreamSupport.stream(pushResults.spliterator(), false) //https://stackoverflow.com/questions/23932061/convert-iterable-to-stream-using-java-8-jdk
                 .map(PushResult::getRemoteUpdates)
                 .flatMap(Collection::stream) //reduces the Iterable
@@ -361,7 +361,7 @@ public class GitProcessor extends DefaultBrokerProcessor {
                 .collect(Collectors.toList());
     }
 
-    public StringBuilder prettyPrint(Iterable<PushResult> results) {
+    private StringBuilder prettyPrint(Iterable<PushResult> results) {
         StringBuilder sb = new StringBuilder();
         for (Object result : results) {
             sb.append(ToStringBuilder.reflectionToString(result));
@@ -370,7 +370,7 @@ public class GitProcessor extends DefaultBrokerProcessor {
         return sb;
     }
 
-    protected String getCommitMessage(Context ctx) {
+    private String getCommitMessage(Context ctx) {
         String configuredMessage = getContextValue(ctx, GitProcessorContext.commitMessage);
         return configuredMessage == null ? "commit by ondemand broker" : configuredMessage;
     }
@@ -378,7 +378,7 @@ public class GitProcessor extends DefaultBrokerProcessor {
     /**
      * recursively delete working directory
      */
-    public void deleteWorkingDir(Context ctx) throws IOException {
+    void deleteWorkingDir(Context ctx) throws IOException {
         // cleaning workDir
         Path workDir = this.getWorkDir(ctx);
         if (workDir != null) {
@@ -400,7 +400,7 @@ public class GitProcessor extends DefaultBrokerProcessor {
         ctx.contextKeys.put(repoAliasName + PRIVATE_GIT_INSTANCE, git);
     }
 
-    Path getWorkDir(Context ctx) {
+    private Path getWorkDir(Context ctx) {
         return (Path) ctx.contextKeys.get(getContextKey(GitProcessorContext.workDir));
     }
 
@@ -416,7 +416,7 @@ public class GitProcessor extends DefaultBrokerProcessor {
         ctx.contextKeys.put(getContextKey(GitProcessorContext.workDir), workDir);
     }
 
-    public String prefixLog(String logMessage) {
+    String prefixLog(String logMessage) {
         if ("".equals(this.repoAliasName)) {
             return logMessage;
         } else {

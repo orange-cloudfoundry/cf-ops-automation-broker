@@ -4,25 +4,6 @@
          - include vcap request id in each trace (MDC), as thread name isn't useful
          - include higher time resolution, as to workaround out of order loggregator traces displayed (sort by logback timestamps instead of loggregator timestamps)
             - report issue with Paas ops team
-    - fix the pull --rebase issue: lacking authentication during pull
-
-   2018-02-05T11:25:34.81+0100 [APP/PROC/WEB/0] OUT 2018-02-05 10:25:34.814  INFO 12 --- [nio-8080-exec-2] c.o.o.c.b.o.o.git.GitProcessor           : [paas-template.] commit push
-   2018-02-05T11:25:35.15+0100 [APP/PROC/WEB/0] OUT 2018-02-05 10:25:35.150  INFO 12 --- [nio-8080-exec-2] c.o.o.c.b.o.o.git.GitProcessor           : [paas-template.] staged commit:  deleted:[] added:[coab-depls/cassandra_a547bc0e-57f5-4197-9a20-bf3bb2d8f5da/template/cassandra_a547bc0e-57f5-4197-9a20-bf3bb2d8f5da-vars-tpl.yml, coab-depls/cassandra_a547bc0e-57f5-4197-9a20-bf3bb2d8f5da/template/coab-operators.yml, coab-depls/cassandra_a547bc0e-57f5-4197-9a20-bf3bb2d8f5da/deployment-dependencies.yml, coab-depls/cassandra_a547bc0e-57f5-4197-9a20-bf3bb2d8f5da/template/cassandra_a547bc0e-57f5-4197-9a20-bf3bb2d8f5da-tpl.yml] changed:[]
-   2018-02-05T11:25:35.51+0100 [APP/PROC/WEB/0] OUT 2018-02-05 10:25:35.510  INFO 12 --- [nio-8080-exec-2] c.o.o.c.b.o.o.git.GitProcessor           : [paas-template.] Failed to push with status [REJECTED_NONFASTFORWARD]
-
-           2018-02-05T11:25:35.56+0100 [APP/PROC/WEB/0] OUT java.lang.IllegalArgumentException: org.eclipse.jgit.api.errors.TransportException: https://elpaaso-gitlab.redacted-domain.org/skc-ops-pp/paas-templates.git: Authentication is required but no CredentialsProvider has been registered
-           2018-02-05T11:25:35.56+0100 [APP/PROC/WEB/0] OUT 	at com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.GitProcessor.commitPushRepo(GitProcessor.java:294) ~[cf-ops-automation-broker-core-0.23.0.jar!/:0.23.0]
-           2018-02-05T11:25:35.56+0100 [APP/PROC/WEB/0] OUT 	at com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.GitProcessor.postCreate(GitProcessor.java:64) ~[cf-ops-automation-broker-core-0.23.0.jar!/:0.23.0]
-
-   2018-02-05T11:25:35.55+0100 [APP/PROC/WEB/0] OUT Caused by: org.eclipse.jgit.errors.TransportException: https://elpaaso-gitlab.redacted-domain.org/skc-ops-pp/paas-templates.git: Authentication is required but no CredentialsProvider has been registered
-   2018-02-05T11:25:35.55+0100 [APP/PROC/WEB/0] OUT 	at org.eclipse.jgit.transport.TransportHttp.connect(TransportHttp.java:524) ~[org.eclipse.jgit-4.9.0.201710071750-r.jar!/:4.9.0.201710071750-r]
-   2018-02-05T11:25:35.55+0100 [APP/PROC/WEB/0] OUT 	at org.eclipse.jgit.transport.TransportHttp.openFetch(TransportHttp.java:341) ~[org.eclipse.jgit-4.9.0.201710071750-r.jar!/:4.9.0.201710071750-r]
-   2018-02-05T11:25:35.55+0100 [APP/PROC/WEB/0] OUT 	at org.eclipse.jgit.transport.FetchProcess.executeImp(FetchProcess.java:137) ~[org.eclipse.jgit-4.9.0.201710071750-r.jar!/:4.9.0.201710071750-r]
-   2018-02-05T11:25:35.55+0100 [APP/PROC/WEB/0] OUT 	at org.eclipse.jgit.transport.FetchProcess.execute(FetchProcess.java:123) ~[org.eclipse.jgit-4.9.0.201710071750-r.jar!/:4.9.0.201710071750-r]
-   2018-02-05T11:25:35.55+0100 [APP/PROC/WEB/0] OUT 	at org.eclipse.jgit.transport.Transport.fetch(Transport.java:1236) ~[org.eclipse.jgit-4.9.0.201710071750-r.jar!/:4.9.0.201710071750-r]
-   2018-02-05T11:25:35.55+0100 [APP/PROC/WEB/0] OUT 	at org.eclipse.jgit.api.FetchCommand.call(FetchCommand.java:239) ~[org.eclipse.jgit-4.9.0.201710071750-r.jar!/:4.9.0.201710071750-r]
-   2018-02-05T11:25:35.55+0100 [APP/PROC/WEB/0] OUT 	... 107 common frames omitted
-
 
     - identify and fix root cause for commit without change list (triggered by CC clean up orphan service instances every 30s)  
            2018-02-05T11:25:46.78+0100 [APP/PROC/WEB/0] OUT 2018-02-05 10:25:46.785  INFO 12 --- [nio-8080-exec-3] c.o.o.c.b.o.o.git.GitProcessor           : [paas-template.] staged commit:  deleted:[] added:[] changed:[]

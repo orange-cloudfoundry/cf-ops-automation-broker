@@ -1,3 +1,5 @@
+- fix OSB request JSON serialization in operation state: query params fields are marked as @JsonIgnore and thus missing from serialization (service instance id, service definition id, service binding id)
+
 - fix git processor issues reported using paas-template
     - clone paas-template as a private gitlab repo to reproduce issue more easily without impacting the team
     - refine logback config to 

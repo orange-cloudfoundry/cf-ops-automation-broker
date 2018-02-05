@@ -31,7 +31,7 @@ public class OsbProxyImplTest {
 
     @Test
     public void constructs_broker_url_osb_client() {
-        String url = osbProxy.getBrokerUrl(request);
+        String url = osbProxy.getBrokerUrl(request.getServiceInstanceId());
         assertThat(url).isEqualTo("https://service-instance-id-cassandra-broker.mydomain/com");
     }
     @Test

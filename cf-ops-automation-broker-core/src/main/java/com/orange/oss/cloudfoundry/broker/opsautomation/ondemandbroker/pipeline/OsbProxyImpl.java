@@ -23,7 +23,7 @@ public class OsbProxyImpl<Q extends ServiceBrokerRequest, P extends AsyncService
 
     @Override
     public GetLastServiceOperationResponse delegate(GetLastServiceOperationRequest pollingRequest, CreateServiceInstanceRequest request, GetLastServiceOperationResponse response) {
-        String brokerUrl = getBrokerUrl(request);
+        String brokerUrl = getBrokerUrl(pollingRequest.getServiceInstanceId());
         CatalogServiceClient catalogServiceClient = constructCatalogClient(brokerUrl);
         Catalog catalog = catalogServiceClient.getCatalog();
         CreateServiceInstanceRequest mappedRequest = mapRequest(request, catalog);
@@ -46,8 +46,7 @@ public class OsbProxyImpl<Q extends ServiceBrokerRequest, P extends AsyncService
                 mappedParameters);
     }
 
-    String getBrokerUrl(CreateServiceInstanceRequest request) {
-        String serviceInstanceId = request.getServiceInstanceId();
+    String getBrokerUrl(String serviceInstanceId) {
         this.brokerUrlPattern = "https://{0}-cassandra-broker.mydomain/com";
         String brokerUrlPattern = this.brokerUrlPattern;
         return MessageFormat.format(brokerUrlPattern, serviceInstanceId);

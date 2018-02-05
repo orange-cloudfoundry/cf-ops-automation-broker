@@ -58,10 +58,10 @@ import static org.springframework.cloud.servicebroker.model.CloudFoundryContext.
 public class CassandraServiceProvisionningTest {
 
     private Clock clock = Clock.fixed(Instant.now(), ZoneId.of("Europe/Paris"));
-    protected static final String SERVICE_INSTANCE_ID = "111";
+    private static final String SERVICE_INSTANCE_ID = "111";
     @LocalServerPort
     int port;
-    GitServer gitServer;
+    private GitServer gitServer;
 
     @Autowired
     @Qualifier(value = "secretsGitProcessor")
@@ -261,7 +261,6 @@ public class CassandraServiceProvisionningTest {
     private CreateServiceInstanceRequest aCreateServiceInstanceRequest() {
 
         Map<String, Object> params = new HashMap<>();
-        params.put("route-prefix", "a-valid-route");
 
         Map<String, Object> contextProperties = new HashMap<>();
         contextProperties.put(OSB_PROFILE_ORGANIZATION_GUID, "org_id");
@@ -270,13 +269,15 @@ public class CassandraServiceProvisionningTest {
                 CLOUD_FOUNDRY_PLATFORM,
                 contextProperties
         );
-        return new CreateServiceInstanceRequest("cassandra-ondemand-service",
+        CreateServiceInstanceRequest request = new CreateServiceInstanceRequest("cassandra-ondemand-service",
                 "cassandra-ondemand-plan",
                 "org_id",
                 "space_id",
                 createServiceInstanceContext,
                 params
         );
+        request.withServiceInstanceId(SERVICE_INSTANCE_ID);
+        return request;
     }
 
 }

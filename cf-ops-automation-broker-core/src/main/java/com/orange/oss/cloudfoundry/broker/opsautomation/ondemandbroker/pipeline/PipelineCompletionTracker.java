@@ -20,7 +20,7 @@ public class PipelineCompletionTracker {
     protected Clock clock;
     private OsbProxy<CreateServiceInstanceRequest> createServiceInstanceOsbProxy;
     private Gson gson;
-    private long maxExecutionDurationSeconds = 600L;
+    private long maxExecutionDurationSeconds = 1200L;
 
     public PipelineCompletionTracker(Clock clock, OsbProxy<CreateServiceInstanceRequest> createServiceInstanceOsbProxy) {
         this.clock = clock;

@@ -12,7 +12,7 @@
 
     <groupId>com.orange.oss.cloudfoundry.broker.opsautomation</groupId>
     <artifactId>cf-ops-automation-cassandra-broker</artifactId>
-    <version>0.23.0-SNAPSHOT</version>
+    <version>0.24.0-SNAPSHOT</version>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -21,16 +21,25 @@
         <rest-assured.version>3.0.5</rest-assured.version>
     </properties>
 
+    <distributionManagement>
+        <repository>
+            <id>bintray-elpaaso-maven</id>
+            <name>elpaaso-maven</name>
+            <url>https://api.bintray.com/maven/elpaaso/maven/${project.artifactId}/;publish=1</url>
+        </repository>
+    </distributionManagement>
+
+
     <dependencies>
         <dependency>
             <groupId>com.orange.oss.cloudfoundry.broker.opsautomation</groupId>
             <artifactId>cf-ops-automation-broker-core</artifactId>
-            <version>0.23.0-SNAPSHOT</version>
+            <version>0.24.0-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>com.orange.oss.cloudfoundry.broker.opsautomation</groupId>
             <artifactId>spring-boot-starter-servicebroker-catalog</artifactId>
-            <version>0.23.0-SNAPSHOT</version>
+            <version>0.24.0-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>

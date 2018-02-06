@@ -3,6 +3,7 @@ package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.sample;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.GitProcessor;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.GitProcessorContext;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.GitProperties;
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.osbclient.OsbClientFactory;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.*;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.*;
 import org.springframework.boot.SpringApplication;
@@ -20,8 +21,9 @@ import java.util.List;
 @EnableConfigurationProperties({GitProperties.class, PipelineProperties.class, OsbProxyProperties.class})
 public class CassandraBrokerApplication {
 
-    protected static final String TEMPLATES_REPOSITORY_ALIAS_NAME = "paas-template.";
-    protected static final String SECRETS_REPOSITORY_ALIAS_NAME = "paas-secrets.";
+    @SuppressWarnings("WeakerAccess")
+    static final String TEMPLATES_REPOSITORY_ALIAS_NAME = "paas-template.";
+    static final String SECRETS_REPOSITORY_ALIAS_NAME = "paas-secrets.";
 
     public static void main(String[] args) {
         SpringApplication.run(CassandraBrokerApplication.class, args);
@@ -50,13 +52,21 @@ public class CassandraBrokerApplication {
 
     @Bean
     public OsbProxy<CreateServiceInstanceRequest> createServiceInstanceResponseOsbProxy(
-            OsbProxyProperties osbProxyProperties) {
-        return new OsbProxyImpl<>(osbProxyProperties.getOsbDelegateUser(), osbProxyProperties.getOsbDelegatePassword());
+            OsbProxyProperties osbProxyProperties, OsbClientFactory clientFactory) {
+        return new OsbProxyImpl<>(
+                osbProxyProperties.getOsbDelegateUser(),
+                osbProxyProperties.getOsbDelegatePassword(),
+                osbProxyProperties.getBrokerUrlPattern(),
+                clientFactory);
     }
 
     @Bean
     public PipelineCompletionTracker pipelineCompletionTracker(Clock clock, OsbProxy<CreateServiceInstanceRequest> createServiceInstanceResponseOsbProxy) {
-        return new PipelineCompletionTracker(clock, createServiceInstanceResponseOsbProxy);
+        return new PipelineCompletionTracker(
+                clock,
+//                createServiceInstanceResponseOsbProxy
+                null
+        );
     }
 
     @Bean
@@ -74,17 +84,34 @@ public class CassandraBrokerApplication {
                                               TemplatesGenerator templatesGenerator,
                                               SecretsGenerator secretsGenerator,
                                               PipelineCompletionTracker pipelineCompletionTracker) {
-        return new CassandraProcessor(TEMPLATES_REPOSITORY_ALIAS_NAME, SECRETS_REPOSITORY_ALIAS_NAME, templatesGenerator, secretsGenerator, pipelineCompletionTracker);
+        return new CassandraProcessor(
+                TEMPLATES_REPOSITORY_ALIAS_NAME,
+                SECRETS_REPOSITORY_ALIAS_NAME,
+                templatesGenerator,
+                secretsGenerator,
+                pipelineCompletionTracker);
     }
 
     @Bean
     public BrokerProcessor secretsGitProcessor(GitProperties secretsGitProperties) {
-        return new GitProcessor(secretsGitProperties.getUser(), secretsGitProperties.getPassword(), secretsGitProperties.getUrl(), secretsGitProperties.committerName(), secretsGitProperties.committerEmail(), SECRETS_REPOSITORY_ALIAS_NAME);
+        return new GitProcessor(
+                secretsGitProperties.getUser(),
+                secretsGitProperties.getPassword(),
+                secretsGitProperties.getUrl(),
+                secretsGitProperties.committerName(),
+                secretsGitProperties.committerEmail(),
+                SECRETS_REPOSITORY_ALIAS_NAME);
     }
 
     @Bean
     public BrokerProcessor templateGitProcessor(GitProperties templateGitProperties) {
-        return new GitProcessor(templateGitProperties.getUser(), templateGitProperties.getPassword(), templateGitProperties.getUrl(), templateGitProperties.committerName(), templateGitProperties.committerEmail(), TEMPLATES_REPOSITORY_ALIAS_NAME);
+        return new GitProcessor(
+                templateGitProperties.getUser(),
+                templateGitProperties.getPassword(),
+                templateGitProperties.getUrl(),
+                templateGitProperties.committerName(),
+                templateGitProperties.committerEmail(),
+                TEMPLATES_REPOSITORY_ALIAS_NAME);
     }
 
 
@@ -104,13 +131,13 @@ public class CassandraBrokerApplication {
     @Bean
     public BrokerProcessor paasTemplateBranchSelector(PipelineProperties pipelineProperties) {
         return new DefaultBrokerProcessor() {
-                @Override
-                public void preCreate(Context ctx) {
-                    ctx.contextKeys.put(TEMPLATES_REPOSITORY_ALIAS_NAME + GitProcessorContext.checkOutRemoteBranch.toString(), pipelineProperties.getCheckOutRemoteBranch()); //"develop"
-                    ctx.contextKeys.put(TEMPLATES_REPOSITORY_ALIAS_NAME + GitProcessorContext.createBranchIfMissing.toString(), pipelineProperties.getCreateBranchIfMissing()); //"feature-coadepls-cassandra-serviceinstances"
-                }
+            @Override
+            public void preCreate(Context ctx) {
+                ctx.contextKeys.put(TEMPLATES_REPOSITORY_ALIAS_NAME + GitProcessorContext.checkOutRemoteBranch.toString(), pipelineProperties.getCheckOutRemoteBranch()); //"develop"
+                ctx.contextKeys.put(TEMPLATES_REPOSITORY_ALIAS_NAME + GitProcessorContext.createBranchIfMissing.toString(), pipelineProperties.getCreateBranchIfMissing()); //"feature-coadepls-cassandra-serviceinstances"
+            }
 
-            };
+        };
     }
 
 

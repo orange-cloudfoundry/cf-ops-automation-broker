@@ -12,6 +12,16 @@ public class OsbProxyProperties {
     private String osbDelegateUser;
     private String osbDelegatePassword;
 
+    public String getBrokerUrlPattern() {
+        return brokerUrlPattern;
+    }
+
+    public void setBrokerUrlPattern(String brokerUrlPattern) {
+        this.brokerUrlPattern = brokerUrlPattern;
+    }
+
+    private String brokerUrlPattern;
+
     public int getMaxExecutionDurationSeconds() {
         return maxExecutionDurationSeconds;
     }

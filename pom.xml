@@ -50,7 +50,6 @@
         <module>cf-ops-automation-broker-framework</module>
         <module>cf-ops-automation-sample-broker</module>
         <module>cf-ops-automation-cloudflare-broker</module>
-        <module>open-service-broker-client</module>
         <module>cf-ops-automation-cassandra-broker</module>
         <module>spring-boot-starter-servicebroker-catalog</module>
     </modules>

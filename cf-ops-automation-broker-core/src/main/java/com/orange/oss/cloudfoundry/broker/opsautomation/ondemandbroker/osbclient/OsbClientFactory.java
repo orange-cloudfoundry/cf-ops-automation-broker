@@ -19,12 +19,12 @@ import org.springframework.stereotype.Service;
 @Service
 public class OsbClientFactory {
 
-    Feign.Builder builder;
-    Client client;
-    okhttp3.OkHttpClient okHttpClient;
-    Encoder encoder;
-    Decoder decoder;
-    Contract springMvcContract;
+    private Feign.Builder builder;
+    private Client client;
+    private okhttp3.OkHttpClient okHttpClient;
+    private Encoder encoder;
+    private Decoder decoder;
+    private Contract springMvcContract;
 
     public OsbClientFactory(@Qualifier(value = "customFeignBuilder") Feign.Builder builder,
                             Client client,

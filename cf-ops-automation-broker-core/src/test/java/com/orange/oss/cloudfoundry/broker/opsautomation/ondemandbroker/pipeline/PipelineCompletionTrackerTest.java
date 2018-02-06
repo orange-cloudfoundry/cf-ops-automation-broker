@@ -1,13 +1,13 @@
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline;
 
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+import org.junit.rules.TemporaryFolder;
 import org.springframework.cloud.servicebroker.model.*;
-import org.springframework.util.FileSystemUtils;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -34,6 +34,9 @@ public class PipelineCompletionTrackerTest {
     @Rule
     public ExpectedException thrown = ExpectedException.none();
 
+    @Rule
+    public TemporaryFolder temporaryFolder = new TemporaryFolder();
+
     Path workDir;
     @SuppressWarnings("unchecked")
     OsbProxy<CreateServiceInstanceRequest> createServiceInstanceOsbProxy = mock(OsbProxy.class);
@@ -43,19 +46,13 @@ public class PipelineCompletionTrackerTest {
 
     @Before
     public void preparePaasSecretWorkDir() throws IOException {
-        workDir = Files.createTempDirectory(REPOSITORY_DIRECTORY);
+        File file = temporaryFolder.newFolder(REPOSITORY_DIRECTORY);
+        workDir = file.toPath();
     }
 
     @Before
     public void setUpOsbProxy() {
         doAnswer(returnsLastArg()).when(createServiceInstanceOsbProxy).delegate(any(), any(), any());
-    }
-
-
-
-    @After
-    public void cleanUpPaasSecretWorkDir() {
-        FileSystemUtils.deleteRecursively(workDir.toFile());
     }
 
     @Test

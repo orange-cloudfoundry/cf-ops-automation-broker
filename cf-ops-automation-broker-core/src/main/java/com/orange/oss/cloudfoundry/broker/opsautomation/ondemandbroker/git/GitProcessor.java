@@ -16,10 +16,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.FileSystemUtils;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -393,12 +395,17 @@ public class GitProcessor extends DefaultBrokerProcessor {
         // cleaning workDir
         Path workDir = this.getWorkDir(ctx);
         if (workDir != null) {
-            boolean deletesuccessful = FileSystemUtils.deleteRecursively(workDir.toFile());
-            if (deletesuccessful) {
-                logger.info(prefixLog("cleaned-up {} work directory"), workDir);
-            } else {
-                logger.error(prefixLog("unable to clean up {}"), workDir);
-            }
+            logger.info(prefixLog("cleaning-up {} work directory"), workDir);
+            Consumer<Path> deleter = file -> {
+                try {
+                    Files.delete(file);
+                } catch (IOException e) {
+                    logger.warn(prefixLog("Unable to delete file {} details:{}"), file, e.toString());
+                }
+            };
+            Files.walk(workDir)
+                    .sorted(Comparator.reverseOrder())
+                    .forEach(deleter);
             setWorkDir(null, ctx);
         }
     }

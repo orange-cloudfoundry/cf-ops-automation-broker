@@ -20,10 +20,11 @@ public class PipelineCompletionTracker {
     protected Clock clock;
     private OsbProxy<CreateServiceInstanceRequest> createServiceInstanceOsbProxy;
     private Gson gson;
-    private long maxExecutionDurationSeconds = 1200L;
+    private long maxExecutionDurationSeconds;
 
-    public PipelineCompletionTracker(Clock clock, OsbProxy<CreateServiceInstanceRequest> createServiceInstanceOsbProxy) {
+    public PipelineCompletionTracker(Clock clock, long maxExecutionDurationSeconds, OsbProxy<CreateServiceInstanceRequest> createServiceInstanceOsbProxy) {
         this.clock = clock;
+        this.maxExecutionDurationSeconds = maxExecutionDurationSeconds;
         this.createServiceInstanceOsbProxy = createServiceInstanceOsbProxy;
         final GsonBuilder gsonBuilder = new GsonBuilder();
         gsonBuilder.registerTypeAdapter(PipelineCompletionTracker.PipelineOperationState.class, new PipelineOperationStateGsonAdapter());

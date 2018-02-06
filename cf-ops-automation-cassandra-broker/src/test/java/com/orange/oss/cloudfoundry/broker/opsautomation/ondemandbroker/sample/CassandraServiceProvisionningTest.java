@@ -67,6 +67,9 @@ public class CassandraServiceProvisionningTest {
     @Qualifier(value = "secretsGitProcessor")
     GitProcessor secretsGitProcessor;
 
+    @Autowired
+    OsbProxyProperties osbProxyProperties;
+
     @Before
     public void startHttpClient() {
         RestAssured.port = port;
@@ -159,7 +162,7 @@ public class CassandraServiceProvisionningTest {
         gitProcessor.preCreate(context);
 
         Path workDirPath = (Path) context.contextKeys.get(SECRETS_REPOSITORY_ALIAS_NAME + GitProcessorContext.workDir.toString());
-        @SuppressWarnings("unchecked") PipelineCompletionTracker tracker = new PipelineCompletionTracker(Clock.systemUTC(), Mockito.mock(OsbProxy.class));
+        @SuppressWarnings("unchecked") PipelineCompletionTracker tracker = new PipelineCompletionTracker(Clock.systemUTC(), osbProxyProperties.getMaxExecutionDurationSeconds(), Mockito.mock(OsbProxy.class));
         Path targetManifestFilePath = tracker.getTargetManifestFilePath(workDirPath, SERVICE_INSTANCE_ID);
         createDir(targetManifestFilePath.getParent());
         createDummyFile(targetManifestFilePath);
@@ -190,7 +193,7 @@ public class CassandraServiceProvisionningTest {
     @Test
     public void supports_crud_lifecycle() throws IOException {
         create_async_service_instance();
-        @SuppressWarnings("unchecked") PipelineCompletionTracker tracker = new PipelineCompletionTracker(clock, Mockito.mock(OsbProxy.class));
+        @SuppressWarnings("unchecked") PipelineCompletionTracker tracker = new PipelineCompletionTracker(clock, osbProxyProperties.getMaxExecutionDurationSeconds(), Mockito.mock(OsbProxy.class));
         String jsonPipelineOperationState = tracker.getPipelineOperationStateAsJson(aCreateServiceInstanceRequest());
 
         polls_last_operation(jsonPipelineOperationState, HttpStatus.SC_OK, "in progress", "Creation is in progress");

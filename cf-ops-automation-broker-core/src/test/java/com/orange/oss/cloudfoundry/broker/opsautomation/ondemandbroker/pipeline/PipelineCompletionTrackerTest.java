@@ -38,7 +38,7 @@ public class PipelineCompletionTrackerTest {
     @SuppressWarnings("unchecked")
     OsbProxy<CreateServiceInstanceRequest> createServiceInstanceOsbProxy = mock(OsbProxy.class);
 
-    PipelineCompletionTracker tracker = new PipelineCompletionTracker(clock, createServiceInstanceOsbProxy);
+    PipelineCompletionTracker tracker = new PipelineCompletionTracker(clock, 1200L, createServiceInstanceOsbProxy);
 
 
     @Before
@@ -162,7 +162,7 @@ public class PipelineCompletionTrackerTest {
         PipelineCompletionTracker.PipelineOperationState pipelineOperationState = new PipelineCompletionTracker.PipelineOperationState( aCreateServiceInstanceRequest(), "2018-01-22T14:00:00.000Z");
 
         //when
-        @SuppressWarnings("unchecked") PipelineCompletionTracker tracker = new PipelineCompletionTracker(Clock.systemUTC(), mock(OsbProxy.class));
+        @SuppressWarnings("unchecked") PipelineCompletionTracker tracker = new PipelineCompletionTracker(Clock.systemUTC(), 1200L, mock(OsbProxy.class));
         String actualJson = tracker.formatAsJson(pipelineOperationState);
         System.out.println(actualJson);
 
@@ -177,7 +177,7 @@ public class PipelineCompletionTrackerTest {
         String json = "{\"org.springframework.cloud.servicebroker.model.CreateServiceInstanceRequest\":{\"serviceDefinitionId\":\"service_definition_id\",\"planId\":\"plan_id\",\"organizationGuid\":\"org_id\",\"spaceGuid\":\"space_id\",\"parameters\":{\"parameterName\":\"parameterValue\"},\"asyncAccepted\":false},\"startRequestDate\":\"2018-01-22T14:00:00.000Z\"}";
 
         //when
-        @SuppressWarnings("unchecked") PipelineCompletionTracker tracker = new PipelineCompletionTracker(Clock.systemUTC(), mock(OsbProxy.class));
+        @SuppressWarnings("unchecked") PipelineCompletionTracker tracker = new PipelineCompletionTracker(Clock.systemUTC(), 1200L, mock(OsbProxy.class));
         PipelineCompletionTracker.PipelineOperationState actualPipelineOperationState= tracker.parseFromJson(json);
 
         //then

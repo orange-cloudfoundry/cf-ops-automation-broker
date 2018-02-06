@@ -46,7 +46,7 @@ public class CassandraProcessorTest {
         //When
         //given a configured timeout (TODO => must mock tracker)
         Clock clock = Clock.fixed(Instant.ofEpochMilli(1510680248007L), ZoneId.of("Europe/Paris"));
-        @SuppressWarnings("unchecked") PipelineCompletionTracker tracker = new PipelineCompletionTracker(clock, Mockito.mock(OsbProxy.class));
+        @SuppressWarnings("unchecked") PipelineCompletionTracker tracker = new PipelineCompletionTracker(clock, 1200L, Mockito.mock(OsbProxy.class));
         CassandraProcessor cassandraProcessor = new CassandraProcessor(TEMPLATES_REPOSITORY_ALIAS_NAME, SECRETS_REPOSITORY_ALIAS_NAME, templatesGenerator, secretsGenerator, tracker);
         cassandraProcessor.preCreate(context);
 

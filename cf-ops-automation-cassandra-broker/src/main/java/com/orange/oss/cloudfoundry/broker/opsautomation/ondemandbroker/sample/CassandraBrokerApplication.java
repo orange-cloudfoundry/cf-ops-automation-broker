@@ -61,9 +61,10 @@ public class CassandraBrokerApplication {
     }
 
     @Bean
-    public PipelineCompletionTracker pipelineCompletionTracker(Clock clock, OsbProxy<CreateServiceInstanceRequest> createServiceInstanceResponseOsbProxy) {
+    public PipelineCompletionTracker pipelineCompletionTracker(Clock clock, OsbProxyProperties osbProxyProperties,OsbProxy<CreateServiceInstanceRequest> createServiceInstanceResponseOsbProxy) {
         return new PipelineCompletionTracker(
                 clock,
+                osbProxyProperties.getMaxExecutionDurationSeconds(),
 //                createServiceInstanceResponseOsbProxy
                 null
         );

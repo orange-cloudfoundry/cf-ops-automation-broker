@@ -51,10 +51,10 @@ TransportException
 
 - Release on-demand cassandra bosh deployment
     - automate broker deployment in paas-template from binary in github release
-       - deploy latest from develop branch
+       - deploy latest from develop branch [DONE in pre-cf-push.sh]
         
 
-- Smoke tests: create service instance, get service instance (wait for success), delete service instance [DONE in coa-cassandra-broker_manifest-tpl.yml]
+- Smoke tests: create service instance, get service instance (wait for success), delete service instance [DONE in post-bosh-deploy.sh]
 
 - Implement OSB provision delegation to nested cassandra broker
    - refine PipelineCompletionTracker to call OSB client create/delete/bind/unbind
@@ -72,8 +72,8 @@ TransportException
 - Implement OSB binding delegation to nested cassandra broker
    - core framework: create/delete service binding 
 
-- Refine timeout implementation: support configuring timeout in the broker (currently hardcoded)
-    - refactor test to properly assert timeout first
+- Refine timeout implementation: support configuring timeout in the broker (currently hardcoded) [DONE]
+    - refactor test to properly assert timeout first [DONE]
         - remove Json litteral and manual date editing ?  
         - refactor Time support to manipulate duration instead of dates
 

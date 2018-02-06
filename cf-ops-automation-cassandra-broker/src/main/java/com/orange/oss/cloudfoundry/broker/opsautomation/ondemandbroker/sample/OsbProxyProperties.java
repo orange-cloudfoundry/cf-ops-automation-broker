@@ -8,7 +8,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  */
 @ConfigurationProperties(prefix = "pipeline")
 public class OsbProxyProperties {
-    private int maxExecutionDurationSeconds = 600;
+    private long maxExecutionDurationSeconds = 1200L;
     private String osbDelegateUser;
     private String osbDelegatePassword;
 
@@ -22,11 +22,11 @@ public class OsbProxyProperties {
 
     private String brokerUrlPattern;
 
-    public int getMaxExecutionDurationSeconds() {
+    public long getMaxExecutionDurationSeconds() {
         return maxExecutionDurationSeconds;
     }
 
-    public void setMaxExecutionDurationSeconds(int maxExecutionDurationSeconds) {
+    public void setMaxExecutionDurationSeconds(long maxExecutionDurationSeconds) {
         this.maxExecutionDurationSeconds = maxExecutionDurationSeconds;
     }
 

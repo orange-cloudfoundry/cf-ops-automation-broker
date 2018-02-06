@@ -54,7 +54,7 @@ TransportException
        - deploy latest from develop branch
         
 
-- Smoke tests: create service instance, get service instance (wait for success), delete service instance
+- Smoke tests: create service instance, get service instance (wait for success), delete service instance [DONE in coa-cassandra-broker_manifest-tpl.yml]
 
 - Implement OSB provision delegation to nested cassandra broker
    - refine PipelineCompletionTracker to call OSB client create/delete/bind/unbind

@@ -25,9 +25,9 @@ import static org.mockito.Mockito.*;
 
 public class PipelineCompletionTrackerTest {
 
-    public static final String SERVICE_INSTANCE_ID = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa0";
-    public static final String REPOSITORY_DIRECTORY = "paas-secrets";
-    public static final String ZONE = "Europe/Paris";
+    private static final String SERVICE_INSTANCE_ID = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa0";
+    private static final String REPOSITORY_DIRECTORY = "paas-secrets";
+    private static final String ZONE = "Europe/Paris";
     private final GetLastServiceOperationRequest pollingRequest = mock(GetLastServiceOperationRequest.class);
     private Clock clock = Clock.fixed(Instant.now(), ZoneId.of(ZONE));
 
@@ -37,11 +37,11 @@ public class PipelineCompletionTrackerTest {
     @Rule
     public TemporaryFolder temporaryFolder = new TemporaryFolder();
 
-    Path workDir;
+    private Path workDir;
     @SuppressWarnings("unchecked")
-    OsbProxy<CreateServiceInstanceRequest> createServiceInstanceOsbProxy = mock(OsbProxy.class);
+    private OsbProxy<CreateServiceInstanceRequest> createServiceInstanceOsbProxy = mock(OsbProxy.class);
 
-    PipelineCompletionTracker tracker = new PipelineCompletionTracker(clock, 1200L, createServiceInstanceOsbProxy);
+    private PipelineCompletionTracker tracker = new PipelineCompletionTracker(clock, 1200L, createServiceInstanceOsbProxy);
 
 
     @Before
@@ -149,37 +149,34 @@ public class PipelineCompletionTrackerTest {
 
 
     
-    protected String createOperationStateInThePast() {
-        return "{\"org.springframework.cloud.servicebroker.model.CreateServiceInstanceRequest\":{\"serviceDefinitionId\":\"service_definition_id\",\"planId\":\"plan_id\",\"organizationGuid\":\"org_id\",\"spaceGuid\":\"space_id\",\"parameters\":{\"parameterName\":\"parameterValue\"},\"asyncAccepted\":false},\"startRequestDate\":\"2018-01-22T14:00:00.000Z\"}";
+    private String createOperationStateInThePast() {
+        PipelineCompletionTracker.PipelineOperationState pipelineOperationState = new PipelineCompletionTracker.PipelineOperationState(aCreateServiceInstanceRequest(), "2018-01-22T14:00:00.000Z");
+
+        //when
+        @SuppressWarnings("unchecked") PipelineCompletionTracker tracker = new PipelineCompletionTracker(Clock.systemUTC(), 1200L, mock(OsbProxy.class));
+        return tracker.formatAsJson(pipelineOperationState);
     }
 
     @Test
-    public void check_java2json_conversion() {
+    public void PipelineOperationState_serializes_back_and_forth_to_json() {
         //given
-        PipelineCompletionTracker.PipelineOperationState pipelineOperationState = new PipelineCompletionTracker.PipelineOperationState( aCreateServiceInstanceRequest(), "2018-01-22T14:00:00.000Z");
+        CreateServiceInstanceRequest originalRequest = aCreateServiceInstanceRequest();
+        PipelineCompletionTracker.PipelineOperationState pipelineOperationState = new PipelineCompletionTracker.PipelineOperationState(originalRequest, "2018-01-22T14:00:00.000Z");
 
         //when
         @SuppressWarnings("unchecked") PipelineCompletionTracker tracker = new PipelineCompletionTracker(Clock.systemUTC(), 1200L, mock(OsbProxy.class));
-        String actualJson = tracker.formatAsJson(pipelineOperationState);
-        System.out.println(actualJson);
+        String json = tracker.formatAsJson(pipelineOperationState);
+        System.out.println(json);
 
         //then
-        String expectedJson = "{\"org.springframework.cloud.servicebroker.model.CreateServiceInstanceRequest\":{\"serviceDefinitionId\":\"service_definition_id\",\"planId\":\"plan_id\",\"organizationGuid\":\"org_id\",\"spaceGuid\":\"space_id\",\"parameters\":{\"parameterName\":\"parameterValue\"},\"asyncAccepted\":false},\"startRequestDate\":\"2018-01-22T14:00:00.000Z\"}";
-        assertEquals(expectedJson, actualJson);
-    }
-
-    @Test
-    public void check_json2java_conversion() {
-        //given //CreateServiceInstanceRequest
-        String json = "{\"org.springframework.cloud.servicebroker.model.CreateServiceInstanceRequest\":{\"serviceDefinitionId\":\"service_definition_id\",\"planId\":\"plan_id\",\"organizationGuid\":\"org_id\",\"spaceGuid\":\"space_id\",\"parameters\":{\"parameterName\":\"parameterValue\"},\"asyncAccepted\":false},\"startRequestDate\":\"2018-01-22T14:00:00.000Z\"}";
-
-        //when
-        @SuppressWarnings("unchecked") PipelineCompletionTracker tracker = new PipelineCompletionTracker(Clock.systemUTC(), 1200L, mock(OsbProxy.class));
         PipelineCompletionTracker.PipelineOperationState actualPipelineOperationState= tracker.parseFromJson(json);
+        CreateServiceInstanceRequest actualServiceBrokerRequest = (CreateServiceInstanceRequest) actualPipelineOperationState.getServiceBrokerRequest();
 
         //then
-        PipelineCompletionTracker.PipelineOperationState expectedPipelineOperationState = new PipelineCompletionTracker.PipelineOperationState(aCreateServiceInstanceRequest(), "2018-01-22T14:00:00.000Z");
-        assertEquals(actualPipelineOperationState, expectedPipelineOperationState);
+        assertEquals(actualPipelineOperationState, pipelineOperationState);
+        //CreateServiceInstanceRequest.equals ignores transient fields that we need to preserve in our context
+        assertEquals(actualServiceBrokerRequest.getServiceInstanceId(), originalRequest.getServiceInstanceId());
+        assertEquals(actualServiceBrokerRequest.getServiceDefinitionId(), originalRequest.getServiceDefinitionId());
     }
 
     private CreateServiceInstanceRequest aCreateServiceInstanceRequest(){
@@ -206,7 +203,7 @@ public class PipelineCompletionTrackerTest {
                 true);
     }
 
-    protected void generateSampleManifest() throws IOException {
+    private void generateSampleManifest() throws IOException {
         Path serviceInstanceDir = StructureGeneratorHelper.generatePath(workDir,
                 CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY,
                 CassandraProcessorConstants.SERVICE_INSTANCE_PREFIX_DIRECTORY + SERVICE_INSTANCE_ID);

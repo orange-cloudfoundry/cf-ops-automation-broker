@@ -14,8 +14,12 @@ import java.util.Map;
 import static com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.OsbProxyImpl.*;
 import static java.util.Arrays.asList;
 import static org.fest.assertions.Assertions.assertThat;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 /**
  * - construct OSB client: construct url from serviceInstanceId, and configured static pwd
@@ -40,11 +44,19 @@ public class OsbProxyImplTest {
     }
     @Test
     public void constructs_osb_clients() {
+        //given
+        ServiceInstanceServiceClient expectedServiceInstanceServiceClient = mock(ServiceInstanceServiceClient.class);
+        when(clientFactory.getClient(anyString(), anyString(), anyString(), eq(ServiceInstanceServiceClient.class))).thenReturn(expectedServiceInstanceServiceClient);
+        CatalogServiceClient expectedCatalogServiceClient = mock(CatalogServiceClient.class);
+        when(clientFactory.getClient(anyString(), anyString(), anyString(), eq(CatalogServiceClient.class))).thenReturn(expectedCatalogServiceClient);
+
+        //when
         CatalogServiceClient catalogServiceClient = osbProxy.constructCatalogClient("https://service-instance-id-cassandra-broker.mydomain/com");
         ServiceInstanceServiceClient serviceInstanceServiceClient = osbProxy.constructServiceInstanceServiceClient("https://service-instance-id-cassandra-broker.mydomain/com");
 
-        assertThat(catalogServiceClient).isNotNull();
-        assertThat(serviceInstanceServiceClient).isNotNull();
+        //then
+        assertThat(catalogServiceClient).isSameAs(expectedCatalogServiceClient);
+        assertThat(serviceInstanceServiceClient).isSameAs(expectedServiceInstanceServiceClient);
     }
 
 

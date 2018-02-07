@@ -18,9 +18,9 @@ import static org.mockito.Mockito.*;
 
 public class CassandraProcessorTest {
 
-    public static final String SERVICE_INSTANCE_ID = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa0";
-    protected static final String TEMPLATES_REPOSITORY_ALIAS_NAME = "paas-template.";
-    protected static final String SECRETS_REPOSITORY_ALIAS_NAME = "paas-secrets.";
+    private static final String SERVICE_INSTANCE_ID = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa0";
+    private static final String TEMPLATES_REPOSITORY_ALIAS_NAME = "paas-template.";
+    private static final String SECRETS_REPOSITORY_ALIAS_NAME = "paas-secrets.";
 
     @Test
     public void creates_structures_and_returns_response() {
@@ -61,7 +61,7 @@ public class CassandraProcessorTest {
         // specifying asynchronous creations
         assertThat(serviceInstanceResponse.isAsync()).isTrue();
         //TODO : Uncomment assertion (use json string?)
-        String expectedJsonPipelineOperationState = "{\"org.springframework.cloud.servicebroker.model.CreateServiceInstanceRequest\":{\"serviceDefinitionId\":\"service_definition_id\",\"planId\":\"plan_id\",\"organizationGuid\":\"org_id\",\"spaceGuid\":\"space_id\",\"asyncAccepted\":false},\"startRequestDate\":\"2017-11-14T17:24:08.007Z\"}";
+        String expectedJsonPipelineOperationState = "{\"org.springframework.cloud.servicebroker.model.CreateServiceInstanceRequest\":{\"serviceDefinitionId\":\"service_definition_id\",\"planId\":\"plan_id\",\"organizationGuid\":\"org_id\",\"spaceGuid\":\"space_id\",\"serviceInstanceId\":\"aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa0\",\"asyncAccepted\":false},\"startRequestDate\":\"2017-11-14T17:24:08.007Z\"}";
         assertThat(serviceInstanceResponse.getOperation()).isEqualTo(expectedJsonPipelineOperationState);
          // and with a proper commit message
         String customTemplateMessage = (String) context.contextKeys.get(TEMPLATES_REPOSITORY_ALIAS_NAME+GitProcessorContext.commitMessage.toString());
@@ -167,7 +167,7 @@ public class CassandraProcessorTest {
 
 
 
-    protected Path aGitRepoWorkDir() {
+    private Path aGitRepoWorkDir() {
         return FileSystems.getDefault().getPath("/a/git_workdir/path");
     }
 

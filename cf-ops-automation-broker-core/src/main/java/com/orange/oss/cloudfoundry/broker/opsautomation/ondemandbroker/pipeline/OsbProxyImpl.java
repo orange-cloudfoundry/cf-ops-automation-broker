@@ -1,11 +1,17 @@
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.osbclient.CatalogServiceClient;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.osbclient.OsbClientFactory;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.osbclient.ServiceInstanceServiceClient;
 import org.springframework.cloud.servicebroker.model.*;
+import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
+import org.springframework.util.Base64Utils;
 
 import java.text.MessageFormat;
+import java.util.HashMap;
 import java.util.Map;
 
 public class OsbProxyImpl<Q extends ServiceBrokerRequest, P extends AsyncServiceInstanceResponse> implements OsbProxy<Q> {
@@ -13,7 +19,6 @@ public class OsbProxyImpl<Q extends ServiceBrokerRequest, P extends AsyncService
     private final String osbDelegatePassword;
     private String brokerUrlPattern;
     private OsbClientFactory clientFactory;
-
     public OsbProxyImpl(String osbDelegateUser, String osbDelegatePassword, String brokerUrlPattern, OsbClientFactory clientFactory) {
         this.osbDelegateUser = osbDelegateUser;
         this.osbDelegatePassword = osbDelegatePassword;
@@ -28,8 +33,70 @@ public class OsbProxyImpl<Q extends ServiceBrokerRequest, P extends AsyncService
         Catalog catalog = catalogServiceClient.getCatalog();
         CreateServiceInstanceRequest mappedRequest = mapRequest(request, catalog);
         ServiceInstanceServiceClient serviceInstanceServiceClient = constructServiceInstanceServiceClient(brokerUrl);
+        
+        ResponseEntity<CreateServiceInstanceResponse> delegatedResponse = null;
+        Exception provisionException = null;
+        try {
+            delegatedResponse = delegateProvision(mappedRequest, serviceInstanceServiceClient);
+        } catch (Exception e) {
+            provisionException = e;
+        }
+        //noinspection UnnecessaryLocalVariable
+        GetLastServiceOperationResponse mappedResponse = mapResponse(response, delegatedResponse, provisionException, catalog);
+        return mappedResponse;
+    }
+
+    GetLastServiceOperationResponse mapResponse(GetLastServiceOperationResponse response, ResponseEntity<CreateServiceInstanceResponse> delegatedResponse, Exception provisionException, Catalog catalog) {
         return response;
     }
+
+
+    ResponseEntity<CreateServiceInstanceResponse> delegateProvision(CreateServiceInstanceRequest request, ServiceInstanceServiceClient serviceInstanceServiceClient) {
+        //noinspection unchecked
+        return (ResponseEntity<CreateServiceInstanceResponse>) serviceInstanceServiceClient.createServiceInstance(
+                request.getServiceInstanceId(),
+                request.isAsyncAccepted(),
+                request.getApiInfoLocation(),
+                buildOriginatingIdentityHeader(request.getOriginatingIdentity()),
+                request);
+    }
+
+
+    static final String ORIGINATING_USER_KEY = "user_id";
+    static final String ORIGINATING_EMAIL_KEY = "email";
+    static final String ORIGINATING_CLOUDFOUNDRY_PLATFORM = "cloudfoundry";
+
+    /**
+     * Inspired from spring-cloud-open-service-broker, see https://github.com/spring-cloud/spring-cloud-cloudfoundry-service-broker/blob/c56080e5ec8ed97ba8fe4e15ac2031073fbc45ae/spring-cloud-open-service-broker-autoconfigure/src/test/java/org/springframework/cloud/servicebroker/autoconfigure/web/servlet/ControllerIntegrationTest.java#L36
+     */
+    String buildOriginatingIdentityHeader(Context originatingIdentity) {
+        String platform = originatingIdentity.getPlatform();
+        Map<String, Object> propMap = new HashMap<>();
+        if (ORIGINATING_CLOUDFOUNDRY_PLATFORM.equals(platform)) {
+            Object userKey = originatingIdentity.getProperty(ORIGINATING_USER_KEY);
+            if (userKey != null) {
+                propMap.put(ORIGINATING_USER_KEY, userKey);
+            }
+            Object email = originatingIdentity.getProperty(ORIGINATING_EMAIL_KEY);
+            if (email != null) {
+                propMap.put(ORIGINATING_EMAIL_KEY, email);
+            }
+        }
+        //Wait for next spring-cloud-open-service-broker version which defines a getProperties() method
+        // to access all properties, see
+        // https://github.com/spring-cloud/spring-cloud-open-service-broker/blob/90e5cd2b9ae5dcf639836a1367079822d5f8a5a9/spring-cloud-open-service-broker/src/main/java/org/springframework/cloud/servicebroker/model/Context.java#L69
+
+        ObjectMapper mapper = Jackson2ObjectMapperBuilder.json().build();
+        String properties;
+        try {
+            properties = mapper.writeValueAsString(propMap);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e.toString(), e);
+        }
+        String encodedProperties = new String(Base64Utils.encode(properties.getBytes()));
+        return platform+ " " + encodedProperties;
+    }
+
 
     CreateServiceInstanceRequest mapRequest(CreateServiceInstanceRequest r, Catalog catalog) {
         ServiceDefinition mappedService = catalog.getServiceDefinitions().get(0);

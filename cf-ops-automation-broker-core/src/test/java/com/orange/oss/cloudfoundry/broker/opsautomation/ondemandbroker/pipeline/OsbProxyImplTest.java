@@ -3,15 +3,19 @@ package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.osbclient.CatalogServiceClient;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.osbclient.OsbClientFactory;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.osbclient.ServiceInstanceServiceClient;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.springframework.cloud.servicebroker.model.*;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Map;
 
+import static com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.OsbProxyImpl.*;
 import static java.util.Arrays.asList;
 import static org.fest.assertions.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 
 /**
  * - construct OSB client: construct url from serviceInstanceId, and configured static pwd
@@ -35,9 +39,12 @@ public class OsbProxyImplTest {
         assertThat(url).isEqualTo("https://service-instance-id-cassandra-broker.mydomain/com");
     }
     @Test
-    public void constructs_osb_client() {
+    public void constructs_osb_clients() {
         CatalogServiceClient catalogServiceClient = osbProxy.constructCatalogClient("https://service-instance-id-cassandra-broker.mydomain/com");
         ServiceInstanceServiceClient serviceInstanceServiceClient = osbProxy.constructServiceInstanceServiceClient("https://service-instance-id-cassandra-broker.mydomain/com");
+
+        assertThat(catalogServiceClient).isNotNull();
+        assertThat(serviceInstanceServiceClient).isNotNull();
     }
 
 
@@ -59,13 +66,46 @@ public class OsbProxyImplTest {
     }
 
     @Test
-    public void delegates_call() {
+    public void serializes_osb_context() {
+        Context context = aContext();
+        String header = osbProxy.buildOriginatingIdentityHeader(context);
 
+        assertThat(header).isEqualTo(aContextOriginatingHeader());
+    }
+
+    private String aContextOriginatingHeader() {
+        return "cloudfoundry eyJ1c2VyX2lkIjoidXNlcl9ndWlkIiwiZW1haWwiOiJ1c2VyX2VtYWlsIn0=";
+    }
+
+    private Context aContext() {
+        Map<String, Object> properties = new HashMap<>();
+        properties.put(ORIGINATING_USER_KEY, "user_guid");
+        properties.put(ORIGINATING_EMAIL_KEY, "user_email");
+        return new Context(ORIGINATING_CLOUDFOUNDRY_PLATFORM, properties);
     }
 
     @Test
-    public void maps_response() {
+    public void delegates_provision_call() {
+        CreateServiceInstanceRequest request = new CreateServiceInstanceRequest("coab-serviceid", "coab-planid", "orgguid", "spaceguid", new HashMap<>());
+        request.withServiceInstanceId("service-instance-id");
+        request.withAsyncAccepted(true);
+        request.withApiInfoLocation("api-info");
+        request.withOriginatingIdentity(aContext());
+        ServiceInstanceServiceClient serviceInstanceServiceClient = mock(ServiceInstanceServiceClient.class);
+        osbProxy.delegateProvision(request, serviceInstanceServiceClient);
 
+        verify(serviceInstanceServiceClient).createServiceInstance(
+                "service-instance-id",
+                true,
+                "api-info",
+                aContextOriginatingHeader(),
+                request);
+    }
+
+    @Test
+    @Ignore
+    public void maps_response() {
+        osbProxy.mapResponse(null, null, null, null);
     }
 
     private CreateServiceInstanceRequest aCreateServiceInstanceRequest() {

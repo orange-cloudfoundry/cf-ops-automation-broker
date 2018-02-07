@@ -1,11 +1,14 @@
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline;
 
+import com.google.gson.ExclusionStrategy;
+import com.google.gson.FieldAttributes;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cloud.servicebroker.model.*;
 
+import java.lang.reflect.Modifier;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Clock;
@@ -28,7 +31,18 @@ public class PipelineCompletionTracker {
         this.createServiceInstanceOsbProxy = createServiceInstanceOsbProxy;
         final GsonBuilder gsonBuilder = new GsonBuilder();
         gsonBuilder.registerTypeAdapter(PipelineCompletionTracker.PipelineOperationState.class, new PipelineOperationStateGsonAdapter());
-        this.gson = gsonBuilder.create();
+
+        Gson gson = buildCustomGson(gsonBuilder);
+        this.gson = gson;
+    }
+
+    public Gson buildCustomGson(GsonBuilder gsonBuilder) {
+        // By default both static and transient fields are serialized.
+        // We need transient fields from CreateServiceInstanceRequest to be serialized so we override this default
+        // to only exclude static fields (such as constants)
+        return gsonBuilder
+                .excludeFieldsWithModifiers(Modifier.STATIC)
+                .create();
     }
 
     public GetLastServiceOperationResponse getDeploymentExecStatus(Path secretsWorkDir, String serviceInstanceId, String jsonPipelineOperationState, GetLastServiceOperationRequest pollingRequest) {

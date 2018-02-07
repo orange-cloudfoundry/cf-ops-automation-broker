@@ -158,7 +158,7 @@ public class PipelineCompletionTrackerTest {
     }
 
     @Test
-    public void PipelineOperationState_serializes_back_and_forth_to_json() {
+    public void operation_state_POJO_serializes_back_and_forth_to_json() {
         //given
         CreateServiceInstanceRequest originalRequest = aCreateServiceInstanceRequest();
         PipelineCompletionTracker.PipelineOperationState pipelineOperationState = new PipelineCompletionTracker.PipelineOperationState(originalRequest, "2018-01-22T14:00:00.000Z");

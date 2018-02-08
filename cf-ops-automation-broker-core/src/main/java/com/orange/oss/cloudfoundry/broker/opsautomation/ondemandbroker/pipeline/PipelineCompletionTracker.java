@@ -37,7 +37,7 @@ public class PipelineCompletionTracker {
     }
 
     public Gson buildCustomGson(GsonBuilder gsonBuilder) {
-        // By default both static and transient fields are serialized.
+        // By default both static and transient fields are not serialized.
         // We need transient fields from CreateServiceInstanceRequest to be serialized so we override this default
         // to only exclude static fields (such as constants)
         return gsonBuilder

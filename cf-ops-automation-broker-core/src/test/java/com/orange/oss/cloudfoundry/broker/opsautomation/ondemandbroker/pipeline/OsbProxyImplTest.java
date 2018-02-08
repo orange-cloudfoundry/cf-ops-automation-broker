@@ -6,6 +6,8 @@ import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.osbclient
 import org.junit.Ignore;
 import org.junit.Test;
 import org.springframework.cloud.servicebroker.model.*;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -42,6 +44,11 @@ public class OsbProxyImplTest {
         String url = osbProxy.getBrokerUrl(request.getServiceInstanceId());
         assertThat(url).isEqualTo("https://service-instance-id-cassandra-broker.mydomain/com");
     }
+
+
+    /**
+     * Feel free to simplify this test if this
+     */
     @Test
     public void constructs_osb_clients() {
         //given
@@ -89,6 +96,15 @@ public class OsbProxyImplTest {
         return "cloudfoundry eyJ1c2VyX2lkIjoidXNlcl9ndWlkIiwiZW1haWwiOiJ1c2VyX2VtYWlsIn0=";
     }
 
+    private Catalog aCatalog() {
+        Plan plan = new Plan("plan_id", "plan_name", "plan_description", new HashMap<>());
+        Plan plan2 = new Plan("plan_id2", "plan_name2", "plan_description2", new HashMap<>());
+        ServiceDefinition serviceDefinition = new ServiceDefinition("service_id", "service_name", "service_description", true, asList(plan, plan2));
+        Plan plan3 = new Plan("plan_id3", "plan_name3", "plan_description3", new HashMap<>());
+        ServiceDefinition serviceDefinition2 = new ServiceDefinition("service_id2", "service_name2", "service_description3", true, Collections.singletonList(plan3));
+        return new Catalog(Collections.singletonList(serviceDefinition));
+    }
+
     private Context aContext() {
         Map<String, Object> properties = new HashMap<>();
         properties.put(ORIGINATING_USER_KEY, "user_guid");
@@ -115,9 +131,25 @@ public class OsbProxyImplTest {
     }
 
     @Test
-    @Ignore
-    public void maps_response() {
-        osbProxy.mapResponse(null, null, null, null);
+    public void maps_successull_provision_response() {
+        //Given
+        GetLastServiceOperationResponse originalResponse = new GetLastServiceOperationResponse()
+                .withOperationState(OperationState.IN_PROGRESS)
+                .withDescription(null);
+        CreateServiceInstanceResponse delegatedResponse = new CreateServiceInstanceResponse()
+                .withAsync(false)
+                .withDashboardUrl("https://a-dashboard.com");
+        ResponseEntity<CreateServiceInstanceResponse> delegatedResponseEnveloppe
+                = new ResponseEntity<>(delegatedResponse, HttpStatus.CREATED);
+        Catalog catalog = aCatalog();
+
+        //when
+        GetLastServiceOperationResponse mappedResponse = osbProxy.mapResponse(originalResponse, delegatedResponseEnveloppe, null, catalog);
+
+        GetLastServiceOperationResponse expectedResponse = new GetLastServiceOperationResponse()
+                .withOperationState(OperationState.SUCCEEDED)
+                .withDescription(null);
+        assertThat(mappedResponse).isEqualTo(expectedResponse);
     }
 
     private CreateServiceInstanceRequest aCreateServiceInstanceRequest() {

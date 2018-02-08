@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.osbclient.CatalogServiceClient;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.osbclient.OsbClientFactory;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.osbclient.ServiceInstanceServiceClient;
+import feign.FeignException;
 import org.springframework.cloud.servicebroker.model.*;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
@@ -35,10 +36,10 @@ public class OsbProxyImpl<Q extends ServiceBrokerRequest, P extends AsyncService
         ServiceInstanceServiceClient serviceInstanceServiceClient = constructServiceInstanceServiceClient(brokerUrl);
         
         ResponseEntity<CreateServiceInstanceResponse> delegatedResponse = null;
-        Exception provisionException = null;
+        FeignException provisionException = null;
         try {
             delegatedResponse = delegateProvision(mappedRequest, serviceInstanceServiceClient);
-        } catch (Exception e) {
+        } catch (FeignException e) {
             provisionException = e;
         }
         //noinspection UnnecessaryLocalVariable
@@ -46,8 +47,9 @@ public class OsbProxyImpl<Q extends ServiceBrokerRequest, P extends AsyncService
         return mappedResponse;
     }
 
-    GetLastServiceOperationResponse mapResponse(GetLastServiceOperationResponse response, ResponseEntity<CreateServiceInstanceResponse> delegatedResponse, Exception provisionException, Catalog catalog) {
-        return response;
+    GetLastServiceOperationResponse mapResponse(GetLastServiceOperationResponse response, ResponseEntity<CreateServiceInstanceResponse> delegatedResponse, FeignException provisionException, Catalog catalog) {
+        return new GetLastServiceOperationResponse()
+                .withOperationState(OperationState.SUCCEEDED);
     }
 
 

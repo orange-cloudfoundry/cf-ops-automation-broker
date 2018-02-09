@@ -154,7 +154,6 @@ public class OsbProxyImplTest {
     }
 
     @Test
-    @Ignore
     public void maps_rejected_provision_response() {
         //Given
         GetLastServiceOperationResponse originalResponse = new GetLastServiceOperationResponse()
@@ -179,7 +178,8 @@ public class OsbProxyImplTest {
 
     @Test
     public void parses_error_response_body() {
-        OsbProxyImpl.ErrorMessage errorMessage = osbProxy.parseReponseBody("{\"description\":\"Missing required fields: keyspace param\"}");
+        OsbProxyImpl.ErrorMessage errorMessage = osbProxy.parseReponseBody("status 422 reading ServiceInstanceServiceClient#createServiceInstance(String,boolean,String,String,CreateServiceInstanceRequest); content:\n" +
+                "{\"description\":\"Missing required fields: keyspace param\"}");
 
         assertThat(errorMessage.getDescription()).isEqualTo("Missing required fields: keyspace param");
     }

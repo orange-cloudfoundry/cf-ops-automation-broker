@@ -20,6 +20,7 @@ import java.util.Map;
 import java.util.Objects;
 
 public class OsbProxyImpl<Q extends ServiceBrokerRequest, P extends AsyncServiceInstanceResponse> implements OsbProxy<Q> {
+    private static final String FEIGN_MESSAGE_SEPARATOR = "content:\n";
     private final String osbDelegateUser;
     private final String osbDelegatePassword;
     private String brokerUrlPattern;
@@ -63,13 +64,16 @@ public class OsbProxyImpl<Q extends ServiceBrokerRequest, P extends AsyncService
 
     GetLastServiceOperationResponse mapResponse(GetLastServiceOperationResponse response, ResponseEntity<CreateServiceInstanceResponse> delegatedResponse, FeignException provisionException, Catalog catalog) {
         OperationState operationState;
+        String description = null;
         if (provisionException != null) {
             operationState = OperationState.FAILED;
-
+            description = parseReponseBody(provisionException.getMessage()).description;
+        } else {
+            operationState = OperationState.SUCCEEDED;
         }
-        operationState = OperationState.SUCCEEDED;
         return new GetLastServiceOperationResponse()
-                .withOperationState(operationState);
+                .withOperationState(operationState)
+                .withDescription(description);
     }
 
 
@@ -148,6 +152,18 @@ public class OsbProxyImpl<Q extends ServiceBrokerRequest, P extends AsyncService
     }
 
     ErrorMessage parseReponseBody(@SuppressWarnings("SameParameterValue") String json)  {
+        int jsonStart = json.lastIndexOf(FEIGN_MESSAGE_SEPARATOR);
+        if (jsonStart != -1) {
+            //found the delimiter, trim it
+            jsonStart += FEIGN_MESSAGE_SEPARATOR.length();
+        } else {
+            //try another weaker delimiter in case feign lib changed behavior in between
+            jsonStart = json.indexOf("{");
+        }
+        if (jsonStart == -1) {
+            throw new RuntimeException("unable to find nested json string within: " + json);
+        }
+        json = json.substring(jsonStart);
         return gson.fromJson(json, ErrorMessage.class);
     }
 

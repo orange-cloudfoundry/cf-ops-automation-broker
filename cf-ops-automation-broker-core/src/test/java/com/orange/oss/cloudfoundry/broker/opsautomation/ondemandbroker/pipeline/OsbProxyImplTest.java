@@ -133,47 +133,37 @@ public class OsbProxyImplTest {
     @Test
     public void maps_successull_provision_response() {
         //Given
-        GetLastServiceOperationResponse originalResponse = new GetLastServiceOperationResponse()
-                .withOperationState(OperationState.IN_PROGRESS)
-                .withDescription(null);
+        GetLastServiceOperationResponse originalResponse = aPreviousOnGoingOperation();
         CreateServiceInstanceResponse delegatedResponse = new CreateServiceInstanceResponse()
                 .withAsync(false)
                 .withDashboardUrl("https://a-inner-dashboard.com");
         ResponseEntity<CreateServiceInstanceResponse> delegatedResponseEnveloppe
                 = new ResponseEntity<>(delegatedResponse, HttpStatus.CREATED);
         FeignException provisionException = null;
-        Catalog catalog = aCatalog();
 
         //when
-        @SuppressWarnings("ConstantConditions") GetLastServiceOperationResponse mappedResponse = osbProxy.mapResponse(originalResponse, delegatedResponseEnveloppe, provisionException, catalog);
+        @SuppressWarnings("ConstantConditions") GetLastServiceOperationResponse mappedResponse = osbProxy.mapResponse(originalResponse, delegatedResponseEnveloppe, provisionException, aCatalog());
 
-        GetLastServiceOperationResponse expectedResponse = new GetLastServiceOperationResponse()
-                .withOperationState(OperationState.SUCCEEDED)
-                .withDescription(null);
-        assertThat(mappedResponse).isEqualTo(expectedResponse);
+        assertThat(mappedResponse.getState()).isSameAs(OperationState.SUCCEEDED);
+        assertThat(mappedResponse.getDescription()).isNull();
     }
 
     @Test
     public void maps_rejected_provision_response() {
         //Given
-        GetLastServiceOperationResponse originalResponse = new GetLastServiceOperationResponse()
-                .withOperationState(OperationState.IN_PROGRESS)
-                .withDescription(null);
+        GetLastServiceOperationResponse originalResponse = aPreviousOnGoingOperation();
         Response errorReponse = Response.builder()
                 .status(HttpStatus.UNPROCESSABLE_ENTITY.value())
                 .headers(new HashMap<>())
                 .body("{\"description\":\"Missing required fields: keyspace param\"}", Charset.defaultCharset())
                 .build();
         FeignException provisionException = FeignException.errorStatus("ServiceInstanceServiceClient#createServiceInstance(String,boolean,String,String,CreateServiceInstanceRequest)", errorReponse);
-        Catalog catalog = aCatalog();
 
         //when
-        GetLastServiceOperationResponse mappedResponse = osbProxy.mapResponse(originalResponse, null, provisionException, catalog);
+        GetLastServiceOperationResponse mappedResponse = osbProxy.mapResponse(originalResponse, null, provisionException, aCatalog());
 
-        GetLastServiceOperationResponse expectedResponse = new GetLastServiceOperationResponse()
-                .withOperationState(OperationState.FAILED)
-                .withDescription("Missing required fields: keyspace param");
-        assertThat(mappedResponse).isEqualTo(expectedResponse);
+        assertThat(mappedResponse.getState()).isSameAs(OperationState.FAILED);
+        assertThat(mappedResponse.getDescription()).isEqualTo("Missing required fields: keyspace param");
     }
 
     @Test
@@ -185,27 +175,26 @@ public class OsbProxyImplTest {
     }
 
     @Test
-    @Ignore
     public void maps_async_creation_response() {
         //Given
-        GetLastServiceOperationResponse originalResponse = new GetLastServiceOperationResponse()
-                .withOperationState(OperationState.IN_PROGRESS)
-                .withDescription(null);
-        Response createdReponse = Response.builder()
-                .status(HttpStatus.CREATED.value())
-                .headers(new HashMap<>())
-                .body("", Charset.defaultCharset())
-                .build();
-        FeignException provisionException = FeignException.errorStatus("ServiceInstanceServiceClient#createServiceInstance(String,boolean,String,String,CreateServiceInstanceRequest)", createdReponse);
-        Catalog catalog = aCatalog();
+        GetLastServiceOperationResponse originalResponse = aPreviousOnGoingOperation();
+        CreateServiceInstanceResponse delegatedResponse = new CreateServiceInstanceResponse()
+                .withAsync(false)
+                .withDashboardUrl("https://a-inner-dashboard.com");
+        ResponseEntity<CreateServiceInstanceResponse> delegatedResponseEnveloppe
+                = new ResponseEntity<>(delegatedResponse, HttpStatus.ACCEPTED);
 
         //when
-        GetLastServiceOperationResponse mappedResponse = osbProxy.mapResponse(originalResponse, null, provisionException, catalog);
+        GetLastServiceOperationResponse mappedResponse = osbProxy.mapResponse(originalResponse, delegatedResponseEnveloppe,null, aCatalog());
 
-        GetLastServiceOperationResponse expectedResponse = new GetLastServiceOperationResponse()
-                .withOperationState(OperationState.FAILED)
-                .withDescription("Internal error, please contact administrator");
-        assertThat(mappedResponse).isEqualTo(expectedResponse);
+        assertThat(mappedResponse.getState()).isSameAs(OperationState.FAILED);
+        assertThat(mappedResponse.getDescription()).isEqualTo("Internal error, please contact administrator");
+    }
+
+    private GetLastServiceOperationResponse aPreviousOnGoingOperation() {
+        return new GetLastServiceOperationResponse()
+                    .withOperationState(OperationState.IN_PROGRESS)
+                    .withDescription(null);
     }
 
     private CreateServiceInstanceRequest aCreateServiceInstanceRequest() {

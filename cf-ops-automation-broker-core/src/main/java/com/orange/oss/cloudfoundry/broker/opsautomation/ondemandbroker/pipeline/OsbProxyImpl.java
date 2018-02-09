@@ -8,7 +8,10 @@ import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.osbclient
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.osbclient.OsbClientFactory;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.osbclient.ServiceInstanceServiceClient;
 import feign.FeignException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.cloud.servicebroker.model.*;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 import org.springframework.util.Base64Utils;
@@ -20,14 +23,16 @@ import java.util.Map;
 import java.util.Objects;
 
 public class OsbProxyImpl<Q extends ServiceBrokerRequest, P extends AsyncServiceInstanceResponse> implements OsbProxy<Q> {
-    private static final String FEIGN_MESSAGE_SEPARATOR = "content:\n";
+
     private final String osbDelegateUser;
     private final String osbDelegatePassword;
     private String brokerUrlPattern;
     private OsbClientFactory clientFactory;
     private Gson gson;
     private ObjectMapper objectMapper;
+    private static Logger logger = LoggerFactory.getLogger(OsbProxyImpl.class.getName());
 
+    private static final String FEIGN_MESSAGE_SEPARATOR = "content:\n";
 
     public OsbProxyImpl(String osbDelegateUser, String osbDelegatePassword, String brokerUrlPattern, OsbClientFactory clientFactory) {
         this.osbDelegateUser = osbDelegateUser;
@@ -67,9 +72,15 @@ public class OsbProxyImpl<Q extends ServiceBrokerRequest, P extends AsyncService
         String description = null;
         if (provisionException != null) {
             operationState = OperationState.FAILED;
-            description = parseReponseBody(provisionException.getMessage()).description;
+            description = parseReponseBody(provisionException.getMessage()).getDescription();
         } else {
-            operationState = OperationState.SUCCEEDED;
+            if (delegatedResponse.getStatusCode() == HttpStatus.CREATED) {
+                operationState = OperationState.SUCCEEDED;
+            } else {
+                logger.error("Unexpected inner broker response with code {} only synchronous provisionning supported for now. Full response follows: {}", delegatedResponse.getStatusCode(), delegatedResponse);
+                operationState = OperationState.FAILED;
+                description = "Internal error, please contact administrator";
+            }
         }
         return new GetLastServiceOperationResponse()
                 .withOperationState(operationState)

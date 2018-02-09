@@ -2,6 +2,8 @@ package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.osbclient.CatalogServiceClient;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.osbclient.OsbClientFactory;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.osbclient.ServiceInstanceServiceClient;
@@ -11,20 +13,30 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 import org.springframework.util.Base64Utils;
 
+import java.io.IOException;
 import java.text.MessageFormat;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 public class OsbProxyImpl<Q extends ServiceBrokerRequest, P extends AsyncServiceInstanceResponse> implements OsbProxy<Q> {
     private final String osbDelegateUser;
     private final String osbDelegatePassword;
     private String brokerUrlPattern;
     private OsbClientFactory clientFactory;
+    private Gson gson;
+    private ObjectMapper objectMapper;
+
+
     public OsbProxyImpl(String osbDelegateUser, String osbDelegatePassword, String brokerUrlPattern, OsbClientFactory clientFactory) {
         this.osbDelegateUser = osbDelegateUser;
         this.osbDelegatePassword = osbDelegatePassword;
         this.brokerUrlPattern = brokerUrlPattern;
         this.clientFactory = clientFactory;
+        objectMapper = Jackson2ObjectMapperBuilder.json().build();
+
+        GsonBuilder gsonBuilder = new GsonBuilder();
+        gson = gsonBuilder.create();
     }
 
     @Override
@@ -47,9 +59,17 @@ public class OsbProxyImpl<Q extends ServiceBrokerRequest, P extends AsyncService
         return mappedResponse;
     }
 
+
+
     GetLastServiceOperationResponse mapResponse(GetLastServiceOperationResponse response, ResponseEntity<CreateServiceInstanceResponse> delegatedResponse, FeignException provisionException, Catalog catalog) {
+        OperationState operationState;
+        if (provisionException != null) {
+            operationState = OperationState.FAILED;
+
+        }
+        operationState = OperationState.SUCCEEDED;
         return new GetLastServiceOperationResponse()
-                .withOperationState(OperationState.SUCCEEDED);
+                .withOperationState(operationState);
     }
 
 
@@ -88,10 +108,9 @@ public class OsbProxyImpl<Q extends ServiceBrokerRequest, P extends AsyncService
         // to access all properties, see
         // https://github.com/spring-cloud/spring-cloud-open-service-broker/blob/90e5cd2b9ae5dcf639836a1367079822d5f8a5a9/spring-cloud-open-service-broker/src/main/java/org/springframework/cloud/servicebroker/model/Context.java#L69
 
-        ObjectMapper mapper = Jackson2ObjectMapperBuilder.json().build();
         String properties;
         try {
-            properties = mapper.writeValueAsString(propMap);
+            properties = objectMapper.writeValueAsString(propMap);
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e.toString(), e);
         }
@@ -127,4 +146,26 @@ public class OsbProxyImpl<Q extends ServiceBrokerRequest, P extends AsyncService
     ServiceInstanceServiceClient constructServiceInstanceServiceClient(@SuppressWarnings("SameParameterValue") String brokerUrl) {
         return clientFactory.getClient(brokerUrl, osbDelegateUser, osbDelegatePassword, ServiceInstanceServiceClient.class);
     }
+
+    ErrorMessage parseReponseBody(@SuppressWarnings("SameParameterValue") String json)  {
+        return gson.fromJson(json, ErrorMessage.class);
+    }
+
+    /**
+     * POJO for parsing error response. Workaround to the fact that spring-cloud-cloudfoundry-service-broker is lacking public noop contructor necessary for jackson to deserialize it
+     * https://github.com/spring-cloud/spring-cloud-cloudfoundry-service-broker/blob/c56080e5ec8ed97ba8fe4e15ac2031073fbc45ae/spring-cloud-open-service-broker/src/main/java/org/springframework/cloud/servicebroker/model/ErrorMessage.java#L28
+     */
+    static class ErrorMessage {
+        private final String description;
+
+        public ErrorMessage(String description) {
+            this.description = description;
+        }
+
+        public String getDescription() {
+            return this.description;
+        }
+
+    }
+
 }

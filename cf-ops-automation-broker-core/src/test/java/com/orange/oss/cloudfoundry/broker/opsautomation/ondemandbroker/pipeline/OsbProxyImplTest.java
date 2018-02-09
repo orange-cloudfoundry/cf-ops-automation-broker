@@ -3,12 +3,15 @@ package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.osbclient.CatalogServiceClient;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.osbclient.OsbClientFactory;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.osbclient.ServiceInstanceServiceClient;
+import feign.FeignException;
+import feign.Response;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.springframework.cloud.servicebroker.model.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
+import java.nio.charset.Charset;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -16,12 +19,9 @@ import java.util.Map;
 import static com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.OsbProxyImpl.*;
 import static java.util.Arrays.asList;
 import static org.fest.assertions.Assertions.assertThat;
-import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 /**
  * - construct OSB client: construct url from serviceInstanceId, and configured static pwd
@@ -138,17 +138,73 @@ public class OsbProxyImplTest {
                 .withDescription(null);
         CreateServiceInstanceResponse delegatedResponse = new CreateServiceInstanceResponse()
                 .withAsync(false)
-                .withDashboardUrl("https://a-dashboard.com");
+                .withDashboardUrl("https://a-inner-dashboard.com");
         ResponseEntity<CreateServiceInstanceResponse> delegatedResponseEnveloppe
                 = new ResponseEntity<>(delegatedResponse, HttpStatus.CREATED);
+        FeignException provisionException = null;
         Catalog catalog = aCatalog();
 
         //when
-        GetLastServiceOperationResponse mappedResponse = osbProxy.mapResponse(originalResponse, delegatedResponseEnveloppe, null, catalog);
+        @SuppressWarnings("ConstantConditions") GetLastServiceOperationResponse mappedResponse = osbProxy.mapResponse(originalResponse, delegatedResponseEnveloppe, provisionException, catalog);
 
         GetLastServiceOperationResponse expectedResponse = new GetLastServiceOperationResponse()
                 .withOperationState(OperationState.SUCCEEDED)
                 .withDescription(null);
+        assertThat(mappedResponse).isEqualTo(expectedResponse);
+    }
+
+    @Test
+    @Ignore
+    public void maps_rejected_provision_response() {
+        //Given
+        GetLastServiceOperationResponse originalResponse = new GetLastServiceOperationResponse()
+                .withOperationState(OperationState.IN_PROGRESS)
+                .withDescription(null);
+        Response errorReponse = Response.builder()
+                .status(HttpStatus.UNPROCESSABLE_ENTITY.value())
+                .headers(new HashMap<>())
+                .body("{\"description\":\"Missing required fields: keyspace param\"}", Charset.defaultCharset())
+                .build();
+        FeignException provisionException = FeignException.errorStatus("ServiceInstanceServiceClient#createServiceInstance(String,boolean,String,String,CreateServiceInstanceRequest)", errorReponse);
+        Catalog catalog = aCatalog();
+
+        //when
+        GetLastServiceOperationResponse mappedResponse = osbProxy.mapResponse(originalResponse, null, provisionException, catalog);
+
+        GetLastServiceOperationResponse expectedResponse = new GetLastServiceOperationResponse()
+                .withOperationState(OperationState.FAILED)
+                .withDescription("Missing required fields: keyspace param");
+        assertThat(mappedResponse).isEqualTo(expectedResponse);
+    }
+
+    @Test
+    public void parses_error_response_body() {
+        OsbProxyImpl.ErrorMessage errorMessage = osbProxy.parseReponseBody("{\"description\":\"Missing required fields: keyspace param\"}");
+
+        assertThat(errorMessage.getDescription()).isEqualTo("Missing required fields: keyspace param");
+    }
+
+    @Test
+    @Ignore
+    public void maps_async_creation_response() {
+        //Given
+        GetLastServiceOperationResponse originalResponse = new GetLastServiceOperationResponse()
+                .withOperationState(OperationState.IN_PROGRESS)
+                .withDescription(null);
+        Response createdReponse = Response.builder()
+                .status(HttpStatus.CREATED.value())
+                .headers(new HashMap<>())
+                .body("", Charset.defaultCharset())
+                .build();
+        FeignException provisionException = FeignException.errorStatus("ServiceInstanceServiceClient#createServiceInstance(String,boolean,String,String,CreateServiceInstanceRequest)", createdReponse);
+        Catalog catalog = aCatalog();
+
+        //when
+        GetLastServiceOperationResponse mappedResponse = osbProxy.mapResponse(originalResponse, null, provisionException, catalog);
+
+        GetLastServiceOperationResponse expectedResponse = new GetLastServiceOperationResponse()
+                .withOperationState(OperationState.FAILED)
+                .withDescription("Internal error, please contact administrator");
         assertThat(mappedResponse).isEqualTo(expectedResponse);
     }
 

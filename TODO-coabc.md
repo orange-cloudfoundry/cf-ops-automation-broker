@@ -2,21 +2,23 @@
 - Refine tarball automatic deployment to filter on the current cassandra PR branch name
         
 - Implement OSB provision delegation to nested cassandra broker
-    - fix OSB request JSON serialization in operation state: query params fields are marked as @JsonIgnore and thus missing from serialization (service instance id, service definition id, service binding id)
    - refine PipelineCompletionTracker to call OSB client create/delete/bind/unbind
       - introduce OSBProxy
-         - pull OsbClientFactory in
-            - pb: circular maven dependencies
-            - solution: 
-               - move back open-service-broker-client classes to cf-ops-automation-broker-core 
-                  - run integration tests 
-               - remove open-service-broker-client dependences and delete open-service-broker-client   
-           
-      - add component to map OSB request (serviceid, planid, in future strip out some arbitrary params)
-         - takes a Catalog bean from which it fetches serviceid and planid
+          - refine integration test to simulate OSB response
+             - using wiremock on cassandra broker
+             - check simulated OSB contract in OsbProxyImplTest match
+          - add component to map OSB request (serviceid, planid, in future strip out some arbitrary params)
+             - takes a Catalog bean from which it fetches serviceid and planid
+             - use wiremock to protect ourselves against feign exception formatting changes that would break OsbProxyImpl parsing
+    - delegate delete request
+      - remove unecessary generics complexity in OSBProxyIml definition
+    - core framework: create/delete service binding
+    - core framework: update service 
+     
+ 
 
-- Implement OSB binding delegation to nested cassandra broker
-   - core framework: create/delete service binding 
+- add support for returning templated dashboard in Cassandra processor provision responses    
+
 
 - Refine timeout implementation: support configuring timeout in the broker (currently hardcoded) [DONE]
     - refactor test to properly assert timeout first [DONE]

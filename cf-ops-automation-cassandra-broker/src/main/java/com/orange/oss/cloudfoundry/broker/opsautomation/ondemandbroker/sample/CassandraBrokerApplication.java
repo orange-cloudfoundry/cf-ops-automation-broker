@@ -65,8 +65,7 @@ public class CassandraBrokerApplication {
         return new PipelineCompletionTracker(
                 clock,
                 osbProxyProperties.getMaxExecutionDurationSeconds(),
-//                createServiceInstanceResponseOsbProxy
-                null
+                createServiceInstanceResponseOsbProxy
         );
     }
 

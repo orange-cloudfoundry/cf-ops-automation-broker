@@ -80,7 +80,7 @@ public class OsbProxyImplTest {
         request.withApiInfoLocation("api-location");
         request.withCfInstanceId("cf-instance-id");
         request.withOriginatingIdentity(aContext());
-        CreateServiceInstanceRequest mappedRequest = osbProxy.mapRequest(request, catalog);
+        CreateServiceInstanceRequest mappedRequest = osbProxy.mapProvisionRequest(request, catalog);
 
         assertThat(mappedRequest.getServiceDefinitionId()).isEqualTo("service_id");
         assertThat(mappedRequest.getPlanId()).isEqualTo("plan_id");
@@ -105,26 +105,6 @@ public class OsbProxyImplTest {
         assertThat(header).isNull();
     }
 
-    private String aContextOriginatingHeader() {
-        return "cloudfoundry eyJ1c2VyX2lkIjoidXNlcl9ndWlkIiwiZW1haWwiOiJ1c2VyX2VtYWlsIn0=";
-    }
-
-    private Catalog aCatalog() {
-        Plan plan = new Plan("plan_id", "plan_name", "plan_description", new HashMap<>());
-        Plan plan2 = new Plan("plan_id2", "plan_name2", "plan_description2", new HashMap<>());
-        ServiceDefinition serviceDefinition = new ServiceDefinition("service_id", "service_name", "service_description", true, asList(plan, plan2));
-        Plan plan3 = new Plan("plan_id3", "plan_name3", "plan_description3", new HashMap<>());
-        ServiceDefinition serviceDefinition2 = new ServiceDefinition("service_id2", "service_name2", "service_description3", true, Collections.singletonList(plan3));
-        return new Catalog(Collections.singletonList(serviceDefinition));
-    }
-
-    private Context aContext() {
-        Map<String, Object> properties = new HashMap<>();
-        properties.put(ORIGINATING_USER_KEY, "user_guid");
-        properties.put(ORIGINATING_EMAIL_KEY, "user_email");
-        return new Context(ORIGINATING_CLOUDFOUNDRY_PLATFORM, properties);
-    }
-
     @Test
     public void delegates_provision_call() {
         CreateServiceInstanceRequest request = new CreateServiceInstanceRequest("coab-serviceid", "coab-planid", "orgguid", "spaceguid", new HashMap<>());
@@ -137,11 +117,71 @@ public class OsbProxyImplTest {
 
         verify(serviceInstanceServiceClient).createServiceInstance(
                 "service-instance-id",
-                true,
+                false, //for now OsbProxyImpl expects sync broker response
                 "api-info",
                 aContextOriginatingHeader(),
                 request);
     }
+
+
+    @Test
+    public void delegates_deprovision_call() {
+        ServiceDefinition serviceDefinition = aCatalog().getServiceDefinitions().get(0);
+        DeleteServiceInstanceRequest request = new DeleteServiceInstanceRequest("service-instance-id", "coab-serviceid", "coab-planid", serviceDefinition, true);
+        request.withApiInfoLocation("api-info");
+        request.withOriginatingIdentity(aContext());
+        ServiceInstanceServiceClient serviceInstanceServiceClient = mock(ServiceInstanceServiceClient.class);
+        osbProxy.delegateDeprovision(request, serviceInstanceServiceClient);
+
+        verify(serviceInstanceServiceClient).deleteServiceInstance(
+                "service-instance-id",
+                "coab-serviceid",
+                "coab-planid",
+                false,
+                "api-info",
+                aContextOriginatingHeader());
+    }
+
+
+
+    @Test
+    public void maps_successull_deprovision_response() {
+        //Given
+        GetLastServiceOperationResponse originalResponse = aPreviousOnGoingOperation();
+        DeleteServiceInstanceResponse deleteServiceInstanceResponse = new DeleteServiceInstanceResponse()
+                .withAsync(false);
+        DeleteServiceInstanceResponse delegatedResponse = new DeleteServiceInstanceResponse()
+                .withAsync(false);
+        ResponseEntity<DeleteServiceInstanceResponse > delegatedResponseEnveloppe
+                = new ResponseEntity<>(delegatedResponse, HttpStatus.OK);
+        FeignException provisionException = null;
+
+        //when
+        @SuppressWarnings("ConstantConditions") GetLastServiceOperationResponse mappedResponse = osbProxy.mapDeprovisionResponse(originalResponse, delegatedResponseEnveloppe, provisionException, aCatalog());
+
+        assertThat(mappedResponse.getState()).isSameAs(OperationState.SUCCEEDED);
+        assertThat(mappedResponse.getDescription()).isNull();
+    }
+
+
+    @Test
+    public void maps_rejected_deprovision_response() {
+        //Given
+        GetLastServiceOperationResponse originalResponse = aPreviousOnGoingOperation();
+        Response errorReponse = Response.builder()
+                .status(HttpStatus.GONE.value())
+                .headers(new HashMap<>())
+                .body("{\"description\":\"No such service instance 1234\"}", Charset.defaultCharset())
+                .build();
+        FeignException provisionException = FeignException.errorStatus("ServiceInstanceServiceClient#deleteServiceInstance(String,String,String,boolean,String,String)", errorReponse);
+
+        //when
+        GetLastServiceOperationResponse mappedResponse = osbProxy.mapDeprovisionResponse(originalResponse, null, provisionException, aCatalog());
+
+        assertThat(mappedResponse.getState()).isSameAs(OperationState.FAILED);
+        assertThat(mappedResponse.getDescription()).isEqualTo("No such service instance 1234");
+    }
+
 
     @Test
     public void maps_successull_provision_response() {
@@ -155,7 +195,7 @@ public class OsbProxyImplTest {
         FeignException provisionException = null;
 
         //when
-        @SuppressWarnings("ConstantConditions") GetLastServiceOperationResponse mappedResponse = osbProxy.mapResponse(originalResponse, delegatedResponseEnveloppe, provisionException, aCatalog());
+        @SuppressWarnings("ConstantConditions") GetLastServiceOperationResponse mappedResponse = osbProxy.mapProvisionResponse(originalResponse, delegatedResponseEnveloppe, provisionException, aCatalog());
 
         assertThat(mappedResponse.getState()).isSameAs(OperationState.SUCCEEDED);
         assertThat(mappedResponse.getDescription()).isNull();
@@ -173,7 +213,7 @@ public class OsbProxyImplTest {
         FeignException provisionException = FeignException.errorStatus("ServiceInstanceServiceClient#createServiceInstance(String,boolean,String,String,CreateServiceInstanceRequest)", errorReponse);
 
         //when
-        GetLastServiceOperationResponse mappedResponse = osbProxy.mapResponse(originalResponse, null, provisionException, aCatalog());
+        GetLastServiceOperationResponse mappedResponse = osbProxy.mapProvisionResponse(originalResponse, null, provisionException, aCatalog());
 
         assertThat(mappedResponse.getState()).isSameAs(OperationState.FAILED);
         assertThat(mappedResponse.getDescription()).isEqualTo("Missing required fields: keyspace param");
@@ -198,10 +238,30 @@ public class OsbProxyImplTest {
                 = new ResponseEntity<>(delegatedResponse, HttpStatus.ACCEPTED);
 
         //when
-        GetLastServiceOperationResponse mappedResponse = osbProxy.mapResponse(originalResponse, delegatedResponseEnveloppe,null, aCatalog());
+        GetLastServiceOperationResponse mappedResponse = osbProxy.mapProvisionResponse(originalResponse, delegatedResponseEnveloppe,null, aCatalog());
 
         assertThat(mappedResponse.getState()).isSameAs(OperationState.FAILED);
         assertThat(mappedResponse.getDescription()).isEqualTo("Internal error, please contact administrator");
+    }
+
+    private String aContextOriginatingHeader() {
+        return "cloudfoundry eyJ1c2VyX2lkIjoidXNlcl9ndWlkIiwiZW1haWwiOiJ1c2VyX2VtYWlsIn0=";
+    }
+
+    private Catalog aCatalog() {
+        Plan plan = new Plan("plan_id", "plan_name", "plan_description", new HashMap<>());
+        Plan plan2 = new Plan("plan_id2", "plan_name2", "plan_description2", new HashMap<>());
+        ServiceDefinition serviceDefinition = new ServiceDefinition("service_id", "service_name", "service_description", true, asList(plan, plan2));
+        Plan plan3 = new Plan("plan_id3", "plan_name3", "plan_description3", new HashMap<>());
+        ServiceDefinition serviceDefinition2 = new ServiceDefinition("service_id2", "service_name2", "service_description3", true, Collections.singletonList(plan3));
+        return new Catalog(Collections.singletonList(serviceDefinition));
+    }
+
+    private Context aContext() {
+        Map<String, Object> properties = new HashMap<>();
+        properties.put(ORIGINATING_USER_KEY, "user_guid");
+        properties.put(ORIGINATING_EMAIL_KEY, "user_email");
+        return new Context(ORIGINATING_CLOUDFOUNDRY_PLATFORM, properties);
     }
 
     private GetLastServiceOperationResponse aPreviousOnGoingOperation() {

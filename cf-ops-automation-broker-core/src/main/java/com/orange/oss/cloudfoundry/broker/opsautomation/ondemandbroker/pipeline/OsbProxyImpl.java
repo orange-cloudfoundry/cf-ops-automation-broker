@@ -16,11 +16,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 import org.springframework.util.Base64Utils;
 
-import java.io.IOException;
 import java.text.MessageFormat;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 
 public class OsbProxyImpl<Q extends ServiceBrokerRequest, P extends AsyncServiceInstanceResponse> implements OsbProxy<Q> {
 
@@ -64,7 +62,7 @@ public class OsbProxyImpl<Q extends ServiceBrokerRequest, P extends AsyncService
         String brokerUrl = getBrokerUrl(pollingRequest.getServiceInstanceId());
         CatalogServiceClient catalogServiceClient = constructCatalogClient(brokerUrl);
         Catalog catalog = catalogServiceClient.getCatalog();
-        CreateServiceInstanceRequest mappedRequest = mapRequest(request, catalog);
+        CreateServiceInstanceRequest mappedRequest = mapProvisionRequest(request, catalog);
         ServiceInstanceServiceClient serviceInstanceServiceClient = constructServiceInstanceServiceClient(brokerUrl);
         
         ResponseEntity<CreateServiceInstanceResponse> delegatedResponse = null;
@@ -75,13 +73,13 @@ public class OsbProxyImpl<Q extends ServiceBrokerRequest, P extends AsyncService
             provisionException = e;
         }
         //noinspection UnnecessaryLocalVariable
-        GetLastServiceOperationResponse mappedResponse = mapResponse(response, delegatedResponse, provisionException, catalog);
+        GetLastServiceOperationResponse mappedResponse = mapProvisionResponse(response, delegatedResponse, provisionException, catalog);
         return mappedResponse;
     }
 
 
 
-    GetLastServiceOperationResponse mapResponse(GetLastServiceOperationResponse response, ResponseEntity<CreateServiceInstanceResponse> delegatedResponse, FeignException provisionException, Catalog catalog) {
+    GetLastServiceOperationResponse mapProvisionResponse(GetLastServiceOperationResponse response, ResponseEntity<CreateServiceInstanceResponse> delegatedResponse, FeignException provisionException, Catalog catalog) {
         OperationState operationState;
         String description = null;
         if (provisionException != null) {
@@ -102,19 +100,50 @@ public class OsbProxyImpl<Q extends ServiceBrokerRequest, P extends AsyncService
     }
 
 
+    GetLastServiceOperationResponse mapDeprovisionResponse(GetLastServiceOperationResponse originalResponse, ResponseEntity<DeleteServiceInstanceResponse> delegatedResponse, FeignException deprovisionException, Catalog catalog) {
+        OperationState operationState;
+        String description = null;
+        if (deprovisionException != null) {
+            operationState = OperationState.FAILED;
+            description = parseReponseBody(deprovisionException.getMessage()).getDescription();
+        } else {
+            if (delegatedResponse.getStatusCode() == HttpStatus.OK) {
+                operationState = OperationState.SUCCEEDED;
+            } else {
+                logger.error("Unexpected inner broker response with code {} only synchronous deprovisionning supported for now. Full response follows: {}", delegatedResponse.getStatusCode(), delegatedResponse);
+                operationState = OperationState.FAILED;
+                description = "Internal error, please contact administrator";
+            }
+        }
+        return new GetLastServiceOperationResponse()
+                .withOperationState(operationState)
+                .withDescription(description);
+    }
+
     ResponseEntity<CreateServiceInstanceResponse> delegateProvision(CreateServiceInstanceRequest request, ServiceInstanceServiceClient serviceInstanceServiceClient) {
         //noinspection unchecked
         return (ResponseEntity<CreateServiceInstanceResponse>) serviceInstanceServiceClient.createServiceInstance(
                 request.getServiceInstanceId(),
-                request.isAsyncAccepted(),
+                false,
                 request.getApiInfoLocation(),
                 buildOriginatingIdentityHeader(request.getOriginatingIdentity()),
                 request);
     }
 
-
+    void delegateDeprovision(DeleteServiceInstanceRequest request, ServiceInstanceServiceClient serviceInstanceServiceClient) {
+        //noinspection unchecked
+        serviceInstanceServiceClient.deleteServiceInstance(
+                request.getServiceInstanceId(),
+                request.getServiceDefinitionId(),
+                request.getPlanId(),
+                false,
+                request.getApiInfoLocation(),
+                buildOriginatingIdentityHeader(request.getOriginatingIdentity()));
+    }
     static final String ORIGINATING_USER_KEY = "user_id";
+
     static final String ORIGINATING_EMAIL_KEY = "email";
+
     static final String ORIGINATING_CLOUDFOUNDRY_PLATFORM = "cloudfoundry";
 
     /**
@@ -152,7 +181,7 @@ public class OsbProxyImpl<Q extends ServiceBrokerRequest, P extends AsyncService
     }
 
 
-    CreateServiceInstanceRequest mapRequest(CreateServiceInstanceRequest r, Catalog catalog) {
+    CreateServiceInstanceRequest mapProvisionRequest(CreateServiceInstanceRequest r, Catalog catalog) {
         ServiceDefinition mappedService = catalog.getServiceDefinitions().get(0);
         Plan mappedPlan = mappedService.getPlans().get(0);
         Map<String, Object> mappedParameters = r.getParameters();
@@ -171,7 +200,6 @@ public class OsbProxyImpl<Q extends ServiceBrokerRequest, P extends AsyncService
         createServiceInstanceRequest.withOriginatingIdentity(r.getOriginatingIdentity());
         return createServiceInstanceRequest;
     }
-
     String getBrokerUrl(String serviceInstanceId) {
         return MessageFormat.format(this.brokerUrlPattern, serviceInstanceId);
     }
@@ -179,6 +207,7 @@ public class OsbProxyImpl<Q extends ServiceBrokerRequest, P extends AsyncService
     CatalogServiceClient constructCatalogClient(@SuppressWarnings("SameParameterValue") String brokerUrl) {
         return clientFactory.getClient(brokerUrl, osbDelegateUser, osbDelegatePassword, CatalogServiceClient.class);
     }
+
     ServiceInstanceServiceClient constructServiceInstanceServiceClient(@SuppressWarnings("SameParameterValue") String brokerUrl) {
         return clientFactory.getClient(brokerUrl, osbDelegateUser, osbDelegatePassword, ServiceInstanceServiceClient.class);
     }

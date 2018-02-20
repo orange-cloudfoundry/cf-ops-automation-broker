@@ -1,21 +1,16 @@
-
-- Refine tarball automatic deployment to filter on the current cassandra PR branch name
-        
+       
 - Implement OSB provision delegation to nested cassandra broker
-   - refine PipelineCompletionTracker to call OSB client create/delete/bind/unbind
-      - introduce OSBProxy
-          - refine integration test to simulate OSB response
-             - using wiremock on cassandra broker
-             - check simulated OSB contract in OsbProxyImplTest match
-          - add component to map OSB request (serviceid, planid, in future strip out some arbitrary params)
-             - takes a Catalog bean from which it fetches serviceid and planid
-             - use wiremock to protect ourselves against feign exception formatting changes that would break OsbProxyImpl parsing
-    - delegate delete request
+   - refine PipelineCompletionTracker to call OSB client delete/bind/unbind
+      - delegate delete request
       - remove unecessary generics complexity in OSBProxyIml definition
     - core framework: create/delete service binding
     - core framework: update service 
-     
+
+- OSBProxy future refinements     
+     - use wiremock to protect ourselves against feign exception formatting changes that would break OsbProxyImpl parsing
+     - strip out some arbitrary params
  
+- Refine tarball automatic deployment to filter on the current cassandra PR branch name
 
 - add support for returning templated dashboard in Cassandra processor provision responses    
 

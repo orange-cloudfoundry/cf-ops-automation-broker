@@ -24,8 +24,8 @@ import java.util.Objects;
 
 public class OsbProxyImpl<Q extends ServiceBrokerRequest, P extends AsyncServiceInstanceResponse> implements OsbProxy<Q> {
 
-    private final String osbDelegateUser;
-    private final String osbDelegatePassword;
+    private String osbDelegateUser;
+    private String osbDelegatePassword;
     private String brokerUrlPattern;
     private OsbClientFactory clientFactory;
     private Gson gson;
@@ -43,6 +43,20 @@ public class OsbProxyImpl<Q extends ServiceBrokerRequest, P extends AsyncService
 
         GsonBuilder gsonBuilder = new GsonBuilder();
         gson = gsonBuilder.create();
+    }
+
+    /**
+     * Used by tests to inject password from environment variable without leaking credentials in test properties files
+     */
+    public void setOsbDelegatePassword(String osbDelegatePassword) {
+        this.osbDelegatePassword = osbDelegatePassword;
+    }
+
+    /**
+     * Used by tests to inject login from environment variable without leaking credentials in test properties files
+     */
+    public void setOsbDelegateUser(String osbDelegateUser) {
+        this.osbDelegateUser = osbDelegateUser;
     }
 
     @Override

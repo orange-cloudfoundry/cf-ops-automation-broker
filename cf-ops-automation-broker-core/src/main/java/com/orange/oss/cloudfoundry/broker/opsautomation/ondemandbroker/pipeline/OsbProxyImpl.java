@@ -20,7 +20,7 @@ import java.text.MessageFormat;
 import java.util.HashMap;
 import java.util.Map;
 
-public class OsbProxyImpl<Q extends ServiceBrokerRequest, P extends AsyncServiceInstanceResponse> implements OsbProxy<Q> {
+public class OsbProxyImpl<Q extends ServiceBrokerRequest, P extends AsyncServiceInstanceResponse> implements OsbProxy {
 
     private String osbDelegateUser;
     private String osbDelegatePassword;
@@ -58,7 +58,7 @@ public class OsbProxyImpl<Q extends ServiceBrokerRequest, P extends AsyncService
     }
 
     @Override
-    public GetLastServiceOperationResponse delegate(GetLastServiceOperationRequest pollingRequest, CreateServiceInstanceRequest request, GetLastServiceOperationResponse response) {
+    public GetLastServiceOperationResponse delegateProvision(GetLastServiceOperationRequest pollingRequest, CreateServiceInstanceRequest request, GetLastServiceOperationResponse response) {
         String brokerUrl = getBrokerUrl(pollingRequest.getServiceInstanceId());
         CatalogServiceClient catalogServiceClient = constructCatalogClient(brokerUrl);
         Catalog catalog = catalogServiceClient.getCatalog();
@@ -74,6 +74,26 @@ public class OsbProxyImpl<Q extends ServiceBrokerRequest, P extends AsyncService
         }
         //noinspection UnnecessaryLocalVariable
         GetLastServiceOperationResponse mappedResponse = mapProvisionResponse(response, delegatedResponse, provisionException, catalog);
+        return mappedResponse;
+    }
+
+    @Override
+    public GetLastServiceOperationResponse delegateDeprovision(GetLastServiceOperationRequest pollingRequest, DeleteServiceInstanceRequest request, GetLastServiceOperationResponse response) {
+        String brokerUrl = getBrokerUrl(pollingRequest.getServiceInstanceId());
+        CatalogServiceClient catalogServiceClient = constructCatalogClient(brokerUrl);
+        Catalog catalog = catalogServiceClient.getCatalog();
+        DeleteServiceInstanceRequest mappedRequest = mapDeprovisionRequest(request, catalog);
+        ServiceInstanceServiceClient serviceInstanceServiceClient = constructServiceInstanceServiceClient(brokerUrl);
+
+        FeignException provisionException = null;
+        ResponseEntity<DeleteServiceInstanceResponse> delegatedResponse = null;
+        try {
+            delegatedResponse = delegateDeprovision(mappedRequest, serviceInstanceServiceClient);
+        } catch (FeignException e) {
+            provisionException = e;
+        }
+        //noinspection UnnecessaryLocalVariable
+        GetLastServiceOperationResponse mappedResponse = mapDeprovisionResponse(response, delegatedResponse, provisionException, catalog);
         return mappedResponse;
     }
 
@@ -130,16 +150,18 @@ public class OsbProxyImpl<Q extends ServiceBrokerRequest, P extends AsyncService
                 request);
     }
 
-    void delegateDeprovision(DeleteServiceInstanceRequest request, ServiceInstanceServiceClient serviceInstanceServiceClient) {
+    ResponseEntity<DeleteServiceInstanceResponse> delegateDeprovision(DeleteServiceInstanceRequest request, ServiceInstanceServiceClient serviceInstanceServiceClient) {
         //noinspection unchecked
-        serviceInstanceServiceClient.deleteServiceInstance(
+        @SuppressWarnings("UnnecessaryLocalVariable") ResponseEntity<DeleteServiceInstanceResponse> response = (ResponseEntity<DeleteServiceInstanceResponse>) serviceInstanceServiceClient.deleteServiceInstance(
                 request.getServiceInstanceId(),
                 request.getServiceDefinitionId(),
                 request.getPlanId(),
                 false,
                 request.getApiInfoLocation(),
                 buildOriginatingIdentityHeader(request.getOriginatingIdentity()));
+        return response;
     }
+
     static final String ORIGINATING_USER_KEY = "user_id";
 
     static final String ORIGINATING_EMAIL_KEY = "email";
@@ -199,6 +221,23 @@ public class OsbProxyImpl<Q extends ServiceBrokerRequest, P extends AsyncService
         createServiceInstanceRequest.withApiInfoLocation(r.getApiInfoLocation());
         createServiceInstanceRequest.withOriginatingIdentity(r.getOriginatingIdentity());
         return createServiceInstanceRequest;
+    }
+
+    DeleteServiceInstanceRequest mapDeprovisionRequest(DeleteServiceInstanceRequest r, Catalog catalog) {
+        ServiceDefinition mappedService = catalog.getServiceDefinitions().get(0);
+        Plan mappedPlan = mappedService.getPlans().get(0);
+
+        //noinspection deprecation
+        DeleteServiceInstanceRequest deleteServiceInstanceRequest = new DeleteServiceInstanceRequest(
+                r.getServiceInstanceId(),
+                mappedService.getId(),
+                mappedPlan.getId(),
+                mappedService,
+                false);
+        deleteServiceInstanceRequest.withCfInstanceId(r.getCfInstanceId());
+        deleteServiceInstanceRequest.withApiInfoLocation(r.getApiInfoLocation());
+        deleteServiceInstanceRequest.withOriginatingIdentity(r.getOriginatingIdentity());
+        return deleteServiceInstanceRequest;
     }
     String getBrokerUrl(String serviceInstanceId) {
         return MessageFormat.format(this.brokerUrlPattern, serviceInstanceId);

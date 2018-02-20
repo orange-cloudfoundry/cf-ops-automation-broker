@@ -1,7 +1,5 @@
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline;
 
-import com.google.gson.ExclusionStrategy;
-import com.google.gson.FieldAttributes;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.slf4j.Logger;
@@ -20,23 +18,22 @@ public class PipelineCompletionTracker {
 
     private static Logger logger = LoggerFactory.getLogger(PipelineCompletionTracker.class.getName());
 
-    protected Clock clock;
-    private OsbProxy<CreateServiceInstanceRequest> createServiceInstanceOsbProxy;
+    private Clock clock;
+    private OsbProxy createServiceInstanceOsbProxy;
     private Gson gson;
     private long maxExecutionDurationSeconds;
 
-    public PipelineCompletionTracker(Clock clock, long maxExecutionDurationSeconds, OsbProxy<CreateServiceInstanceRequest> createServiceInstanceOsbProxy) {
+    public PipelineCompletionTracker(Clock clock, long maxExecutionDurationSeconds, OsbProxy createServiceInstanceOsbProxy) {
         this.clock = clock;
         this.maxExecutionDurationSeconds = maxExecutionDurationSeconds;
         this.createServiceInstanceOsbProxy = createServiceInstanceOsbProxy;
         final GsonBuilder gsonBuilder = new GsonBuilder();
         gsonBuilder.registerTypeAdapter(PipelineCompletionTracker.PipelineOperationState.class, new PipelineOperationStateGsonAdapter());
 
-        Gson gson = buildCustomGson(gsonBuilder);
-        this.gson = gson;
+        this.gson = buildCustomGson(gsonBuilder);
     }
 
-    public Gson buildCustomGson(GsonBuilder gsonBuilder) {
+    private Gson buildCustomGson(GsonBuilder gsonBuilder) {
         // By default both static and transient fields are not serialized.
         // We need transient fields from CreateServiceInstanceRequest to be serialized so we override this default
         // to only exclude static fields (such as constants)
@@ -45,7 +42,7 @@ public class PipelineCompletionTracker {
                 .create();
     }
 
-    public GetLastServiceOperationResponse getDeploymentExecStatus(Path secretsWorkDir, String serviceInstanceId, String jsonPipelineOperationState, GetLastServiceOperationRequest pollingRequest) {
+    GetLastServiceOperationResponse getDeploymentExecStatus(Path secretsWorkDir, String serviceInstanceId, String jsonPipelineOperationState, GetLastServiceOperationRequest pollingRequest) {
 
         //Check if target manifest file is present
         Path targetManifestFile = this.getTargetManifestFilePath(secretsWorkDir, serviceInstanceId);
@@ -71,7 +68,7 @@ public class PipelineCompletionTracker {
                     response.withOperationState(OperationState.SUCCEEDED);
                     response.withDescription("Creation is succeeded");
                     if (createServiceInstanceOsbProxy != null) {
-                        return createServiceInstanceOsbProxy.delegate(pollingRequest, (CreateServiceInstanceRequest) storedRequest, response);
+                        return createServiceInstanceOsbProxy.delegateProvision(pollingRequest, (CreateServiceInstanceRequest) storedRequest, response);
                     }
 
                 }else{
@@ -116,7 +113,7 @@ public class PipelineCompletionTracker {
         return elapsedSeconds;
     }
 
-    public String getPipelineOperationStateAsJson(ServiceBrokerRequest serviceBrokerRequest) {
+    String getPipelineOperationStateAsJson(ServiceBrokerRequest serviceBrokerRequest) {
         PipelineCompletionTracker.PipelineOperationState pipelineOperationState = new PipelineCompletionTracker.PipelineOperationState(
                 serviceBrokerRequest,
                 getCurrentDate()
@@ -137,16 +134,16 @@ public class PipelineCompletionTracker {
         private ServiceBrokerRequest serviceBrokerRequest;
         private String startRequestDate;
 
-        public PipelineOperationState(ServiceBrokerRequest serviceBrokerRequest, String startRequestDate) {
+        PipelineOperationState(ServiceBrokerRequest serviceBrokerRequest, String startRequestDate) {
             this.serviceBrokerRequest = serviceBrokerRequest;
             this.startRequestDate = startRequestDate;
         }
 
-        public ServiceBrokerRequest getServiceBrokerRequest(){
+        ServiceBrokerRequest getServiceBrokerRequest(){
             return this.serviceBrokerRequest;
         }
 
-        public String getStartRequestDate(){
+        String getStartRequestDate(){
             return this.startRequestDate;
         }
 

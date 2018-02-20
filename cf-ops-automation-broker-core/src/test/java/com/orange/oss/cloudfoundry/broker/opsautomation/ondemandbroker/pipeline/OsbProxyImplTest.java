@@ -67,7 +67,7 @@ public class OsbProxyImplTest {
 
 
     @Test
-    public void maps_request_to_1st_service_and_1st_plan() {
+    public void maps_provision_request_to_1st_service_and_1st_plan() {
         Plan plan = new Plan("plan_id", "plan_name", "plan_description", new HashMap<>());
         Plan plan2 = new Plan("plan_id2", "plan_name2", "plan_description2", new HashMap<>());
         ServiceDefinition serviceDefinition = new ServiceDefinition("service_id", "service_name", "service_description", true, asList(plan, plan2));
@@ -81,6 +81,30 @@ public class OsbProxyImplTest {
         request.withCfInstanceId("cf-instance-id");
         request.withOriginatingIdentity(aContext());
         CreateServiceInstanceRequest mappedRequest = osbProxy.mapProvisionRequest(request, catalog);
+
+        assertThat(mappedRequest.getServiceDefinitionId()).isEqualTo("service_id");
+        assertThat(mappedRequest.getPlanId()).isEqualTo("plan_id");
+        assertThat(mappedRequest.getServiceInstanceId()).isEqualTo("service-instance-id");
+        assertThat(mappedRequest.getApiInfoLocation()).isEqualTo("api-location");
+        assertThat(mappedRequest.getCfInstanceId()).isEqualTo("cf-instance-id");
+        assertThat(mappedRequest.getOriginatingIdentity()).isEqualTo(aContext());
+    }
+
+    @Test
+    public void maps_deprovision_request_to_1st_service_and_1st_plan() {
+        Plan plan = new Plan("plan_id", "plan_name", "plan_description", new HashMap<>());
+        Plan plan2 = new Plan("plan_id2", "plan_name2", "plan_description2", new HashMap<>());
+        ServiceDefinition serviceDefinition = new ServiceDefinition("service_id", "service_name", "service_description", true, asList(plan, plan2));
+        Plan plan3 = new Plan("plan_id3", "plan_name3", "plan_description3", new HashMap<>());
+        ServiceDefinition serviceDefinition2 = new ServiceDefinition("service_id2", "service_name2", "service_description3", true, Collections.singletonList(plan3));
+        Catalog catalog = new Catalog(Collections.singletonList(serviceDefinition));
+
+        DeleteServiceInstanceRequest request = new DeleteServiceInstanceRequest("service-instance-id", "coab-serviceid", "coab-planid", serviceDefinition, true);
+        request.withApiInfoLocation("api-location");
+        request.withOriginatingIdentity(aContext());
+        request.withCfInstanceId("cf-instance-id");
+
+        DeleteServiceInstanceRequest mappedRequest = osbProxy.mapDeprovisionRequest(request, catalog);
 
         assertThat(mappedRequest.getServiceDefinitionId()).isEqualTo("service_id");
         assertThat(mappedRequest.getPlanId()).isEqualTo("plan_id");
@@ -131,7 +155,7 @@ public class OsbProxyImplTest {
         request.withApiInfoLocation("api-info");
         request.withOriginatingIdentity(aContext());
         ServiceInstanceServiceClient serviceInstanceServiceClient = mock(ServiceInstanceServiceClient.class);
-        osbProxy.delegateDeprovision(request, serviceInstanceServiceClient);
+        @SuppressWarnings("unchecked") ResponseEntity<DeleteServiceInstanceResponse> responseEntity = osbProxy.delegateDeprovision(request, serviceInstanceServiceClient);
 
         verify(serviceInstanceServiceClient).deleteServiceInstance(
                 "service-instance-id",
@@ -168,12 +192,12 @@ public class OsbProxyImplTest {
     public void maps_rejected_deprovision_response() {
         //Given
         GetLastServiceOperationResponse originalResponse = aPreviousOnGoingOperation();
-        Response errorReponse = Response.builder()
+        Response errorResponse = Response.builder()
                 .status(HttpStatus.GONE.value())
                 .headers(new HashMap<>())
                 .body("{\"description\":\"No such service instance 1234\"}", Charset.defaultCharset())
                 .build();
-        FeignException provisionException = FeignException.errorStatus("ServiceInstanceServiceClient#deleteServiceInstance(String,String,String,boolean,String,String)", errorReponse);
+        FeignException provisionException = FeignException.errorStatus("ServiceInstanceServiceClient#deleteServiceInstance(String,String,String,boolean,String,String)", errorResponse);
 
         //when
         GetLastServiceOperationResponse mappedResponse = osbProxy.mapDeprovisionResponse(originalResponse, null, provisionException, aCatalog());

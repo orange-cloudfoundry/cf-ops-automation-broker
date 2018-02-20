@@ -10,7 +10,6 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
-import org.springframework.cloud.servicebroker.model.CreateServiceInstanceRequest;
 import org.springframework.context.annotation.Bean;
 
 import java.time.Clock;
@@ -51,7 +50,7 @@ public class CassandraBrokerApplication {
     }
 
     @Bean
-    public OsbProxy<CreateServiceInstanceRequest> createServiceInstanceResponseOsbProxy(
+    public OsbProxy createServiceInstanceResponseOsbProxy(
             OsbProxyProperties osbProxyProperties, OsbClientFactory clientFactory) {
         return new OsbProxyImpl<>(
                 osbProxyProperties.getOsbDelegateUser(),
@@ -61,7 +60,7 @@ public class CassandraBrokerApplication {
     }
 
     @Bean
-    public PipelineCompletionTracker pipelineCompletionTracker(Clock clock, OsbProxyProperties osbProxyProperties,OsbProxy<CreateServiceInstanceRequest> createServiceInstanceResponseOsbProxy) {
+    public PipelineCompletionTracker pipelineCompletionTracker(Clock clock, OsbProxyProperties osbProxyProperties,OsbProxy createServiceInstanceResponseOsbProxy) {
         return new PipelineCompletionTracker(
                 clock,
                 osbProxyProperties.getMaxExecutionDurationSeconds(),

@@ -39,7 +39,7 @@ public class PipelineCompletionTrackerTest {
 
     private Path workDir;
     @SuppressWarnings("unchecked")
-    private OsbProxy<CreateServiceInstanceRequest> createServiceInstanceOsbProxy = mock(OsbProxy.class);
+    private OsbProxy createServiceInstanceOsbProxy = mock(OsbProxy.class);
 
     private PipelineCompletionTracker tracker = new PipelineCompletionTracker(clock, 1200L, createServiceInstanceOsbProxy);
 
@@ -52,7 +52,7 @@ public class PipelineCompletionTrackerTest {
 
     @Before
     public void setUpOsbProxy() {
-        doAnswer(returnsLastArg()).when(createServiceInstanceOsbProxy).delegate(any(), any(), any());
+        doAnswer(returnsLastArg()).when(createServiceInstanceOsbProxy).delegateProvision(any(), any(), any());
     }
 
     @Test
@@ -80,7 +80,7 @@ public class PipelineCompletionTrackerTest {
         //Then
         assertThat(response.getState()).isEqualTo(OperationState.FAILED);
         assertThat(response.getDescription()).startsWith("Execution timeout after ");
-        verify(createServiceInstanceOsbProxy, never()).delegate(any(), any(), any());
+        verify(createServiceInstanceOsbProxy, never()).delegateProvision(any(), any(), any());
     }
 
     @Test
@@ -96,7 +96,7 @@ public class PipelineCompletionTrackerTest {
         assertThat(response.getState()).isEqualTo(OperationState.SUCCEEDED);
         assertThat(response.getDescription()).isEqualTo("Creation is succeeded");
         //and proxy is invoked
-        verify(createServiceInstanceOsbProxy).delegate(any(), any(), any());
+        verify(createServiceInstanceOsbProxy).delegateProvision(any(), any(), any());
     }
 
     @Test
@@ -109,7 +109,7 @@ public class PipelineCompletionTrackerTest {
         proxiedResponse.withOperationState(OperationState.SUCCEEDED);
         proxiedResponse.withDescription("osb proxied");
 
-        when(createServiceInstanceOsbProxy.delegate(any(), any(), any())).thenReturn(proxiedResponse);
+        when(createServiceInstanceOsbProxy.delegateProvision(any(), any(), any())).thenReturn(proxiedResponse);
 
 
         //When

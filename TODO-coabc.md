@@ -1,7 +1,7 @@
        
 - Implement OSB provision delegation to nested cassandra broker
    - refine PipelineCompletionTracker to call OSB client delete/bind/unbind
-      - delegate delete request
+      - delegate delete request in PipelineCompletionTracker to OSBProxy 
       - remove unecessary generics complexity in OSBProxyIml definition
     - core framework: create/delete service binding
     - core framework: update service 

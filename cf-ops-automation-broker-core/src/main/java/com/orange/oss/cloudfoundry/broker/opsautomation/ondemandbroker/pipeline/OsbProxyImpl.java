@@ -107,7 +107,11 @@ public class OsbProxyImpl<Q extends ServiceBrokerRequest, P extends AsyncService
      * Inspired from spring-cloud-open-service-broker, see https://github.com/spring-cloud/spring-cloud-cloudfoundry-service-broker/blob/c56080e5ec8ed97ba8fe4e15ac2031073fbc45ae/spring-cloud-open-service-broker-autoconfigure/src/test/java/org/springframework/cloud/servicebroker/autoconfigure/web/servlet/ControllerIntegrationTest.java#L36
      */
     String buildOriginatingIdentityHeader(Context originatingIdentity) {
+        if (originatingIdentity == null) {
+            return null;
+        }
         String platform = originatingIdentity.getPlatform();
+
         Map<String, Object> propMap = new HashMap<>();
         if (ORIGINATING_CLOUDFOUNDRY_PLATFORM.equals(platform)) {
             Object userKey = originatingIdentity.getProperty(ORIGINATING_USER_KEY);
@@ -140,19 +144,22 @@ public class OsbProxyImpl<Q extends ServiceBrokerRequest, P extends AsyncService
         Map<String, Object> mappedParameters = r.getParameters();
 
         //noinspection deprecation
-        return new CreateServiceInstanceRequest(
+        CreateServiceInstanceRequest createServiceInstanceRequest = new CreateServiceInstanceRequest(
                 mappedService.getId(),
                 mappedPlan.getId(),
                 r.getOrganizationGuid(),
                 r.getSpaceGuid(),
                 r.getContext(),
                 mappedParameters);
+        createServiceInstanceRequest.withServiceInstanceId(r.getServiceInstanceId());
+        createServiceInstanceRequest.withCfInstanceId(r.getCfInstanceId());
+        createServiceInstanceRequest.withApiInfoLocation(r.getApiInfoLocation());
+        createServiceInstanceRequest.withOriginatingIdentity(r.getOriginatingIdentity());
+        return createServiceInstanceRequest;
     }
 
     String getBrokerUrl(String serviceInstanceId) {
-        this.brokerUrlPattern = "https://{0}-cassandra-broker.mydomain/com";
-        String brokerUrlPattern = this.brokerUrlPattern;
-        return MessageFormat.format(brokerUrlPattern, serviceInstanceId);
+        return MessageFormat.format(this.brokerUrlPattern, serviceInstanceId);
     }
 
     CatalogServiceClient constructCatalogClient(@SuppressWarnings("SameParameterValue") String brokerUrl) {

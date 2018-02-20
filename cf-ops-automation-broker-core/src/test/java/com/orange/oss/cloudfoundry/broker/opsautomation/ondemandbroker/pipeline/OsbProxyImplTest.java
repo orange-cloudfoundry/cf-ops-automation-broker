@@ -5,7 +5,6 @@ import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.osbclient
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.osbclient.ServiceInstanceServiceClient;
 import feign.FeignException;
 import feign.Response;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.springframework.cloud.servicebroker.model.*;
 import org.springframework.http.HttpStatus;
@@ -78,10 +77,17 @@ public class OsbProxyImplTest {
 
         CreateServiceInstanceRequest request = new CreateServiceInstanceRequest("coab-serviceid", "coab-planid", "orgguid", "spaceguid", new HashMap<>());
         request.withServiceInstanceId("service-instance-id");
+        request.withApiInfoLocation("api-location");
+        request.withCfInstanceId("cf-instance-id");
+        request.withOriginatingIdentity(aContext());
         CreateServiceInstanceRequest mappedRequest = osbProxy.mapRequest(request, catalog);
 
         assertThat(mappedRequest.getServiceDefinitionId()).isEqualTo("service_id");
         assertThat(mappedRequest.getPlanId()).isEqualTo("plan_id");
+        assertThat(mappedRequest.getServiceInstanceId()).isEqualTo("service-instance-id");
+        assertThat(mappedRequest.getApiInfoLocation()).isEqualTo("api-location");
+        assertThat(mappedRequest.getCfInstanceId()).isEqualTo("cf-instance-id");
+        assertThat(mappedRequest.getOriginatingIdentity()).isEqualTo(aContext());
     }
 
     @Test
@@ -90,6 +96,13 @@ public class OsbProxyImplTest {
         String header = osbProxy.buildOriginatingIdentityHeader(context);
 
         assertThat(header).isEqualTo(aContextOriginatingHeader());
+    }
+
+    @Test
+    public void serializes_empty_osb_context() {
+        String header = osbProxy.buildOriginatingIdentityHeader(null);
+
+        assertThat(header).isNull();
     }
 
     private String aContextOriginatingHeader() {

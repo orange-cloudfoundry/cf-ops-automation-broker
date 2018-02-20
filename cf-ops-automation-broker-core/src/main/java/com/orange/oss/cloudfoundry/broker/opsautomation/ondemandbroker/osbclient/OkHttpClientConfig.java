@@ -18,6 +18,7 @@
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.osbclient;
 
 import okhttp3.*;
+import okhttp3.logging.HttpLoggingInterceptor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -42,23 +43,11 @@ public class OkHttpClientConfig {
 
     private static final Logger log = LoggerFactory.getLogger(OkHttpClientConfig.class);
 
-    private static final Interceptor LOGGING_INTERCEPTOR = new Interceptor() {
-        @Override
-        public Response intercept(Chain chain) throws IOException {
-            Request request = chain.request();
+    private static final HttpLoggingInterceptor LOGGING_INTERCEPTOR;
 
-            long t1 = System.nanoTime();
-            log.info(String.format("Sending request %s on %s%n%s",
-                    request.url(), chain.connection(), request.headers()));
-
-            Response response = chain.proceed(request);
-
-            long t2 = System.nanoTime();
-            log.info(String.format("Received response for %s in %.1fms%n%s",
-                    response.request().url(), (t2 - t1) / 1e6d, response.headers()));
-
-            return response;
-        }
+    static {
+        LOGGING_INTERCEPTOR = new HttpLoggingInterceptor();
+        LOGGING_INTERCEPTOR.setLevel(HttpLoggingInterceptor.Level.BODY);
     };
     @Value("${director.proxyHost:}")
     private String proxyHost;

@@ -23,7 +23,7 @@ public class CassandraProcessorTest {
     private static final String SECRETS_REPOSITORY_ALIAS_NAME = "paas-secrets.";
 
     @Test
-    public void creates_structures_and_returns_response() {
+    public void creates_structures_and_returns_async_response() {
         //Given a creation request
         CreateServiceInstanceRequest creationRequest = new CreateServiceInstanceRequest("service_definition_id",
                 "plan_id",
@@ -43,11 +43,13 @@ public class CassandraProcessorTest {
         TemplatesGenerator templatesGenerator = mock(TemplatesGenerator.class);
         SecretsGenerator secretsGenerator = mock(SecretsGenerator.class);
 
-        //When
-        //given a configured timeout (TODO => must mock tracker)
-        Clock clock = Clock.fixed(Instant.ofEpochMilli(1510680248007L), ZoneId.of("Europe/Paris"));
-        @SuppressWarnings("unchecked") PipelineCompletionTracker tracker = new PipelineCompletionTracker(clock, 1200L, Mockito.mock(OsbProxy.class));
+        //given a configured timeout
+        @SuppressWarnings("unchecked")
+        PipelineCompletionTracker tracker = aCompletionTracker();
+
         CassandraProcessor cassandraProcessor = new CassandraProcessor(TEMPLATES_REPOSITORY_ALIAS_NAME, SECRETS_REPOSITORY_ALIAS_NAME, templatesGenerator, secretsGenerator, tracker);
+
+        //When
         cassandraProcessor.preCreate(context);
 
         //Then verify parameters and delegation on calls
@@ -60,8 +62,11 @@ public class CassandraProcessorTest {
         CreateServiceInstanceResponse serviceInstanceResponse = (CreateServiceInstanceResponse) context.contextKeys.get(ProcessorChainServiceInstanceService.CREATE_SERVICE_INSTANCE_RESPONSE);
         // specifying asynchronous creations
         assertThat(serviceInstanceResponse.isAsync()).isTrue();
-        //TODO : Uncomment assertion (use json string?)
-        String expectedJsonPipelineOperationState = "{\"org.springframework.cloud.servicebroker.model.CreateServiceInstanceRequest\":{\"serviceDefinitionId\":\"service_definition_id\",\"planId\":\"plan_id\",\"organizationGuid\":\"org_id\",\"spaceGuid\":\"space_id\",\"serviceInstanceId\":\"aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa0\",\"asyncAccepted\":false},\"startRequestDate\":\"2017-11-14T17:24:08.007Z\"}";
+
+        PipelineCompletionTracker.PipelineOperationState pipelineOperationState = new PipelineCompletionTracker.PipelineOperationState(creationRequest, "2017-11-14T17:24:08.007Z");
+        String expectedJsonPipelineOperationState = tracker.formatAsJson(pipelineOperationState);
+
+        //when
         assertThat(serviceInstanceResponse.getOperation()).isEqualTo(expectedJsonPipelineOperationState);
          // and with a proper commit message
         String customTemplateMessage = (String) context.contextKeys.get(TEMPLATES_REPOSITORY_ALIAS_NAME+GitProcessorContext.commitMessage.toString());
@@ -102,7 +107,7 @@ public class CassandraProcessorTest {
     }
 
     @Test
-    public void responds_to_get_last_service_operation_suceeded() {
+    public void responds_to_get_last_service_operation_succeeded() {
 
         //Given a get last operation request (asynchronous polling from Cloud Controller)
         GetLastServiceOperationRequest operationRequest = new GetLastServiceOperationRequest(SERVICE_INSTANCE_ID,
@@ -132,7 +137,7 @@ public class CassandraProcessorTest {
     }
 
     @Test
-    public void removes_secrets_structures_and_returns_response() {
+    public void unprovision_removes_secrets_structures_and_returns_async_response() {
         //Given a delete request
         DeleteServiceInstanceRequest request = new DeleteServiceInstanceRequest(SERVICE_INSTANCE_ID,
                 "service_id",
@@ -148,8 +153,13 @@ public class CassandraProcessorTest {
         //Given a mock behaviour
         SecretsGenerator secretsGenerator = mock(SecretsGenerator.class);
 
+        //given a configured timeout within tracker
+        @SuppressWarnings("unchecked")
+        PipelineCompletionTracker tracker = aCompletionTracker();
+
+
         //When
-        CassandraProcessor cassandraProcessor = new CassandraProcessor(TEMPLATES_REPOSITORY_ALIAS_NAME, SECRETS_REPOSITORY_ALIAS_NAME, null, secretsGenerator, null);
+        CassandraProcessor cassandraProcessor = new CassandraProcessor(TEMPLATES_REPOSITORY_ALIAS_NAME, SECRETS_REPOSITORY_ALIAS_NAME, null, secretsGenerator, tracker);
         cassandraProcessor.preDelete(context);
 
         //Then verify parameters and delegation on calls
@@ -159,13 +169,25 @@ public class CassandraProcessorTest {
         //Then verify populated context
         DeleteServiceInstanceResponse serviceInstanceResponse = (DeleteServiceInstanceResponse) context.contextKeys.get(ProcessorChainServiceInstanceService.DELETE_SERVICE_INSTANCE_RESPONSE);
         // specifying asynchronous creations
-        assertThat(serviceInstanceResponse.isAsync()).isFalse();
+        assertThat(serviceInstanceResponse.isAsync()).isTrue();
+
+        //and operation state is specified
+        PipelineCompletionTracker.PipelineOperationState pipelineOperationState = new PipelineCompletionTracker.PipelineOperationState(request, "2017-11-14T17:24:08.007Z");
+        String expectedJsonPipelineOperationState = tracker.formatAsJson(pipelineOperationState);
+
+        assertThat(serviceInstanceResponse.getOperation()).isEqualTo(expectedJsonPipelineOperationState);
+
         // and with a proper commit message
         String customMessage = (String) context.contextKeys.get(SECRETS_REPOSITORY_ALIAS_NAME + GitProcessorContext.commitMessage.toString());
         assertThat(customMessage).isEqualTo("Cassandra broker" + ": "+ CassandraProcessorConstants.OSB_OPERATION_DELETE + " instance id=" + SERVICE_INSTANCE_ID);
     }
 
 
+
+    private PipelineCompletionTracker aCompletionTracker() {
+        Clock clock = Clock.fixed(Instant.ofEpochMilli(1510680248007L), ZoneId.of("Europe/Paris"));
+        return new PipelineCompletionTracker(clock, 1200L, Mockito.mock(OsbProxy.class));
+    }
 
     private Path aGitRepoWorkDir() {
         return FileSystems.getDefault().getPath("/a/git_workdir/path");

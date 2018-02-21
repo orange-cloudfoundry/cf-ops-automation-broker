@@ -90,20 +90,22 @@ public class CassandraProcessor extends DefaultBrokerProcessor {
 
 		//Create response and put it into context
 		DeleteServiceInstanceResponse deletionResponse = new DeleteServiceInstanceResponse();
-		deletionResponse.withAsync(false);
+		deletionResponse.withAsync(true);
+		deletionResponse.withOperation(this.tracker.getPipelineOperationStateAsJson(request));
+
 		ctx.contextKeys.put(ProcessorChainServiceInstanceService.DELETE_SERVICE_INSTANCE_RESPONSE, deletionResponse);
 
 		//Generate commit message and put it into context
         setCommitMsg(ctx,"Cassandra broker: delete instance id=" + serviceInstanceId);
 	}
 
-	protected Path getPaasSecret(Context ctx) {
+    private Path getPaasSecret(Context ctx) {
 		Path secretsWorkDir = (Path) ctx.contextKeys.get(secretsRepositoryAliasName + GitProcessorContext.workDir.toString());
 		logger.debug("secrets workDir is " + secretsWorkDir.toString());
 		return secretsWorkDir;
 	}
 
-	protected Path getPaasTemplate(Context ctx) {
+	private Path getPaasTemplate(Context ctx) {
 		Path templatesWorkDir = (Path) ctx.contextKeys.get(templatesRepositoryAliasName + GitProcessorContext.workDir.toString());
 		logger.debug("templates workDir is " + templatesWorkDir.toString());
 		return templatesWorkDir;
@@ -112,7 +114,7 @@ public class CassandraProcessor extends DefaultBrokerProcessor {
 	/**
 	 * Set commmit msg for both secrets and template repos. Template repos commit msg will be ignored if not changes
 	 */
-	protected void setCommitMsg(Context ctx, String msg) {
+    private void setCommitMsg(Context ctx, String msg) {
 		ctx.contextKeys.put(templatesRepositoryAliasName + GitProcessorContext.commitMessage.toString(), msg);
 		ctx.contextKeys.put(secretsRepositoryAliasName + GitProcessorContext.commitMessage.toString(), msg);
 	}

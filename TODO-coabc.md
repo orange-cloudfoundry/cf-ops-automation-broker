@@ -1,8 +1,15 @@
        
 - Implement OSB provision delegation to nested cassandra broker
    - refine PipelineCompletionTracker to call OSB client delete/bind/unbind
-      - delegate delete request in PipelineCompletionTracker to OSBProxy 
-      - remove unecessary generics complexity in OSBProxyIml definition
+      - delegate delete request in PipelineCompletionTracker to OSBProxy
+         - CassandraProcessor.unprovision is now async and returns operation state
+         - CompletionTracker handles async delete request & delegates to osb proxy
+         - Rationale & discussion to be moved to design doc:
+             - Right now we could synchronously execute osbDelegate.unprovision() + delete manifest and return sync successfull delete
+             - However, this makes it asymetrical and more work
+             - When would we need async delete support with COA ?
+                - when refactoring and merging with TF modules
+                - when/if COA implements sync deprovision 
     - core framework: create/delete service binding
     - core framework: update service 
 

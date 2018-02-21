@@ -71,6 +71,8 @@ public class CassandraServiceProvisionningTest {
     /**
      * Define an environment variable to turn on wiremock recording.
      * Set the url of the broker forward requests to (e.g. "https://cassandra-broker.mydomain.com"
+     *
+     * More background in http://wiremock.org/docs/record-playback/
      */
     @Value("${preprodBrokerUrlToRecord:}")
     private String preprodBrokerUrlToRecord;

@@ -59,30 +59,35 @@ public class PipelineCompletionTracker {
         return this.buildResponse(classFullyQualifiedName, isTargetManifestFilePresent, isRequestTimedOut, elapsedTimeSecsSinceStartRequestDate, pollingRequest, serviceBrokerRequest);
     }
 
-    private GetLastServiceOperationResponse buildResponse(String classFullyQualifiedName, boolean asyncTaskCompleted, boolean isRequestTimedOut, long elapsedTimeSecsSinceStartRequestDate, GetLastServiceOperationRequest pollingRequest, ServiceBrokerRequest storedRequest){
-        GetLastServiceOperationResponse response = new GetLastServiceOperationResponse();
-        switch(classFullyQualifiedName)
-        {
-            case CassandraProcessorConstants.OSB_CREATE_REQUEST_CLASS_NAME:
-                if (asyncTaskCompleted){
-                    response.withOperationState(OperationState.SUCCEEDED);
-                    response.withDescription("Creation is succeeded");
-                    if (createServiceInstanceOsbProxy != null) {
-                        return createServiceInstanceOsbProxy.delegateProvision(pollingRequest, (CreateServiceInstanceRequest) storedRequest, response);
-                    }
 
-                }else{
-                    if (isRequestTimedOut){
-                        response.withOperationState(OperationState.FAILED);
-                        response.withDescription("Execution timeout after " + elapsedTimeSecsSinceStartRequestDate + "s max is " + maxExecutionDurationSeconds);
-                    }else {
-                        response.withOperationState(OperationState.IN_PROGRESS);
-                        response.withDescription("Creation is in progress");
+    GetLastServiceOperationResponse buildResponse(String classFullyQualifiedName, boolean asyncTaskCompleted, boolean isRequestTimedOut, long elapsedTimeSecsSinceStartRequestDate, GetLastServiceOperationRequest pollingRequest, ServiceBrokerRequest storedRequest) {
+        GetLastServiceOperationResponse response = new GetLastServiceOperationResponse();
+        if (asyncTaskCompleted) {
+            response.withOperationState(OperationState.SUCCEEDED);
+            switch (classFullyQualifiedName) {
+                case CassandraProcessorConstants.OSB_CREATE_REQUEST_CLASS_NAME:
+                    response.withDescription("Creation succeeded");
+                    if (createServiceInstanceOsbProxy != null) {
+                        response = createServiceInstanceOsbProxy.delegateProvision(pollingRequest, (CreateServiceInstanceRequest) storedRequest, response);
                     }
-                }
-                break;
-            default:
-                throw new RuntimeException("Get Deployment Execution status fails (unhandled request class)");
+                    break;
+                case CassandraProcessorConstants.OSB_DELETE_REQUEST_CLASS_NAME:
+                    response.withDescription("Deletion succeeded");
+                    if (createServiceInstanceOsbProxy != null) {
+                        response = createServiceInstanceOsbProxy.delegateDeprovision(pollingRequest, (DeleteServiceInstanceRequest) storedRequest, response);
+                    }
+                    break;
+                default:
+                    throw new RuntimeException("Get Deployment Execution status fails (unhandled request class)");
+            }
+        } else {
+            if (isRequestTimedOut) {
+                response.withOperationState(OperationState.FAILED);
+                response.withDescription("Execution timeout after " + elapsedTimeSecsSinceStartRequestDate + "s max is " + maxExecutionDurationSeconds);
+            } else {
+                response.withOperationState(OperationState.IN_PROGRESS);
+                response.withDescription("Creation is in progress");
+            }
         }
         return response;
     }

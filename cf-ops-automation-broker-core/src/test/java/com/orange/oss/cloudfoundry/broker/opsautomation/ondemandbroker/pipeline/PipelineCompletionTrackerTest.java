@@ -61,18 +61,15 @@ public class PipelineCompletionTrackerTest {
         thrown.expect(RuntimeException.class);
         thrown.expectMessage("Get Deployment Execution status fails (unhandled request class)");
 
-        //Given pipeline completion tracker with a "delete pipeline operation state"
-        String jsonPipelineOperationState = tracker.getPipelineOperationStateAsJson(aDeleteServiceInstanceRequest());
-
         //When
-        tracker.getDeploymentExecStatus(workDir, SERVICE_INSTANCE_ID, jsonPipelineOperationState, pollingRequest);
+        tracker.buildResponse("unsupported-class-name", true, false, 10000L, pollingRequest, aDeleteServiceInstanceRequest());
     }
 
     @Test
-    public void returns_failed_state_if_create_operation_state_is_timed_out() throws IOException {
+    public void returns_failed_state_if_provision_operation_state_is_timed_out() throws IOException {
         //TODO : Test with null work dir
         //Given a missing manifest file and a create operation state in the past
-        String jsonPipelineOperationState = createOperationStateInThePast();
+        String jsonPipelineOperationState = createProvisionOperationStateInThePast();
 
         //When
         GetLastServiceOperationResponse response = tracker.getDeploymentExecStatus(workDir, SERVICE_INSTANCE_ID, jsonPipelineOperationState, pollingRequest);
@@ -87,23 +84,23 @@ public class PipelineCompletionTrackerTest {
     public void returns_succeeded_state_if_manifest_is_present_regardless_of_elapsed_time() throws IOException {
         //Given an existing manifest file
         generateSampleManifest();
-        String jsonPipelineOperationState = createOperationStateInThePast();
+        String jsonPipelineOperationState = createProvisionOperationStateInThePast();
 
         //When
         GetLastServiceOperationResponse response = tracker.getDeploymentExecStatus(workDir, SERVICE_INSTANCE_ID, jsonPipelineOperationState, pollingRequest);
 
         //Then
         assertThat(response.getState()).isEqualTo(OperationState.SUCCEEDED);
-        assertThat(response.getDescription()).isEqualTo("Creation is succeeded");
+        assertThat(response.getDescription()).isEqualTo("Creation succeeded");
         //and proxy is invoked
         verify(createServiceInstanceOsbProxy).delegateProvision(any(), any(), any());
     }
 
     @Test
-    public void delegates_to_osb_proxy_when_manifest_is_present() throws IOException {
+    public void delegates_to_osb_proxy_when_provision_completes_with_manifest_being_present() throws IOException {
         //Given an existing manifest file
         generateSampleManifest();
-        String jsonPipelineOperationState = createOperationStateInThePast();
+        String jsonPipelineOperationState = createProvisionOperationStateInThePast();
         //Given a proxy that returns a custom response message
         GetLastServiceOperationResponse proxiedResponse = new GetLastServiceOperationResponse();
         proxiedResponse.withOperationState(OperationState.SUCCEEDED);
@@ -118,10 +115,56 @@ public class PipelineCompletionTrackerTest {
         //Then
         assertThat(response.getState()).isEqualTo(OperationState.SUCCEEDED);
         assertThat(response.getDescription()).isEqualTo("osb proxied");
+        verify(createServiceInstanceOsbProxy).delegateProvision(any(), any(), any());
     }
 
     @Test
-    public void returns_succeeded_state_if_manifest_is_present_and_create_operation_state_without_timeout() throws IOException {
+    public void delegates_to_osb_proxy_when_deprovision_completes_with_manifest_being_present() throws IOException {
+        //Given an existing manifest file
+        generateSampleManifest();
+        String jsonPipelineOperationState = createDeprovisionOperationStateInThePast();
+        //Given a proxy that returns a custom response message
+        GetLastServiceOperationResponse proxiedResponse = new GetLastServiceOperationResponse();
+        proxiedResponse.withOperationState(OperationState.SUCCEEDED);
+        proxiedResponse.withDescription("osb proxied");
+
+        when(createServiceInstanceOsbProxy.delegateDeprovision(any(), any(), any())).thenReturn(proxiedResponse);
+
+
+        //When
+        GetLastServiceOperationResponse response = tracker.getDeploymentExecStatus(workDir, SERVICE_INSTANCE_ID, jsonPipelineOperationState, pollingRequest);
+
+        //Then
+        assertThat(response.getState()).isEqualTo(OperationState.SUCCEEDED);
+        assertThat(response.getDescription()).isEqualTo("osb proxied");
+        verify(createServiceInstanceOsbProxy).delegateDeprovision(any(), any(), any());
+    }
+
+// we dropped direct provisionning delegation from cassandra processor
+//    @Test
+//    public void delegates_deprovision_to_osb_proxy() throws IOException {
+//        //given an incoming unprovision request
+//        DeleteServiceInstanceRequest request = aDeleteServiceInstanceRequest();
+//
+//        //when
+//        tracker.delegateDeprovisionRequest(request);
+//        String jsonPipelineOperationState = createOperationStateInThePast(request);
+//        //Given a proxy that returns a custom response message
+//        DeleteServiceInstanceResponse proxiedResponse = new DeleteServiceInstanceResponse();
+//
+//        when(createServiceInstanceOsbProxy.delegateDeprovision(any(), any(), any())).thenReturn(proxiedResponse);
+//
+//
+//        //When
+//        GetLastServiceOperationResponse response = tracker.getDeploymentExecStatus(workDir, SERVICE_INSTANCE_ID, jsonPipelineOperationState, pollingRequest);
+//
+//        //Then
+//        assertThat(response.getState()).isEqualTo(OperationState.SUCCEEDED);
+//        assertThat(response.getDescription()).isEqualTo("osb proxied");
+//    }
+
+    @Test
+    public void returns_succeeded_state_if_manifest_is_present_and_provision_operation_state_without_timeout() throws IOException {
         //Given an existing manifest file and a create operation state without timeout
         generateSampleManifest();
         String jsonPipelineOperationState = tracker.getPipelineOperationStateAsJson(aCreateServiceInstanceRequest());
@@ -131,11 +174,11 @@ public class PipelineCompletionTrackerTest {
 
         //Then
         assertThat(response.getState()).isEqualTo(OperationState.SUCCEEDED);
-        assertThat(response.getDescription()).describedAs("Creation is succeeded");
+        assertThat(response.getDescription()).describedAs("Creation succeeded");
     }
 
     @Test
-    public void returns_inprogress_state_if_manifest_is_not_present_and_create_operation_state_before_timeout() throws IOException {
+    public void returns_inprogress_state_if_manifest_is_not_present_and_provision_operation_state_before_timeout() throws IOException {
         //Given a missing manifest file and a create operation state without timeout
         String jsonPipelineOperationState = tracker.getPipelineOperationStateAsJson(aCreateServiceInstanceRequest());
 
@@ -149,8 +192,18 @@ public class PipelineCompletionTrackerTest {
 
 
     
-    private String createOperationStateInThePast() {
-        PipelineCompletionTracker.PipelineOperationState pipelineOperationState = new PipelineCompletionTracker.PipelineOperationState(aCreateServiceInstanceRequest(), "2018-01-22T14:00:00.000Z");
+    private String createProvisionOperationStateInThePast() {
+        CreateServiceInstanceRequest request = aCreateServiceInstanceRequest();
+        return createOperationStateInThePast(request);
+    }
+
+    private String createDeprovisionOperationStateInThePast() {
+        DeleteServiceInstanceRequest request = aDeleteServiceInstanceRequest();
+        return createOperationStateInThePast(request);
+    }
+
+    private String createOperationStateInThePast(ServiceBrokerRequest request) {
+        PipelineCompletionTracker.PipelineOperationState pipelineOperationState = new PipelineCompletionTracker.PipelineOperationState(request, "2018-01-22T14:00:00.000Z");
 
         //when
         @SuppressWarnings("unchecked") PipelineCompletionTracker tracker = new PipelineCompletionTracker(Clock.systemUTC(), 1200L, mock(OsbProxy.class));
@@ -202,6 +255,16 @@ public class PipelineCompletionTrackerTest {
                 new ServiceDefinition(),
                 true);
     }
+
+    private UpdateServiceInstanceRequest anUpdateServiceInstanceRequest() {
+        // Given an incoming delete request
+        return new UpdateServiceInstanceRequest(
+                "service_id",
+                "plan_id",
+                new HashMap<>())
+                .withServiceInstanceId("instance_id");
+    }
+
 
     private void generateSampleManifest() throws IOException {
         Path serviceInstanceDir = StructureGeneratorHelper.generatePath(workDir,

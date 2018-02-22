@@ -24,13 +24,15 @@ import static org.mockito.Matchers.any;
 public class ProcessorChainServiceInstanceServiceTest {
 
     @Mock
+    private
     ProcessorChain processorChain;
 
     @InjectMocks
+    private
     ProcessorChainServiceInstanceService processorChainServiceInstanceService;
 
     @Test
-    public void should_chain_create_processors_on_service_instance_creation() throws Exception {
+    public void chains_create_processors_on_service_instance_creation() throws Exception {
         //given
         CreateServiceInstanceRequest request = new CreateServiceInstanceRequest();
 
@@ -48,7 +50,7 @@ public class ProcessorChainServiceInstanceServiceTest {
     }
 
    @Test(expected = RuntimeException.class)
-    public void create_method_logs_and_rethrows_exceptions() throws Exception {
+    public void creates_method_logs_and_rethrows_exceptions() throws Exception {
        RuntimeException confidentialException = new RuntimeException("unable to push at https://login:pwd@mygit.site.org/secret_path", new IOException());
        CreateServiceInstanceRequest request = new CreateServiceInstanceRequest();
        //given a processor throws an exception
@@ -61,7 +63,7 @@ public class ProcessorChainServiceInstanceServiceTest {
     }
 
     @Test
-    public void should_filter_internal_exceptions_details() {
+    public void filters_internal_exceptions_details() {
         //given an exception with confidential internal data thrown
         IOException rootCause = new IOException();
         RuntimeException confidentialException = new RuntimeException("unable to push at https://login:pwd@mygit.site.org/secret_path", rootCause);
@@ -77,7 +79,7 @@ public class ProcessorChainServiceInstanceServiceTest {
     }
 
     @Test
-    public void should_not_filter_user_facing_exception() {
+    public void does_not_filter_user_facing_exception() {
 
         //given an exception with confidential internal data thrown
         RuntimeException safeException = new UserFacingRuntimeException("invalid parameter param with value. Param should only contain alphanumerics");
@@ -91,7 +93,7 @@ public class ProcessorChainServiceInstanceServiceTest {
     }
 
     @Test
-    public void should_use_create_response_from_context_when_set() {
+    public void uses_create_response_from_context_when_set() {
         CreateServiceInstanceRequest request = new CreateServiceInstanceRequest();
 
         //given a processor that generates a response into the context
@@ -116,7 +118,7 @@ public class ProcessorChainServiceInstanceServiceTest {
     }
 
     @Test
-    public void should_chain_getLastCreateOperation_processors() throws Exception {
+    public void chains_getLastCreateOperation_processors() throws Exception {
         //given
         GetLastServiceOperationRequest request = new GetLastServiceOperationRequest("instanceId");
 
@@ -136,7 +138,7 @@ public class ProcessorChainServiceInstanceServiceTest {
     }
 
     @Test
-    public void should_use_last_create_response_from_context_when_set() {
+    public void uses_last_create_response_from_context_when_set() {
         //given
         GetLastServiceOperationRequest request = new GetLastServiceOperationRequest("instanceId");
 
@@ -163,7 +165,7 @@ public class ProcessorChainServiceInstanceServiceTest {
 
 
     @Test
-    public void should_chain_delete_processors_on_service_instance_deletion() throws Exception {
+    public void chains_delete_processors_on_service_instance_deletion() throws Exception {
         //given
         DeleteServiceInstanceRequest request = new DeleteServiceInstanceRequest("instance_id",
                 "service_id",
@@ -186,7 +188,7 @@ public class ProcessorChainServiceInstanceServiceTest {
     }
 
     @Test
-    public void should_use_delete_response_from_context_when_set() {
+    public void uses_delete_response_from_context_when_set() {
         //given
         DeleteServiceInstanceRequest request = new DeleteServiceInstanceRequest("instance_id",
                 "service_id",
@@ -217,7 +219,7 @@ public class ProcessorChainServiceInstanceServiceTest {
     }
 
     @Test
-    public void should_chain_update_processors_on_service_instance_update() throws Exception {
+    public void chains_update_processors_on_service_instance_update() throws Exception {
         //given
         UpdateServiceInstanceRequest request = new UpdateServiceInstanceRequest(
                 "service_id",
@@ -239,7 +241,7 @@ public class ProcessorChainServiceInstanceServiceTest {
     }
 
     @Test
-    public void should_use_update_response_from_context_when_set() {
+    public void uses_update_response_from_context_when_set() {
         //given
         UpdateServiceInstanceRequest request = new UpdateServiceInstanceRequest(
                 "service_id",

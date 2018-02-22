@@ -2,8 +2,12 @@
 - Implement OSB provision delegation to nested cassandra broker
    - refine PipelineCompletionTracker to call OSB client delete/bind/unbind
       - delegate delete request in PipelineCompletionTracker to OSBProxy
-         - CassandraProcessor.unprovision is now async and returns operation state
-         - CompletionTracker handles async delete request & delegates to osb proxy
+         - fix content-type issue returned by cassandra broker: returning text/plain response on delete 200 response and triggering feign client parsing errors
+            - Could not extract response: no suitable HttpMessageConverter found for response type [?] and content type [text/plain;charset=UTF-8]
+            - see if okhttpclient can force/transform received header to application/json;charset=UTF-8
+            - modify the HttpMessage converter to support text/plain https://stackoverflow.com/questions/21854369/no-suitable-httpmessageconverter-found-for-response-type
+               - modify existing spring  
+             
          - Rationale & discussion to be moved to design doc:
              - Right now we could synchronously execute osbDelegate.unprovision() + delete manifest and return sync successfull delete
              - However, this makes it asymetrical and more work
@@ -12,6 +16,12 @@
                 - when/if COA implements sync deprovision 
     - core framework: create/delete service binding
     - core framework: update service 
+
+- refine CassandraServiceProvisionningTest to use OSB client instead of raw rest assured
+   - CassandraServiceProvisionningTest rest-assured based client which is not compliant w.r.t. "X-Broker-API-Originating-Identity" mandatory header.
+   - clean up associated workaround in OsbClientFeignConfig 
+- clean up maven dependency management for wiremock: factor out version across modules
+
 
 - OSBProxy future refinements     
      - use wiremock to protect ourselves against feign exception formatting changes that would break OsbProxyImpl parsing

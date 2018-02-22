@@ -17,6 +17,7 @@
 
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.osbclient;
 
+import com.google.gson.Gson;
 import feign.Feign;
 import feign.Logger;
 import feign.okhttp.OkHttpClient;
@@ -25,6 +26,13 @@ import org.springframework.cloud.netflix.feign.FeignClientsConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
+import org.springframework.http.MediaType;
+import org.springframework.http.converter.json.GsonHttpMessageConverter;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import static org.springframework.http.MediaType.TEXT_PLAIN;
 
 /**
  * Overrides  {@link <a href="http://projects.spring.io/spring-cloud/spring-cloud.html#spring-cloud-feign">Feign</a>} Defaults
@@ -46,6 +54,23 @@ public class OsbClientFeignConfig {
         return new Slf4jLogger();
     }
 
+    /**
+     * Override default Gson message converter media type support to support
+     * legacy servers sometimes retuning text/plain media type.
+     * This overrides spring boot default, see https://github.com/spring-projects/spring-boot/blob/3fddfee65c901d2aade6eb8a63781b766657d664/spring-boot-project/spring-boot-autoconfigure/src/main/java/org/springframework/boot/autoconfigure/http/GsonHttpMessageConvertersConfiguration.java#L50
+     */
+    @Bean
+    public GsonHttpMessageConverter gsonHttpMessageConverter(Gson gson) {
+        GsonHttpMessageConverter converter = new GsonHttpMessageConverter();
+        converter.setGson(gson);
+        List<MediaType> supportedMediaTypes = converter.getSupportedMediaTypes();
+        if (! supportedMediaTypes.contains(TEXT_PLAIN)) {
+            supportedMediaTypes = new ArrayList<>(supportedMediaTypes);
+            supportedMediaTypes.add(TEXT_PLAIN);
+            converter.setSupportedMediaTypes(supportedMediaTypes);
+        }
+        return converter;
+    }
     @Bean
     Feign.Builder customFeignBuilder(okhttp3.OkHttpClient customOkHttpClient) {
         return Feign.builder().client(new OkHttpClient(customOkHttpClient));

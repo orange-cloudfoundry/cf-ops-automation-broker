@@ -1,0 +1,28 @@
+{
+  "id" : "bc831e8a-5039-4b8f-b7b8-491753f3ebc4",
+  "name" : "v2_service_instances_111",
+  "request" : {
+    "url" : "/v2/service_instances/111?service_id=cassandra-service-broker&plan_id=cassandra-plan&accepts_incomplete=false",
+    "method" : "DELETE"
+  },
+  "response" : {
+    "status" : 200,
+    "body" : "{}",
+    "headers" : {
+      "Cache-Control" : "no-cache, no-store, max-age=0, must-revalidate",
+      "Content-Type" : "text/plain;charset=UTF-8",
+      "Date" : "Thu, 22 Feb 2018 10:02:49 GMT",
+      "Expires" : "0",
+      "Pragma" : "no-cache",
+      "Strict-Transport-Security" : "max-age=31536000 ; includeSubDomains",
+      "X-Application-Context" : "application:5000",
+      "X-Content-Type-Options" : "nosniff",
+      "X-Frame-Options" : "DENY",
+      "X-Vcap-Request-Id" : "5cd09ec3-a29a-4920-590d-63453c242f09",
+      "X-Xss-Protection" : "1; mode=block"
+    }
+  },
+  "uuid" : "bc831e8a-5039-4b8f-b7b8-491753f3ebc4",
+  "persistent" : true,
+  "insertionIndex" : 7
+}

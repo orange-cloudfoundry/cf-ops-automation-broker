@@ -2,6 +2,9 @@ package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.osbclien
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.tomakehurst.wiremock.common.Slf4jNotifier;
+import com.github.tomakehurst.wiremock.junit.WireMockRule;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,6 +19,7 @@ import org.springframework.util.Base64Utils;
 import java.util.HashMap;
 import java.util.Map;
 
+import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
 import static org.fest.assertions.Assertions.assertThat;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 import static org.springframework.cloud.servicebroker.model.CloudFoundryContext.CLOUD_FOUNDRY_PLATFORM;
@@ -37,7 +41,7 @@ public class OsbClientTestApplicationTest {
 
 
     @Test
-    public void constructs_feign_clients() throws JsonProcessingException {
+    public void feign_client_is_compatible_with_current_spring_cloud_service_broker_library() throws JsonProcessingException {
         //given
         String url = "http://127.0.0.1:" + port;
         String user = "user";
@@ -164,6 +168,39 @@ public class OsbClientTestApplicationTest {
         assertThat(deleteInstanceResponse.getBody()).isNotNull();
     }
 
+
+    @Rule
+    public WireMockRule wireMockRule = new WireMockRule(wireMockConfig()
+            .port(8088)
+            .httpsPort(8089)
+            .notifier(new Slf4jNotifier(true))
+    );
+
+    @Test
+    public void feign_client_is_compatible_with_previous_spring_cloud_service_broker_library() throws JsonProcessingException {
+        //given
+        String url = "https://127.0.0.1:" + 8089;
+        String user = "user";
+        String password = "secret";
+
+        ServiceInstanceServiceClient serviceInstanceServiceClient= clientFactory.getClient(url, user, password, ServiceInstanceServiceClient.class);
+
+//        /v2/service_instances/111?service_id=cassandra-service-broker&plan_id=cassandra-plan&accepts_incomplete
+
+
+        //when
+        @SuppressWarnings("unchecked")
+        ResponseEntity<DeleteServiceInstanceResponse> deleteInstanceResponse = (ResponseEntity<DeleteServiceInstanceResponse>) serviceInstanceServiceClient.deleteServiceInstance(
+                "111",
+                "cassandra-service-broker",
+                "cassandra-plan",
+                false,
+                null,
+                buildOriginatingIdentityHeader("a_user_guid", CLOUD_FOUNDRY_PLATFORM));
+        assertThat(deleteInstanceResponse.getStatusCode()).isEqualTo(OK);
+        assertThat(deleteInstanceResponse.getBody()).isNotNull();
+
+    }
 
     private static final String ORIGINATING_USER_KEY = "user_id";
 

@@ -259,11 +259,11 @@ public class CassandraServiceProvisionningTest {
 
         polls_last_operation(operation, HttpStatus.SC_OK, "succeeded", "");
 
-            String deleteOperation = delete_a_service_instance();
+        String deleteOperation = delete_a_service_instance();
 
-            polls_last_operation(deleteOperation,
-                    HttpStatus.SC_GONE, //async delete expects a 410 status
-                    "succeeded", "succeeded");
+        polls_last_operation(deleteOperation,
+                HttpStatus.SC_GONE, //async delete expects a 410 status
+                "succeeded", "succeeded");
     }
 
 

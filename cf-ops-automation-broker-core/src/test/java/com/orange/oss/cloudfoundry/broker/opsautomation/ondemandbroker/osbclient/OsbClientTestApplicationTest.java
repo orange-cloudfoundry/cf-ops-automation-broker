@@ -242,7 +242,6 @@ public class OsbClientTestApplicationTest {
         thrown.expectMessage("status 500 reading ServiceInstanceServiceClient#createServiceInstance(String,boolean,String,String,CreateServiceInstanceRequest); content:\n" +
                 "{\"description\":\"Keyspace ks111 already exists\"}");
 
-
         @SuppressWarnings("unchecked")
         ResponseEntity<CreateServiceInstanceResponse> createResponse = (ResponseEntity<CreateServiceInstanceResponse>) serviceInstanceServiceClient.createServiceInstance(
                 "111",

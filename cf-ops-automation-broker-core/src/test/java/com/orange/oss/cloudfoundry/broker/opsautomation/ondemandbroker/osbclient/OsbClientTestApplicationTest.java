@@ -4,8 +4,10 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.tomakehurst.wiremock.common.Slf4jNotifier;
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
+import feign.FeignException;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.embedded.LocalServerPort;
@@ -23,6 +25,7 @@ import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMoc
 import static org.fest.assertions.Assertions.assertThat;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 import static org.springframework.cloud.servicebroker.model.CloudFoundryContext.CLOUD_FOUNDRY_PLATFORM;
+import static org.springframework.http.HttpStatus.ACCEPTED;
 import static org.springframework.http.HttpStatus.CREATED;
 import static org.springframework.http.HttpStatus.OK;
 
@@ -197,8 +200,60 @@ public class OsbClientTestApplicationTest {
                 false,
                 null,
                 buildOriginatingIdentityHeader("a_user_guid", CLOUD_FOUNDRY_PLATFORM));
+
+        //then
         assertThat(deleteInstanceResponse.getStatusCode()).isEqualTo(OK);
         assertThat(deleteInstanceResponse.getBody()).isNotNull();
+
+    }
+
+    @Rule
+    public ExpectedException thrown = ExpectedException.none();
+
+
+    @Test
+    public void feign_client_handles_server_500_response() throws JsonProcessingException {
+        //given
+        String url = "https://127.0.0.1:" + 8089;
+        String user = "user";
+        String password = "secret";
+
+        ServiceInstanceServiceClient serviceInstanceServiceClient= clientFactory.getClient(url, user, password, ServiceInstanceServiceClient.class);
+
+        //when
+        Map<String, Object> cfContextProps = new HashMap<>();
+        cfContextProps.put("user_id", "a_user_guid");
+        cfContextProps.put("organization_guid", "org_guid");
+        cfContextProps.put("space_guid", "space_guid");
+        Map<String, Object> serviceInstanceParams= new HashMap<>();
+
+        Context cfContext = new Context(CLOUD_FOUNDRY_PLATFORM, cfContextProps);
+        CreateServiceInstanceRequest createServiceInstanceRequest = new CreateServiceInstanceRequest(
+                "cassandra-service-broker",
+                "cassandra-plan",
+                "org_id",
+                "space_id",
+                cfContext,
+                serviceInstanceParams
+        );
+
+        //Then expect
+        thrown.expect(FeignException.class);
+        thrown.expectMessage("status 500 reading ServiceInstanceServiceClient#createServiceInstance(String,boolean,String,String,CreateServiceInstanceRequest); content:\n" +
+                "{\"description\":\"Keyspace ks111 already exists\"}");
+
+
+        @SuppressWarnings("unchecked")
+        ResponseEntity<CreateServiceInstanceResponse> createResponse = (ResponseEntity<CreateServiceInstanceResponse>) serviceInstanceServiceClient.createServiceInstance(
+                "111",
+                false,
+                null,
+                buildOriginatingIdentityHeader("a_user_guid", CLOUD_FOUNDRY_PLATFORM),
+                createServiceInstanceRequest);
+
+        //then
+        assertThat(createResponse.getStatusCode()).isEqualTo(ACCEPTED);
+        assertThat(createResponse.getBody()).isNotNull();
 
     }
 

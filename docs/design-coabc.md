@@ -376,36 +376,16 @@ CC -> COAB: get last operation https://github.com/openservicebrokerapi/servicebr
 
 # Credhub processor behaviour
 
-# Osb processor behaviour
+# Osb Proxy
 
+The Osb client isn't following the processor model and is instead a POJO invoked by CassandraProcessor
 
-* waits for a key in context to start in any processorchain method (regardless of whether create, bind, unbind, delete)
-    * catalog-request: null value
-        * catalog-response: a org.springframework.cloud.servicebroker.model.Catalog object
-    * create-service-instance: a spring-cloud-cloudfoundry-service-broker object
-    * update-service-instance
-    * delete-service-instance
-    * create-service-binding
-    * delete-service-binding
-* maintains current state in context (for credhub processor to persist it)
-* polls service instance creation
-* pushes response in the context
-
-- osb-processor: for any pre method  
-    - reads
-        - credhub key: "credhub_cassandra_deployment"
-            - state=
-                - null
-                - creating
-                - created
-        - operation=mysql-provided-operation (i.e. the state usually persisted by the CC, as part of OSB, see https://github    - writes
-        - "credhub_osb-processor-serviceinstance_state"
-            - state=
-                - null
-                - creating
-                - created
-        - operation=mysql-provided-operation (i.e. the state usually persisted by the CC, as part of OSB, see https://github.com/openservicebrokerapi/servicebroker/blob/master/spec.md#parameters )
-
+- Right now, CassandraProcessor handles delete asynchronous, whereas it could have been synchronous:
+        - we could synchronously execute osbDelegate.unprovision() + delete manifest and return sync successfull delete
+        - However, this makes it asymetrical and more work
+        - May be useful in the future when we will really need async delete support with COA
+            - when refactoring and merging with TF modules
+            - when/if COA implements sync deprovision 
 
 # faq
 

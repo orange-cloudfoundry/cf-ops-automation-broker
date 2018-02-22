@@ -1,21 +1,9 @@
        
 - Implement OSB provision delegation to nested cassandra broker
-   - refine PipelineCompletionTracker to call OSB client delete/bind/unbind
-      - delegate delete request in PipelineCompletionTracker to OSBProxy
-         - fix content-type issue returned by cassandra broker: returning text/plain response on delete 200 response and triggering feign client parsing errors
-            - Could not extract response: no suitable HttpMessageConverter found for response type [?] and content type [text/plain;charset=UTF-8]
-            - see if okhttpclient can force/transform received header to application/json;charset=UTF-8
-            - modify the HttpMessage converter to support text/plain https://stackoverflow.com/questions/21854369/no-suitable-httpmessageconverter-found-for-response-type
-               - modify existing spring  
-             
-         - Rationale & discussion to be moved to design doc:
-             - Right now we could synchronously execute osbDelegate.unprovision() + delete manifest and return sync successfull delete
-             - However, this makes it asymetrical and more work
-             - When would we need async delete support with COA ?
-                - when refactoring and merging with TF modules
-                - when/if COA implements sync deprovision 
-    - core framework: create/delete service binding
-    - core framework: update service 
+   - refine PipelineCompletionTracker to call OSB client bind/unbind
+     - core framework: create/delete service binding
+     - delegate delete request in PipelineCompletionTracker to OSBProxy
+
 
 - refine CassandraServiceProvisionningTest to use OSB client instead of raw rest assured
    - CassandraServiceProvisionningTest rest-assured based client which is not compliant w.r.t. "X-Broker-API-Originating-Identity" mandatory header.
@@ -24,19 +12,16 @@
 
 
 - OSBProxy future refinements     
-     - use wiremock to protect ourselves against feign exception formatting changes that would break OsbProxyImpl parsing
      - strip out some arbitrary params
+     - better map service plans
+     - modularize mapping as injected strategies
  
 - Refine tarball automatic deployment to filter on the current cassandra PR branch name
 
 - add support for returning templated dashboard in Cassandra processor provision responses    
 
 
-- Refine timeout implementation: support configuring timeout in the broker (currently hardcoded) [DONE]
-    - refactor test to properly assert timeout first [DONE]
-        - remove Json litteral and manual date editing ?  
-        - refactor Time support to manipulate duration instead of dates
-
+- core framework: update service 
 
 
 --------------------------------

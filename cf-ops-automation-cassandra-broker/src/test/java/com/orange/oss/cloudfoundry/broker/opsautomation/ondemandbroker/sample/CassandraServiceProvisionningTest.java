@@ -1,8 +1,8 @@
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.sample;
 
 
-import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.WireMock;
+import com.github.tomakehurst.wiremock.common.Slf4jNotifier;
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
 import com.github.tomakehurst.wiremock.recording.SnapshotRecordResult;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.GitProcessor;
@@ -109,15 +109,20 @@ public class CassandraServiceProvisionningTest {
     }
 
     @Rule
-    public WireMockRule wireMockRule = new WireMockRule(wireMockConfig().port(8088).httpsPort(8089));
+    public WireMockRule wireMockRule = new WireMockRule(wireMockConfig()
+            .port(8088)
+            .httpsPort(8089)
+            .notifier(new Slf4jNotifier(true))
+    );
+
 
 
     @Before
     public void setUpWireMockRecording() {
         if (isWiremockRecordingEnabled()) {
             WireMock.startRecording(preprodBrokerUrlToRecord);
-            assertThat(preprodBrokerPassword).isNullOrEmpty();
-            assertThat(preprodBrokerUser).isNullOrEmpty();
+            assertThat(preprodBrokerPassword).isNotEmpty();
+            assertThat(preprodBrokerUser).isNotEmpty();
             osbProxy.setOsbDelegatePassword(preprodBrokerPassword);
             osbProxy.setOsbDelegateUser(preprodBrokerUser);
         }
@@ -247,17 +252,18 @@ public class CassandraServiceProvisionningTest {
     @Test
     public void supports_crud_lifecycle() throws IOException {
         String operation = create_async_service_instance();
-        @SuppressWarnings("unchecked") PipelineCompletionTracker tracker = new PipelineCompletionTracker(clock, osbProxyProperties.getMaxExecutionDurationSeconds(), Mockito.mock(OsbProxy.class));
 
         polls_last_operation(operation, HttpStatus.SC_OK, "in progress", "Creation is in progress");
-
 
         simulateManifestGeneration(secretsGitProcessor);
 
         polls_last_operation(operation, HttpStatus.SC_OK, "succeeded", "");
 
-//        delete_a_service_instance();
-//        polls_last_operation("delete", 410, "succeeded", "succeeded");
+            String deleteOperation = delete_a_service_instance();
+
+            polls_last_operation(deleteOperation,
+                    HttpStatus.SC_GONE, //async delete expects a 410 status
+                    "succeeded", "succeeded");
     }
 
 
@@ -296,18 +302,23 @@ public class CassandraServiceProvisionningTest {
                 .body(containsString(secondExpectedKeyword)); //hard coded start date way in the past
     }
 
-    public void delete_a_service_instance() {
+    public String delete_a_service_instance() {
 
-        given()
+        @SuppressWarnings("UnnecessaryLocalVariable")
+        String operation = given()
                 .basePath("/v2")
                 .param("service_id", "cassandra-ondemand-service")
                 .param("plan_id", "cassandra-ondemand-plan")
                 .param("accepts_incomplete", true).
-                when()
+                        when()
                 .delete("/service_instances/{id}", SERVICE_INSTANCE_ID).
-                then()
-                .statusCode(HttpStatus.SC_ACCEPTED);
+                        then()
+                .statusCode(HttpStatus.SC_ACCEPTED)
+                .body("operation", not(isEmptyString()))
+                .extract().
+                        path("operation");
 
+        return operation;
     }
 
 

@@ -116,7 +116,8 @@ public class OsbProxyImpl<Q extends ServiceBrokerRequest, P extends AsyncService
         }
         return new GetLastServiceOperationResponse()
                 .withOperationState(operationState)
-                .withDescription(description);
+                .withDescription(description)
+                .withDeleteOperation(false);
     }
 
 
@@ -126,6 +127,7 @@ public class OsbProxyImpl<Q extends ServiceBrokerRequest, P extends AsyncService
         if (deprovisionException != null) {
             operationState = OperationState.FAILED;
             description = parseReponseBody(deprovisionException.getMessage()).getDescription();
+            logger.info("inner broker deprovision request rejected:" + deprovisionException);
         } else {
             if (delegatedResponse.getStatusCode() == HttpStatus.OK) {
                 operationState = OperationState.SUCCEEDED;
@@ -137,7 +139,8 @@ public class OsbProxyImpl<Q extends ServiceBrokerRequest, P extends AsyncService
         }
         return new GetLastServiceOperationResponse()
                 .withOperationState(operationState)
-                .withDescription(description);
+                .withDescription(description)
+                .withDeleteOperation(true);
     }
 
     ResponseEntity<CreateServiceInstanceResponse> delegateProvision(CreateServiceInstanceRequest request, ServiceInstanceServiceClient serviceInstanceServiceClient) {

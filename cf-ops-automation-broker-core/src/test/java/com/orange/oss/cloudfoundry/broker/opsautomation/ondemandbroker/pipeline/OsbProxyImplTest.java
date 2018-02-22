@@ -185,6 +185,7 @@ public class OsbProxyImplTest {
 
         assertThat(mappedResponse.getState()).isSameAs(OperationState.SUCCEEDED);
         assertThat(mappedResponse.getDescription()).isNull();
+        assertThat(mappedResponse.isDeleteOperation()).isTrue();
     }
 
 
@@ -204,6 +205,7 @@ public class OsbProxyImplTest {
 
         assertThat(mappedResponse.getState()).isSameAs(OperationState.FAILED);
         assertThat(mappedResponse.getDescription()).isEqualTo("No such service instance 1234");
+        assertThat(mappedResponse.isDeleteOperation()).isTrue();
     }
 
 
@@ -223,6 +225,7 @@ public class OsbProxyImplTest {
 
         assertThat(mappedResponse.getState()).isSameAs(OperationState.SUCCEEDED);
         assertThat(mappedResponse.getDescription()).isNull();
+        assertThat(mappedResponse.isDeleteOperation()).isFalse();
     }
 
     @Test
@@ -241,6 +244,7 @@ public class OsbProxyImplTest {
 
         assertThat(mappedResponse.getState()).isSameAs(OperationState.FAILED);
         assertThat(mappedResponse.getDescription()).isEqualTo("Missing required fields: keyspace param");
+        assertThat(mappedResponse.isDeleteOperation()).isFalse();
     }
 
     @Test

@@ -210,25 +210,6 @@ public class OsbProxyImplTest {
     }
 
 
-    @Test
-    public void maps_osb_client_exceptions_as_generic_message() {
-        //Given
-        GetLastServiceOperationResponse originalResponse = aPreviousOnGoingOperation();
-        Response errorResponse = Response.builder()
-                .status(HttpStatus.GONE.value())
-                .headers(new HashMap<>())
-                .body("{\"description\":\"No such service instance 1234\"}", Charset.defaultCharset())
-                .build();
-        DecodeException decodeException = new DecodeException("Could not extract response: no suitable HttpMessageConverter found for response type [?] and content type [text/plain;charset=UTF-8]");
-
-        //when
-        GetLastServiceOperationResponse mappedResponse = osbProxy.mapDeprovisionResponse(originalResponse, null, decodeException, aCatalog());
-
-        assertThat(mappedResponse.getState()).isSameAs(OperationState.FAILED);
-        assertThat(mappedResponse.getDescription()).isEqualTo("Internal error, please contact administrator");
-        assertThat(mappedResponse.isDeleteOperation()).isTrue();
-    }
-
 
     @Test
     public void maps_successull_provision_response() {
@@ -280,6 +261,17 @@ public class OsbProxyImplTest {
         OsbProxyImpl.ErrorMessage errorMessage = osbProxy.parseReponseBody(provisionException);
 
         assertThat(errorMessage.getDescription()).isEqualTo("Missing required fields: keyspace param");
+    }
+
+    @Test
+    public void parses_osb_client_exceptions_into_generic_message() {
+        //Given
+        DecodeException decodeException = new DecodeException("Could not extract response: no suitable HttpMessageConverter found for response type [?] and content type [text/plain;charset=UTF-8]");
+
+        //when
+        String description = osbProxy.parseReponseBody(decodeException).getDescription();
+
+        assertThat(description).isEqualTo("Internal error, please contact administrator");
     }
 
     @Test

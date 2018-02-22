@@ -104,7 +104,7 @@ public class OsbProxyImpl<Q extends ServiceBrokerRequest, P extends AsyncService
         String description = null;
         if (provisionException != null) {
             operationState = OperationState.FAILED;
-            description = parseReponseBody(provisionException.getMessage()).getDescription();
+            description = parseReponseBody(provisionException).getDescription();
         } else {
             if (delegatedResponse.getStatusCode() == HttpStatus.CREATED) {
                 operationState = OperationState.SUCCEEDED;
@@ -126,7 +126,7 @@ public class OsbProxyImpl<Q extends ServiceBrokerRequest, P extends AsyncService
         String description = null;
         if (deprovisionException != null) {
             operationState = OperationState.FAILED;
-            description = parseReponseBody(deprovisionException.getMessage()).getDescription();
+            description = parseReponseBody(deprovisionException).getDescription();
             logger.info("inner broker deprovision request rejected:" + deprovisionException);
         } else {
             if (delegatedResponse.getStatusCode() == HttpStatus.OK) {
@@ -254,20 +254,25 @@ public class OsbProxyImpl<Q extends ServiceBrokerRequest, P extends AsyncService
         return clientFactory.getClient(brokerUrl, osbDelegateUser, osbDelegatePassword, ServiceInstanceServiceClient.class);
     }
 
-    ErrorMessage parseReponseBody(@SuppressWarnings("SameParameterValue") String json)  {
-        int jsonStart = json.lastIndexOf(FEIGN_MESSAGE_SEPARATOR);
+    ErrorMessage parseReponseBody(FeignException provisionException)  {
+        String exceptionMessage = provisionException.getMessage();
+        int jsonStart = exceptionMessage.lastIndexOf(FEIGN_MESSAGE_SEPARATOR);
         if (jsonStart != -1) {
             //found the delimiter, trim it
             jsonStart += FEIGN_MESSAGE_SEPARATOR.length();
         } else {
             //try another weaker delimiter in case feign lib changed behavior in between
-            jsonStart = json.indexOf("{");
+            jsonStart = exceptionMessage.indexOf("{");
         }
+        ErrorMessage errorMessage;
         if (jsonStart == -1) {
-            throw new RuntimeException("unable to find nested json string within: " + json);
+            logger.info("unable to find nested user-facing description json string within: " + exceptionMessage + ".  using raw exception message as descr");
+            errorMessage = new ErrorMessage("Internal error, please contact administrator");
+        } else {
+            String json = exceptionMessage.substring(jsonStart);
+            errorMessage = gson.fromJson(json, ErrorMessage.class);
         }
-        json = json.substring(jsonStart);
-        return gson.fromJson(json, ErrorMessage.class);
+        return errorMessage;
     }
 
     /**
@@ -277,7 +282,7 @@ public class OsbProxyImpl<Q extends ServiceBrokerRequest, P extends AsyncService
     static class ErrorMessage {
         private final String description;
 
-        public ErrorMessage(String description) {
+        ErrorMessage(String description) {
             this.description = description;
         }
 

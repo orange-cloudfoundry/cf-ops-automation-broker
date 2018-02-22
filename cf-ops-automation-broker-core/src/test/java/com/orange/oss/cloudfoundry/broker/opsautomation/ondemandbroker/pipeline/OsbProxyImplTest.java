@@ -5,6 +5,7 @@ import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.osbclient
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.osbclient.ServiceInstanceServiceClient;
 import feign.FeignException;
 import feign.Response;
+import feign.codec.DecodeException;
 import org.junit.Test;
 import org.springframework.cloud.servicebroker.model.*;
 import org.springframework.http.HttpStatus;
@@ -190,7 +191,7 @@ public class OsbProxyImplTest {
 
 
     @Test
-    public void maps_rejected_deprovision_response() {
+    public void maps_rejected_deprovision_user_facing_responses() {
         //Given
         GetLastServiceOperationResponse originalResponse = aPreviousOnGoingOperation();
         Response errorResponse = Response.builder()
@@ -205,6 +206,26 @@ public class OsbProxyImplTest {
 
         assertThat(mappedResponse.getState()).isSameAs(OperationState.FAILED);
         assertThat(mappedResponse.getDescription()).isEqualTo("No such service instance 1234");
+        assertThat(mappedResponse.isDeleteOperation()).isTrue();
+    }
+
+
+    @Test
+    public void maps_osb_client_exceptions_as_generic_message() {
+        //Given
+        GetLastServiceOperationResponse originalResponse = aPreviousOnGoingOperation();
+        Response errorResponse = Response.builder()
+                .status(HttpStatus.GONE.value())
+                .headers(new HashMap<>())
+                .body("{\"description\":\"No such service instance 1234\"}", Charset.defaultCharset())
+                .build();
+        DecodeException decodeException = new DecodeException("Could not extract response: no suitable HttpMessageConverter found for response type [?] and content type [text/plain;charset=UTF-8]");
+
+        //when
+        GetLastServiceOperationResponse mappedResponse = osbProxy.mapDeprovisionResponse(originalResponse, null, decodeException, aCatalog());
+
+        assertThat(mappedResponse.getState()).isSameAs(OperationState.FAILED);
+        assertThat(mappedResponse.getDescription()).isEqualTo("Internal error, please contact administrator");
         assertThat(mappedResponse.isDeleteOperation()).isTrue();
     }
 
@@ -248,9 +269,15 @@ public class OsbProxyImplTest {
     }
 
     @Test
-    public void parses_error_response_body() {
-        OsbProxyImpl.ErrorMessage errorMessage = osbProxy.parseReponseBody("status 422 reading ServiceInstanceServiceClient#createServiceInstance(String,boolean,String,String,CreateServiceInstanceRequest); content:\n" +
-                "{\"description\":\"Missing required fields: keyspace param\"}");
+    public void parses_error_response_description_body() {
+        Response errorReponse = Response.builder()
+                .status(HttpStatus.UNPROCESSABLE_ENTITY.value())
+                .headers(new HashMap<>())
+                .body("{\"description\":\"Missing required fields: keyspace param\"}", Charset.defaultCharset())
+                .build();
+        FeignException provisionException = FeignException.errorStatus("ServiceInstanceServiceClient#createServiceInstance(String,boolean,String,String,CreateServiceInstanceRequest)", errorReponse);
+
+        OsbProxyImpl.ErrorMessage errorMessage = osbProxy.parseReponseBody(provisionException);
 
         assertThat(errorMessage.getDescription()).isEqualTo("Missing required fields: keyspace param");
     }

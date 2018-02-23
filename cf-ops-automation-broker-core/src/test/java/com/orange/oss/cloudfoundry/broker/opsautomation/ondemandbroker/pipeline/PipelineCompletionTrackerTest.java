@@ -187,7 +187,6 @@ public class PipelineCompletionTrackerTest {
 
         //Then
         assertThat(response.getState()).isEqualTo(OperationState.IN_PROGRESS);
-        assertThat(response.getDescription()).describedAs("Creation is in progress");
     }
 
 

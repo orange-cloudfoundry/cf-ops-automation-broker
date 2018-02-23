@@ -91,7 +91,6 @@ public class CassandraProcessorTest {
 
         //Given a mock behaviour (in progress state)
         GetLastServiceOperationResponse expectedResponse = new GetLastServiceOperationResponse();
-        expectedResponse.withDescription("Creation is in progress");
         expectedResponse.withOperationState(OperationState.IN_PROGRESS);
         PipelineCompletionTracker tracker = mock(PipelineCompletionTracker.class);
         when(tracker.getDeploymentExecStatus(any(Path.class), eq(SERVICE_INSTANCE_ID), eq(CassandraProcessorConstants.OSB_OPERATION_CREATE), any(GetLastServiceOperationRequest.class))).thenReturn(expectedResponse);

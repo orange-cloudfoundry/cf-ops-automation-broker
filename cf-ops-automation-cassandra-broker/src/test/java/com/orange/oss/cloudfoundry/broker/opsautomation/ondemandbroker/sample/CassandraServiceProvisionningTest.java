@@ -253,7 +253,7 @@ public class CassandraServiceProvisionningTest {
     public void supports_crud_lifecycle() throws IOException {
         String operation = create_async_service_instance();
 
-        polls_last_operation(operation, HttpStatus.SC_OK, "in progress", "Creation is in progress");
+        polls_last_operation(operation, HttpStatus.SC_OK, "in progress", "");
 
         simulateManifestGeneration(secretsGitProcessor);
 

@@ -4,12 +4,6 @@
      - core framework: create/delete service binding
      - delegate delete request in PipelineCompletionTracker to OSBProxy
 
-- refine DeleteServiceInstance message
-    Showing status of last operation from service cassandra-instance32733...
-    
-    status:    delete in progress
-    message:   Creation is in progress
-
 - fix excessive prereqs checking for delete service instance: 
     - when delete request targets a failed service instance, manifest is missing 
 

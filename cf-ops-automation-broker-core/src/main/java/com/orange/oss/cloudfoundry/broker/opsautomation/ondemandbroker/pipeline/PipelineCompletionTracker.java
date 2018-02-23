@@ -86,7 +86,6 @@ public class PipelineCompletionTracker {
                 response.withDescription("Execution timeout after " + elapsedTimeSecsSinceStartRequestDate + "s max is " + maxExecutionDurationSeconds);
             } else {
                 response.withOperationState(OperationState.IN_PROGRESS);
-                response.withDescription("Creation is in progress");
             }
         }
         return response;

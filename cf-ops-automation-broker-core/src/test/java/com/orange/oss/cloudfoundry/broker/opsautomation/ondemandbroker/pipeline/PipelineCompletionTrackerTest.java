@@ -5,6 +5,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.rules.TemporaryFolder;
+import org.mockito.Mockito;
 import org.springframework.cloud.servicebroker.model.*;
 
 import java.io.File;
@@ -120,19 +121,54 @@ public class PipelineCompletionTrackerTest {
 
     @Test
     public void delegates_to_osb_proxy_when_deprovision_completes_with_manifest_being_present() throws IOException {
-        //Given an existing manifest file
-        generateSampleManifest();
-        String jsonPipelineOperationState = createDeprovisionOperationStateInThePast();
+        DeleteServiceInstanceRequest request = aDeleteServiceInstanceRequest();
+
         //Given a proxy that returns a custom response message
         GetLastServiceOperationResponse proxiedResponse = new GetLastServiceOperationResponse();
         proxiedResponse.withOperationState(OperationState.SUCCEEDED);
         proxiedResponse.withDescription("osb proxied");
-
         when(createServiceInstanceOsbProxy.delegateDeprovision(any(), any(), any())).thenReturn(proxiedResponse);
 
-
         //When
-        GetLastServiceOperationResponse response = tracker.getDeploymentExecStatus(workDir, SERVICE_INSTANCE_ID, jsonPipelineOperationState, pollingRequest);
+        GetLastServiceOperationResponse response = tracker.buildResponse(request.getClass().getName(), true, false, (long) 10, pollingRequest, request);
+
+        //Then
+        assertThat(response.getState()).isEqualTo(OperationState.SUCCEEDED);
+        assertThat(response.getDescription()).isEqualTo("osb proxied");
+        verify(createServiceInstanceOsbProxy).delegateDeprovision(any(), any(), any());
+    }
+
+    @Test
+    public void delegates_to_osb_proxy_when_deprovision_completes_with_manifest_being_absent() throws IOException {
+        DeleteServiceInstanceRequest request = aDeleteServiceInstanceRequest();
+
+        //Given a proxy that returns a custom response message
+        GetLastServiceOperationResponse proxiedResponse = new GetLastServiceOperationResponse();
+        proxiedResponse.withOperationState(OperationState.SUCCEEDED);
+        proxiedResponse.withDescription("osb proxied");
+        when(createServiceInstanceOsbProxy.delegateDeprovision(any(), any(), any())).thenReturn(proxiedResponse);
+
+        //When invoked before timeout
+        GetLastServiceOperationResponse response = tracker.buildResponse(request.getClass().getName(), false, false, 10L, pollingRequest, request);
+
+        //Then
+        assertThat(response.getState()).isEqualTo(OperationState.SUCCEEDED);
+        assertThat(response.getDescription()).isEqualTo("osb proxied");
+        verify(createServiceInstanceOsbProxy).delegateDeprovision(any(), any(), any());
+    }
+
+    @Test
+    public void delegates_to_osb_proxy_when_deprovision_completes_with_manifest_being_absent_after_timeout() throws IOException {
+        DeleteServiceInstanceRequest request = aDeleteServiceInstanceRequest();
+
+        //Given a proxy that returns a custom response message
+        GetLastServiceOperationResponse proxiedResponse = new GetLastServiceOperationResponse();
+        proxiedResponse.withOperationState(OperationState.SUCCEEDED);
+        proxiedResponse.withDescription("osb proxied");
+        when(createServiceInstanceOsbProxy.delegateDeprovision(any(), any(), any())).thenReturn(proxiedResponse);
+
+        //When invoked after timeout
+        GetLastServiceOperationResponse response = tracker.buildResponse(request.getClass().getName(), false, true, 10L, pollingRequest, request);
 
         //Then
         assertThat(response.getState()).isEqualTo(OperationState.SUCCEEDED);

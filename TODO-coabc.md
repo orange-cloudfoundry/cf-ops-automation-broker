@@ -4,6 +4,35 @@
      - core framework: create/delete service binding
      - delegate delete request in PipelineCompletionTracker to OSBProxy
 
+- refine DeleteServiceInstance message
+    Showing status of last operation from service cassandra-instance32733...
+    
+    status:    delete in progress
+    message:   Creation is in progress
+
+- fix excessive prereqs checking for delete service instance: 
+    - when delete request targets a failed service instance, manifest is missing 
+
+- fix timeout handling in delete
+    Showing info of service cassandra-instance32733 in org system_domain / space coa-cassandra-broker as admin...
+    
+    name:            cassandra-instance32733
+    service:         cassandra-ondemand
+    bound apps:      
+    tags:            
+    plan:            default
+    description:     On demand cassandra dedicated clusters
+    documentation:   
+    dashboard:       
+    
+    Showing status of last operation from service cassandra-instance32733...
+    
+    status:    delete failed
+    message:   Execution timeout after 2002s max is 2000
+    started:   2018-02-23T14:04:47Z
+    updated:   2018-02-23T14:38:20Z
+    
+
 
 - refine CassandraServiceProvisionningTest to use OSB client instead of raw rest assured
    - CassandraServiceProvisionningTest rest-assured based client which is not compliant w.r.t. "X-Broker-API-Originating-Identity" mandatory header.

@@ -1,9 +1,3 @@
-       
-- Implement OSB provision delegation to nested cassandra broker
-   - refine PipelineCompletionTracker to call OSB client bind/unbind
-     - core framework: create/delete service binding
-     - delegate delete request in PipelineCompletionTracker to OSBProxy
-
 - fix excessive prereqs checking for delete service instance: 
     - when delete request targets a failed service instance, manifest is missing 
 
@@ -26,6 +20,20 @@
     started:   2018-02-23T14:04:47Z
     updated:   2018-02-23T14:38:20Z
     
+- fix OOM  in the broker (currently configured with 1GB RAM)
+
+2018-02-23T15:12:14.00+0100   app.crash                  coa-cassandra-broker   index: 0, reason: CRASHED, exit_description: 2 error(s) occurred:
+
+                                                                                * 2 error(s) occurred:
+
+                                                                                * Exited with status 137 (out of memory)
+                                                                                * cancelled
+                                                                                * cancelled
+       
+- Implement OSB provision delegation to nested cassandra broker
+   - refine PipelineCompletionTracker to call OSB client bind/unbind
+     - core framework: create/delete service binding
+     - delegate delete request in PipelineCompletionTracker to OSBProxy
 
 
 - refine CassandraServiceProvisionningTest to use OSB client instead of raw rest assured

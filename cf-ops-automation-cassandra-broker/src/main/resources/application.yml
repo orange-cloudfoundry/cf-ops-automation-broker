@@ -25,9 +25,9 @@ servicebroker:
         documentationUrl: https://orange.com/doc
         supportUrl: https://orange.com/support
         
-#logging:
-#  level:
-#    org.springframework.cloud.servicebroker: debug
+logging:
+  level:
+    org.springframework.cloud.servicebroker: info
 #    com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git: debug
 #    org.springframework.boot.context.properties.ConfigurationPropertiesBindingPostProcessor: debug
 #    org.springframework.boot.bind.PropertiesConfigurationFactory: trace

@@ -1,4 +1,23 @@
 
+- consider recording git commit log into build
+    https://github.com/ktoso/maven-git-commit-id-plugin#using-the-plugin
+    https://stackoverflow.com/questions/40446275/include-git-commit-hash-in-jar-version
+
+- fix file system leak, likely git repo leak
+       2018-02-26T09:37:52.96+0100 [APP/PROC/WEB/0] OUT Caused by: org.eclipse.jgit.api.errors.TransportException: No space left on device
+
+    vcap@2438b2fe-2c49-4e21-4862-8ed8:~/tmp$ ls -alrH | head
+    total 556
+    drwxr-xr-x   2 vcap vcap  4096 Feb 26 10:53 tomcat-docbase.6964236809616157912.8080
+    drwxr-xr-x   3 vcap vcap  4096 Feb 26 10:53 tomcat.4424243097414663641.8080
+    drwx------   2 vcap vcap  4096 Feb 26 11:16 broker-990852131337233226
+    drwx------   2 vcap vcap  4096 Feb 26 11:43 broker-979417479625278769
+    drwx------   2 vcap vcap  4096 Feb 26 11:39 broker-941872569701712118
+    [...]
+    vcap@2438b2fe-2c49-4e21-4862-8ed8:~/tmp$ ls -alrH | grep broker | wc -l
+    133
+      
+
 - fix OOM  in the broker (currently configured with 1GB RAM)
     - increase bindly capacity and check if OOMs persist
     - diagnose
@@ -7,13 +26,13 @@
             - use recent online version
     
 
-2018-02-23T15:12:14.00+0100   app.crash                  coa-cassandra-broker   index: 0, reason: CRASHED, exit_description: 2 error(s) occurred:
-
-                                                                                * 2 error(s) occurred:
-
-                                                                                * Exited with status 137 (out of memory)
-                                                                                * cancelled
-                                                                                * cancelled
+                2018-02-23T15:12:14.00+0100   app.crash                  coa-cassandra-broker   index: 0, reason: CRASHED, exit_description: 2 error(s) occurred:
+                
+                                                                                                * 2 error(s) occurred:
+                
+                                                                                                * Exited with status 137 (out of memory)
+                                                                                                * cancelled
+                                                                                                * cancelled
        
 - Implement OSB provision delegation to nested cassandra broker
    - refine PipelineCompletionTracker to call OSB client bind/unbind

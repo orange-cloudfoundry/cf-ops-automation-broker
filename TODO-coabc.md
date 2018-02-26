@@ -1,7 +1,22 @@
+- fix GitProcessor bugs
 
-- consider recording git commit log into build
-    https://github.com/ktoso/maven-git-commit-id-plugin#using-the-plugin
-    https://stackoverflow.com/questions/40446275/include-git-commit-hash-in-jar-version
+- diagnose smoke test revealed symptom 1:
+
+Deleting service cassandra-instance14938 in org system_domain / space coa-cassandra-broker as admin...
+	
+FAILED
+	
+Server error, status code: 409, error code: 60016, message: An operation for service instance cassandra-instance14938 is in progress.
+
+- diagnose smoke test revealed symptom 2:
+
+/tmp/build/140b8ac5/result-dir/lib/root_deployment.rb:36:in `block in overview_from_hash': Inconsistency detected: found enable-deployment.yml, but no deployment-dependencies.yml found at ../templates/coab-depls/cassandra_59ee1bfc-228e-403d-bbc2-6c2f8edeb80f/deployment-dependencies.yml (RuntimeError)
+	
+	from /tmp/build/140b8ac5/result-dir/lib/root_deployment.rb:28:in `each'
+	
+	from /tmp/build/140b8ac5/result-dir/lib/root_deployment.rb:28:in `overview_from_hash'
+	
+	from ./scripts/generate-depls.rb:98:in `<main>'
 
 - fix file system leak, likely git repo leak
        2018-02-26T09:37:52.96+0100 [APP/PROC/WEB/0] OUT Caused by: org.eclipse.jgit.api.errors.TransportException: No space left on device
@@ -16,6 +31,10 @@
     [...]
     vcap@2438b2fe-2c49-4e21-4862-8ed8:~/tmp$ ls -alrH | grep broker | wc -l
     133
+
+- consider recording git commit log into build
+    https://github.com/ktoso/maven-git-commit-id-plugin#using-the-plugin
+    https://stackoverflow.com/questions/40446275/include-git-commit-hash-in-jar-version
       
 
 - fix OOM  in the broker (currently configured with 1GB RAM)

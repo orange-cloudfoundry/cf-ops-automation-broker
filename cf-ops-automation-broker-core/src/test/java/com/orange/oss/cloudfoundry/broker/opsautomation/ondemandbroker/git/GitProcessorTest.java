@@ -312,6 +312,20 @@ public class GitProcessorTest {
     }
 
     @Test
+    public void cleans_up_workdir_on_cleanup_method() {
+        //given a clone of an empty repo
+        processor.cloneRepo(ctx);
+        Path workDir = getWorkDir(ctx, "");
+        assertThat(workDir.toFile().exists()).isTrue();
+
+        //when
+        processor.cleanUp(ctx);
+
+        //then
+        assertThat(workDir.toFile().exists()).isFalse();
+    }
+
+    @Test
     public void disables_git_linefeed_cleanups_if_any() throws IOException {
         //given
         Path tempDirectory = Files.createTempDirectory("GitProcessorTest_configures_autoclrf_to_false");

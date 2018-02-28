@@ -105,6 +105,11 @@ public class GitProcessor extends DefaultBrokerProcessor {
         this.commitPushRepo(ctx, true);
     }
 
+    @Override
+    public void cleanUp(Context ctx) {
+        deleteWorkingDir(ctx);
+    }
+
     /**
      * local clone a repo
      *

@@ -1,4 +1,3 @@
-
 - automate inspection of smoke tests broker exceptions
    - in log search using specific searches
    
@@ -23,7 +22,7 @@
    2018-02-28T10:26:59.37+0100 [APP/PROC/WEB/0] OUT     at com.orange.oss.ondemandbroker.ProcessorChainServiceInstanceService.getLastOperation(ProcessorChainServiceInstanceService.java:109) ~[cf-ops-automation-broker-core-0.25.0-SNAPSHOT.jar!/:0.25.0-SNAPSHOT]
 
     
-   - add repo alias into the tmp dir name
+- add repo alias into the tmp dir name
 
 - diagnose smoke test revealed symptom 1:
 
@@ -45,9 +44,7 @@ Server error, status code: 409, error code: 60016, message: An operation for ser
 
       
 
-- fix OOM  in the broker (currently configured with 1GB RAM)
-    - increase bindly capacity and check if OOMs persist
-    - diagnose
+- instrument to diagnose future OOM  in the broker (currently configured with 1GB RAM)
         - connect newrelic
         - turn on java buildpack diagnostics
             - use recent online version

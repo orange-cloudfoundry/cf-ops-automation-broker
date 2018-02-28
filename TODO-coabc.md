@@ -81,15 +81,14 @@ Server error, status code: 409, error code: 60016, message: An operation for ser
 --------------------------------
 
 - Refactor to generalize to another deployment (e.g. mysql)
-   - Change secrets generation from files to symlinks (ONGOING)
    - Convert constants from CassandraProcessorConstants into Properties (ONGOING)
-   - Bosh templates refactoring (TODO)
+   - Change secrets generation from files to symlinks (ONGOING)
+   - Refactor bosh templates (TODO)
        - static operators instead of cassandra specific operators
        - propagate OSB data as bosh vars
+   - Introduce configuration class and builder in order to hold secrets/templates static information (TODO)
    
    
-   
-
 - refine logback config to 
      - include vcap request id in each trace (MDC), as thread name isn't useful
      - include higher time resolution, as to workaround out of order loggregator traces displayed (sort by logback timestamps instead of loggregator timestamps)

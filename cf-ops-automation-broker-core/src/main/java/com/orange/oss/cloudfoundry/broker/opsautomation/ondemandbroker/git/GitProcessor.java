@@ -6,6 +6,7 @@ import org.apache.commons.lang.builder.ToStringBuilder;
 import org.eclipse.jgit.api.*;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.Config;
+import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.lib.StoredConfig;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.submodule.SubmoduleStatus;
@@ -14,9 +15,7 @@ import org.eclipse.jgit.transport.RemoteRefUpdate;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.util.FileSystemUtils;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -126,7 +125,8 @@ public class GitProcessor extends DefaultBrokerProcessor {
                     .setCredentialsProvider(cred)
                     .setDirectory(workDir.toFile())
                     .setTimeout(timeoutSeconds)
-                    .setURI(this.gitUrl);
+                    .setURI(this.gitUrl)
+                    .setCloneAllBranches(true); //explicitly set ad default is not clearly documented
 
             Git git = clone.call();
             this.setGit(git, ctx);
@@ -200,25 +200,48 @@ public class GitProcessor extends DefaultBrokerProcessor {
      * </pre>
      */
     private void createNewBranchIfNeeded(Git git, Context ctx) throws GitAPIException, IOException {
-        String branch = getContextValue(ctx, GitProcessorContext.createBranchIfMissing);
+        String branchName = getContextValue(ctx, GitProcessorContext.createBranchIfMissing);
 
-        if (branch != null) {
-            git.branchCreate()
-                    .setName(branch)
-                    .call();
+        if (branchName != null) {
+            Optional<Ref> existingMatchingRemoteBranchRef = lookUpRemoteBranch(git, branchName);
 
-            git.getRepository().getConfig()
-                    .setString("branch", branch, "remote", "origin");
-            git.getRepository().getConfig()
-                    .setString("push", branch, "default", "upstream"); //overkill ?
-            git.getRepository().getConfig()
-                    .setString("branch", branch, "merge", "refs/heads/" + branch);
-            git.getRepository().getConfig().save();
+            if (existingMatchingRemoteBranchRef.isPresent()) {
+                logger.debug(prefixLog("existing remote branch {}"), branchName);
+                git.branchCreate()
+                        .setName(branchName)
+                        .setStartPoint("refs/remotes/origin/" + branchName)
+                        .setUpstreamMode(CreateBranchCommand.SetupUpstreamMode.SET_UPSTREAM)
+                        .call();
+                logger.info(prefixLog("created local branch from remote branch {}"), branchName);
+            } else {
+                git.branchCreate()
+                        .setName(branchName)
+                        .call();
+
+                git.getRepository().getConfig()
+                        .setString("branch", branchName, "remote", "origin");
+                git.getRepository().getConfig()
+                        .setString("push", branchName, "default", "upstream"); //overkill ?
+                git.getRepository().getConfig()
+                        .setString("branch", branchName, "merge", "refs/heads/" + branchName);
+                git.getRepository().getConfig().save();
+
+                logger.info(prefixLog("created branch {} from current HEAD"), branchName);
+            }
+
+
+            logger.info(prefixLog("checked out local branch {}"), branchName);
             git.checkout()
-                    .setName(branch)
+                    .setName(branchName)
                     .call();
-            logger.info(prefixLog("created and checked out branch {}"), branch);
         }
+    }
+
+    Optional<Ref> lookUpRemoteBranch(Git git, String branchName) throws GitAPIException {
+        List<Ref> branches = git.branchList().setListMode(ListBranchCommand.ListMode.ALL).call();
+        return branches.stream() 
+                .filter(ref -> ref.getName().equals("refs/remotes/origin/" + branchName))
+                .findFirst();
     }
 
 
@@ -237,9 +260,9 @@ public class GitProcessor extends DefaultBrokerProcessor {
         String branch = getContextValue(ctx, GitProcessorContext.checkOutRemoteBranch);
         if (branch != null) {
             git.checkout()
-                    .setCreateBranch(true).setName(branch)
+                    .setCreateBranch(true).setName(branch) //create local branch
                     .setUpstreamMode(CreateBranchCommand.SetupUpstreamMode.SET_UPSTREAM)
-                    .setStartPoint("origin/" + branch)
+                    .setStartPoint("origin/" + branch) //from remote branch
                     .call();
             logger.info(prefixLog("checked out branch {}"), branch);
         }
@@ -340,7 +363,7 @@ public class GitProcessor extends DefaultBrokerProcessor {
         if (failedStatuses.contains(RemoteRefUpdate.Status.REJECTED_NONFASTFORWARD)) {
             logger.info(prefixLog("Failed to push with status {}"), failedStatuses);
             logger.info(prefixLog("pull and rebasing from origin/{} ..."), getImplicitRemoteBranchToDisplay(ctx));
-            PullResult pullRebaseResult = git.pull().setCredentialsProvider(cred).call();
+            PullResult pullRebaseResult = git.pull().setRebase(true).setCredentialsProvider(cred).call();
             if (!pullRebaseResult.isSuccessful()) {
                 logger.info(prefixLog("Failed to pull rebase: ") + pullRebaseResult);
                 throw new RuntimeException("failed to push: remote conflict. pull rebased failed:" + pullRebaseResult);

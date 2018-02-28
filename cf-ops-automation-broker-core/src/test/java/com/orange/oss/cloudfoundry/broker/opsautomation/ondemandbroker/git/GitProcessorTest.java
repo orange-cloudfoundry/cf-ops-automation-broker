@@ -5,6 +5,7 @@ import org.eclipse.jgit.api.AddCommand;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.PersonIdent;
+import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
@@ -18,20 +19,21 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
+import java.util.stream.StreamSupport;
 
 import static com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.GitIT.createDir;
 import static org.fest.assertions.Assertions.assertThat;
 
 public class GitProcessorTest {
 
-    public static final String GIT_BASE_URL = "git://127.0.0.1:9418/";
+    private static final String GIT_BASE_URL = "git://127.0.0.1:9418/";
     private static final String GIT_URL = GIT_BASE_URL + "volatile-repo.git";
 
-    static GitServer gitServer;
+    private static GitServer gitServer;
 
-    GitProcessor processor = new GitProcessor("gituser", "gitsecret", GIT_URL, "committerName", "committer@address.org", null);
-    Context ctx = new Context();
-
+    private GitProcessor processor = new GitProcessor("gituser", "gitsecret", GIT_URL, "committerName", "committer@address.org", null);
+    private Context ctx = new Context();
 
 
     @BeforeClass
@@ -90,33 +92,60 @@ public class GitProcessorTest {
     }
 
     @Test
-    public void supports_createBranchIfMissing_key() throws IOException, GitAPIException {
+    public void looks_up_existing_remote_branch_by_name() throws IOException, GitAPIException {
+        //1- given a repo with a develop branch:
+
         //given a clone of an empty repo on the master branch
-
-        //when adding files
+        //and adding files
         //and asking to commit and create missing develop branch
-        Context context = new Context();
-        context.contextKeys.put(GitProcessorContext.createBranchIfMissing.toString(), "develop");
-        processor.cloneRepo(context);
-        addAFile(context, "hello.txt", "afile-in-" + "develop" + "-branch.txt", "");
-        processor.commitPushRepo(context, false);
+        ctx.contextKeys.put(GitProcessorContext.createBranchIfMissing.toString(), "develop");
+        processor.cloneRepo(ctx);
+        addAFile(ctx, "hello.txt", "afile-in-" + "develop" + "-branch.txt", "");
+        processor.commitPushRepo(ctx, false);
 
-        //then file should be persisted in develop branch
+        //2- when looking up the develop remote branch in a new clone
         Context ctx1 = new Context();
         ctx1.contextKeys.put(GitProcessorContext.checkOutRemoteBranch.toString(), "develop");
 
         processor.cloneRepo(ctx1);
-        Path secondClone = getWorkDir(ctx1, "");
-        File secondCloneSameFile = secondClone.resolve("afile-in-" + "develop" + "-branch.txt").toFile();
+        //then it is present
+        Optional<Ref> secondLookup = processor.lookUpRemoteBranch(processor.getGit(ctx1), "develop");
+        assertThat(secondLookup.isPresent()).isTrue();
+    }
+
+
+    @Test
+    public void supports_createBranchIfMissing_key() throws IOException, GitAPIException {
+        //given a clone of an empty repo on the "master" branch
+        //and adding files, and and asking to commit
+        Context context = new Context();
+        context.contextKeys.put(GitProcessorContext.createBranchIfMissing.toString(), "develop");
+        processor.cloneRepo(context);
+        addAFile(context, "hello.txt", "afile-in-" + "develop" + "-branch.txt", "");
+        // when asking to create a missing "develop" remote branch
+        processor.commitPushRepo(context, false);
+
+
+        //then file should be persisted in "develop" branch
+        Context ctx1 = new Context();
+        ctx1.contextKeys.put(GitProcessorContext.checkOutRemoteBranch.toString(), "develop");
+
+        processor.cloneRepo(ctx1);
+        Path cloneCtxt1 = getWorkDir(ctx1, "");
+        File secondCloneSameFile = cloneCtxt1.resolve("afile-in-" + "develop" + "-branch.txt").toFile();
         assertThat(secondCloneSameFile).exists();
 
 
         //when adding files
-        //and asking to commit and create existing develop branch
+        //and asking to commit and create existing "develop" remote branch
         Context ctx2 = new Context();
         ctx2.contextKeys.put(GitProcessorContext.createBranchIfMissing.toString(), "develop");
         processor.cloneRepo(ctx2);
         addAFile(ctx2, "hello.txt", "another-file-in-" + "develop" + "-branch.txt", "");
+        //then existing files in existing branch are indeed present in the working dir before push
+        //so that we avoid extra polluting rejected push & rebase
+        Path cloneCtxt2 = getWorkDir(ctx2, "");
+        assertThat(cloneCtxt2.resolve("afile-in-" + "develop" + "-branch.txt").toFile()).exists();
         processor.commitPushRepo(ctx2, false);
 
         //then file should be persisted in the existing develop branch
@@ -252,7 +281,7 @@ public class GitProcessorTest {
         addAndDeleteFilesForRepoAlias(this.processor, this.ctx, "");
     }
 
-    protected void addAndDeleteFilesForRepoAlias(GitProcessor processor, Context context, String repoAlias) throws IOException {
+    private void addAndDeleteFilesForRepoAlias(GitProcessor processor, Context context, String repoAlias) throws IOException {
         //given a clone of an empty repo
         processor.cloneRepo(context);
 
@@ -287,8 +316,8 @@ public class GitProcessorTest {
         //given
         Path tempDirectory = Files.createTempDirectory("GitProcessorTest_configures_autoclrf_to_false");
         Path boshDeploymentRepo = tempDirectory.resolve("a_repo").resolve(".git");
-            Repository repository = FileRepositoryBuilder.create(boshDeploymentRepo.toFile());
-            repository.create();
+        Repository repository = FileRepositoryBuilder.create(boshDeploymentRepo.toFile());
+        repository.create();
 
         //given tests run on a developer machine where the global config is
         // "core.autocrlf = input" (which is the common case in the Orange elpaaso team
@@ -309,9 +338,10 @@ public class GitProcessorTest {
 
         FileSystemUtils.deleteRecursively(tempDirectory.toFile());
     }
+
     @Test
     public void fetches_submodules_when_asked() {
-        
+
         //given a repo with submodules configured
         gitServer.initRepo("paas-template.git", this::initPaasTemplate);
         processor = new GitProcessor("gituser", "gitsecret", GIT_BASE_URL + "paas-template.git", "committerName", "committer@address.org", null);
@@ -369,7 +399,7 @@ public class GitProcessorTest {
         //so that submodules get excluded from commit list
     }
 
-    public void initPaasTemplate(Git git) {
+    private void initPaasTemplate(Git git) {
         File gitWorkDir = git.getRepository().getDirectory().getParentFile();
         try {
             git.commit().setMessage("Initial empty repo setup").call();
@@ -400,23 +430,6 @@ public class GitProcessorTest {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-    }
-
-    protected void createPaasTemplateRepo() throws IOException {
-        String name = "paas-template";
-            try {
-                Path gitProcessorTest = Files.createTempDirectory("GitProcessorTest");
-                //Note: we use local disk because RepositoryBuilder does the heavy lifting of repository init
-                //and we can debug using local disk more easily if needed
-                Path boshDeploymentRepo = gitProcessorTest.resolve(name);
-                File gitDir = new File(boshDeploymentRepo.toFile(), ".git");
-                Repository repo = FileRepositoryBuilder.create(gitDir);
-                repo.create();
-                Git git = new Git(repo);
-                git.close();
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
     }
 
 
@@ -451,24 +464,25 @@ public class GitProcessorTest {
     }
 
 
-
     @Test
     public void rebases_during_push_conflicts() throws GitAPIException, IOException {
         //given a clone of an empty repo
         Context ctx1 = new Context();
         GitProcessor processor1 = new GitProcessor("gituser", "gitsecret", GIT_URL, "committerName", "committer@address.org", null);
         processor1.cloneRepo(ctx1);
+        assertThat(getNbCommits(ctx1, processor1)).describedAs("initial commit").isEqualTo(1);
 
         //Given concurrent commits
         Context ctx2 = new Context();
         GitProcessor processor2 = new GitProcessor("gituser", "gitsecret", GIT_URL, "committerName", "committer@address.org", null);
         processor2.cloneRepo(ctx2);
         addAFile(ctx2, "content2", "a_first_file.txt", "");
-        processor2.commitPushRepo(ctx2, true);
+        processor2.commitPushRepo(ctx2, false);
+        assertThat(getNbCommits(ctx2, processor2)).describedAs("initial + 1st file addition").isEqualTo(2);
 
         //when trying to commit and push
         addAFile(ctx1, "content1", "a_second_file.txt", "");
-        processor1.commitPushRepo(ctx1, true);
+        processor1.commitPushRepo(ctx1, false);
 
         //then a rebase should be tried, a 3rd clone sees both files commited
         Context ctx3 = new Context();
@@ -477,11 +491,19 @@ public class GitProcessorTest {
         Path thirdClone = getWorkDir(ctx3, "");
         assertThat(thirdClone.resolve("a_first_file.txt").toFile()).exists();
         assertThat(thirdClone.resolve("a_second_file.txt").toFile()).exists();
+        assertThat(getNbCommits(ctx3, processor3)).describedAs("expecting no merge commit").isEqualTo(3);
 
         //cleanup
         processor1.deleteWorkingDir(ctx1);
         processor2.deleteWorkingDir(ctx2);
         processor3.deleteWorkingDir(ctx3);
+    }
+
+    private long getNbCommits(Context ctx, GitProcessor processor) throws GitAPIException {
+        Git git = processor.getGit(ctx);
+        Iterable<RevCommit> commits = git.log().call();
+        return StreamSupport.stream(commits.spliterator(), false) //https://stackoverflow.com/questions/23932061/convert-iterable-to-stream-using-java-8-jdk
+                .count();
     }
 
 
@@ -530,7 +552,7 @@ public class GitProcessorTest {
         assertThat(processor.getImplicitRemoteBranchToDisplay(context)).isEqualTo(expectedBranchDisplayed);
     }
 
-    protected void givenAnExistingRepoOnSpecifiedBranch(String branch) throws IOException, GitAPIException {
+    private void givenAnExistingRepoOnSpecifiedBranch(String branch) throws IOException, GitAPIException {
         //given a clone of an empty repo on the master branch
         GitProcessor processor = new GitProcessor("gituser", "gitsecret", GIT_URL, "committerName", "committer@address.org", null);
 
@@ -557,8 +579,7 @@ public class GitProcessorTest {
     ///--------------------------------------- Text fixtures ---------------------------------
 
 
-
-    protected Path cloneRepoFromBranch(@SuppressWarnings("SameParameterValue") String branch) {
+    private Path cloneRepoFromBranch(@SuppressWarnings("SameParameterValue") String branch) {
         GitProcessor processor = new GitProcessor("gituser", "gitsecret", GIT_URL, "committerName", "committer@address.org", null);
         Context context = new Context();
         context.contextKeys.put(GitProcessorContext.checkOutRemoteBranch.toString(), branch);
@@ -566,22 +587,22 @@ public class GitProcessorTest {
         return getWorkDir(context, "");
     }
 
-    public void addAFile(Context ctx) throws IOException {
+    private void addAFile(Context ctx) throws IOException {
         addAFile(ctx, "hello.txt", "afile.txt", "");
     }
 
-    public void addAFile(Context ctx, String content, String fileRelativePath, String repoAlias) throws IOException {
+    private void addAFile(Context ctx, String content, String fileRelativePath, String repoAlias) throws IOException {
         Path workDir = getWorkDir(ctx, repoAlias);
         try (FileWriter writer = new FileWriter(workDir.resolve(fileRelativePath).toFile())) {
             writer.append(content);
         }
     }
 
-    public Path getWorkDir(Context ctx, String repoAlias) {
+    private Path getWorkDir(Context ctx, String repoAlias) {
         return (Path) ctx.contextKeys.get(repoAlias + GitProcessorContext.workDir.toString());
     }
 
-    public int countIterables(Iterable<RevCommit> resultingCommits) {
+    private int countIterables(Iterable<RevCommit> resultingCommits) {
         int size = 0;
         for (RevCommit ignored : resultingCommits) {
             size++;
@@ -589,7 +610,7 @@ public class GitProcessorTest {
         return size;
     }
 
-    public Path cloneRepo(GitProcessor processor, String repoAlias) {
+    private Path cloneRepo(GitProcessor processor, String repoAlias) {
         Context ctx = new Context();
         processor.preCreate(ctx);
 

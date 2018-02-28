@@ -1,4 +1,4 @@
-- fix GitProcessor bugs
+
 
 - diagnose smoke test revealed symptom 1:
 

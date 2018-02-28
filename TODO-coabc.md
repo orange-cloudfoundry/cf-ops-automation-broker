@@ -1,4 +1,15 @@
 
+- fix git repo leak: GitProcessor.postGetLastOperation(Context ctx) is never invoked if another processor fails before
+   - add a cleanUp() lifecycle to operators 
+
+   2018-02-28T17:10:16.21+0100 [APP/PROC/WEB/0] OUT java.lang.NullPointerException: null
+   2018-02-28T17:10:16.21+0100 [APP/PROC/WEB/0] OUT     at com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.OsbProxyImpl.getBrokerUrl(OsbProxyImpl.java:246) ~[cf-ops-automation-broker-core-0.25.0-SNAPSHOT.jar!/:0.25.0-SNAPSHOT]
+   2018-02-28T17:10:16.21+0100 [APP/PROC/WEB/0] OUT     at com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.OsbProxyImpl.delegateDeprovision(OsbProxyImpl.java:82) ~[cf-ops-automation-broker-core-0.25.0-SNAPSHOT.jar!/:0.25.0-SNAPSHOT]
+   2018-02-28T17:10:16.21+0100 [APP/PROC/WEB/0] OUT     at com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.CassandraProcessor.preGetLastOperation(CassandraProcessor.java:71) ~[cf-ops-automation-broker-core-0.25.0-SNAPSHOT.jar!/:0.25.0-SNAPSHOT]
+   2018-02-28T17:10:16.21+0100 [APP/PROC/WEB/0] OUT     at com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.ProcessorChain.getLastOperation(ProcessorChain.java:36) ~[cf-ops-automation-broker-framework-0.25.0-SNAPSHOT.jar!/:0.25.0-SNAPSHOT]
+   2018-02-28T17:10:16.21+0100 [APP/PROC/WEB/0] OUT     at com.orange.oss.ondemandbroker.ProcessorChainServiceInstanceService.getLastOperation(ProcessorChainServiceInstanceService.java:109) ~[cf-ops-automation-broker-core-0.25.0-SNAPSHOT.jar!/:0.25.0-SNAPSHOT]
+ 
+
 - consider recording git commit log into build
     https://github.com/ktoso/maven-git-commit-id-plugin#using-the-plugin
     https://stackoverflow.com/questions/40446275/include-git-commit-hash-in-jar-version

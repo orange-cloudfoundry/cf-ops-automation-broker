@@ -73,4 +73,7 @@ public class DefaultBrokerProcessor implements BrokerProcessor {
 	public void postUpdate(Context ctx) {
 		logger.debug("noop default postUpdate");
 	}
+
+	@Override
+	public void cleanUp(Context ctx) { logger.debug("noop default cleanUp"); }
 }

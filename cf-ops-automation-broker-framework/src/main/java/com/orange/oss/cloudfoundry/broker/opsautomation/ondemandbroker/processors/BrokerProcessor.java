@@ -19,4 +19,6 @@ public interface BrokerProcessor {
 
 	void preDelete(Context ctx);
 	void postDelete(Context ctx);
+
+	void cleanUp(Context ctx);
 }

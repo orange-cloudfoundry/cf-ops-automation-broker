@@ -1,29 +1,18 @@
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git;
 
-import org.hibernate.validator.constraints.Email;
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.validation.annotation.Validated;
-
-import javax.validation.constraints.NotNull;
 
 /**
  * This class is typically imported by SpringBoot apps or Tests by referencing it into
  * EnableConfigurationProperties
  */
 @ConfigurationProperties(prefix = "git")
-@Validated
 public class GitProperties {
 
-	@NotNull
 	private String user;
-	@NotNull
 	private String password;
-	@NotNull
 	private String url;
-	@NotNull
 	private String committerName = "coab";
-	@NotNull
-	@Email
 	private String committerEmail = "coab@orange.com";
 
 	/**

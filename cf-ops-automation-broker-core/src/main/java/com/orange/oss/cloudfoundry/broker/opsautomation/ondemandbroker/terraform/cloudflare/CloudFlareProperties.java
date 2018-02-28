@@ -1,10 +1,6 @@
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.terraform.cloudflare;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.validation.annotation.Validated;
-
-import javax.validation.constraints.Min;
-import javax.validation.constraints.NotNull;
 
 /**
  * This class is typically imported by SpringBoot apps or Tests by referencing it into
@@ -13,17 +9,11 @@ import javax.validation.constraints.NotNull;
  * Note: would deserve merging with CloudFlareConfig in the future
  */
 @ConfigurationProperties(prefix = "cloudflare")
-@Validated
 public class CloudFlareProperties {
-    @Min(1)
     private int maxExecutionDurationSeconds = 600;
-    @NotNull
     private String routeSuffix;
-    @NotNull
     private String pathTFSpecs;
-    @NotNull
     private String filePrefix="cloudflare-instance-";
-    @NotNull
     private String pathToTfState;
 
     public int getMaxExecutionDurationSeconds() {

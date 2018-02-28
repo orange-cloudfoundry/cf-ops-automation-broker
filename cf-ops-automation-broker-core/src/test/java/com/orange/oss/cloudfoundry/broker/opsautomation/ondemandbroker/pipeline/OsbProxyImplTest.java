@@ -6,21 +6,15 @@ import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.osbclient
 import feign.FeignException;
 import feign.Response;
 import feign.codec.DecodeException;
-import org.junit.Before;
 import org.junit.Test;
 import org.springframework.cloud.servicebroker.model.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
-import javax.validation.ConstraintViolation;
-import javax.validation.Validation;
-import javax.validation.Validator;
-import javax.validation.ValidatorFactory;
 import java.nio.charset.Charset;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 
 import static com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.OsbProxyImpl.*;
 import static java.util.Arrays.asList;
@@ -44,21 +38,6 @@ public class OsbProxyImplTest {
     private CreateServiceInstanceRequest request = aCreateServiceInstanceRequest();
     GetLastServiceOperationResponse response;
 
-    private static Validator validator;
-
-    @Before
-    public void setUp() {
-        ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
-        validator = factory.getValidator();
-    }
-
-    @Test
-    public void validates_constructor_params() {
-        assertThat(validator.validate(new OsbProxyImpl<>(null, "password", "https://{0}-cassandra-broker.mydomain/com", clientFactory))).isNotEmpty();
-        assertThat(validator.validate(new OsbProxyImpl<>("user", null, "https://{0}-cassandra-broker.mydomain/com", clientFactory))).isNotEmpty();
-        assertThat(validator.validate(new OsbProxyImpl<>("user", "password", null, clientFactory))).isNotEmpty();
-        assertThat(validator.validate(new OsbProxyImpl<>("user", "password", "https://{0}-cassandra-broker.mydomain/com", null))).isNotEmpty();
-    }
 
     @Test
     public void constructs_broker_url_osb_client() {

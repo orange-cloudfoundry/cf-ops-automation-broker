@@ -1,53 +1,4 @@
-
-- automate inspection of smoke tests broker exceptions
-   - in log search using specific searches
-   
-
-- fix file system leak, likely git repo leak
-       2018-02-26T09:37:52.96+0100 [APP/PROC/WEB/0] OUT Caused by: org.eclipse.jgit.api.errors.TransportException: No space left on device
-
-    vcap@2438b2fe-2c49-4e21-4862-8ed8:~/tmp$ ls -alrH | head
-    total 556
-    drwxr-xr-x   2 vcap vcap  4096 Feb 26 10:53 tomcat-docbase.6964236809616157912.8080
-    drwxr-xr-x   3 vcap vcap  4096 Feb 26 10:53 tomcat.4424243097414663641.8080
-    drwx------   2 vcap vcap  4096 Feb 26 11:16 broker-990852131337233226
-    drwx------   2 vcap vcap  4096 Feb 26 11:43 broker-979417479625278769
-    drwx------   2 vcap vcap  4096 Feb 26 11:39 broker-941872569701712118
-    [...]
-    vcap@2438b2fe-2c49-4e21-4862-8ed8:~/tmp$ ls -alrH | grep broker | wc -l
-    133
-    
-    vcap@16401407-d404-45a7-518f-9625:~/tmp$ du -skh *
-    4.0K    broker-5000640675571041256
-    4.0K    broker-599943947526755110
-    18M     broker-7390901502754482572
-    20K     tomcat.3781008693117820008.8080
-    4.0K    tomcat-docbase.1266888443055000428.8080
-
-    vcap@16401407-d404-45a7-518f-9625:~/tmp$ find . -name "broker-*" -type d | xargs -n 1 du -skh | sort -r | tail -n 20
-    4.0K    ./broker-1020705149053710062
-    4.0K    ./broker-1005413475527741734
-    4.0K    ./broker-1000110375010018516
-    18M     ./broker-8360526159144735471
-    18M     ./broker-7390901502754482572
-    18M     ./broker-539690926087295657
-    18M     ./broker-4816560631716549737
-    18M     ./broker-4073121191850802190
-    18M     ./broker-3576094359116884261
-    18M     ./broker-2894142623879260280
-    18M     ./broker-2701544119791576582
-    18M     ./broker-2207028703637527663
-    12M     ./broker-992704924581518828
-    12M     ./broker-8895621542806669682
-    12M     ./broker-8471246033507306138
-    12M     ./broker-6220992825161058965
-    12M     ./broker-3962172648307692940
-    12M     ./broker-3860177479966710175
-    12M     ./broker-3371529885782236228
-    12M     ./broker-1596226320335494270
-
-    vcap@16401407-d404-45a7-518f-9625:~/tmp$ du -skh .
-    254M    .
+- fail fast on incorrect configuration
 
    2018-02-28T10:26:59.37+0100 [APP/PROC/WEB/0] OUT java.lang.NullPointerException: null
    2018-02-28T10:26:59.37+0100 [APP/PROC/WEB/0] OUT     at java.text.MessageFormat.applyPattern(MessageFormat.java:436) ~[na:1.8.0_131]
@@ -59,6 +10,10 @@
    2018-02-28T10:26:59.37+0100 [APP/PROC/WEB/0] OUT     at com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.CassandraProcessor.preGetLastOperation(CassandraProcessor.java:71) ~[cf-ops-automation-broker-core-0.25.0-SNAPSHOT.jar!/:0.25.0-SNAPSHOT]
    2018-02-28T10:26:59.37+0100 [APP/PROC/WEB/0] OUT     at com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.ProcessorChain.getLastOperation(ProcessorChain.java:36) ~[cf-ops-automation-broker-framework-0.25.0-SNAPSHOT.jar!/:0.25.0-SNAPSHOT]
    2018-02-28T10:26:59.37+0100 [APP/PROC/WEB/0] OUT     at com.orange.oss.ondemandbroker.ProcessorChainServiceInstanceService.getLastOperation(ProcessorChainServiceInstanceService.java:109) ~[cf-ops-automation-broker-core-0.25.0-SNAPSHOT.jar!/:0.25.0-SNAPSHOT]
+
+- automate inspection of smoke tests broker exceptions
+   - in log search using specific searches
+   
 
     
    - add repo alias into the tmp dir name

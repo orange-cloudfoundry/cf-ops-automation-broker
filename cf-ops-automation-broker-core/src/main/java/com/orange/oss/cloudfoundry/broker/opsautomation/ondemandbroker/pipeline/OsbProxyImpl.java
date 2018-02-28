@@ -14,19 +14,30 @@ import org.springframework.cloud.servicebroker.model.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
+import org.springframework.stereotype.Service;
 import org.springframework.util.Base64Utils;
+import org.springframework.validation.annotation.Validated;
 
+import javax.validation.constraints.NotNull;
 import java.text.MessageFormat;
 import java.util.HashMap;
 import java.util.Map;
 
+@Service
+@Validated
 public class OsbProxyImpl<Q extends ServiceBrokerRequest, P extends AsyncServiceInstanceResponse> implements OsbProxy {
 
+    @NotNull
     private String osbDelegateUser;
+    @NotNull
     private String osbDelegatePassword;
+    @NotNull
     private String brokerUrlPattern;
+    @NotNull
     private OsbClientFactory clientFactory;
+    @NotNull
     private Gson gson;
+    @NotNull
     private ObjectMapper objectMapper;
     private static Logger logger = LoggerFactory.getLogger(OsbProxyImpl.class.getName());
 
@@ -37,10 +48,9 @@ public class OsbProxyImpl<Q extends ServiceBrokerRequest, P extends AsyncService
         this.osbDelegatePassword = osbDelegatePassword;
         this.brokerUrlPattern = brokerUrlPattern;
         this.clientFactory = clientFactory;
-        objectMapper = Jackson2ObjectMapperBuilder.json().build();
 
-        GsonBuilder gsonBuilder = new GsonBuilder();
-        gson = gsonBuilder.create();
+        objectMapper = Jackson2ObjectMapperBuilder.json().build();
+        gson = new GsonBuilder().create();
     }
 
     /**

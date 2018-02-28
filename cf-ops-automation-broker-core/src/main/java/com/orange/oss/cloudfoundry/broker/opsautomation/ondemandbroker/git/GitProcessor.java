@@ -299,19 +299,19 @@ public class GitProcessor extends DefaultBrokerProcessor {
             Set<String> missing = status.getMissing();
             stageMissingFilesExcludingSubModules(ctx, git, missing);
             status = git.status().call();
-            if (! status.getConflicting().isEmpty()) {
+            if (!status.getConflicting().isEmpty()) {
                 logger.error("Unexpected conflicting files:" + status.getConflicting());
                 throw new RuntimeException("Unexpected conflicting files, skipping commit and push");
             } else if (status.hasUncommittedChanges() && (
-                            !status.getAdded().isEmpty() ||
+                    !status.getAdded().isEmpty() ||
                             !status.getChanged().isEmpty() ||
                             !status.getRemoved().isEmpty()
-                    )) {
+            )) {
                 logger.info(prefixLog("staged commit: "
                         + " added:" + status.getAdded()
                         + " changed:" + status.getChanged()
                         + " deleted:" + status.getRemoved()
-                        ));
+                ));
                 CommitCommand commitC = git.commit().setMessage(getCommitMessage(ctx));
 
                 RevCommit revCommit = commitC.call();
@@ -321,13 +321,13 @@ public class GitProcessor extends DefaultBrokerProcessor {
             } else {
                 logger.info(prefixLog("No changes to commit, skipping push"));
             }
-
-            if (deleteRepo) {
-                deleteWorkingDir(ctx);
-            }
         } catch (Exception e) {
             logger.warn(prefixLog("caught ") + e, e);
             throw new IllegalArgumentException(e);
+        } finally {
+            if (deleteRepo) {
+                deleteWorkingDir(ctx);
+            }
         }
 
     }
@@ -414,22 +414,26 @@ public class GitProcessor extends DefaultBrokerProcessor {
     /**
      * recursively delete working directory
      */
-    void deleteWorkingDir(Context ctx) throws IOException {
-        // cleaning workDir
+    void deleteWorkingDir(Context ctx)  {
         Path workDir = this.getWorkDir(ctx);
-        if (workDir != null) {
-            logger.info(prefixLog("cleaning-up {} work directory"), workDir);
-            Consumer<Path> deleter = file -> {
-                try {
-                    Files.delete(file);
-                } catch (IOException e) {
-                    logger.warn(prefixLog("Unable to delete file {} details:{}"), file, e.toString());
-                }
-            };
-            Files.walk(workDir)
-                    .sorted(Comparator.reverseOrder())
-                    .forEach(deleter);
-            setWorkDir(null, ctx);
+        try {
+            // cleaning workDir
+            if (workDir != null) {
+                logger.info(prefixLog("cleaning-up {} work directory"), workDir);
+                Consumer<Path> deleter = file -> {
+                    try {
+                        Files.delete(file);
+                    } catch (IOException e) {
+                        logger.warn(prefixLog("Unable to delete file {} details:{}"), file, e.toString());
+                    }
+                };
+                Files.walk(workDir)
+                        .sorted(Comparator.reverseOrder())
+                        .forEach(deleter);
+                setWorkDir(null, ctx);
+            }
+        } catch (IOException e) {
+            logger.error("Unable to clean up workdir: " + workDir, e);
         }
     }
 

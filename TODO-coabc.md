@@ -1,9 +1,20 @@
 
+- consider recording git commit log into build
+    https://github.com/ktoso/maven-git-commit-id-plugin#using-the-plugin
+    https://stackoverflow.com/questions/40446275/include-git-commit-hash-in-jar-version
+
+
 - automate inspection of smoke tests broker exceptions
    - in log search using specific searches
    
 - stronger configuration validation to avoid following symptom: fail fast 
-    - refine spring validation study, see reverted commit b031956e3091da4a77357b0216a7b718bccb6f78 
+    - refine spring validation study, see reverted commit b031956e3091da4a77357b0216a7b718bccb6f78
+      - keep @ConfigurationProperties annotation except for GitProperties to diagnose
+         - stackoverflow ?
+         - debugger
+      - find a solution for classes that are not @Component
+         - get inspiration from springboot source code itself
+         - look into spring-boot-starter-validation source code 
 
    2018-02-28T10:26:59.37+0100 [APP/PROC/WEB/0] OUT java.lang.NullPointerException: null
    2018-02-28T10:26:59.37+0100 [APP/PROC/WEB/0] OUT     at java.text.MessageFormat.applyPattern(MessageFormat.java:436) ~[na:1.8.0_131]
@@ -37,9 +48,6 @@ Server error, status code: 409, error code: 60016, message: An operation for ser
 	
 	from ./scripts/generate-depls.rb:98:in `<main>'
 
-- consider recording git commit log into build
-    https://github.com/ktoso/maven-git-commit-id-plugin#using-the-plugin
-    https://stackoverflow.com/questions/40446275/include-git-commit-hash-in-jar-version
       
 
 - fix OOM  in the broker (currently configured with 1GB RAM)
@@ -71,6 +79,7 @@ Server error, status code: 409, error code: 60016, message: An operation for ser
 
 
 - OSBProxy future refinements     
+     - propagate description from nested broker 
      - strip out some arbitrary params
      - better map service plans
      - modularize mapping as injected strategies

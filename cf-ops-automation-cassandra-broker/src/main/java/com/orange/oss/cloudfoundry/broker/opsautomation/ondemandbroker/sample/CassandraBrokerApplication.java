@@ -43,6 +43,11 @@ public class CassandraBrokerApplication {
         return new GitProperties();
     }
 
+    @ConfigurationProperties(prefix = "deployment")
+    @Bean
+    public DeploymentProperties deploymentProperties() {
+        return new DeploymentProperties();
+    }
 
     @Bean
     public Clock clock() {
@@ -69,14 +74,19 @@ public class CassandraBrokerApplication {
     }
 
     @Bean
-    public SecretsGenerator secretsGenerator() {
+    public SecretsGenerator secretsGenerator(
+            DeploymentProperties deploymentProperties) {
         return new SecretsGenerator();
     }
 
     @Bean
-    public TemplatesGenerator templatesGenerator() {
+    public TemplatesGenerator templatesGenerator(
+            DeploymentProperties deploymentProperties
+    ) {
         return new TemplatesGenerator();
     }
+
+
 
     @Bean
     public BrokerProcessor cassandraProcessor(Clock clock,

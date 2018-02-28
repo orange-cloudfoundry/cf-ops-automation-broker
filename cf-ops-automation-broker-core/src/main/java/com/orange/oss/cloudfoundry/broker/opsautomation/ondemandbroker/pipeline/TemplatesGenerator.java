@@ -21,11 +21,19 @@ import java.util.Map;
  */
 public class TemplatesGenerator extends StructureGeneratorImpl{
 
-/*
-    public TemplatesGenerator(Path workDir, String serviceInstanceId) {
-        super(workDir, serviceInstanceId);
+    private String template;
+    private String vars;
+    private String operators;
+
+    public TemplatesGenerator(){
     }
-*/
+
+    public TemplatesGenerator(String rootDeployment, String modelDeployment, String template, String vars, String operators){
+        super(rootDeployment,modelDeployment);
+        this.template = template;
+        this.vars = vars;
+        this.operators = operators;
+    }
 
     @Override
     public void checkPrerequisites(Path workDir) {

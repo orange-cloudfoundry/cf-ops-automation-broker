@@ -81,10 +81,13 @@ Server error, status code: 409, error code: 60016, message: An operation for ser
 --------------------------------
 
 - Refactor to generalize to another deployment (e.g. mysql)
-   - Bosh templates refactoring
+   - Change secrets generation from files to symlinks (ONGOING)
+   - Convert constants from CassandraProcessorConstants into Properties (ONGOING)
+   - Bosh templates refactoring (TODO)
        - static operators instead of cassandra specific operators
        - propagate OSB data as bosh vars
-   - convert constants from CassandraProcessorConstants into Properties
+   
+   
    
 
 - refine logback config to 

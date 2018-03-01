@@ -83,7 +83,12 @@ public class PipelineCompletionTracker {
                 case CassandraProcessorConstants.OSB_DELETE_REQUEST_CLASS_NAME:
                     response.withDescription("Deletion succeeded");
                     if (createServiceInstanceOsbProxy != null) {
-                        response = createServiceInstanceOsbProxy.delegateDeprovision(pollingRequest, (DeleteServiceInstanceRequest) storedRequest, response);
+                        try {
+                            response = createServiceInstanceOsbProxy.delegateDeprovision(pollingRequest, (DeleteServiceInstanceRequest) storedRequest, response);
+                        } catch (Exception e) {
+                            logger.info("Unable to delegate delete to enclosed broker, maybe absent/down. Ignoring. Caught:" + e);
+                            response.withOperationState(OperationState.SUCCEEDED);
+                        }
                     }
                     break;
                 default:

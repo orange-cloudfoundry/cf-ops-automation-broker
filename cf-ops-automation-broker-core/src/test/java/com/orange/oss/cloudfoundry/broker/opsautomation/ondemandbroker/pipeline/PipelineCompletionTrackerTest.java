@@ -1,5 +1,7 @@
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline;
 
+import feign.FeignException;
+import feign.Response;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -7,9 +9,11 @@ import org.junit.rules.ExpectedException;
 import org.junit.rules.TemporaryFolder;
 import org.mockito.Mockito;
 import org.springframework.cloud.servicebroker.model.*;
+import org.springframework.http.HttpStatus;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Clock;
@@ -135,6 +139,28 @@ public class PipelineCompletionTrackerTest {
         //Then
         assertThat(response.getState()).isEqualTo(OperationState.SUCCEEDED);
         assertThat(response.getDescription()).isEqualTo("osb proxied");
+        verify(createServiceInstanceOsbProxy).delegateDeprovision(any(), any(), any());
+    }
+
+    @Test
+    public void ignores_osb_proxy_404_missing_catalog_response_when_deprovision_completes() throws IOException {
+        DeleteServiceInstanceRequest request = aDeleteServiceInstanceRequest();
+
+        //Given a proxy that can not reach the enclosing broker
+        Response errorResponse = Response.builder()
+                .status(HttpStatus.NOT_FOUND.value())
+                .headers(new HashMap<>())
+                .body("{\"description\":\"Requested route ('cassandra-broker_85329f8c-40d0-482b-a996-ff8bee2d4b1a.mydomain') does not exist.\"}", Charset.defaultCharset())
+                .build();
+        FeignException catalogException = FeignException.errorStatus("CatalogServiceClient#getCatalog()", errorResponse);
+        when(createServiceInstanceOsbProxy.delegateDeprovision(any(), any(), any())).thenThrow(catalogException );
+
+        //When
+        GetLastServiceOperationResponse response = tracker.buildResponse(request.getClass().getName(), false, false, (long) 10, pollingRequest, request);
+
+        //Then
+        assertThat(response.getState()).isEqualTo(OperationState.SUCCEEDED);
+        assertThat(response.getDescription()).isEqualTo("Deletion succeeded"); //don't need to inform users about our internal issues
         verify(createServiceInstanceOsbProxy).delegateDeprovision(any(), any(), any());
     }
 

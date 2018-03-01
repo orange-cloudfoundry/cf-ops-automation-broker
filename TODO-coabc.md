@@ -77,8 +77,8 @@ Server error, status code: 409, error code: 60016, message: An operation for ser
 - clean up maven dependency management for wiremock: factor out version across modules
 
 
-- OSBProxy future refinements     
-     - propagate description from nested broker 
+- OSBProxy/CompletionTracker future refinements     
+     - propagate description from nested broker instead of hardcoded 
      - strip out some arbitrary params
      - better map service plans
      - modularize mapping as injected strategies

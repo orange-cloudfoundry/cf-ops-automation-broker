@@ -1,3 +1,10 @@
+
+- harden handling of delete error when broker is missing
+    - skip OsbProxy when manifest is missing
+    - ignore OsbProxy errors during delete 
+        2018-03-01T15:33:52.04+0100 [APP/PROC/WEB/0] OUT feign.FeignException: status 404 reading CatalogServiceClient#getCatalog(); content:
+
+
 - automate inspection of smoke tests broker exceptions
    - in log search using specific searches
    

@@ -1,8 +1,16 @@
+- harden smoke tests to clean up service instances beyond the quota
 
-- harden handling of delete error when broker is missing
-    - skip OsbProxy when manifest is missing
-    - ignore OsbProxy errors during delete 
-        2018-03-01T15:33:52.04+0100 [APP/PROC/WEB/0] OUT feign.FeignException: status 404 reading CatalogServiceClient#getCatalog(); content:
+
+
+- harden handling of delete error
+    - when osb delegation previously failed
+       2018-03-02T09:21:06.67+0100 [APP/PROC/WEB/0] OUT 2018-03-02 08:21:06.665  INFO 7 --- [nio-8080-exec-8] c.o.o.c.b.o.o.pipeline.OsbProxyImpl      : inner broker deprovision request rejected:feign.FeignException: status 500 reading ServiceInstanceServiceClient#deleteServiceInstance(String,String,String,boolean,String,String); content:
+       2018-03-02T09:21:06.67+0100 [APP/PROC/WEB/0] OUT {"description":"Cannot drop non existing keyspace 'kse61bd6bf_6392_40f4_a8bc_3d7726581bf3'."}
+      
+    - when broker is missing
+        - skip OsbProxy when manifest is missing
+        - ignore OsbProxy errors during delete 
+            2018-03-01T15:33:52.04+0100 [APP/PROC/WEB/0] OUT feign.FeignException: status 404 reading CatalogServiceClient#getCatalog(); content:
 
 
 - automate inspection of smoke tests broker exceptions

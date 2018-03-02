@@ -1,9 +1,14 @@
-- harden smoke tests to clean up service instances beyond the quota
+- harden smoke tests to clean up service instances 
+    - failed
+        - create failed
+            cf s | grep 'create failed' | cut -d ' ' -f 1 | xargs -n 1  cf ds -f 
+
+    - beyond the quota
 
 
 
 - harden handling of delete error
-    - when osb delegation previously failed
+    - when osb delegation previously failed, support flag to ignore delete errors for brokers that don't maintain external state
        2018-03-02T09:21:06.67+0100 [APP/PROC/WEB/0] OUT 2018-03-02 08:21:06.665  INFO 7 --- [nio-8080-exec-8] c.o.o.c.b.o.o.pipeline.OsbProxyImpl      : inner broker deprovision request rejected:feign.FeignException: status 500 reading ServiceInstanceServiceClient#deleteServiceInstance(String,String,String,boolean,String,String); content:
        2018-03-02T09:21:06.67+0100 [APP/PROC/WEB/0] OUT {"description":"Cannot drop non existing keyspace 'kse61bd6bf_6392_40f4_a8bc_3d7726581bf3'."}
       

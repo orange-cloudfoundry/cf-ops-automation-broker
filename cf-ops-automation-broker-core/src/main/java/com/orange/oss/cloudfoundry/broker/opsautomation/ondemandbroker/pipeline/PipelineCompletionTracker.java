@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.cloud.servicebroker.exception.ServiceInstanceDoesNotExistException;
 import org.springframework.cloud.servicebroker.model.*;
 
 import java.lang.reflect.Modifier;
@@ -86,8 +87,8 @@ public class PipelineCompletionTracker {
                         try {
                             response = createServiceInstanceOsbProxy.delegateDeprovision(pollingRequest, (DeleteServiceInstanceRequest) storedRequest, response);
                         } catch (Exception e) {
-                            logger.info("Unable to delegate delete to enclosed broker, maybe absent/down. Ignoring. Caught:" + e);
-                            response.withOperationState(OperationState.SUCCEEDED);
+                            logger.info("Unable to delegate delete to enclosed broker, maybe absent/down. Reporting as GONE. Caught:" + e);
+                            throw new ServiceInstanceDoesNotExistException(pollingRequest.getServiceInstanceId());
                         }
                     }
                     break;

@@ -8,6 +8,7 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.rules.TemporaryFolder;
 import org.mockito.Mockito;
+import org.springframework.cloud.servicebroker.exception.ServiceInstanceDoesNotExistException;
 import org.springframework.cloud.servicebroker.model.*;
 import org.springframework.http.HttpStatus;
 
@@ -142,8 +143,8 @@ public class PipelineCompletionTrackerTest {
         verify(createServiceInstanceOsbProxy).delegateDeprovision(any(), any(), any());
     }
 
-    @Test
-    public void ignores_osb_proxy_404_missing_catalog_response_when_deprovision_completes() throws IOException {
+    @Test(expected = ServiceInstanceDoesNotExistException.class)
+    public void returns_410_GONE_on_osb_proxy_404_missing_catalog_response_when_deprovision_completes() throws IOException {
         DeleteServiceInstanceRequest request = aDeleteServiceInstanceRequest();
 
         //Given a proxy that can not reach the enclosing broker
@@ -156,11 +157,9 @@ public class PipelineCompletionTrackerTest {
         when(createServiceInstanceOsbProxy.delegateDeprovision(any(), any(), any())).thenThrow(catalogException );
 
         //When
-        GetLastServiceOperationResponse response = tracker.buildResponse(request.getClass().getName(), false, false, (long) 10, pollingRequest, request);
+        tracker.buildResponse(request.getClass().getName(), false, false, (long) 10, pollingRequest, request);
 
         //Then
-        assertThat(response.getState()).isEqualTo(OperationState.SUCCEEDED);
-        assertThat(response.getDescription()).isEqualTo("Deletion succeeded"); //don't need to inform users about our internal issues
         verify(createServiceInstanceOsbProxy).delegateDeprovision(any(), any(), any());
     }
 

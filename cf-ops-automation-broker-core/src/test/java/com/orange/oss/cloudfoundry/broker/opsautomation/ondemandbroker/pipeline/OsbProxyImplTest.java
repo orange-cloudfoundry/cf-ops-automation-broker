@@ -10,6 +10,7 @@ import org.junit.Test;
 import org.springframework.cloud.servicebroker.model.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.ResponseStatus;
 
 import java.nio.charset.Charset;
 import java.util.Collections;
@@ -247,6 +248,48 @@ public class OsbProxyImplTest {
         assertThat(mappedResponse.getState()).isSameAs(OperationState.FAILED);
         assertThat(mappedResponse.getDescription()).isEqualTo("Missing required fields: keyspace param");
         assertThat(mappedResponse.isDeleteOperation()).isFalse();
+    }
+
+    @Test
+    public void maps_feign_client_unknown_errors_to_500_errors() {
+        //Given
+        Response errorReponse = Response.builder()
+                .status(HttpStatus.INSUFFICIENT_STORAGE.value())
+                .headers(new HashMap<>())
+                .body("{\"description\":\"Missing required fields: keyspace param\"}", Charset.defaultCharset())
+                .build();
+        FeignException provisionException = FeignException.errorStatus("ServiceInstanceServiceClient#createServiceInstance(String,boolean,String,String,CreateServiceInstanceRequest)", errorReponse);
+
+        //when
+        RuntimeException mapClientException = osbProxy.mapClientException(provisionException);
+
+        assertThat(mapClientException.getMessage()).isEqualTo("Missing required fields: keyspace param. Original status: 507");
+        assertThat(mapClientException.getClass().getAnnotation(ResponseStatus.class).value()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    @Test
+    public void maps_feign_client_known_errors() {
+        assertDescriptionAndStatusMapped(HttpStatus.BAD_REQUEST, "Missing required fields: keyspace param");
+        assertDescriptionAndStatusMapped(HttpStatus.CONFLICT, "Service instance with id 1234 already exists");
+        //should better really map this to error when we get more time.
+        assertDescriptionAndStatusMapped(HttpStatus.UNPROCESSABLE_ENTITY, "This Service Plan requires client support for asynchronous service operations.");
+    }
+
+    private void assertDescriptionAndStatusMapped(HttpStatus httpStatus, String description) {
+        //given
+        Response errorReponse = Response.builder()
+                .status(httpStatus.value())
+                .headers(new HashMap<>())
+                .body("{\"description\":\"" + description + "\"}", Charset.defaultCharset())
+                .build();
+        FeignException provisionException = FeignException.errorStatus("ServiceInstanceServiceClient#createServiceInstance(String,boolean,String,String,CreateServiceInstanceRequest)", errorReponse);
+
+        //when
+        RuntimeException mapClientException = osbProxy.mapClientException(provisionException);
+
+        //then
+        assertThat(mapClientException.getMessage()).isEqualTo(description);
+        assertThat(mapClientException.getClass().getAnnotation(ResponseStatus.class).value()).isEqualTo(httpStatus);
     }
 
     @Test

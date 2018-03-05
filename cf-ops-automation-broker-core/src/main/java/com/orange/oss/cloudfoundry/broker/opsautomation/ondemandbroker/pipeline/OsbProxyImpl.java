@@ -15,6 +15,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 import org.springframework.util.Base64Utils;
+import org.springframework.web.bind.annotation.ResponseStatus;
 
 import java.text.MessageFormat;
 import java.util.HashMap;
@@ -103,6 +104,7 @@ public class OsbProxyImpl<Q extends ServiceBrokerRequest, P extends AsyncService
         OperationState operationState;
         String description = null;
         if (provisionException != null) {
+            RuntimeException mappedException = mapClientException(provisionException);
             operationState = OperationState.FAILED;
             description = parseReponseBody(provisionException).getDescription();
         } else {
@@ -118,6 +120,51 @@ public class OsbProxyImpl<Q extends ServiceBrokerRequest, P extends AsyncService
                 .withOperationState(operationState)
                 .withDescription(description)
                 .withDeleteOperation(false);
+    }
+
+    RuntimeException mapClientException(FeignException exception) {
+        //Once we upgrade to spring5, prefer ResponseStatusException as a programmatic alternative to @ResponseStatus
+        //static response code
+        //see https://github.com/spring-projects/spring-framework/wiki/What%27s-New-in-Spring-Framework-5.x
+        switch (exception.status()) {
+            case 400:
+                return new NestedBroker400StatusException(parseReponseBody(exception).getDescription(), exception);
+            case 409:
+                return new NestedBroker409StatusException(parseReponseBody(exception).getDescription(), exception);
+            case 422:
+                return new NestedBroker422StatusException(parseReponseBody(exception).getDescription(), exception);
+            default:
+                return new NestedBroker500StatusException(parseReponseBody(exception).getDescription() + ". Original status: " + exception.status(), exception);
+        }
+    }
+
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    public static class NestedBroker500StatusException extends RuntimeException {
+        @SuppressWarnings("WeakerAccess")
+        public NestedBroker500StatusException(String message, Throwable cause) {
+            super(message, cause);
+        }
+    }
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public static class NestedBroker400StatusException extends RuntimeException {
+        @SuppressWarnings("WeakerAccess")
+        public NestedBroker400StatusException(String message, Throwable cause) {
+            super(message, cause);
+        }
+    }
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public static class NestedBroker409StatusException extends RuntimeException {
+        @SuppressWarnings("WeakerAccess")
+        public NestedBroker409StatusException(String message, Throwable cause) {
+            super(message, cause);
+        }
+    }
+    @ResponseStatus(HttpStatus.UNPROCESSABLE_ENTITY)
+    public static class NestedBroker422StatusException extends RuntimeException {
+        @SuppressWarnings("WeakerAccess")
+        public NestedBroker422StatusException(String message, Throwable cause) {
+            super(message, cause);
+        }
     }
 
 

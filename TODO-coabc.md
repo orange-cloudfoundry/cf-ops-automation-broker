@@ -7,6 +7,10 @@
        Proposed behavior:
          - map sync provision/unprovision unexpected error as async unexpected error 
             (as to allow for retries until max polling duration is reached, in case of transient error): propagate error
+            Impl:
+               - throw an exception http://www.baeldung.com/spring-mvc-controller-custom-http-status-code with static @ResponseStatus 500 spring mvc annotation
+               
+               Q: is FeignException annotated with @Status 
          - map missing catalog endpoint as 410 gone to indicate underlying deployment is likely to be unknown.
           
        Diagnostic:

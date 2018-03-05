@@ -127,7 +127,7 @@ public class OsbProxyImpl<Q extends ServiceBrokerRequest, P extends AsyncService
         if (deprovisionException != null) {
             operationState = OperationState.FAILED;
             description = parseReponseBody(deprovisionException).getDescription();
-            logger.info("inner broker deprovision request rejected:" + deprovisionException);
+            logger.error("inner broker deprovision request rejected:" + deprovisionException);
         } else {
             if (delegatedResponse.getStatusCode() == HttpStatus.OK) {
                 operationState = OperationState.SUCCEEDED;

@@ -104,9 +104,7 @@ public class OsbProxyImpl<Q extends ServiceBrokerRequest, P extends AsyncService
         OperationState operationState;
         String description = null;
         if (provisionException != null) {
-            RuntimeException mappedException = mapClientException(provisionException);
-            operationState = OperationState.FAILED;
-            description = parseReponseBody(provisionException).getDescription();
+            throw mapClientException(provisionException);
         } else {
             if (delegatedResponse.getStatusCode() == HttpStatus.CREATED) {
                 operationState = OperationState.SUCCEEDED;

@@ -40,29 +40,48 @@ public class TemplatesGenerator extends StructureGeneratorImpl{
         //Check common pre-requisites
         super.checkPrerequisites(workDir);
 
-        //Check specific pre-requisites
+        //Check specific pre-requisite (template directory)
         Path templateDir = StructureGeneratorHelper.generatePath(workDir,
-                CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY,
-                CassandraProcessorConstants.MODEL_DEPLOYMENT_DIRECTORY,
-                CassandraProcessorConstants.TEMPLATE_DIRECTORY);
+                this.rootDeployment,
+                this.modelDeployment,
+                this.template);
         if (Files.notExists(templateDir)){
-            throw new CassandraProcessorException(CassandraProcessorConstants.TEMPLATE_EXCEPTION);
+            throw new DeploymentException(DeploymentConstants.TEMPLATE_EXCEPTION);
         }
+        //Check specific pre-requisite (operators directory)
+        Path operatorsDir = StructureGeneratorHelper.generatePath(workDir,
+                this.rootDeployment,
+                this.modelDeployment,
+                this.operators);
+        if (Files.notExists(operatorsDir)){
+            throw new DeploymentException(DeploymentConstants.OPERATORS_EXCEPTION);
+        }
+        //Check specific pre-requisite (manifest file in model template directory)
         Path modelManifestFile = StructureGeneratorHelper.generatePath(workDir,
-                CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY,
-                CassandraProcessorConstants.MODEL_DEPLOYMENT_DIRECTORY,
-                CassandraProcessorConstants.TEMPLATE_DIRECTORY,
-                CassandraProcessorConstants.MODEL_MANIFEST_FILENAME);
+                this.rootDeployment,
+                this.modelDeployment,
+                this.template,
+                this.modelDeployment + DeploymentConstants.YML_EXTENSION);
         if (Files.notExists(modelManifestFile)){
-            throw new CassandraProcessorException(CassandraProcessorConstants.MANIFEST_FILE_EXCEPTION);
+            throw new DeploymentException(DeploymentConstants.MANIFEST_FILE_EXCEPTION);
         }
+        //Check specific pre-requisite (vars file in model template directory)
         Path modelVarsFile = StructureGeneratorHelper.generatePath(workDir,
-                CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY,
-                CassandraProcessorConstants.MODEL_DEPLOYMENT_DIRECTORY,
-                CassandraProcessorConstants.TEMPLATE_DIRECTORY,
-                CassandraProcessorConstants.MODEL_VARS_FILENAME);
+                this.rootDeployment,
+                this.modelDeployment,
+                this.template,
+                this.modelDeployment + DeploymentConstants.HYPHEN + this.vars + DeploymentConstants.YML_EXTENSION);
         if (Files.notExists(modelVarsFile)){
-            throw new CassandraProcessorException(CassandraProcessorConstants.VARS_FILE_EXCEPTION);
+            throw new DeploymentException(DeploymentConstants.VARS_FILE_EXCEPTION);
+        }
+        //Check specific pre-requisite (coab operators file in model operators directory)
+        Path modelOperatorsFile = StructureGeneratorHelper.generatePath(workDir,
+                this.rootDeployment,
+                this.modelDeployment,
+                this.operators,
+                DeploymentConstants.COAB + DeploymentConstants.HYPHEN + this.operators + DeploymentConstants.YML_EXTENSION);
+        if (Files.notExists(modelOperatorsFile)){
+            throw new DeploymentException(DeploymentConstants.COAB_OPERATORS_FILE_EXCEPTION);
         }
     }
 
@@ -74,48 +93,51 @@ public class TemplatesGenerator extends StructureGeneratorImpl{
             //Generate service directory
             super.generate(workDir, serviceInstanceId);
 
+            //Build deploymentInstanceDirectory
+            String deploymentInstance = this.modelDeployment + DeploymentConstants.UNDERSCORE + serviceInstanceId;
+
             //Generate template directory
             Path deploymentTemplateDir = StructureGeneratorHelper.generatePath(workDir,
-                    CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY,
-                    CassandraProcessorConstants.SERVICE_INSTANCE_PREFIX_DIRECTORY + serviceInstanceId,
-                    CassandraProcessorConstants.TEMPLATE_DIRECTORY);
+                    this.rootDeployment,
+                    this.modelDeployment + DeploymentConstants.UNDERSCORE + serviceInstanceId,
+                    this.template);
             Files.createDirectory(deploymentTemplateDir);
 
             //Generate deployment dependencies file
-            Path targetDeploymentDependenciesFile = StructureGeneratorHelper.generatePath(workDir,
-                    CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY,
-                    CassandraProcessorConstants.SERVICE_INSTANCE_PREFIX_DIRECTORY + serviceInstanceId,
-                    CassandraProcessorConstants.DEPLOYMENT_DEPENDENCIES_FILENAME);
             Map<String, String> mapDeploymentDependenciesFile = new HashMap<String, String>();
-            mapDeploymentDependenciesFile.put(CassandraProcessorConstants.SERVICE_INSTANCE_PATTERN, CassandraProcessorConstants.SERVICE_INSTANCE_PREFIX_DIRECTORY + serviceInstanceId);
-            this.generateFile(CassandraProcessorConstants.DEPLOYMENT_DEPENDENCIES_FILENAME,
-                    targetDeploymentDependenciesFile,
-                    mapDeploymentDependenciesFile);
-
-            //Generate operators file
-            Path targetOperatorsFile = StructureGeneratorHelper.generatePath(workDir,
-                    CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY,
-                    CassandraProcessorConstants.SERVICE_INSTANCE_PREFIX_DIRECTORY + serviceInstanceId,
-                    CassandraProcessorConstants.TEMPLATE_DIRECTORY,
-                    CassandraProcessorConstants.OPERATORS_FILENAME);
-            Map<String, String> mapOperatorsFile = new HashMap<String, String>();
-            mapOperatorsFile.put(CassandraProcessorConstants.SERVICE_INSTANCE_PATTERN, CassandraProcessorConstants.SERVICE_INSTANCE_PREFIX_DIRECTORY + serviceInstanceId);
-            mapOperatorsFile.put(CassandraProcessorConstants.URL_PATTERN, CassandraProcessorConstants.BROKER_PREFIX + serviceInstanceId);
-            this.generateFile(CassandraProcessorConstants.OPERATORS_FILENAME,
-                    targetOperatorsFile,
-                    mapOperatorsFile);
+            mapDeploymentDependenciesFile.put(DeploymentConstants.DEPLOYMENT_NAME_PATTERN, deploymentInstance);
+            String[] targetPathElements = new String[] {this.rootDeployment, deploymentInstance};
+            String sourceFileName = DeploymentConstants.DEPLOYMENT_DEPENDENCIES_FILENAME;
+            StructureGeneratorHelper.generateDynamicFile(workDir, targetPathElements, sourceFileName, sourceFileName, mapDeploymentDependenciesFile);
 
             //Generate manifest file as symlink
-            this.generateFileAsSymbolicLink(CassandraProcessorConstants.MODEL_MANIFEST_FILENAME, CassandraProcessorConstants.MANIFEST_FILENAME_SUFFIX, workDir, serviceInstanceId);
+            String[] sourcePathElements = new String[] {this.rootDeployment, this.modelDeployment, this.template};
+            targetPathElements = new String[] {this.rootDeployment, deploymentInstance, this.template};
+            sourceFileName = this.modelDeployment + DeploymentConstants.YML_EXTENSION;
+            String targetFileName = deploymentInstance + DeploymentConstants.YML_EXTENSION;
+            StructureGeneratorHelper.generateSymbolicLink(workDir, sourcePathElements, targetPathElements, sourceFileName, targetFileName);
 
             //Generate vars file as symlink
-            this.generateFileAsSymbolicLink(CassandraProcessorConstants.MODEL_VARS_FILENAME, CassandraProcessorConstants.VARS_FILENAME_SUFFIX, workDir, serviceInstanceId);
+            sourceFileName = this.modelDeployment + DeploymentConstants.HYPHEN + this.vars + DeploymentConstants.YML_EXTENSION;
+            targetFileName = deploymentInstance + DeploymentConstants.HYPHEN + this.vars + DeploymentConstants.YML_EXTENSION;
+            StructureGeneratorHelper.generateSymbolicLink(workDir, sourcePathElements, targetPathElements, sourceFileName, targetFileName);
+
+            //Generate coab operators file as symlink
+            sourcePathElements = new String[] {this.rootDeployment, this.modelDeployment, this.operators};
+            sourceFileName = DeploymentConstants.COAB + DeploymentConstants.HYPHEN + this.operators + DeploymentConstants.YML_EXTENSION;
+            StructureGeneratorHelper.generateSymbolicLink(workDir, sourcePathElements, targetPathElements, sourceFileName, sourceFileName);
+
+            //Generate coab vars file
+            Map<String, String> mapCoabVarsFile = new HashMap<String, String>();
+            mapCoabVarsFile.put(DeploymentConstants.DEPLOYMENT_NAME_PATTERN, deploymentInstance);
+            targetPathElements = new String[] {this.rootDeployment, deploymentInstance, this.template};
+            sourceFileName = DeploymentConstants.COAB + DeploymentConstants.HYPHEN + this.vars + DeploymentConstants.YML_EXTENSION;
+            StructureGeneratorHelper.generateDynamicFile(workDir, targetPathElements, sourceFileName, sourceFileName, mapCoabVarsFile);
 
         } catch (IOException e) {
             e.printStackTrace();
             throw new CassandraProcessorException(CassandraProcessorConstants.GENERATION_EXCEPTION);
         }
-
     }
 
     private void generateFile(String sourceFileName, Path targetFile, Map<String, String> findAndReplace){
@@ -135,40 +157,4 @@ public class TemplatesGenerator extends StructureGeneratorImpl{
             throw new CassandraProcessorException(CassandraProcessorConstants.GENERATION_EXCEPTION);
         }
     }
-
-    private void generateFileAsSymbolicLink(String modelFileName, String modelFileNameSuffix, Path workDir, String serviceInstanceId) {
-        try {
-
-            //Compute relative path on directories with relativize method otherwise doesn't work
-            Path modelTemplateDir = StructureGeneratorHelper.generatePath(workDir,
-                    CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY,
-                    CassandraProcessorConstants.MODEL_DEPLOYMENT_DIRECTORY,
-                    CassandraProcessorConstants.TEMPLATE_DIRECTORY);
-
-            Path serviceTemplateDir = StructureGeneratorHelper.generatePath(workDir,
-                    CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY,
-                    CassandraProcessorConstants.SERVICE_INSTANCE_PREFIX_DIRECTORY + serviceInstanceId,
-                    CassandraProcessorConstants.TEMPLATE_DIRECTORY);
-            Path serviceToModel = serviceTemplateDir.relativize(modelTemplateDir);
-
-            //Generate file paths
-            Path relativeModelManifestFile = StructureGeneratorHelper.generatePath(serviceToModel,
-                    modelFileName);
-
-            Path serviceManifestFile = StructureGeneratorHelper.generatePath(workDir,
-                    CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY,
-                    CassandraProcessorConstants.SERVICE_INSTANCE_PREFIX_DIRECTORY + serviceInstanceId,
-                    CassandraProcessorConstants.TEMPLATE_DIRECTORY,
-                    CassandraProcessorConstants.SERVICE_INSTANCE_PREFIX_DIRECTORY + serviceInstanceId + modelFileNameSuffix);
-
-            //Generate symbolic link
-            Files.createSymbolicLink(serviceManifestFile, relativeModelManifestFile);
-
-        } catch (IOException e) {
-            e.printStackTrace();
-            throw new CassandraProcessorException(CassandraProcessorConstants.GENERATION_EXCEPTION);
-        }
-    }
-
-
 }

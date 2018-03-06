@@ -21,50 +21,37 @@ public class SecretsGenerator extends StructureGeneratorImpl {
     public SecretsGenerator(){
     }
 
-    public SecretsGenerator(String rootDeployment, String modelDeployment, String secrets, String meta, String enable){
+    public SecretsGenerator(String rootDeployment, String modelDeployment, String secrets, String meta){
         super(rootDeployment,modelDeployment);
+        this.secrets = secrets;
+        this.meta = meta;
     }
 
     public void generate(Path workDir, String serviceInstanceId) {
 
-        try {
             //Generate service directory
             super.generate(workDir, serviceInstanceId);
 
             //Generate secrets directory
-            Path deploymentSecretsDir = StructureGeneratorHelper.generatePath(workDir,
-                    CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY,
-                    CassandraProcessorConstants.SERVICE_INSTANCE_PREFIX_DIRECTORY + serviceInstanceId,
-                    CassandraProcessorConstants.SECRETS_DIRECTORY);
-            Files.createDirectory(deploymentSecretsDir);
+            String deploymentInstanceDirectory = this.modelDeployment + DeploymentConstants.UNDERSCORE + serviceInstanceId;
+            StructureGeneratorHelper.generateDirectory(workDir, this.rootDeployment, deploymentInstanceDirectory, this.secrets);
 
             //Generate meta file
-            Path metaFile = StructureGeneratorHelper.generatePath(workDir,
-                    CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY,
-                    CassandraProcessorConstants.SERVICE_INSTANCE_PREFIX_DIRECTORY + serviceInstanceId,
-                    CassandraProcessorConstants.SECRETS_DIRECTORY,
-                    CassandraProcessorConstants.META_FILENAME);
-            Files.write(metaFile, Arrays.asList(CassandraProcessorConstants.META_CONTENT), Charset.forName(StandardCharsets.UTF_8.name()));
+            String[] sourcePathElements = new String[] {this.rootDeployment, this.modelDeployment, this.secrets};
+            String[] targetPathElements = new String[] {this.rootDeployment, deploymentInstanceDirectory, this.secrets};
+            String fileName = this.meta + DeploymentConstants.YML_EXTENSION;
+            StructureGeneratorHelper.generateSymbolicLink(workDir, sourcePathElements, targetPathElements, fileName, fileName);
 
             //Generate secrets file
-            Path secretsFile = StructureGeneratorHelper.generatePath(workDir,
-                    CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY,
-                    CassandraProcessorConstants.SERVICE_INSTANCE_PREFIX_DIRECTORY + serviceInstanceId,
-                    CassandraProcessorConstants.SECRETS_DIRECTORY,
-                    CassandraProcessorConstants.SECRETS_FILENAME);
-            Files.write(secretsFile, Arrays.asList(CassandraProcessorConstants.SECRETS_CONTENT), Charset.forName(StandardCharsets.UTF_8.name()));
+            fileName = this.secrets + DeploymentConstants.YML_EXTENSION;
+            StructureGeneratorHelper.generateSymbolicLink(workDir, sourcePathElements, targetPathElements, fileName, fileName);
 
             //Generate enable deployment file
-            Path enableDeploymentFile = StructureGeneratorHelper.generatePath(workDir,
-                    CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY,
-                    CassandraProcessorConstants.SERVICE_INSTANCE_PREFIX_DIRECTORY + serviceInstanceId,
-                    CassandraProcessorConstants.ENABLE_DEPLOYMENT_FILENAME);
-            Files.write(enableDeploymentFile, Arrays.asList(CassandraProcessorConstants.ENABLE_DEPLOYMENT_CONTENT), Charset.forName(StandardCharsets.UTF_8.name()));
+            targetPathElements = new String[] {this.rootDeployment, deploymentInstanceDirectory};
+            fileName = DeploymentConstants.ENABLE_DEPLOYMENT_FILENAME;
+            //StructureGeneratorHelper.generateFile(workDir,targetPathElements, fileName, DeploymentConstants.YML_HEADER);
+            StructureGeneratorHelper.generateDynamicFile(workDir,  targetPathElements, fileName, fileName, null);
 
-        } catch (IOException e) {
-            e.printStackTrace();
-            throw new CassandraProcessorException(CassandraProcessorConstants.GENERATION_EXCEPTION);
-        }
     }
 
     public void remove(Path workDir, String serviceInstanceId) {

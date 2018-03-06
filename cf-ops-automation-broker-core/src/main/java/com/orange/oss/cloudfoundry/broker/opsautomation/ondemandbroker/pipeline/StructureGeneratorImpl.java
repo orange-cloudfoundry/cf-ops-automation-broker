@@ -24,65 +24,22 @@ public class StructureGeneratorImpl implements StructureGenerator {
 
     public void checkPrerequisites(Path workDir) {
         Path rootDeploymentDir = StructureGeneratorHelper.generatePath(workDir,
-                CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY);
+                this.rootDeployment);
         if (Files.notExists(rootDeploymentDir)){
-            throw new CassandraProcessorException(CassandraProcessorConstants.ROOT_DEPLOYMENT_EXCEPTION);
+            throw new DeploymentException(DeploymentConstants.ROOT_DEPLOYMENT_EXCEPTION);
         }
         Path modelDeploymentDir = StructureGeneratorHelper.generatePath(workDir,
-                CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY,
-                CassandraProcessorConstants.MODEL_DEPLOYMENT_DIRECTORY);
+                this.rootDeployment,
+                this.modelDeployment);
         if (Files.notExists(modelDeploymentDir)){
-            throw new CassandraProcessorException(CassandraProcessorConstants.MODEL_DEPLOYMENT_EXCEPTION);
+            throw new DeploymentException(DeploymentConstants.MODEL_DEPLOYMENT_EXCEPTION);
         }
     }
 
     public void generate(Path workDir, String serviceInstanceId) {
-        try {
-            //Generate service directory
-            Path serviceInstanceDir = StructureGeneratorHelper.generatePath(workDir,
-                    CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY,
-                    CassandraProcessorConstants.SERVICE_INSTANCE_PREFIX_DIRECTORY + serviceInstanceId);
-            Files.createDirectory(serviceInstanceDir);
-        } catch (IOException e) {
-            e.printStackTrace();
-            throw new CassandraProcessorException(CassandraProcessorConstants.GENERATION_EXCEPTION);
-        }
+            ////Generate service directory
+            String deploymentInstanceDirectory = this.modelDeployment + DeploymentConstants.UNDERSCORE + serviceInstanceId;
+            StructureGeneratorHelper.generateDirectory(workDir, this.rootDeployment, deploymentInstanceDirectory);
     }
-
-    private void generateFileAsSymbolicLink(String modelFileName, String modelFileNameSuffix, Path workDir, String serviceInstanceId) {
-        try {
-
-            //Compute relative path on directories with relativize method otherwise doesn't work
-            Path modelTemplateDir = StructureGeneratorHelper.generatePath(workDir,
-                    CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY,
-                    CassandraProcessorConstants.MODEL_DEPLOYMENT_DIRECTORY,
-                    CassandraProcessorConstants.TEMPLATE_DIRECTORY);
-
-            Path serviceTemplateDir = StructureGeneratorHelper.generatePath(workDir,
-                    CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY,
-                    CassandraProcessorConstants.SERVICE_INSTANCE_PREFIX_DIRECTORY + serviceInstanceId,
-                    CassandraProcessorConstants.TEMPLATE_DIRECTORY);
-            Path serviceToModel = serviceTemplateDir.relativize(modelTemplateDir);
-
-            //Generate file paths
-            Path relativeModelManifestFile = StructureGeneratorHelper.generatePath(serviceToModel,
-                    modelFileName);
-
-            Path serviceManifestFile = StructureGeneratorHelper.generatePath(workDir,
-                    CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY,
-                    CassandraProcessorConstants.SERVICE_INSTANCE_PREFIX_DIRECTORY + serviceInstanceId,
-                    CassandraProcessorConstants.TEMPLATE_DIRECTORY,
-                    CassandraProcessorConstants.SERVICE_INSTANCE_PREFIX_DIRECTORY + serviceInstanceId + modelFileNameSuffix);
-
-            //Generate symbolic link
-            Files.createSymbolicLink(serviceManifestFile, relativeModelManifestFile);
-
-        } catch (IOException e) {
-            e.printStackTrace();
-            throw new CassandraProcessorException(CassandraProcessorConstants.GENERATION_EXCEPTION);
-        }
-    }
-
-
 
 }

@@ -8,10 +8,7 @@ import com.github.tomakehurst.wiremock.recording.SnapshotRecordResult;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.GitProcessor;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.GitProcessorContext;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.GitServer;
-import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.CassandraProcessorConstants;
-import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.OsbProxy;
-import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.OsbProxyImpl;
-import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.PipelineCompletionTracker;
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.*;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.Context;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.terraform.TerraformModuleHelper;
 import io.restassured.RestAssured;
@@ -97,6 +94,9 @@ public class CassandraServiceProvisionningTest {
     @Autowired
     OsbProxyProperties osbProxyProperties;
 
+    @Autowired
+    DeploymentProperties deploymentProperties;
+
     private boolean isWiremockRecordingEnabled() {
         return preprodBrokerUrlToRecord != null && ! preprodBrokerUrlToRecord.isEmpty();
     }
@@ -164,14 +164,20 @@ public class CassandraServiceProvisionningTest {
             git.checkout().setName("develop").setCreateBranch(true).call();
 
             //root deployment
-            Path coabDepls = gitWorkDir.toPath().resolve(CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY);
+            Path coabDepls = gitWorkDir.toPath().resolve(deploymentProperties.getRootDeployment());
             //sub deployments
             Path templateDir = coabDepls
-                    .resolve(CassandraProcessorConstants.MODEL_DEPLOYMENT_DIRECTORY)
-                    .resolve(CassandraProcessorConstants.TEMPLATE_DIRECTORY);
+                    .resolve(deploymentProperties.getModelDeployment())
+                    .resolve(deploymentProperties.getTemplate());
             createDir(templateDir);
-            createDummyFile(templateDir.resolve(CassandraProcessorConstants.MODEL_MANIFEST_FILENAME));
-            createDummyFile(templateDir.resolve(CassandraProcessorConstants.MODEL_VARS_FILENAME));
+            createDummyFile(templateDir.resolve(deploymentProperties.getModelDeployment() + DeploymentConstants.YML_EXTENSION));
+            createDummyFile(templateDir.resolve(deploymentProperties.getModelDeployment() + DeploymentConstants.HYPHEN + deploymentProperties.getVars()+ DeploymentConstants.YML_EXTENSION));
+
+            Path operatorsDir = coabDepls
+                    .resolve(deploymentProperties.getModelDeployment())
+                    .resolve(deploymentProperties.getOperators());
+            createDir(operatorsDir);
+            createDummyFile(operatorsDir.resolve(DeploymentConstants.COAB + DeploymentConstants.HYPHEN + deploymentProperties.getOperators() + DeploymentConstants.YML_EXTENSION));
 
             AddCommand addC = git.add().addFilepattern(".");
             addC.call();
@@ -194,13 +200,14 @@ public class CassandraServiceProvisionningTest {
             git.commit().setMessage("Initial empty repo setup").call();
 
             //root deployment
-            Path coabDepls = gitWorkDir.toPath().resolve(CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY);
+            Path coabDepls = gitWorkDir.toPath().resolve(deploymentProperties.getRootDeployment());
             //sub deployments
-            Path templateDir = coabDepls
-                    .resolve(CassandraProcessorConstants.MODEL_DEPLOYMENT_DIRECTORY)
-                    .resolve(CassandraProcessorConstants.TEMPLATE_DIRECTORY);
-            createDir(templateDir);
-
+            Path secretsDir = coabDepls
+                    .resolve(deploymentProperties.getModelDeployment())
+                    .resolve(deploymentProperties.getSecrets());
+            createDir(secretsDir);
+            createDummyFile(secretsDir.resolve(deploymentProperties.getMeta() + DeploymentConstants.YML_EXTENSION));
+            createDummyFile(secretsDir.resolve(deploymentProperties.getSecrets() + DeploymentConstants.YML_EXTENSION));
             AddCommand addC = git.add().addFilepattern(".");
             addC.call();
 

@@ -13,7 +13,6 @@ public class DeploymentProperties {
     private String modelDeployment = "cassandra"; //Model deployment (i.e cassandra, cassandravarsops, ...)
     private String secrets = "secrets"; //Secrets directory (i.e secrets)
     private String meta = "meta"; //Meta directory (i.e meta)
-    private String enable = "enable-deployment"; //Enable deployment (i.e enable-deployment)
     private String template = "template"; //Template directory (i.e template)
     private String vars = "vars"; //Vars suffix (i.e vars)
     private String operators = "operators"; //Operators suffix (i.e operators)
@@ -48,10 +47,6 @@ public class DeploymentProperties {
     public void setMeta(String meta) {
         this.meta = meta;
     }
-
-    public String getEnable() { return enable; }
-
-    public void setEnable(String enable) { this.enable = enable; }
 
     public String getTemplate() {
         return template;

@@ -76,17 +76,26 @@ public class CassandraBrokerApplication {
     @Bean
     public SecretsGenerator secretsGenerator(
             DeploymentProperties deploymentProperties) {
-        return new SecretsGenerator();
+        return new SecretsGenerator(
+                deploymentProperties.getRootDeployment(),
+                deploymentProperties.getModelDeployment(),
+                deploymentProperties.getSecrets(),
+                deploymentProperties.getMeta()
+        );
     }
 
     @Bean
     public TemplatesGenerator templatesGenerator(
             DeploymentProperties deploymentProperties
     ) {
-        return new TemplatesGenerator();
+        return new TemplatesGenerator(
+                deploymentProperties.getRootDeployment(),
+                deploymentProperties.getModelDeployment(),
+                deploymentProperties.getTemplate(),
+                deploymentProperties.getVars(),
+                deploymentProperties.getOperators()
+        );
     }
-
-
 
     @Bean
     public BrokerProcessor cassandraProcessor(Clock clock,

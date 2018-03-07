@@ -5,22 +5,18 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.rules.TemporaryFolder;
-import org.springframework.test.context.TestExecutionListeners;
-
 import java.io.File;
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.List;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 
 public class TemplatesGeneratorTest {
 
     public static final String REPOSITORY_DIRECTORY = "paas-templates";
-    public static final String SERVICE_INSTANCE_ID = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa0";
+    public static final String SERVICE_INSTANCE_ID = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa10";
     private DeploymentProperties deploymentProperties;
     private File file;
     private Path workDir;
@@ -361,6 +357,15 @@ public class TemplatesGeneratorTest {
         }
     }
 
+    private DeploymentProperties aDeploymentProperties(){
+        DeploymentProperties deploymentProperties = new DeploymentProperties();
+        deploymentProperties.setRootDeployment("coab-depls");
+        deploymentProperties.setModelDeployment("cassandravarsops");
+        deploymentProperties.setTemplate("template");
+        deploymentProperties.setVars("vars");
+        deploymentProperties.setOperators("operators");
+        return deploymentProperties;
+    }
 
     @Test
     @Ignore
@@ -370,59 +375,10 @@ public class TemplatesGeneratorTest {
 
     @Test
     @Ignore
-    public void testPathAdvanced() throws IOException {
-        //Given repository, root deployment,model deployment and template directory
-        Path workDir = Files.createTempDirectory(REPOSITORY_DIRECTORY);
-
-        Path modelTemplateDir = StructureGeneratorHelper.generatePath(workDir,
-                CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY,
-                CassandraProcessorConstants.MODEL_DEPLOYMENT_DIRECTORY,
-                CassandraProcessorConstants.TEMPLATE_DIRECTORY);
-        modelTemplateDir = Files.createDirectories(modelTemplateDir);
-
-        Path modelManifestFile = StructureGeneratorHelper.generatePath(modelTemplateDir, CassandraProcessorConstants.MODEL_MANIFEST_FILENAME);
-        modelManifestFile = Files.createFile(modelManifestFile);
-
-        Path serviceTemplateDir = StructureGeneratorHelper.generatePath(workDir,
-                CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY,
-                CassandraProcessorConstants.SERVICE_INSTANCE_PREFIX_DIRECTORY + SERVICE_INSTANCE_ID,
-                CassandraProcessorConstants.TEMPLATE_DIRECTORY);
-        serviceTemplateDir = Files.createDirectories(serviceTemplateDir);
-
-        Path serviceToModel = serviceTemplateDir.relativize(modelTemplateDir);
-        System.out.println(serviceToModel);
-        Path relativeModelManifestFile = StructureGeneratorHelper.generatePath(serviceToModel,
-                CassandraProcessorConstants.MODEL_MANIFEST_FILENAME);
-        System.out.println(relativeModelManifestFile);
-        Path serviceManifestFile = StructureGeneratorHelper.generatePath(workDir,
-                CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY,
-                CassandraProcessorConstants.SERVICE_INSTANCE_PREFIX_DIRECTORY + SERVICE_INSTANCE_ID,
-                CassandraProcessorConstants.TEMPLATE_DIRECTORY,
-                CassandraProcessorConstants.SERVICE_INSTANCE_PREFIX_DIRECTORY + SERVICE_INSTANCE_ID + CassandraProcessorConstants.MANIFEST_FILENAME_SUFFIX);
-        Files.createSymbolicLink(serviceManifestFile, relativeModelManifestFile);
-
-    }
-
-    private DeploymentProperties aDeploymentProperties(){
-        DeploymentProperties deploymentProperties = new DeploymentProperties();
-        deploymentProperties.setRootDeployment("coab-depls");
-        deploymentProperties.setModelDeployment("deployment");
-        deploymentProperties.setTemplate("template");
-        deploymentProperties.setVars("vars");
-        deploymentProperties.setOperators("operators");
-        return deploymentProperties;
-    }
-
-
-
-    @Test@Ignore
     public void populatePaasTemplates() throws IOException {
-        Path workDir = Paths.get("/home/ijly7474/GIT/paas-templates");
-        String serviceInstanceId = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa10";
-        TemplatesGenerator templates = new TemplatesGenerator();
-        templates.checkPrerequisites(workDir);
-        templates.generate(workDir, SERVICE_INSTANCE_ID);
+        Path workDir = Paths.get("/home/ijly7474/GIT/coab/paas-templates");
+        this.templatesGenerator.checkPrerequisites(workDir);
+        this.templatesGenerator.generate(workDir, SERVICE_INSTANCE_ID);
     }
-
 
 }

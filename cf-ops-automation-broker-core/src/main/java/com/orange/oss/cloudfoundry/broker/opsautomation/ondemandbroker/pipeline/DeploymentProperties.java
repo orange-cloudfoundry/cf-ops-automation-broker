@@ -10,7 +10,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 public class DeploymentProperties {
 
     private String rootDeployment = "coab-depls"; //Root deployment (i.e coab-depls)
-    private String modelDeployment = "cassandra"; //Model deployment (i.e cassandra, cassandravarsops, ...)
+    private String modelDeployment = "cassandravarsops"; //Model deployment (i.e cassandra, cassandravarsops, ...)
     private String secrets = "secrets"; //Secrets directory (i.e secrets)
     private String meta = "meta"; //Meta directory (i.e meta)
     private String template = "template"; //Template directory (i.e template)

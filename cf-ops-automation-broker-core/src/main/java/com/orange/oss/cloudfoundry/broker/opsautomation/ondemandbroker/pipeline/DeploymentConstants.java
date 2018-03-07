@@ -17,4 +17,7 @@ public class DeploymentConstants {
     public static final String MANIFEST_FILE_EXCEPTION = "Model manifest file doesn't exist";
     public static final String VARS_FILE_EXCEPTION = "Model vars file doesn't exist";
     public static final String COAB_OPERATORS_FILE_EXCEPTION = "Coab operators file doesn't exist";
+    public static final String SECRETS_EXCEPTION = "Secrets directory doesn't exist";;
+    public static final String META_FILE_EXCEPTION = "Model meta file doesn't exist";
+    public static final String SECRETS_FILE_EXCEPTION = "Model secrets file doesn't exist";
 }

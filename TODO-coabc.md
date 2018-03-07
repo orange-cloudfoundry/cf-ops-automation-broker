@@ -115,12 +115,14 @@ Server error, status code: 409, error code: 60016, message: An operation for ser
 --------------------------------
 
 - Refactor to generalize to another deployment (e.g. mysql)
-   - Convert constants from CassandraProcessorConstants into Properties (ONGOING)
-   - Change secrets generation from files to symlinks (ONGOING)
-   - Refactor bosh templates (TODO)
-       - static operators instead of cassandra specific operators
-       - propagate OSB data as bosh vars
    - Introduce configuration class and builder in order to hold secrets/templates static information (TODO)
+   - Refactor secrets and templates generator to have little methods
+   - Split Junit tests between check and generate in order to improve readability (target little methods instead of global method)
+   - Use MessageFormat in StructureGeneratorHelper
+   - Use Builder in Junit tests to improve readability
+   - Manage “-tpl” files
+   - Improve test coverage StructureGeneratorHelper
+   - Update integration test to use the builder
    
    
 - refine logback config to 

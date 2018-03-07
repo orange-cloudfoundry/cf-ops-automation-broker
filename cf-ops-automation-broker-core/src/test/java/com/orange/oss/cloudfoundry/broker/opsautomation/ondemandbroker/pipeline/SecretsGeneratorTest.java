@@ -8,20 +8,15 @@ import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
-
-import static junit.framework.TestCase.assertFalse;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 public class SecretsGeneratorTest {
 
     public static final String REPOSITORY_DIRECTORY = "paas-secrets";
-    public static final String SERVICE_INSTANCE_ID = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa0";
+    public static final String SERVICE_INSTANCE_ID = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa10";
     private DeploymentProperties deploymentProperties;
     private File file;
     private Path workDir;
@@ -57,7 +52,7 @@ public class SecretsGeneratorTest {
     }
 
     @Test
-    public void raise_exception_if_model_deployment_is_missing(){
+    public void raise_exception_if_model_deployment_directory_is_missing(){
         try {
             //Then
             thrown.expect(DeploymentException.class);
@@ -73,7 +68,59 @@ public class SecretsGeneratorTest {
     }
 
     @Test
-    public void check_if_deployment_instance_directory_is_generated() {
+    public void raise_exception_if_secrets_directory_is_missing(){
+        try {
+            //Then
+            thrown.expect(DeploymentException.class);
+            thrown.expectMessage(DeploymentConstants.SECRETS_EXCEPTION);
+            //Given (a part is initialized by setUp method)
+            Path modelDeploymentDir = StructureGeneratorHelper.generatePath(this.workDir, this.deploymentProperties.getRootDeployment(), this.deploymentProperties.getModelDeployment());
+            Files.createDirectories(modelDeploymentDir);
+            //When
+            this.secretsGenerator.checkPrerequisites(this.workDir);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Test
+    public void raise_exception_if_model_meta_file_is_missing() {
+        try {
+            //Then
+            thrown.expect(DeploymentException.class);
+            thrown.expectMessage(DeploymentConstants.META_FILE_EXCEPTION);
+            //Given (a part is initialized by setUp method) : root deployment, model and secrets directory
+            Path modelSecretsDir = StructureGeneratorHelper.generatePath(this.workDir, this.deploymentProperties.getRootDeployment(), this.deploymentProperties.getModelDeployment(), this.deploymentProperties.getSecrets());
+            Files.createDirectories(modelSecretsDir);
+            //When
+            this.secretsGenerator.checkPrerequisites(this.workDir);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Test
+    public void raise_exception_if_model_secrets_file_is_missing() {
+        try {
+            //Then
+            thrown.expect(DeploymentException.class);
+            thrown.expectMessage(DeploymentConstants.SECRETS_FILE_EXCEPTION);
+            //Given (a part is initialized by setUp method) : root deployment, model, secrets directory and meta file
+            Path modelSecretsDir = StructureGeneratorHelper.generatePath(this.workDir, this.deploymentProperties.getRootDeployment(), this.deploymentProperties.getModelDeployment(), deploymentProperties.getSecrets());
+            Files.createDirectories(modelSecretsDir);
+            Path modelMetaFile = StructureGeneratorHelper.generatePath(modelSecretsDir, this.deploymentProperties.getMeta() + DeploymentConstants.YML_EXTENSION);
+            Files.createFile(modelMetaFile);
+            //When
+            this.secretsGenerator.checkPrerequisites(this.workDir);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+
+
+    @Test
+    public void check_that_deployment_instance_directory_is_generated() {
         try {
             //Given
             Path modelDeploymentDir = StructureGeneratorHelper.generatePath(this.workDir,
@@ -82,7 +129,6 @@ public class SecretsGeneratorTest {
             Files.createDirectories(modelDeploymentDir);
 
             //When
-            this.secretsGenerator.checkPrerequisites(this.workDir);
             this.secretsGenerator.generate(this.workDir, SERVICE_INSTANCE_ID);
 
             //Then
@@ -97,16 +143,15 @@ public class SecretsGeneratorTest {
     }
 
     @Test
-    public void check_if_secrets_directory_is_generated() {
+    public void check_that_secrets_directory_is_generated() {
         try {
             //Given
             Path modelDeploymentDir = StructureGeneratorHelper.generatePath(this.workDir,
                     this.deploymentProperties.getRootDeployment(),
                     this.deploymentProperties.getModelDeployment());
-            modelDeploymentDir = Files.createDirectories(modelDeploymentDir);
+            Files.createDirectories(modelDeploymentDir);
 
             //When
-            this.secretsGenerator.checkPrerequisites(this.workDir);
             this.secretsGenerator.generate(this.workDir, SERVICE_INSTANCE_ID);
 
             //Then
@@ -122,7 +167,7 @@ public class SecretsGeneratorTest {
     }
 
     @Test
-    public void check_if_meta_file_is_generated() {
+    public void check_that_meta_file_is_generated() {
         try {
 
             //Given
@@ -132,10 +177,9 @@ public class SecretsGeneratorTest {
                     this.deploymentProperties.getSecrets());
             secretsDir = Files.createDirectories(secretsDir);
             Path sourceMetaFile = StructureGeneratorHelper.generatePath(secretsDir, this.deploymentProperties.getMeta() + DeploymentConstants.YML_EXTENSION);
-            sourceMetaFile = Files.createFile(sourceMetaFile);
+            Files.createFile(sourceMetaFile);
 
             //When
-            this.secretsGenerator.checkPrerequisites(this.workDir);
             this.secretsGenerator.generate(this.workDir, SERVICE_INSTANCE_ID);
 
             //Then
@@ -154,7 +198,7 @@ public class SecretsGeneratorTest {
     }
 
     @Test
-    public void check_if_secrets_file_is_generated() {
+    public void check_that_secrets_file_is_generated() {
         try {
 
             //Given
@@ -164,10 +208,9 @@ public class SecretsGeneratorTest {
                     this.deploymentProperties.getSecrets());
             secretsDir = Files.createDirectories(secretsDir);
             Path sourceSecretsFile = StructureGeneratorHelper.generatePath(secretsDir, this.deploymentProperties.getSecrets() + DeploymentConstants.YML_EXTENSION);
-            sourceSecretsFile = Files.createFile(sourceSecretsFile);
+            Files.createFile(sourceSecretsFile);
 
             //When
-            this.secretsGenerator.checkPrerequisites(this.workDir);
             this.secretsGenerator.generate(this.workDir, SERVICE_INSTANCE_ID);
 
             //Then
@@ -184,17 +227,16 @@ public class SecretsGeneratorTest {
     }
 
     @Test
-    public void check_if_enable_deployment_file_is_generated() {
+    public void check_that_enable_deployment_file_is_generated() {
         try {
 
             //Given
             Path modelDeploymentDir = StructureGeneratorHelper.generatePath(this.workDir,
                     this.deploymentProperties.getRootDeployment(),
                     this.deploymentProperties.getModelDeployment());
-            modelDeploymentDir = Files.createDirectories(modelDeploymentDir);
+            Files.createDirectories(modelDeploymentDir);
 
             //When
-            this.secretsGenerator.checkPrerequisites(this.workDir);
             this.secretsGenerator.generate(this.workDir, SERVICE_INSTANCE_ID);
 
             //Then
@@ -211,125 +253,82 @@ public class SecretsGeneratorTest {
     }
 
     @Test
-    public void check_if_enable_deployment_file_is_removed() {
+    public void check_that_enable_deployment_file_is_removed() {
 
-        try {
+        //Given
+        this.check_that_enable_deployment_file_is_generated();
 
-            //Given
-            Path workDir = Files.createTempDirectory(REPOSITORY_DIRECTORY);
-            Path serviceInstanceDir = StructureGeneratorHelper.generatePath(workDir,
-                    CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY,
-                    CassandraProcessorConstants.SERVICE_INSTANCE_PREFIX_DIRECTORY + SERVICE_INSTANCE_ID);
-            serviceInstanceDir = Files.createDirectories(serviceInstanceDir);
-            Path enableDeploymentFile = StructureGeneratorHelper.generatePath(workDir,
-                    CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY,
-                    CassandraProcessorConstants.SERVICE_INSTANCE_PREFIX_DIRECTORY + SERVICE_INSTANCE_ID,
-                    CassandraProcessorConstants.ENABLE_DEPLOYMENT_FILENAME);
-            Files.write(enableDeploymentFile, Arrays.asList(CassandraProcessorConstants.ENABLE_DEPLOYMENT_CONTENT), Charset.forName(StandardCharsets.UTF_8.name()));
+        //When
+        this.secretsGenerator.remove(this.workDir, SERVICE_INSTANCE_ID);
 
-            //When
-            SecretsGenerator secrets = new SecretsGenerator();
-            secrets.remove(workDir, SERVICE_INSTANCE_ID);
-
-            //Then
-            assertThat("Enable deployment file exists", Files.notExists(enableDeploymentFile));
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        //Then
+        Path targetEnableDeploymentFile = StructureGeneratorHelper.generatePath(this.workDir,
+                this.deploymentProperties.getRootDeployment(),
+                this.deploymentProperties.getModelDeployment() +  DeploymentConstants.UNDERSCORE + SERVICE_INSTANCE_ID,
+                DeploymentConstants.ENABLE_DEPLOYMENT_FILENAME);
+        assertThat("Enable deployment file is still existing", Files.notExists(targetEnableDeploymentFile));
 
     }
+
 
     @Test
-    public void check_if_meta_file_is_removed() {
+    public void check_that_meta_file_is_removed() {
 
-        try {
+        //Given
+        this.check_that_meta_file_is_generated();
 
-            //Given
-            Path workDir = Files.createTempDirectory(REPOSITORY_DIRECTORY);
-            Path secretsDir = StructureGeneratorHelper.generatePath(workDir,
-                    CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY,
-                    CassandraProcessorConstants.SERVICE_INSTANCE_PREFIX_DIRECTORY + SERVICE_INSTANCE_ID,
-                    CassandraProcessorConstants.SECRETS_DIRECTORY);
-            secretsDir = Files.createDirectories(secretsDir);
+        //When
+        this.secretsGenerator.remove(this.workDir, SERVICE_INSTANCE_ID);
 
-            Path metaFile = StructureGeneratorHelper.generatePath(workDir,
-                    CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY,
-                    CassandraProcessorConstants.SERVICE_INSTANCE_PREFIX_DIRECTORY + SERVICE_INSTANCE_ID,
-                    CassandraProcessorConstants.SECRETS_DIRECTORY,
-                    CassandraProcessorConstants.META_FILENAME);
-            Files.write(metaFile, Arrays.asList(CassandraProcessorConstants.META_CONTENT), Charset.forName(StandardCharsets.UTF_8.name()));
-
-            //When
-            SecretsGenerator secrets = new SecretsGenerator();
-            secrets.remove(workDir, SERVICE_INSTANCE_ID);
-
-            //Then
-            assertThat("Meta file exists", Files.notExists(metaFile));
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
+        //Then
+        Path targetMetaFile = StructureGeneratorHelper.generatePath(this.workDir,
+                this.deploymentProperties.getRootDeployment(),
+                this.deploymentProperties.getModelDeployment() +  DeploymentConstants.UNDERSCORE + SERVICE_INSTANCE_ID,
+                this.deploymentProperties.getSecrets(),
+                this.deploymentProperties.getMeta() + DeploymentConstants.YML_EXTENSION);
+        assertThat("Meta file is still existing", Files.notExists(targetMetaFile));
     }
-
-    @Test
-    public void check_if_secrets_file_is_removed() {
-
-        try {
-
-            //Given
-            Path workDir = Files.createTempDirectory(REPOSITORY_DIRECTORY);
-            Path secretsDir = StructureGeneratorHelper.generatePath(workDir,
-                    CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY,
-                    CassandraProcessorConstants.SERVICE_INSTANCE_PREFIX_DIRECTORY + SERVICE_INSTANCE_ID,
-                    CassandraProcessorConstants.SECRETS_DIRECTORY);
-            secretsDir = Files.createDirectories(secretsDir);
-
-            Path secretsFile = StructureGeneratorHelper.generatePath(workDir,
-                    CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY,
-                    CassandraProcessorConstants.SERVICE_INSTANCE_PREFIX_DIRECTORY + SERVICE_INSTANCE_ID,
-                    CassandraProcessorConstants.SECRETS_DIRECTORY,
-                    CassandraProcessorConstants.SECRETS_FILENAME);
-            Files.write(secretsFile, Arrays.asList(CassandraProcessorConstants.SECRETS_CONTENT), Charset.forName(StandardCharsets.UTF_8.name()));
-
-            //When
-            SecretsGenerator secrets = new SecretsGenerator();
-            secrets.remove(workDir, SERVICE_INSTANCE_ID);
-
-            //Then
-            assertThat("Secrets file exists", Files.notExists(secretsFile));
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-
 
 
 
     @Test
-    public void check_if_files_content_are_correct() {
-        //TODO
-    }
+    public void check_that_secrets_file_is_removed() {
+        //Given
+        this.check_that_secrets_file_is_generated();
 
-    @Test@Ignore
-    public void populatePaasTemplates() throws IOException {
-        Path workDir = Paths.get("/home/ijly7474/GIT/bosh-cloudwatt-secrets-pprod");
-        String serviceInstanceId = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa10";
-        SecretsGenerator secrets = new SecretsGenerator();
-        secrets.checkPrerequisites(workDir);
-        secrets.generate(workDir, serviceInstanceId);
+        //When
+        this.secretsGenerator.remove(this.workDir, SERVICE_INSTANCE_ID);
+
+        //Then
+        Path targetSecretsFile = StructureGeneratorHelper.generatePath(this.workDir,
+                this.deploymentProperties.getRootDeployment(),
+                this.deploymentProperties.getModelDeployment() +  DeploymentConstants.UNDERSCORE + SERVICE_INSTANCE_ID,
+                this.deploymentProperties.getSecrets(),
+                this.deploymentProperties.getSecrets() + DeploymentConstants.YML_EXTENSION);
+        assertThat("Secrets file is still existing", Files.notExists(targetSecretsFile));
     }
 
     private DeploymentProperties aDeploymentProperties(){
         DeploymentProperties deploymentProperties = new DeploymentProperties();
         deploymentProperties.setRootDeployment("coab-depls");
-        deploymentProperties.setModelDeployment("deployment");
+        deploymentProperties.setModelDeployment("cassandravarsops");
         deploymentProperties.setSecrets("secrets");
         deploymentProperties.setMeta("meta");
         return deploymentProperties;
+    }
+
+    @Test
+    @Ignore
+    public void check_if_files_content_are_correct() {
+        //TODO
+    }
+
+    @Test
+    @Ignore
+    public void populatePaasSecrets() throws IOException {
+        Path workDir = Paths.get("/home/ijly7474/GIT/coab/preprod-secrets");
+        this.secretsGenerator.checkPrerequisites(workDir);
+        this.secretsGenerator.generate(workDir, SERVICE_INSTANCE_ID);
     }
 
 }

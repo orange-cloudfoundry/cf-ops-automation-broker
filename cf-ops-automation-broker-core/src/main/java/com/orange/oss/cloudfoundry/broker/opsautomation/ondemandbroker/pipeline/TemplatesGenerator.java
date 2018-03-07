@@ -1,24 +1,16 @@
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline;
 
-import org.apache.commons.collections.map.HashedMap;
 import org.apache.commons.io.IOUtils;
-
 import java.io.File;
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Created by ijly7474 on 14/12/17.
- */
 public class TemplatesGenerator extends StructureGeneratorImpl{
 
     private String template;
@@ -108,7 +100,7 @@ public class TemplatesGenerator extends StructureGeneratorImpl{
             mapDeploymentDependenciesFile.put(DeploymentConstants.DEPLOYMENT_NAME_PATTERN, deploymentInstance);
             String[] targetPathElements = new String[] {this.rootDeployment, deploymentInstance};
             String sourceFileName = DeploymentConstants.DEPLOYMENT_DEPENDENCIES_FILENAME;
-            StructureGeneratorHelper.generateDynamicFile(workDir, targetPathElements, sourceFileName, sourceFileName, mapDeploymentDependenciesFile);
+            StructureGeneratorHelper.generateFile(workDir, targetPathElements, sourceFileName, sourceFileName, mapDeploymentDependenciesFile);
 
             //Generate manifest file as symlink
             String[] sourcePathElements = new String[] {this.rootDeployment, this.modelDeployment, this.template};
@@ -132,7 +124,7 @@ public class TemplatesGenerator extends StructureGeneratorImpl{
             mapCoabVarsFile.put(DeploymentConstants.DEPLOYMENT_NAME_PATTERN, deploymentInstance);
             targetPathElements = new String[] {this.rootDeployment, deploymentInstance, this.template};
             sourceFileName = DeploymentConstants.COAB + DeploymentConstants.HYPHEN + this.vars + DeploymentConstants.YML_EXTENSION;
-            StructureGeneratorHelper.generateDynamicFile(workDir, targetPathElements, sourceFileName, sourceFileName, mapCoabVarsFile);
+            StructureGeneratorHelper.generateFile(workDir, targetPathElements, sourceFileName, sourceFileName, mapCoabVarsFile);
 
         } catch (IOException e) {
             e.printStackTrace();

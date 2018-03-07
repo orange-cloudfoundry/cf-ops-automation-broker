@@ -9,7 +9,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -58,21 +57,7 @@ public class StructureGeneratorHelper {
     }
 
 
-    public static void generateFile(Path rootPath, String[] targetPathElements, String targetFileName, String content) {
-        try{
-            //Compute path
-            Path targetDir = StructureGeneratorHelper.generatePath(rootPath, targetPathElements);
-            Path targetFile = StructureGeneratorHelper.generatePath(targetDir, targetFileName);
-
-            //Create file
-            Files.write(targetFile, Arrays.asList(content), Charset.forName(StandardCharsets.UTF_8.name()));
-        } catch (IOException e) {
-            e.printStackTrace();
-            throw new DeploymentException(DeploymentConstants.GENERATION_EXCEPTION);
-        }
-    }
-
-    public static void generateDynamicFile(Path rootPath, String[] targetPathElements, String targetFileName, String sourceFileName, Map<String, String> findAndReplace) {
+    public static void generateFile(Path rootPath, String[] targetPathElements, String targetFileName, String sourceFileName, Map<String, String> findAndReplace) {
         try{
             //Compute target path
             Path targetDir = StructureGeneratorHelper.generatePath(rootPath, targetPathElements);
@@ -91,6 +76,21 @@ public class StructureGeneratorHelper {
 
             //Generate target file
             Files.write(targetFile, resultLines, Charset.forName(StandardCharsets.UTF_8.name()));
+        } catch (IOException e) {
+            e.printStackTrace();
+            throw new DeploymentException(DeploymentConstants.GENERATION_EXCEPTION);
+        }
+    }
+
+    public static void removeFile(Path rootPath, String[] pathElements, String fileName) {
+        try{
+            //Compute path
+            Path dir = StructureGeneratorHelper.generatePath(rootPath, pathElements);
+            Path file = StructureGeneratorHelper.generatePath(dir, fileName);
+
+            //Delete file
+            Files.deleteIfExists(file);
+
         } catch (IOException e) {
             e.printStackTrace();
             throw new DeploymentException(DeploymentConstants.GENERATION_EXCEPTION);

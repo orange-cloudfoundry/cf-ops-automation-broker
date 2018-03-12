@@ -57,8 +57,7 @@ public class ProcessorChain {
 		}
 	}
 
-	public void bind() {
-		Context ctx=new Context();
+	public void bind(Context ctx) {
 		try {
 			for (BrokerProcessor m: processors) {
                 m.preBind(ctx);
@@ -79,8 +78,7 @@ public class ProcessorChain {
 	}
 
 
-	public void unBind() {
-		Context ctx=new Context();
+	public void unBind(Context ctx) {
 		try {
 			for (BrokerProcessor m: processors) {
                 m.preUnBind(ctx);

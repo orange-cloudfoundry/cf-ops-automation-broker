@@ -29,7 +29,7 @@ public class ProcessorChainServiceInstanceServiceTest {
 
     @InjectMocks
     private
-    ProcessorChainServiceInstanceService processorChainServiceInstanceService;
+    ProcessorChainServiceInstanceService service;
 
     @Test
     public void chains_create_processors_on_service_instance_creation() throws Exception {
@@ -37,9 +37,12 @@ public class ProcessorChainServiceInstanceServiceTest {
         CreateServiceInstanceRequest request = new CreateServiceInstanceRequest();
 
         //when
-        CreateServiceInstanceResponse response = processorChainServiceInstanceService.createServiceInstance(request);
+        CreateServiceInstanceResponse response = service.createServiceInstance(request);
 
-        //then call is properly chained
+        //then the default response is returned
+        Assertions.assertThat(response).isEqualTo(new CreateServiceInstanceResponse());
+
+        //and call is properly chained
         ArgumentCaptor<Context> argument = ArgumentCaptor.forClass(Context.class);
         Assertions.assertThat(response).isEqualTo(new CreateServiceInstanceResponse());
         Mockito.verify(processorChain).create(argument.capture());
@@ -57,39 +60,9 @@ public class ProcessorChainServiceInstanceServiceTest {
        Mockito.doThrow(confidentialException).when(processorChain).create(any(Context.class));
 
        //when
-        CreateServiceInstanceResponse response = processorChainServiceInstanceService.createServiceInstance(request);
+        CreateServiceInstanceResponse response = service.createServiceInstance(request);
 
         //then exception is logged and rethrown
-    }
-
-    @Test
-    public void filters_internal_exceptions_details() {
-        //given an exception with confidential internal data thrown
-        IOException rootCause = new IOException();
-        RuntimeException confidentialException = new RuntimeException("unable to push at https://login:pwd@mygit.site.org/secret_path", rootCause);
-
-        //when
-        RuntimeException wrappedException = processorChainServiceInstanceService.processInternalException(confidentialException);
-
-        //then the exception is wrapped into a runtime exception, hidding the confidential data
-
-        assertThat(wrappedException.toString()).doesNotContain("login");
-        assertThat(wrappedException.toString()).containsIgnoringCase("internal");
-        assertThat(wrappedException.toString()).containsIgnoringCase("contact");
-    }
-
-    @Test
-    public void does_not_filter_user_facing_exception() {
-
-        //given an exception with confidential internal data thrown
-        RuntimeException safeException = new UserFacingRuntimeException("invalid parameter param with value. Param should only contain alphanumerics");
-
-        //when
-        RuntimeException exception = processorChainServiceInstanceService.processInternalException(safeException);
-
-        //then the exception is wrapped into a runtime exception, hidding the confidential data
-
-        assertThat(exception.toString()).contains("alphanumerics");
     }
 
     @Test
@@ -107,11 +80,11 @@ public class ProcessorChainServiceInstanceServiceTest {
             }
         };
         processorChain = aProcessorChain(processor);
-        processorChainServiceInstanceService = new ProcessorChainServiceInstanceService(processorChain);
+        service = new ProcessorChainServiceInstanceService(processorChain);
 
 
         //when
-        CreateServiceInstanceResponse response = processorChainServiceInstanceService.createServiceInstance(request);
+        CreateServiceInstanceResponse response = service.createServiceInstance(request);
 
         //then
         Assertions.assertThat(response).isEqualTo(customResponse);
@@ -123,7 +96,7 @@ public class ProcessorChainServiceInstanceServiceTest {
         GetLastServiceOperationRequest request = new GetLastServiceOperationRequest("instanceId");
 
         //when
-        GetLastServiceOperationResponse response = processorChainServiceInstanceService.getLastOperation(request);
+        GetLastServiceOperationResponse response = service.getLastOperation(request);
 
         //then call is properly chained
         ArgumentCaptor<Context> argument = ArgumentCaptor.forClass(Context.class);
@@ -153,11 +126,11 @@ public class ProcessorChainServiceInstanceServiceTest {
             }
         };
         processorChain = aProcessorChain(processor);
-        processorChainServiceInstanceService = new ProcessorChainServiceInstanceService(processorChain);
+        service = new ProcessorChainServiceInstanceService(processorChain);
 
 
         //when
-        GetLastServiceOperationResponse response = processorChainServiceInstanceService.getLastOperation(request);
+        GetLastServiceOperationResponse response = service.getLastOperation(request);
 
         //then
         Assertions.assertThat(response).isEqualTo(customResponse);
@@ -174,12 +147,12 @@ public class ProcessorChainServiceInstanceServiceTest {
                 true);
 
         //when
-        DeleteServiceInstanceResponse response = processorChainServiceInstanceService.deleteServiceInstance(request);
-
+        DeleteServiceInstanceResponse response = service.deleteServiceInstance(request);
         //then call is properly chained
         ArgumentCaptor<Context> argument = ArgumentCaptor.forClass(Context.class);
-        Assertions.assertThat(response).isEqualTo(new DeleteServiceInstanceResponse());
         Mockito.verify(processorChain).delete(argument.capture());
+        //and default response is returned
+        Assertions.assertThat(response).isEqualTo(new DeleteServiceInstanceResponse());
 
         //and context is populated with the request
         Context ctx=argument.getValue();
@@ -208,11 +181,11 @@ public class ProcessorChainServiceInstanceServiceTest {
             }
         };
         processorChain = aProcessorChain(processor);
-        processorChainServiceInstanceService = new ProcessorChainServiceInstanceService(processorChain);
+        service = new ProcessorChainServiceInstanceService(processorChain);
 
 
         //when
-        DeleteServiceInstanceResponse response = processorChainServiceInstanceService.deleteServiceInstance(request);
+        DeleteServiceInstanceResponse response = service.deleteServiceInstance(request);
 
         //then
         Assertions.assertThat(response).isEqualTo(customResponse);
@@ -227,7 +200,7 @@ public class ProcessorChainServiceInstanceServiceTest {
                 new HashMap<>());
 
         //when
-        UpdateServiceInstanceResponse response = processorChainServiceInstanceService.updateServiceInstance(request);
+        UpdateServiceInstanceResponse response = service.updateServiceInstance(request);
 
         //then call is properly chained
         ArgumentCaptor<Context> argument = ArgumentCaptor.forClass(Context.class);
@@ -260,11 +233,11 @@ public class ProcessorChainServiceInstanceServiceTest {
             }
         };
         processorChain = aProcessorChain(processor);
-        processorChainServiceInstanceService = new ProcessorChainServiceInstanceService(processorChain);
+        service = new ProcessorChainServiceInstanceService(processorChain);
 
 
         //when
-        UpdateServiceInstanceResponse response = processorChainServiceInstanceService.updateServiceInstance(request);
+        UpdateServiceInstanceResponse response = service.updateServiceInstance(request);
 
         //then
         Assertions.assertThat(response).isEqualTo(customResponse);

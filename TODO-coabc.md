@@ -1,3 +1,11 @@
+- Implement OSB provision delegation to nested cassandra broker
+   - refine PipelineCompletionTracker to call OSB client bind/unbind
+     - DONE: ~~core framework: create/delete service binding~~
+     - cassandra processor: delegate bind/unbind to PipelineCompletionTracker 
+     - delegate delete request in PipelineCompletionTracker to OSBProxy
+
+
+
 
 - harden smoke tests:
    - to clean up service instances 
@@ -86,11 +94,6 @@ Server error, status code: 409, error code: 60016, message: An operation for ser
                                                                                                 * cancelled
                                                                                                 * cancelled
        
-- Implement OSB provision delegation to nested cassandra broker
-   - refine PipelineCompletionTracker to call OSB client bind/unbind
-     - core framework: create/delete service binding
-     - delegate delete request in PipelineCompletionTracker to OSBProxy
-
 
 - refactor CassandraServiceProvisionningTest to use OSB client instead of raw rest assured
    - CassandraServiceProvisionningTest rest-assured based client which is not compliant w.r.t. "X-Broker-API-Originating-Identity" mandatory header.

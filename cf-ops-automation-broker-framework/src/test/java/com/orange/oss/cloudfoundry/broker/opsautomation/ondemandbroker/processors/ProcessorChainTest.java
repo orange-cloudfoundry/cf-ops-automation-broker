@@ -167,8 +167,8 @@ public class ProcessorChainTest {
 
 		Context ctx1 =new Context();
 		chain.getLastOperation(ctx1);
-		chain.bind();
-		chain.unBind();
+		chain.bind(new Context());
+		chain.unBind(new Context());
 		chain.delete(new Context());
 	
 	

@@ -50,7 +50,7 @@
    2018-02-28T10:26:59.37+0100 [APP/PROC/WEB/0] OUT     at com.orange.oss.ondemandbroker.ProcessorChainServiceInstanceService.getLastOperation(ProcessorChainServiceInstanceService.java:109) ~[cf-ops-automation-broker-core-0.25.0-SNAPSHOT.jar!/:0.25.0-SNAPSHOT]
 
     
-- add repo alias into the tmp dir name
+- GitProcessor UX improvement: add repo alias into the tmp dir name
 
 - diagnose smoke test revealed symptom 1:
 
@@ -92,7 +92,7 @@ Server error, status code: 409, error code: 60016, message: An operation for ser
      - delegate delete request in PipelineCompletionTracker to OSBProxy
 
 
-- refine CassandraServiceProvisionningTest to use OSB client instead of raw rest assured
+- refactor CassandraServiceProvisionningTest to use OSB client instead of raw rest assured
    - CassandraServiceProvisionningTest rest-assured based client which is not compliant w.r.t. "X-Broker-API-Originating-Identity" mandatory header.
    - clean up associated workaround in OsbClientFeignConfig 
 - clean up maven dependency management for wiremock: factor out version across modules

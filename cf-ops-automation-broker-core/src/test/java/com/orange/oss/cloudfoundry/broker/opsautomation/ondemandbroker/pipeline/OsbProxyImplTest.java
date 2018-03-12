@@ -23,6 +23,7 @@ import java.util.Map;
 import static com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.OsbProxyImpl.*;
 import static java.util.Arrays.asList;
 import static org.fest.assertions.Assertions.assertThat;
+import static org.hamcrest.CoreMatchers.containsString;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.*;
@@ -237,7 +238,7 @@ public class OsbProxyImplTest {
     @Rule
     public ExpectedException thrown = ExpectedException.none();
 
-    @Test@Ignore
+    @Test
     public void maps_rejected_provision_response() {
         //Given
         GetLastServiceOperationResponse originalResponse = aPreviousOnGoingOperation();
@@ -248,7 +249,7 @@ public class OsbProxyImplTest {
                 .build();
         FeignException provisionException = FeignException.errorStatus("ServiceInstanceServiceClient#createServiceInstance(String,boolean,String,String,CreateServiceInstanceRequest)", errorReponse);
 
-        thrown.expectMessage(contains("Missing required fields: keyspace param"));
+        thrown.expectMessage(containsString("Missing required fields: keyspace param"));
 
         //when
         GetLastServiceOperationResponse mappedResponse = osbProxy.mapProvisionResponse(originalResponse, null, provisionException, aCatalog());

@@ -6,6 +6,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.osbclient.CatalogServiceClient;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.osbclient.OsbClientFactory;
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.osbclient.ServiceInstanceBindingServiceClient;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.osbclient.ServiceInstanceServiceClient;
 import feign.FeignException;
 import org.slf4j.Logger;
@@ -79,6 +80,27 @@ public class OsbProxyImpl<Q extends ServiceBrokerRequest, P extends AsyncService
     }
 
     @Override
+    public CreateServiceInstanceBindingResponse delegateBind(CreateServiceInstanceBindingRequest request) {
+        String brokerUrl = getBrokerUrl(request.getServiceInstanceId());
+        CatalogServiceClient catalogServiceClient = constructCatalogClient(brokerUrl);
+        Catalog catalog = catalogServiceClient.getCatalog();
+        CreateServiceInstanceBindingRequest mappedRequest = mapBindRequest(request, catalog);
+        ServiceInstanceBindingServiceClient serviceInstanceBindingServiceClient = constructServiceInstanceBindingServiceClient(brokerUrl);
+
+        ResponseEntity<CreateServiceInstanceAppBindingResponse> delegatedResponse = null;
+        FeignException bindException = null;
+        try {
+            delegateBind(mappedRequest, serviceInstanceBindingServiceClient);
+        } catch (FeignException e) {
+            bindException = e;
+        }
+
+        //noinspection UnnecessaryLocalVariable
+        @SuppressWarnings("ConstantConditions") CreateServiceInstanceBindingResponse mappedResponse = mapBindResponse(delegatedResponse, bindException, catalog);
+        return mappedResponse;
+    }
+
+    @Override
     public GetLastServiceOperationResponse delegateDeprovision(GetLastServiceOperationRequest pollingRequest, DeleteServiceInstanceRequest request, GetLastServiceOperationResponse response) {
         String brokerUrl = getBrokerUrl(pollingRequest.getServiceInstanceId());
         CatalogServiceClient catalogServiceClient = constructCatalogClient(brokerUrl);
@@ -118,6 +140,18 @@ public class OsbProxyImpl<Q extends ServiceBrokerRequest, P extends AsyncService
                 .withOperationState(operationState)
                 .withDescription(description)
                 .withDeleteOperation(false);
+    }
+
+    CreateServiceInstanceAppBindingResponse mapBindResponse(ResponseEntity<CreateServiceInstanceAppBindingResponse> delegatedResponse, FeignException provisionException, Catalog catalog) {
+        if (provisionException != null) {
+            throw mapClientException(provisionException);
+        }
+        CreateServiceInstanceAppBindingResponse delegatedResponseBody = delegatedResponse.getBody();
+        return new CreateServiceInstanceAppBindingResponse()
+                .withBindingExisted(delegatedResponse.getStatusCode() == HttpStatus.OK)
+                .withCredentials(delegatedResponseBody.getCredentials())
+                .withSyslogDrainUrl(delegatedResponseBody.getSyslogDrainUrl())
+                .withVolumeMounts(delegatedResponseBody.getVolumeMounts());
     }
 
     RuntimeException mapClientException(FeignException exception) {
@@ -210,6 +244,28 @@ public class OsbProxyImpl<Q extends ServiceBrokerRequest, P extends AsyncService
         return response;
     }
 
+    ResponseEntity<CreateServiceInstanceAppBindingResponse> delegateBind(CreateServiceInstanceBindingRequest request, ServiceInstanceBindingServiceClient serviceInstanceBindingServiceClient) {
+        //noinspection unchecked
+        @SuppressWarnings("UnnecessaryLocalVariable") ResponseEntity<CreateServiceInstanceAppBindingResponse> response = (ResponseEntity<CreateServiceInstanceAppBindingResponse>) serviceInstanceBindingServiceClient.createServiceInstanceBinding(
+                request.getServiceInstanceId(),
+                request.getBindingId(),
+                request.getApiInfoLocation(),
+                buildOriginatingIdentityHeader(request.getOriginatingIdentity()),
+                request);
+        return response;
+    }
+
+    void delegateUnbind(DeleteServiceInstanceBindingRequest request, ServiceInstanceBindingServiceClient serviceInstanceBindingServiceClient) {
+        //noinspection unchecked
+        serviceInstanceBindingServiceClient.deleteServiceInstanceBinding(
+                request.getServiceInstanceId(),
+                request.getBindingId(),
+                request.getServiceDefinitionId(),
+                request.getPlanId(),
+                request.getApiInfoLocation(),
+                buildOriginatingIdentityHeader(request.getOriginatingIdentity()));
+    }
+
     static final String ORIGINATING_USER_KEY = "user_id";
 
     static final String ORIGINATING_EMAIL_KEY = "email";
@@ -271,6 +327,26 @@ public class OsbProxyImpl<Q extends ServiceBrokerRequest, P extends AsyncService
         return createServiceInstanceRequest;
     }
 
+    CreateServiceInstanceBindingRequest mapBindRequest(CreateServiceInstanceBindingRequest r, Catalog catalog) {
+        ServiceDefinition mappedService = catalog.getServiceDefinitions().get(0);
+        Plan mappedPlan = mappedService.getPlans().get(0);
+        Map<String, Object> mappedParameters = r.getParameters();
+
+        //noinspection deprecation
+        CreateServiceInstanceBindingRequest createServiceInstanceBindingRequest = new CreateServiceInstanceBindingRequest(
+                mappedService.getId(),
+                mappedPlan.getId(),
+                r.getBindResource(),
+                r.getContext(),
+                mappedParameters);
+        createServiceInstanceBindingRequest.withBindingId(r.getBindingId());
+        createServiceInstanceBindingRequest.withServiceInstanceId(r.getServiceInstanceId());
+        createServiceInstanceBindingRequest.withCfInstanceId(r.getCfInstanceId());
+        createServiceInstanceBindingRequest.withApiInfoLocation(r.getApiInfoLocation());
+        createServiceInstanceBindingRequest.withOriginatingIdentity(r.getOriginatingIdentity());
+        return createServiceInstanceBindingRequest;
+    }
+
     DeleteServiceInstanceRequest mapDeprovisionRequest(DeleteServiceInstanceRequest r, Catalog catalog) {
         ServiceDefinition mappedService = catalog.getServiceDefinitions().get(0);
         Plan mappedPlan = mappedService.getPlans().get(0);
@@ -297,6 +373,10 @@ public class OsbProxyImpl<Q extends ServiceBrokerRequest, P extends AsyncService
 
     ServiceInstanceServiceClient constructServiceInstanceServiceClient(@SuppressWarnings("SameParameterValue") String brokerUrl) {
         return clientFactory.getClient(brokerUrl, osbDelegateUser, osbDelegatePassword, ServiceInstanceServiceClient.class);
+    }
+
+    ServiceInstanceBindingServiceClient constructServiceInstanceBindingServiceClient(@SuppressWarnings("SameParameterValue") String brokerUrl) {
+        return clientFactory.getClient(brokerUrl, osbDelegateUser, osbDelegatePassword, ServiceInstanceBindingServiceClient.class);
     }
 
     ErrorMessage parseReponseBody(FeignException provisionException)  {

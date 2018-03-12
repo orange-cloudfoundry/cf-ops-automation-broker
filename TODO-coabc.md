@@ -1,9 +1,16 @@
 - Implement OSB provision delegation to nested cassandra broker
    - refine PipelineCompletionTracker to call OSB client bind/unbind
      - DONE: ~~core framework: create/delete service binding~~
+     - DONE: implement bind delegation & mapping in OSBProxy
+     - implement unbind delegation & mapping in OSBProxy
+        test delegateUnbind()
      - cassandra processor: delegate bind/unbind to PipelineCompletionTracker 
      - delegate delete request in PipelineCompletionTracker to OSBProxy
+   - DONE: record current cassandra broker bind errors in wiremock
+   
 
+   - future bind mapping improvements
+       - support route binding responses                 
 
 
 

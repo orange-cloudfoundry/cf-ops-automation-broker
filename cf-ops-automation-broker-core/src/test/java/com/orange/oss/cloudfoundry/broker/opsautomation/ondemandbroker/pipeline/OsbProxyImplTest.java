@@ -2,11 +2,11 @@ package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline
 
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.osbclient.CatalogServiceClient;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.osbclient.OsbClientFactory;
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.osbclient.ServiceInstanceBindingServiceClient;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.osbclient.ServiceInstanceServiceClient;
 import feign.FeignException;
 import feign.Response;
 import feign.codec.DecodeException;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -27,6 +27,7 @@ import static org.hamcrest.CoreMatchers.containsString;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.*;
+import static org.springframework.cloud.servicebroker.model.CloudFoundryContext.CLOUD_FOUNDRY_PLATFORM;
 
 /**
  * - construct OSB client: construct url from serviceInstanceId, and configured static pwd
@@ -61,14 +62,18 @@ public class OsbProxyImplTest {
         when(clientFactory.getClient(anyString(), anyString(), anyString(), eq(ServiceInstanceServiceClient.class))).thenReturn(expectedServiceInstanceServiceClient);
         CatalogServiceClient expectedCatalogServiceClient = mock(CatalogServiceClient.class);
         when(clientFactory.getClient(anyString(), anyString(), anyString(), eq(CatalogServiceClient.class))).thenReturn(expectedCatalogServiceClient);
+        ServiceInstanceBindingServiceClient expectedServiceInstanceBindingServiceClient = mock(ServiceInstanceBindingServiceClient.class);
+        when(clientFactory.getClient(anyString(), anyString(), anyString(), eq(ServiceInstanceBindingServiceClient.class))).thenReturn(expectedServiceInstanceBindingServiceClient);
 
         //when
         CatalogServiceClient catalogServiceClient = osbProxy.constructCatalogClient("https://service-instance-id-cassandra-broker.mydomain/com");
         ServiceInstanceServiceClient serviceInstanceServiceClient = osbProxy.constructServiceInstanceServiceClient("https://service-instance-id-cassandra-broker.mydomain/com");
+        ServiceInstanceBindingServiceClient serviceInstanceServiceBindingClient = osbProxy.constructServiceInstanceBindingServiceClient("https://service-instance-id-cassandra-broker.mydomain/com");
 
         //then
         assertThat(catalogServiceClient).isSameAs(expectedCatalogServiceClient);
         assertThat(serviceInstanceServiceClient).isSameAs(expectedServiceInstanceServiceClient);
+        assertThat(serviceInstanceServiceBindingClient).isSameAs(expectedServiceInstanceBindingServiceClient);
     }
 
 
@@ -92,6 +97,50 @@ public class OsbProxyImplTest {
         assertThat(mappedRequest.getPlanId()).isEqualTo("plan_id");
         assertThat(mappedRequest.getServiceInstanceId()).isEqualTo("service-instance-id");
         assertThat(mappedRequest.getApiInfoLocation()).isEqualTo("api-location");
+        assertThat(mappedRequest.getCfInstanceId()).isEqualTo("cf-instance-id");
+        assertThat(mappedRequest.getOriginatingIdentity()).isEqualTo(aContext());
+    }
+
+    @Test
+    public void maps_bind_request_to_1st_service_and_1st_plan() {
+        Plan plan = new Plan("plan_id", "plan_name", "plan_description", new HashMap<>());
+        Plan plan2 = new Plan("plan_id2", "plan_name2", "plan_description2", new HashMap<>());
+        ServiceDefinition serviceDefinition = new ServiceDefinition("service_id", "service_name", "service_description", true, asList(plan, plan2));
+        Plan plan3 = new Plan("plan_id3", "plan_name3", "plan_description3", new HashMap<>());
+        ServiceDefinition serviceDefinition2 = new ServiceDefinition("service_id2", "service_name2", "service_description3", true, Collections.singletonList(plan3));
+        Catalog catalog = new Catalog(Collections.singletonList(serviceDefinition));
+
+        Map<String, Object> routeBindingParams= new HashMap<>();
+        Map<String, Object> serviceBindingParams= new HashMap<>();
+        BindResource bindResource = new BindResource("app_guid", null, routeBindingParams);
+
+        Map<String, Object> cfContextProps = new HashMap<>();
+        cfContextProps.put("user_id", "a_user_guid");
+        cfContextProps.put("organization_guid", "org_guid");
+        cfContextProps.put("space_guid", "space_guid");
+
+        Context cfContext = new Context(CLOUD_FOUNDRY_PLATFORM, cfContextProps);
+
+        CreateServiceInstanceBindingRequest request = new CreateServiceInstanceBindingRequest(
+                "coab-serviceid",
+                "coab-planid",
+                bindResource,
+                cfContext,
+                serviceBindingParams
+        );
+        request.withBindingId("service-instance-binding-id");
+        request.withServiceInstanceId("service-instance-id");
+        request.withApiInfoLocation("api-info");
+        request.withOriginatingIdentity(aContext());
+        request.withCfInstanceId("cf-instance-id");
+
+        CreateServiceInstanceBindingRequest mappedRequest = osbProxy.mapBindRequest(request, catalog);
+
+        assertThat(mappedRequest.getBindingId()).isEqualTo("service-instance-binding-id");
+        assertThat(mappedRequest.getServiceDefinitionId()).isEqualTo("service_id");
+        assertThat(mappedRequest.getPlanId()).isEqualTo("plan_id");
+        assertThat(mappedRequest.getServiceInstanceId()).isEqualTo("service-instance-id");
+        assertThat(mappedRequest.getApiInfoLocation()).isEqualTo("api-info");
         assertThat(mappedRequest.getCfInstanceId()).isEqualTo("cf-instance-id");
         assertThat(mappedRequest.getOriginatingIdentity()).isEqualTo(aContext());
     }
@@ -148,6 +197,43 @@ public class OsbProxyImplTest {
         verify(serviceInstanceServiceClient).createServiceInstance(
                 "service-instance-id",
                 false, //for now OsbProxyImpl expects sync broker response
+                "api-info",
+                aContextOriginatingHeader(),
+                request);
+    }
+
+    @Test
+    public void delegates_bind_call() {
+        Map<String, Object> routeBindingParams= new HashMap<>();
+        Map<String, Object> serviceBindingParams= new HashMap<>();
+        BindResource bindResource = new BindResource("app_guid", null, routeBindingParams);
+
+        Map<String, Object> cfContextProps = new HashMap<>();
+        cfContextProps.put("user_id", "a_user_guid");
+        cfContextProps.put("organization_guid", "org_guid");
+        cfContextProps.put("space_guid", "space_guid");
+
+        Context cfContext = new Context(CLOUD_FOUNDRY_PLATFORM, cfContextProps);
+
+        CreateServiceInstanceBindingRequest request = new CreateServiceInstanceBindingRequest(
+                "coab-serviceid",
+                "coab-planid",
+                bindResource,
+                cfContext,
+                serviceBindingParams
+        );
+        request.withBindingId("service-instance-binding-id");
+        request.withServiceInstanceId("service-instance-id");
+        request.withApiInfoLocation("api-info");
+        request.withOriginatingIdentity(aContext());
+
+        ServiceInstanceBindingServiceClient serviceInstanceBindingServiceClient = mock(ServiceInstanceBindingServiceClient.class);
+        //noinspection unchecked
+        ResponseEntity<CreateServiceInstanceAppBindingResponse> responseEntity = osbProxy.delegateBind(request, serviceInstanceBindingServiceClient);
+
+        verify(serviceInstanceBindingServiceClient).createServiceInstanceBinding(
+                "service-instance-id",
+                "service-instance-binding-id",
                 "api-info",
                 aContextOriginatingHeader(),
                 request);
@@ -235,11 +321,59 @@ public class OsbProxyImplTest {
         assertThat(mappedResponse.isDeleteOperation()).isFalse();
     }
 
+    @Test
+    public void maps_successull_bind_response() {
+        //Given
+        CreateServiceInstanceAppBindingResponse delegatedResponse = new CreateServiceInstanceAppBindingResponse();
+        Map<String, Object> credentials = new HashMap<>();
+        credentials.put("keyspaceName", "ks055d0899_018d_4841_ba66_2e4d4ce91f47");
+        credentials.put("contact-points", "127.0.0.1");
+        credentials.put("password", "aPassword");
+        credentials.put("port", "9142");
+        credentials.put("jdbcUrl", "jdbc:cassandra://127.0.0.1:9142/ks055d0899_018d_4841_ba66_2e4d4ce91f47");
+        credentials.put("login", "rbbbbbbbb_ba66_4841_018d_2e4d4ce91f47");
+        delegatedResponse.withCredentials(credentials);
+        delegatedResponse.withBindingExisted(false);
+
+        ResponseEntity<CreateServiceInstanceAppBindingResponse> delegatedResponseEnveloppe
+                = new ResponseEntity<>(delegatedResponse, HttpStatus.CREATED);
+        FeignException provisionException = null;
+
+        //when
+        @SuppressWarnings("ConstantConditions") CreateServiceInstanceAppBindingResponse mappedResponse = osbProxy.mapBindResponse(delegatedResponseEnveloppe, provisionException, aCatalog());
+
+
+        assertThat(mappedResponse).isEqualTo(delegatedResponse);
+    }
+
+    @Test
+    public void maps_already_existing_bind_response() {
+        //Given
+        CreateServiceInstanceAppBindingResponse delegatedResponse = new CreateServiceInstanceAppBindingResponse();
+        Map<String, Object> credentials = new HashMap<>();
+        credentials.put("keyspaceName", "ks055d0899_018d_4841_ba66_2e4d4ce91f47");
+        delegatedResponse.withCredentials(credentials);
+        delegatedResponse.withBindingExisted(true);
+
+        ResponseEntity<CreateServiceInstanceAppBindingResponse> delegatedResponseEnveloppe
+                = new ResponseEntity<>(delegatedResponse, HttpStatus.OK);
+        FeignException provisionException = null;
+
+        //when
+        @SuppressWarnings("ConstantConditions") CreateServiceInstanceAppBindingResponse mappedResponse = osbProxy.mapBindResponse(delegatedResponseEnveloppe, provisionException, aCatalog());
+
+
+        assertThat(mappedResponse.isBindingExisted()).isTrue();
+        assertThat(mappedResponse).isEqualTo(delegatedResponse);
+    }
+
+    //
+
     @Rule
     public ExpectedException thrown = ExpectedException.none();
 
     @Test
-    public void maps_rejected_provision_response() {
+    public void maps_rejected_provision_request() {
         //Given
         GetLastServiceOperationResponse originalResponse = aPreviousOnGoingOperation();
         Response errorReponse = Response.builder()
@@ -253,6 +387,23 @@ public class OsbProxyImplTest {
 
         //when
         GetLastServiceOperationResponse mappedResponse = osbProxy.mapProvisionResponse(originalResponse, null, provisionException, aCatalog());
+    }
+
+    @Test
+    public void maps_rejected_bind_request() {
+        //Given
+        Response errorReponse = Response.builder()
+                .status(HttpStatus.BAD_REQUEST.value())
+                .headers(new HashMap<>())
+                .body("{\"description\":\"Missing required fields: keyspace param\"}", Charset.defaultCharset())
+                .build();
+        FeignException provisionException = FeignException.errorStatus("ServiceInstanceBindingServiceClient#createServiceInstanceBinding(String,String,String,String,CreateServiceInstanceBindingRequest)", errorReponse);
+
+        thrown.expectMessage(containsString("Missing required fields: keyspace param"));
+
+        //when
+
+        osbProxy.mapBindResponse(null, provisionException, aCatalog());
     }
 
     @Test

@@ -9,4 +9,6 @@ public interface OsbProxy {
     GetLastServiceOperationResponse delegateDeprovision(GetLastServiceOperationRequest pollingRequest, DeleteServiceInstanceRequest request, GetLastServiceOperationResponse response);
 
     CreateServiceInstanceBindingResponse delegateBind(CreateServiceInstanceBindingRequest request);
+
+    void delegateUnbind(DeleteServiceInstanceBindingRequest request);
 }

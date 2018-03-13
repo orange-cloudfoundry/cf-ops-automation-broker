@@ -10,6 +10,7 @@
    
 
    - future bind mapping improvements
+       - factor out plan mapping into a method and then a bean 
        - support route binding responses                 
 
 

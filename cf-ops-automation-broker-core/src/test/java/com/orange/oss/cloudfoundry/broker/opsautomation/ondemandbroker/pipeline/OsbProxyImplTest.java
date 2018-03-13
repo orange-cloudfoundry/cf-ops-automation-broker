@@ -170,6 +170,31 @@ public class OsbProxyImplTest {
     }
 
     @Test
+    public void maps_unbind_request_to_1st_service_and_1st_plan() {
+        Plan plan = new Plan("plan_id", "plan_name", "plan_description", new HashMap<>());
+        Plan plan2 = new Plan("plan_id2", "plan_name2", "plan_description2", new HashMap<>());
+        ServiceDefinition serviceDefinition = new ServiceDefinition("service_id", "service_name", "service_description", true, asList(plan, plan2));
+        Plan plan3 = new Plan("plan_id3", "plan_name3", "plan_description3", new HashMap<>());
+        ServiceDefinition serviceDefinition2 = new ServiceDefinition("service_id2", "service_name2", "service_description3", true, Collections.singletonList(plan3));
+        Catalog catalog = new Catalog(Collections.singletonList(serviceDefinition));
+
+        DeleteServiceInstanceBindingRequest request = new DeleteServiceInstanceBindingRequest("service-instance-id", "service-binding-id","coab-serviceid", "coab-planid", serviceDefinition);
+        request.withApiInfoLocation("api-location");
+        request.withOriginatingIdentity(aContext());
+        request.withCfInstanceId("cf-instance-id");
+
+        DeleteServiceInstanceBindingRequest mappedRequest = osbProxy.mapUnbindRequest(request, catalog);
+
+        assertThat(mappedRequest.getBindingId()).isEqualTo("service-binding-id");
+        assertThat(mappedRequest.getServiceDefinitionId()).isEqualTo("service_id");
+        assertThat(mappedRequest.getPlanId()).isEqualTo("plan_id");
+        assertThat(mappedRequest.getServiceInstanceId()).isEqualTo("service-instance-id");
+        assertThat(mappedRequest.getApiInfoLocation()).isEqualTo("api-location");
+        assertThat(mappedRequest.getCfInstanceId()).isEqualTo("cf-instance-id");
+        assertThat(mappedRequest.getOriginatingIdentity()).isEqualTo(aContext());
+    }
+
+    @Test
     public void serializes_osb_context() {
         Context context = aContext();
         String header = osbProxy.buildOriginatingIdentityHeader(context);
@@ -254,6 +279,26 @@ public class OsbProxyImplTest {
                 "coab-serviceid",
                 "coab-planid",
                 false,
+                "api-info",
+                aContextOriginatingHeader());
+    }
+
+    @Test
+    public void delegates_unbind_call() {
+        ServiceDefinition serviceDefinition = aCatalog().getServiceDefinitions().get(0);
+        DeleteServiceInstanceBindingRequest request = new DeleteServiceInstanceBindingRequest("service-instance-id", "service-binding-id","coab-serviceid", "coab-planid", serviceDefinition);
+        request.withApiInfoLocation("api-info");
+        request.withOriginatingIdentity(aContext());
+        request.withCfInstanceId("cf-instance-id");
+        
+        ServiceInstanceBindingServiceClient serviceInstanceBindingServiceClient = mock(ServiceInstanceBindingServiceClient.class);
+        osbProxy.delegateUnbind(request, serviceInstanceBindingServiceClient);
+
+        verify(serviceInstanceBindingServiceClient).deleteServiceInstanceBinding(
+                "service-instance-id",
+                "service-binding-id",
+                "coab-serviceid",
+                "coab-planid",
                 "api-info",
                 aContextOriginatingHeader());
     }

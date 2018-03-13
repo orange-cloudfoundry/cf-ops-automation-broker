@@ -120,6 +120,23 @@ public class OsbProxyImpl<Q extends ServiceBrokerRequest, P extends AsyncService
         return mappedResponse;
     }
 
+    @Override
+    public void delegateUnbind(DeleteServiceInstanceBindingRequest request) {
+        String brokerUrl = getBrokerUrl(request.getServiceInstanceId());
+        CatalogServiceClient catalogServiceClient = constructCatalogClient(brokerUrl);
+        Catalog catalog = catalogServiceClient.getCatalog();
+        DeleteServiceInstanceBindingRequest mappedRequest = mapUnbindRequest(request, catalog);
+        ServiceInstanceBindingServiceClient serviceInstanceBindingServiceClient = constructServiceInstanceBindingServiceClient(brokerUrl);
+
+        try {
+            delegateUnbind(mappedRequest, serviceInstanceBindingServiceClient);
+        } catch (FeignException e) {
+            logger.error("inner broker bind request rejected:" + e);
+            throw mapClientException(e);
+        }
+
+    }
+
 
 
     GetLastServiceOperationResponse mapProvisionResponse(GetLastServiceOperationResponse response, ResponseEntity<CreateServiceInstanceResponse> delegatedResponse, FeignException provisionException, Catalog catalog) {
@@ -142,9 +159,10 @@ public class OsbProxyImpl<Q extends ServiceBrokerRequest, P extends AsyncService
                 .withDeleteOperation(false);
     }
 
-    CreateServiceInstanceAppBindingResponse mapBindResponse(ResponseEntity<CreateServiceInstanceAppBindingResponse> delegatedResponse, FeignException provisionException, Catalog catalog) {
-        if (provisionException != null) {
-            throw mapClientException(provisionException);
+    CreateServiceInstanceAppBindingResponse mapBindResponse(ResponseEntity<CreateServiceInstanceAppBindingResponse> delegatedResponse, FeignException bindException, Catalog catalog) {
+        if (bindException != null) {
+            logger.error("inner broker bind request rejected:" + bindException);
+            throw mapClientException(bindException);
         }
         CreateServiceInstanceAppBindingResponse delegatedResponseBody = delegatedResponse.getBody();
         return new CreateServiceInstanceAppBindingResponse()
@@ -244,17 +262,6 @@ public class OsbProxyImpl<Q extends ServiceBrokerRequest, P extends AsyncService
         return response;
     }
 
-    ResponseEntity<CreateServiceInstanceAppBindingResponse> delegateBind(CreateServiceInstanceBindingRequest request, ServiceInstanceBindingServiceClient serviceInstanceBindingServiceClient) {
-        //noinspection unchecked
-        @SuppressWarnings("UnnecessaryLocalVariable") ResponseEntity<CreateServiceInstanceAppBindingResponse> response = (ResponseEntity<CreateServiceInstanceAppBindingResponse>) serviceInstanceBindingServiceClient.createServiceInstanceBinding(
-                request.getServiceInstanceId(),
-                request.getBindingId(),
-                request.getApiInfoLocation(),
-                buildOriginatingIdentityHeader(request.getOriginatingIdentity()),
-                request);
-        return response;
-    }
-
     void delegateUnbind(DeleteServiceInstanceBindingRequest request, ServiceInstanceBindingServiceClient serviceInstanceBindingServiceClient) {
         //noinspection unchecked
         serviceInstanceBindingServiceClient.deleteServiceInstanceBinding(
@@ -264,6 +271,17 @@ public class OsbProxyImpl<Q extends ServiceBrokerRequest, P extends AsyncService
                 request.getPlanId(),
                 request.getApiInfoLocation(),
                 buildOriginatingIdentityHeader(request.getOriginatingIdentity()));
+    }
+
+    ResponseEntity<CreateServiceInstanceAppBindingResponse> delegateBind(CreateServiceInstanceBindingRequest request, ServiceInstanceBindingServiceClient serviceInstanceBindingServiceClient) {
+        //noinspection unchecked
+        @SuppressWarnings("UnnecessaryLocalVariable") ResponseEntity<CreateServiceInstanceAppBindingResponse> response = (ResponseEntity<CreateServiceInstanceAppBindingResponse>) serviceInstanceBindingServiceClient.createServiceInstanceBinding(
+                request.getServiceInstanceId(),
+                request.getBindingId(),
+                request.getApiInfoLocation(),
+                buildOriginatingIdentityHeader(request.getOriginatingIdentity()),
+                request);
+        return response;
     }
 
     static final String ORIGINATING_USER_KEY = "user_id";
@@ -358,6 +376,23 @@ public class OsbProxyImpl<Q extends ServiceBrokerRequest, P extends AsyncService
                 mappedPlan.getId(),
                 mappedService,
                 false);
+        deleteServiceInstanceRequest.withCfInstanceId(r.getCfInstanceId());
+        deleteServiceInstanceRequest.withApiInfoLocation(r.getApiInfoLocation());
+        deleteServiceInstanceRequest.withOriginatingIdentity(r.getOriginatingIdentity());
+        return deleteServiceInstanceRequest;
+    }
+
+    DeleteServiceInstanceBindingRequest mapUnbindRequest(DeleteServiceInstanceBindingRequest r, Catalog catalog) {
+        ServiceDefinition mappedService = catalog.getServiceDefinitions().get(0);
+        Plan mappedPlan = mappedService.getPlans().get(0);
+
+        //noinspection deprecation
+        DeleteServiceInstanceBindingRequest deleteServiceInstanceRequest = new DeleteServiceInstanceBindingRequest(
+                r.getServiceInstanceId(),
+                r.getBindingId(),
+                mappedService.getId(),
+                mappedPlan.getId(),
+                mappedService);
         deleteServiceInstanceRequest.withCfInstanceId(r.getCfInstanceId());
         deleteServiceInstanceRequest.withApiInfoLocation(r.getApiInfoLocation());
         deleteServiceInstanceRequest.withOriginatingIdentity(r.getOriginatingIdentity());

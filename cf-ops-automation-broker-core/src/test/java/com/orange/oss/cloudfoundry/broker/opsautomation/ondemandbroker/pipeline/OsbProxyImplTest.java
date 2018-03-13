@@ -86,7 +86,9 @@ public class OsbProxyImplTest {
         ServiceDefinition serviceDefinition2 = new ServiceDefinition("service_id2", "service_name2", "service_description3", true, Collections.singletonList(plan3));
         Catalog catalog = new Catalog(Collections.singletonList(serviceDefinition));
 
-        CreateServiceInstanceRequest request = new CreateServiceInstanceRequest("coab-serviceid", "coab-planid", "orgguid", "spaceguid", new HashMap<>());
+        HashMap<String, Object> parameters = new HashMap<>();
+        parameters.put("keyspace_name", "foo");
+        CreateServiceInstanceRequest request = new CreateServiceInstanceRequest("coab-serviceid", "coab-planid", "orgguid", "spaceguid", parameters);
         request.withServiceInstanceId("service-instance-id");
         request.withApiInfoLocation("api-location");
         request.withCfInstanceId("cf-instance-id");
@@ -99,6 +101,7 @@ public class OsbProxyImplTest {
         assertThat(mappedRequest.getApiInfoLocation()).isEqualTo("api-location");
         assertThat(mappedRequest.getCfInstanceId()).isEqualTo("cf-instance-id");
         assertThat(mappedRequest.getOriginatingIdentity()).isEqualTo(aContext());
+        assertThat(mappedRequest.getParameters()).isEqualTo(parameters);
     }
 
     @Test
@@ -112,6 +115,7 @@ public class OsbProxyImplTest {
 
         Map<String, Object> routeBindingParams= new HashMap<>();
         Map<String, Object> serviceBindingParams= new HashMap<>();
+        serviceBindingParams.put("user-name", "myname");
         BindResource bindResource = new BindResource("app_guid", null, routeBindingParams);
 
         Map<String, Object> cfContextProps = new HashMap<>();
@@ -143,6 +147,7 @@ public class OsbProxyImplTest {
         assertThat(mappedRequest.getApiInfoLocation()).isEqualTo("api-info");
         assertThat(mappedRequest.getCfInstanceId()).isEqualTo("cf-instance-id");
         assertThat(mappedRequest.getOriginatingIdentity()).isEqualTo(aContext());
+        assertThat(mappedRequest.getParameters()).isEqualTo(serviceBindingParams);
     }
 
     @Test
@@ -231,6 +236,7 @@ public class OsbProxyImplTest {
     public void delegates_bind_call() {
         Map<String, Object> routeBindingParams= new HashMap<>();
         Map<String, Object> serviceBindingParams= new HashMap<>();
+        serviceBindingParams.put("user-name", "myname");
         BindResource bindResource = new BindResource("app_guid", null, routeBindingParams);
 
         Map<String, Object> cfContextProps = new HashMap<>();

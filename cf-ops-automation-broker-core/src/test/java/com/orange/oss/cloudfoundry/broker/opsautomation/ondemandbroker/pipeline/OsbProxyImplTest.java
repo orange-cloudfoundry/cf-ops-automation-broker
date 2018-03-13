@@ -20,7 +20,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.OsbProxyImpl.*;
 import static java.util.Arrays.asList;
 import static org.fest.assertions.Assertions.assertThat;
 import static org.hamcrest.CoreMatchers.containsString;
@@ -556,9 +555,9 @@ public class OsbProxyImplTest {
 
     private Context aContext() {
         Map<String, Object> properties = new HashMap<>();
-        properties.put(ORIGINATING_USER_KEY, "user_guid");
-        properties.put(ORIGINATING_EMAIL_KEY, "user_email");
-        return new Context(ORIGINATING_CLOUDFOUNDRY_PLATFORM, properties);
+        properties.put(OsbConstants.ORIGINATING_USER_KEY, "user_guid");
+        properties.put(OsbConstants.ORIGINATING_EMAIL_KEY, "user_email");
+        return new Context(OsbConstants.ORIGINATING_CLOUDFOUNDRY_PLATFORM, properties);
     }
 
     private GetLastServiceOperationResponse aPreviousOnGoingOperation() {

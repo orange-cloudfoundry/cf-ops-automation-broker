@@ -1,8 +1,11 @@
+- refine exception filtering to allow broker framework exceptions 
+    from org.springframework.cloud.servicebroker.exception package to get through
+
 - Implement OSB provision delegation to nested cassandra broker
    - refine PipelineCompletionTracker to call OSB client bind/unbind
      - DONE: ~~core framework: create/delete service binding~~
      - DONE: implement bind delegation & mapping in OSBProxy
-     - implement unbind delegation & mapping in OSBProxy
+     - DONE: implement unbind delegation & mapping in OSBProxy
         test delegateUnbind()
      - cassandra processor: delegate bind/unbind to PipelineCompletionTracker 
      - delegate delete request in PipelineCompletionTracker to OSBProxy
@@ -133,7 +136,7 @@ Server error, status code: 409, error code: 60016, message: An operation for ser
    - Use Builder in Junit tests to improve readability
    - Manage “-tpl” files
    - Improve test coverage StructureGeneratorHelper
-   - Update integration test to use the builder
+   - Update integration test to use a builder (e.g. for OSB req/resps) 
    
    
 - refine logback config to 

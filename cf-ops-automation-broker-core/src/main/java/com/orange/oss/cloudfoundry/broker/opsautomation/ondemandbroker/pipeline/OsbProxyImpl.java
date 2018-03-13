@@ -284,12 +284,6 @@ public class OsbProxyImpl<Q extends ServiceBrokerRequest, P extends AsyncService
         return response;
     }
 
-    static final String ORIGINATING_USER_KEY = "user_id";
-
-    static final String ORIGINATING_EMAIL_KEY = "email";
-
-    static final String ORIGINATING_CLOUDFOUNDRY_PLATFORM = "cloudfoundry";
-
     /**
      * Inspired from spring-cloud-open-service-broker, see https://github.com/spring-cloud/spring-cloud-cloudfoundry-service-broker/blob/c56080e5ec8ed97ba8fe4e15ac2031073fbc45ae/spring-cloud-open-service-broker-autoconfigure/src/test/java/org/springframework/cloud/servicebroker/autoconfigure/web/servlet/ControllerIntegrationTest.java#L36
      */
@@ -300,14 +294,14 @@ public class OsbProxyImpl<Q extends ServiceBrokerRequest, P extends AsyncService
         String platform = originatingIdentity.getPlatform();
 
         Map<String, Object> propMap = new HashMap<>();
-        if (ORIGINATING_CLOUDFOUNDRY_PLATFORM.equals(platform)) {
-            Object userKey = originatingIdentity.getProperty(ORIGINATING_USER_KEY);
+        if (OsbConstants.ORIGINATING_CLOUDFOUNDRY_PLATFORM.equals(platform)) {
+            Object userKey = originatingIdentity.getProperty(OsbConstants.ORIGINATING_USER_KEY);
             if (userKey != null) {
-                propMap.put(ORIGINATING_USER_KEY, userKey);
+                propMap.put(OsbConstants.ORIGINATING_USER_KEY, userKey);
             }
-            Object email = originatingIdentity.getProperty(ORIGINATING_EMAIL_KEY);
+            Object email = originatingIdentity.getProperty(OsbConstants.ORIGINATING_EMAIL_KEY);
             if (email != null) {
-                propMap.put(ORIGINATING_EMAIL_KEY, email);
+                propMap.put(OsbConstants.ORIGINATING_EMAIL_KEY, email);
             }
         }
         //Wait for next spring-cloud-open-service-broker version which defines a getProperties() method

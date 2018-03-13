@@ -2,6 +2,7 @@ package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline
 
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.GitProcessorContext;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.Context;
+import com.orange.oss.ondemandbroker.ProcessorChainServiceInstanceBindingService;
 import com.orange.oss.ondemandbroker.ProcessorChainServiceInstanceService;
 import org.junit.Test;
 import org.mockito.Mockito;
@@ -104,6 +105,56 @@ public class CassandraProcessorTest {
         GetLastServiceOperationResponse operationResponse = (GetLastServiceOperationResponse) context.contextKeys.get(ProcessorChainServiceInstanceService.GET_LAST_SERVICE_OPERATION_RESPONSE);
         assertThat(operationResponse).isEqualTo(expectedResponse);
     }
+
+    @Test
+    public void delegates_bind_request_to_completion_nested_broker() {
+
+        //given
+        CreateServiceInstanceBindingRequest request = OsbBuilderHelper.aBindingRequest("service-instance-id");
+
+        //Given a populated context
+        Context context = new Context();
+        context.contextKeys.put(ProcessorChainServiceInstanceBindingService.CREATE_SERVICE_INSTANCE_BINDING_REQUEST, request);
+        context.contextKeys.put(SECRETS_REPOSITORY_ALIAS_NAME + GitProcessorContext.workDir.toString(), aGitRepoWorkDir());
+
+        //Given a mock behaviour (in progress state)
+        PipelineCompletionTracker tracker = mock(PipelineCompletionTracker.class);
+        when(tracker.delegateBindRequest(any(Path.class), any(CreateServiceInstanceBindingRequest.class))).thenReturn(OsbBuilderHelper.aBindingResponse());
+
+
+        //When
+        CassandraProcessor cassandraProcessor = new CassandraProcessor(TEMPLATES_REPOSITORY_ALIAS_NAME, SECRETS_REPOSITORY_ALIAS_NAME, null, null, tracker);
+        cassandraProcessor.preBind(context);
+
+        //Then
+        verify(tracker).delegateBindRequest(any(Path.class), eq(request));
+        //And mapped response from tracker is returned
+        CreateServiceInstanceBindingResponse bindingResponse = (CreateServiceInstanceBindingResponse) context.contextKeys.get(ProcessorChainServiceInstanceBindingService.CREATE_SERVICE_INSTANCE_BINDING_RESPONSE);
+        assertThat(bindingResponse).isEqualTo(OsbBuilderHelper.aBindingResponse());
+    }
+
+    @Test
+    public void delegates_unbind_request_to_completion_nested_broker() {
+        //given
+        DeleteServiceInstanceBindingRequest request = OsbBuilderHelper.anUnbindRequest("service-instance-id");
+
+        //Given a populated context
+        Context context = new Context();
+        context.contextKeys.put(ProcessorChainServiceInstanceBindingService.DELETE_SERVICE_INSTANCE_BINDING_REQUEST, request);
+        context.contextKeys.put(SECRETS_REPOSITORY_ALIAS_NAME + GitProcessorContext.workDir.toString(), aGitRepoWorkDir());
+
+        //Given a mock behaviour (in progress state)
+        PipelineCompletionTracker tracker = mock(PipelineCompletionTracker.class);
+        doNothing().when(tracker).delegateUnbindRequest(any(Path.class), any(DeleteServiceInstanceBindingRequest.class));
+
+        //When
+        CassandraProcessor cassandraProcessor = new CassandraProcessor(TEMPLATES_REPOSITORY_ALIAS_NAME, SECRETS_REPOSITORY_ALIAS_NAME, null, null, tracker);
+        cassandraProcessor.preUnBind(context);
+
+        //Then
+        verify(tracker).delegateUnbindRequest(any(Path.class), eq(request));
+    }
+
 
     @Test
     public void responds_to_get_last_service_operation_succeeded() {

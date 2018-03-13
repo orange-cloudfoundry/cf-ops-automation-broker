@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.cloud.servicebroker.exception.ServiceBrokerException;
 import org.springframework.cloud.servicebroker.exception.ServiceInstanceDoesNotExistException;
 import org.springframework.cloud.servicebroker.model.*;
 
@@ -20,14 +21,14 @@ public class PipelineCompletionTracker {
     private static Logger logger = LoggerFactory.getLogger(PipelineCompletionTracker.class.getName());
 
     private Clock clock;
-    private OsbProxy createServiceInstanceOsbProxy;
+    private OsbProxy osbProxy;
     private Gson gson;
     private long maxExecutionDurationSeconds;
 
-    public PipelineCompletionTracker(Clock clock, long maxExecutionDurationSeconds, OsbProxy createServiceInstanceOsbProxy) {
+    public PipelineCompletionTracker(Clock clock, long maxExecutionDurationSeconds, OsbProxy osbProxy) {
         this.clock = clock;
         this.maxExecutionDurationSeconds = maxExecutionDurationSeconds;
-        this.createServiceInstanceOsbProxy = createServiceInstanceOsbProxy;
+        this.osbProxy = osbProxy;
         final GsonBuilder gsonBuilder = new GsonBuilder();
         gsonBuilder.registerTypeAdapter(PipelineCompletionTracker.PipelineOperationState.class, new PipelineOperationStateGsonAdapter());
 
@@ -45,9 +46,8 @@ public class PipelineCompletionTracker {
 
     GetLastServiceOperationResponse getDeploymentExecStatus(Path secretsWorkDir, String serviceInstanceId, String jsonPipelineOperationState, GetLastServiceOperationRequest pollingRequest) {
 
-        //Check if target manifest file is present
-        Path targetManifestFile = this.getTargetManifestFilePath(secretsWorkDir, serviceInstanceId);
-        boolean isTargetManifestFilePresent = Files.exists(targetManifestFile);
+        //Check if target manifest file is present, i.e. if nested broker bosh deployment completed successfully
+        boolean isTargetManifestFilePresent = isBoshDeploymentAvailable(secretsWorkDir, serviceInstanceId);
 
         //Check if timeout is reached
         PipelineOperationState pipelineOperationState = this.parseFromJson(jsonPipelineOperationState);
@@ -60,6 +60,11 @@ public class PipelineCompletionTracker {
         return this.buildResponse(classFullyQualifiedName, isTargetManifestFilePresent, isRequestTimedOut, elapsedTimeSecsSinceStartRequestDate, pollingRequest, serviceBrokerRequest);
     }
 
+    private boolean isBoshDeploymentAvailable(Path secretsWorkDir, String serviceInstanceId) {
+        Path targetManifestFile = this.getTargetManifestFilePath(secretsWorkDir, serviceInstanceId);
+        return Files.exists(targetManifestFile);
+    }
+
 
     GetLastServiceOperationResponse buildResponse(String classFullyQualifiedName, boolean isManifestFilePresent, boolean isRequestTimedOut, long displayedElapsedTimeSecs, GetLastServiceOperationRequest pollingRequest, ServiceBrokerRequest storedRequest) {
         GetLastServiceOperationResponse response = new GetLastServiceOperationResponse();
@@ -68,8 +73,8 @@ public class PipelineCompletionTracker {
                     if (isManifestFilePresent) {
                         response.withOperationState(OperationState.SUCCEEDED);
                         response.withDescription("Creation succeeded");
-                        if (createServiceInstanceOsbProxy != null) {
-                            response = createServiceInstanceOsbProxy.delegateProvision(pollingRequest, (CreateServiceInstanceRequest) storedRequest, response);
+                        if (osbProxy != null) {
+                            response = osbProxy.delegateProvision(pollingRequest, (CreateServiceInstanceRequest) storedRequest, response);
                         }
                     } else {
                         if (isRequestTimedOut) {
@@ -83,9 +88,9 @@ public class PipelineCompletionTracker {
 
                 case CassandraProcessorConstants.OSB_DELETE_REQUEST_CLASS_NAME:
                     response.withDescription("Deletion succeeded");
-                    if (createServiceInstanceOsbProxy != null) {
+                    if (osbProxy != null) {
                         try {
-                            response = createServiceInstanceOsbProxy.delegateDeprovision(pollingRequest, (DeleteServiceInstanceRequest) storedRequest, response);
+                            response = osbProxy.delegateDeprovision(pollingRequest, (DeleteServiceInstanceRequest) storedRequest, response);
                         } catch (Exception e) {
                             logger.info("Unable to delegate delete to enclosed broker, maybe absent/down. Reporting as GONE. Caught:" + e);
                             throw new ServiceInstanceDoesNotExistException(pollingRequest.getServiceInstanceId());
@@ -139,6 +144,28 @@ public class PipelineCompletionTracker {
 
     PipelineCompletionTracker.PipelineOperationState parseFromJson(String json) {
         return gson.fromJson(json, PipelineCompletionTracker.PipelineOperationState.class);
+    }
+
+    CreateServiceInstanceBindingResponse delegateBindRequest(Path secretsWorkDir, CreateServiceInstanceBindingRequest request) {
+        checkBindingRequestsPrereqs(secretsWorkDir, request.getServiceInstanceId());
+        return osbProxy.delegateBind(request);
+    }
+
+    void delegateUnbindRequest(Path secretsWorkDir, DeleteServiceInstanceBindingRequest request) {
+        checkBindingRequestsPrereqs(secretsWorkDir, request.getServiceInstanceId());
+        osbProxy.delegateUnbind(request);
+    }
+
+    void checkBindingRequestsPrereqs(Path secretsWorkDir, String serviceInstanceId) {
+        //Check if target manifest file is present, i.e. if nested broker bosh deployment completed successfully
+        boolean boshDeploymentAvailable = isBoshDeploymentAvailable(secretsWorkDir, serviceInstanceId);
+
+        if (!boshDeploymentAvailable) {
+            throw new ServiceInstanceDoesNotExistException(serviceInstanceId);
+        }
+        if (osbProxy == null) {
+            throw new ServiceBrokerException("Bindings not supported for this service");
+        }
     }
 
     static class PipelineOperationState {

@@ -7,7 +7,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.rules.TemporaryFolder;
-import org.mockito.Mockito;
+import org.springframework.cloud.servicebroker.exception.ServiceBrokerException;
 import org.springframework.cloud.servicebroker.exception.ServiceInstanceDoesNotExistException;
 import org.springframework.cloud.servicebroker.model.*;
 import org.springframework.http.HttpStatus;
@@ -21,9 +21,11 @@ import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.util.HashMap;
-import java.util.Map;
 
+import static com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.OsbBuilderHelper.aBindingRequest;
+import static com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.OsbBuilderHelper.aBindingResponse;
 import static org.fest.assertions.Assertions.assertThat;
+import static org.hamcrest.CoreMatchers.containsString;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.AdditionalAnswers.returnsLastArg;
 import static org.mockito.Matchers.any;
@@ -45,9 +47,9 @@ public class PipelineCompletionTrackerTest {
 
     private Path workDir;
     @SuppressWarnings("unchecked")
-    private OsbProxy createServiceInstanceOsbProxy = mock(OsbProxy.class);
+    private OsbProxy osbProxy = mock(OsbProxy.class);
 
-    private PipelineCompletionTracker tracker = new PipelineCompletionTracker(clock, 1200L, createServiceInstanceOsbProxy);
+    private PipelineCompletionTracker tracker = new PipelineCompletionTracker(clock, 1200L, osbProxy);
 
 
     @Before
@@ -58,7 +60,7 @@ public class PipelineCompletionTrackerTest {
 
     @Before
     public void setUpOsbProxy() {
-        doAnswer(returnsLastArg()).when(createServiceInstanceOsbProxy).delegateProvision(any(), any(), any());
+        doAnswer(returnsLastArg()).when(osbProxy).delegateProvision(any(), any(), any());
     }
 
     @Test
@@ -68,7 +70,7 @@ public class PipelineCompletionTrackerTest {
         thrown.expectMessage("Get Deployment Execution status fails (unhandled request class)");
 
         //When
-        tracker.buildResponse("unsupported-class-name", true, false, 10000L, pollingRequest, aDeleteServiceInstanceRequest());
+        tracker.buildResponse("unsupported-class-name", true, false, 10000L, pollingRequest, OsbBuilderHelper.aDeleteServiceInstanceRequest());
     }
 
     @Test
@@ -83,7 +85,7 @@ public class PipelineCompletionTrackerTest {
         //Then
         assertThat(response.getState()).isEqualTo(OperationState.FAILED);
         assertThat(response.getDescription()).startsWith("Execution timeout after ");
-        verify(createServiceInstanceOsbProxy, never()).delegateProvision(any(), any(), any());
+        verify(osbProxy, never()).delegateProvision(any(), any(), any());
     }
 
     @Test
@@ -99,7 +101,7 @@ public class PipelineCompletionTrackerTest {
         assertThat(response.getState()).isEqualTo(OperationState.SUCCEEDED);
         assertThat(response.getDescription()).isEqualTo("Creation succeeded");
         //and proxy is invoked
-        verify(createServiceInstanceOsbProxy).delegateProvision(any(), any(), any());
+        verify(osbProxy).delegateProvision(any(), any(), any());
     }
 
     @Test
@@ -112,7 +114,7 @@ public class PipelineCompletionTrackerTest {
         proxiedResponse.withOperationState(OperationState.SUCCEEDED);
         proxiedResponse.withDescription("osb proxied");
 
-        when(createServiceInstanceOsbProxy.delegateProvision(any(), any(), any())).thenReturn(proxiedResponse);
+        when(osbProxy.delegateProvision(any(), any(), any())).thenReturn(proxiedResponse);
 
 
         //When
@@ -121,18 +123,71 @@ public class PipelineCompletionTrackerTest {
         //Then
         assertThat(response.getState()).isEqualTo(OperationState.SUCCEEDED);
         assertThat(response.getDescription()).isEqualTo("osb proxied");
-        verify(createServiceInstanceOsbProxy).delegateProvision(any(), any(), any());
+        verify(osbProxy).delegateProvision(any(), any(), any());
+    }
+
+    @Test
+    public void delegates_bind_to_osb_proxy_when_manifest_is_present() throws IOException {
+        //Given an existing manifest file
+        generateSampleManifest();
+        //and
+        CreateServiceInstanceBindingRequest request = aBindingRequest(SERVICE_INSTANCE_ID);
+        when(osbProxy.delegateBind(any())).thenReturn(aBindingResponse());
+
+        //When
+        CreateServiceInstanceBindingResponse response = tracker.delegateBindRequest(workDir, request);
+
+        //Then
+        assertThat(response).isEqualTo(aBindingResponse());
+        verify(osbProxy).delegateBind(request);
+    }
+
+    @Test
+    public void delegates_unbind_to_osb_proxy_when_manifest_is_present() throws IOException {
+        //Given an existing manifest file
+        generateSampleManifest();
+        //and
+        DeleteServiceInstanceBindingRequest request = OsbBuilderHelper.anUnbindRequest(SERVICE_INSTANCE_ID);
+        doNothing().when(osbProxy).delegateUnbind(any());
+
+        //When
+        tracker.delegateUnbindRequest(workDir, request);
+
+        verify(osbProxy).delegateUnbind(request);
+    }
+    @Test
+    public void rejects_bind_request_when_manifest_is_absent() throws IOException {
+        //Given no manifest file
+
+        thrown.expect(ServiceInstanceDoesNotExistException.class);
+        thrown.expectMessage(containsString(SERVICE_INSTANCE_ID));
+
+        //When
+        tracker.checkBindingRequestsPrereqs(workDir, SERVICE_INSTANCE_ID);
+    }
+    @Test
+    public void rejects_bind_request_when_no_osb_proxy_configured() throws IOException {
+        //Given a null proxy was configured
+        tracker = new PipelineCompletionTracker(clock, 1200L, null);
+        //Given a manifest file
+        generateSampleManifest();
+
+        thrown.expect(ServiceBrokerException.class);
+        thrown.expectMessage(containsString("Bindings not supported for this service"));
+
+        //When
+        tracker.checkBindingRequestsPrereqs(workDir, SERVICE_INSTANCE_ID);
     }
 
     @Test
     public void delegates_to_osb_proxy_when_deprovision_completes_with_manifest_being_present() throws IOException {
-        DeleteServiceInstanceRequest request = aDeleteServiceInstanceRequest();
+        DeleteServiceInstanceRequest request = OsbBuilderHelper.aDeleteServiceInstanceRequest();
 
         //Given a proxy that returns a custom response message
         GetLastServiceOperationResponse proxiedResponse = new GetLastServiceOperationResponse();
         proxiedResponse.withOperationState(OperationState.SUCCEEDED);
         proxiedResponse.withDescription("osb proxied");
-        when(createServiceInstanceOsbProxy.delegateDeprovision(any(), any(), any())).thenReturn(proxiedResponse);
+        when(osbProxy.delegateDeprovision(any(), any(), any())).thenReturn(proxiedResponse);
 
         //When
         GetLastServiceOperationResponse response = tracker.buildResponse(request.getClass().getName(), true, false, (long) 10, pollingRequest, request);
@@ -140,12 +195,12 @@ public class PipelineCompletionTrackerTest {
         //Then
         assertThat(response.getState()).isEqualTo(OperationState.SUCCEEDED);
         assertThat(response.getDescription()).isEqualTo("osb proxied");
-        verify(createServiceInstanceOsbProxy).delegateDeprovision(any(), any(), any());
+        verify(osbProxy).delegateDeprovision(any(), any(), any());
     }
 
     @Test(expected = ServiceInstanceDoesNotExistException.class)
     public void returns_410_GONE_on_osb_proxy_404_missing_catalog_response_when_deprovision_completes() throws IOException {
-        DeleteServiceInstanceRequest request = aDeleteServiceInstanceRequest();
+        DeleteServiceInstanceRequest request = OsbBuilderHelper.aDeleteServiceInstanceRequest();
 
         //Given a proxy that can not reach the enclosing broker
         Response errorResponse = Response.builder()
@@ -154,24 +209,24 @@ public class PipelineCompletionTrackerTest {
                 .body("{\"description\":\"Requested route ('cassandra-broker_85329f8c-40d0-482b-a996-ff8bee2d4b1a.mydomain') does not exist.\"}", Charset.defaultCharset())
                 .build();
         FeignException catalogException = FeignException.errorStatus("CatalogServiceClient#getCatalog()", errorResponse);
-        when(createServiceInstanceOsbProxy.delegateDeprovision(any(), any(), any())).thenThrow(catalogException );
+        when(osbProxy.delegateDeprovision(any(), any(), any())).thenThrow(catalogException );
 
         //When
         tracker.buildResponse(request.getClass().getName(), false, false, (long) 10, pollingRequest, request);
 
         //Then
-        verify(createServiceInstanceOsbProxy).delegateDeprovision(any(), any(), any());
+        verify(osbProxy).delegateDeprovision(any(), any(), any());
     }
 
     @Test
     public void delegates_to_osb_proxy_when_deprovision_completes_with_manifest_being_absent() throws IOException {
-        DeleteServiceInstanceRequest request = aDeleteServiceInstanceRequest();
+        DeleteServiceInstanceRequest request = OsbBuilderHelper.aDeleteServiceInstanceRequest();
 
         //Given a proxy that returns a custom response message
         GetLastServiceOperationResponse proxiedResponse = new GetLastServiceOperationResponse();
         proxiedResponse.withOperationState(OperationState.SUCCEEDED);
         proxiedResponse.withDescription("osb proxied");
-        when(createServiceInstanceOsbProxy.delegateDeprovision(any(), any(), any())).thenReturn(proxiedResponse);
+        when(osbProxy.delegateDeprovision(any(), any(), any())).thenReturn(proxiedResponse);
 
         //When invoked before timeout
         GetLastServiceOperationResponse response = tracker.buildResponse(request.getClass().getName(), false, false, 10L, pollingRequest, request);
@@ -179,18 +234,18 @@ public class PipelineCompletionTrackerTest {
         //Then
         assertThat(response.getState()).isEqualTo(OperationState.SUCCEEDED);
         assertThat(response.getDescription()).isEqualTo("osb proxied");
-        verify(createServiceInstanceOsbProxy).delegateDeprovision(any(), any(), any());
+        verify(osbProxy).delegateDeprovision(any(), any(), any());
     }
 
     @Test
     public void delegates_to_osb_proxy_when_deprovision_completes_with_manifest_being_absent_after_timeout() throws IOException {
-        DeleteServiceInstanceRequest request = aDeleteServiceInstanceRequest();
+        DeleteServiceInstanceRequest request = OsbBuilderHelper.aDeleteServiceInstanceRequest();
 
         //Given a proxy that returns a custom response message
         GetLastServiceOperationResponse proxiedResponse = new GetLastServiceOperationResponse();
         proxiedResponse.withOperationState(OperationState.SUCCEEDED);
         proxiedResponse.withDescription("osb proxied");
-        when(createServiceInstanceOsbProxy.delegateDeprovision(any(), any(), any())).thenReturn(proxiedResponse);
+        when(osbProxy.delegateDeprovision(any(), any(), any())).thenReturn(proxiedResponse);
 
         //When invoked after timeout
         GetLastServiceOperationResponse response = tracker.buildResponse(request.getClass().getName(), false, true, 10L, pollingRequest, request);
@@ -198,7 +253,7 @@ public class PipelineCompletionTrackerTest {
         //Then
         assertThat(response.getState()).isEqualTo(OperationState.SUCCEEDED);
         assertThat(response.getDescription()).isEqualTo("osb proxied");
-        verify(createServiceInstanceOsbProxy).delegateDeprovision(any(), any(), any());
+        verify(osbProxy).delegateDeprovision(any(), any(), any());
     }
 
 // we dropped direct provisionning delegation from cassandra processor
@@ -228,7 +283,7 @@ public class PipelineCompletionTrackerTest {
     public void returns_succeeded_state_if_manifest_is_present_and_provision_operation_state_without_timeout() throws IOException {
         //Given an existing manifest file and a create operation state without timeout
         generateSampleManifest();
-        String jsonPipelineOperationState = tracker.getPipelineOperationStateAsJson(aCreateServiceInstanceRequest());
+        String jsonPipelineOperationState = tracker.getPipelineOperationStateAsJson(OsbBuilderHelper.aCreateServiceInstanceRequest());
 
         //When
         GetLastServiceOperationResponse response = tracker.getDeploymentExecStatus(workDir, SERVICE_INSTANCE_ID, jsonPipelineOperationState, pollingRequest);
@@ -241,7 +296,7 @@ public class PipelineCompletionTrackerTest {
     @Test
     public void returns_inprogress_state_if_manifest_is_not_present_and_provision_operation_state_before_timeout() throws IOException {
         //Given a missing manifest file and a create operation state without timeout
-        String jsonPipelineOperationState = tracker.getPipelineOperationStateAsJson(aCreateServiceInstanceRequest());
+        String jsonPipelineOperationState = tracker.getPipelineOperationStateAsJson(OsbBuilderHelper.aCreateServiceInstanceRequest());
 
         //When
         GetLastServiceOperationResponse response = tracker.getDeploymentExecStatus(workDir, SERVICE_INSTANCE_ID, jsonPipelineOperationState, pollingRequest);
@@ -253,12 +308,12 @@ public class PipelineCompletionTrackerTest {
 
     
     private String createProvisionOperationStateInThePast() {
-        CreateServiceInstanceRequest request = aCreateServiceInstanceRequest();
+        CreateServiceInstanceRequest request = OsbBuilderHelper.aCreateServiceInstanceRequest();
         return createOperationStateInThePast(request);
     }
 
     private String createDeprovisionOperationStateInThePast() {
-        DeleteServiceInstanceRequest request = aDeleteServiceInstanceRequest();
+        DeleteServiceInstanceRequest request = OsbBuilderHelper.aDeleteServiceInstanceRequest();
         return createOperationStateInThePast(request);
     }
 
@@ -273,7 +328,7 @@ public class PipelineCompletionTrackerTest {
     @Test
     public void operation_state_POJO_serializes_back_and_forth_to_json() {
         //given
-        CreateServiceInstanceRequest originalRequest = aCreateServiceInstanceRequest();
+        CreateServiceInstanceRequest originalRequest = OsbBuilderHelper.aCreateServiceInstanceRequest();
         PipelineCompletionTracker.PipelineOperationState pipelineOperationState = new PipelineCompletionTracker.PipelineOperationState(originalRequest, "2018-01-22T14:00:00.000Z");
 
         //when
@@ -290,39 +345,6 @@ public class PipelineCompletionTrackerTest {
         //CreateServiceInstanceRequest.equals ignores transient fields that we need to preserve in our context
         assertEquals(actualServiceBrokerRequest.getServiceInstanceId(), originalRequest.getServiceInstanceId());
         assertEquals(actualServiceBrokerRequest.getServiceDefinitionId(), originalRequest.getServiceDefinitionId());
-    }
-
-    private CreateServiceInstanceRequest aCreateServiceInstanceRequest(){
-        //Given a parameter request
-        Map<String, Object> parameters = new HashMap<>();
-        parameters.put("parameterName", "parameterValue");
-
-        CreateServiceInstanceRequest request = new CreateServiceInstanceRequest("service_definition_id",
-                "plan_id",
-                "org_id",
-                "space_id",
-                parameters
-        );
-        request.withServiceInstanceId("service-instance-guid");
-        return request;
-    }
-
-    private DeleteServiceInstanceRequest aDeleteServiceInstanceRequest() {
-        // Given an incoming delete request
-        return new DeleteServiceInstanceRequest("instance_id",
-                "service_id",
-                "plan_id",
-                new ServiceDefinition(),
-                true);
-    }
-
-    private UpdateServiceInstanceRequest anUpdateServiceInstanceRequest() {
-        // Given an incoming delete request
-        return new UpdateServiceInstanceRequest(
-                "service_id",
-                "plan_id",
-                new HashMap<>())
-                .withServiceInstanceId("instance_id");
     }
 
 

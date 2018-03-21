@@ -7,9 +7,21 @@
      - DONE: implement bind delegation & mapping in OSBProxy
      - DONE: implement unbind delegation & mapping in OSBProxy
         test delegateUnbind()
-     - cassandra processor: delegate bind/unbind to PipelineCompletionTracker 
-     - delegate delete request in PipelineCompletionTracker to OSBProxy
-   - DONE: record current cassandra broker bind errors in wiremock
+     - DONE: cassandra processor: delegate bind/unbind to PipelineCompletionTracker 
+     - DONE: delegate delete request in PipelineCompletionTracker to OSBProxy
+   - DONE: record current cassandra broker bind errors 
+   - update CassandraServiceProvisionningTest + associated wiremock recordings
+        - refactor CassandraServiceProvisionningTest to use OSB client instead of raw rest assured:CassandraServiceProvisionningTest rest-assured based client which is not compliant w.r.t. "X-Broker-API-Originating-Identity" mandatory header.
+           - Pb with service binding invocation : 401 unauthorized
+              - Looks like if the delegated broker password was injected into the CassandraServiceProvisionningTest test case instead 
+              - Pb with service provisionning: GSON mapping not resulting into CreateServiceInstanceResponse but rather Map<String,String>
+                 - same in OsbClientTestApplicationTest where GSON maps to empty Map<String,String>
+                    - would need to refactor matching OsbClientTestApplicationTest methods to be using wiremock responses rather than stubbed in memory OSB app impl.
+                 - Q: how come work on OSBProxyImpl did not yet ran into same issue ?
+                 - A: OsbProxyImpl/CompletionTracker currently only leverage response status but not yet payload:
+                    - sync provision/unprovision where dashboard url isn't yet dereferenced
+          => this Feign/Gson issue is likely to also occur on service binding response we are dependent for  
+   - refine smoke tests to test C* credentials using a CF app 
    
 
    - future bind mapping improvements
@@ -106,8 +118,6 @@ Server error, status code: 409, error code: 60016, message: An operation for ser
                                                                                                 * cancelled
        
 
-- refactor CassandraServiceProvisionningTest to use OSB client instead of raw rest assured
-   - CassandraServiceProvisionningTest rest-assured based client which is not compliant w.r.t. "X-Broker-API-Originating-Identity" mandatory header.
    - clean up associated workaround in OsbClientFeignConfig 
 - clean up maven dependency management for wiremock: factor out version across modules
 

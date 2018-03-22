@@ -8,6 +8,10 @@ import com.github.tomakehurst.wiremock.recording.SnapshotRecordResult;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.GitProcessor;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.GitProcessorContext;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.GitServer;
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.osbclient.CatalogServiceClient;
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.osbclient.OsbClientFactory;
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.osbclient.ServiceInstanceBindingServiceClient;
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.osbclient.ServiceInstanceServiceClient;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.*;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.Context;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.terraform.TerraformModuleHelper;
@@ -16,18 +20,22 @@ import org.apache.http.HttpStatus;
 import org.eclipse.jgit.api.AddCommand;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.fest.assertions.Assertions;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mockito;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.embedded.LocalServerPort;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.cloud.servicebroker.model.CreateServiceInstanceRequest;
+import org.springframework.cloud.servicebroker.model.*;
+import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import java.io.File;
@@ -45,6 +53,8 @@ import java.util.function.Consumer;
 
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
 import static com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.GitServer.NO_OP_INITIALIZER;
+import static com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.OsbBuilderHelper.aBindingRequest;
+import static com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.OsbBuilderHelper.aContext;
 import static com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.sample.CassandraBrokerApplication.SECRETS_REPOSITORY_ALIAS_NAME;
 import static com.orange.oss.ondemandbroker.ProcessorChainServiceInstanceService.OSB_PROFILE_ORGANIZATION_GUID;
 import static com.orange.oss.ondemandbroker.ProcessorChainServiceInstanceService.OSB_PROFILE_SPACE_GUID;
@@ -56,6 +66,8 @@ import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.text.IsEmptyString.isEmptyString;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 import static org.springframework.cloud.servicebroker.model.CloudFoundryContext.CLOUD_FOUNDRY_PLATFORM;
+import static org.springframework.http.HttpStatus.ACCEPTED;
+import static org.springframework.http.HttpStatus.CREATED;
 
 
 /**
@@ -80,6 +92,7 @@ public class CassandraServiceProvisionningTest {
 
     private Clock clock = Clock.fixed(Instant.now(), ZoneId.of("Europe/Paris"));
     private static final String SERVICE_INSTANCE_ID = "111";
+    private static final String SERVICE_BINDING_INSTANCE_ID = "222";
     @LocalServerPort
     int port;
     private GitServer gitServer;
@@ -96,6 +109,13 @@ public class CassandraServiceProvisionningTest {
 
     @Autowired
     DeploymentProperties deploymentProperties;
+    @Autowired
+    OsbClientFactory clientFactory;
+
+    private CatalogServiceClient catalogServiceClient;
+    private ServiceInstanceBindingServiceClient serviceInstanceBindingService;
+    private ServiceInstanceServiceClient serviceInstanceService;
+
 
     private boolean isWiremockRecordingEnabled() {
         return preprodBrokerUrlToRecord != null && ! preprodBrokerUrlToRecord.isEmpty();
@@ -108,6 +128,21 @@ public class CassandraServiceProvisionningTest {
         RestAssured.authentication = basic("user", "secret");
     }
 
+    @Before
+    public void initializeOsbClientsToLocalSystemUnderTest() {
+        String url = "http://127.0.0.1:" + port;
+        String user = "user";
+        String password = "secret";
+
+        //when
+        catalogServiceClient = clientFactory.getClient(url, user, password, CatalogServiceClient.class);
+        ServiceInstanceServiceClient serviceInstanceServiceClient=
+                clientFactory.getClient(url, user, password, ServiceInstanceServiceClient.class);
+
+        serviceInstanceService =
+                clientFactory.getClient(url, user, password, ServiceInstanceServiceClient.class);
+        serviceInstanceBindingService = clientFactory.getClient(url, user, password, ServiceInstanceBindingServiceClient.class);
+    }
     @Rule
     public WireMockRule wireMockRule = new WireMockRule(wireMockConfig()
             .port(8088)
@@ -132,6 +167,8 @@ public class CassandraServiceProvisionningTest {
     public void stopWireMockRecording() {
         if (isWiremockRecordingEnabled()) {
             SnapshotRecordResult recordedMappings = WireMock.stopRecording();
+            // No need to try to print resulting SnapshotRecordResult as wiremock debug traces already do so.
+            // When empty, when wiremock indeed received some requests to record
         }
     }
 
@@ -258,13 +295,19 @@ public class CassandraServiceProvisionningTest {
 
     @Test
     public void supports_crud_lifecycle() throws IOException {
-        String operation = create_async_service_instance();
+        exposes_catalog();
+        // not yet ready
+//        String operation = create_async_service_instance_using_osb_client();
+        String operation = create_async_service_instance_using_rest_assured();
 
         polls_last_operation(operation, HttpStatus.SC_OK, "in progress", "");
 
         simulateManifestGeneration(secretsGitProcessor);
 
         polls_last_operation(operation, HttpStatus.SC_OK, "succeeded", "");
+
+        // not yet ready
+//        create_service_binding();
 
         String deleteOperation = delete_a_service_instance();
 
@@ -273,9 +316,36 @@ public class CassandraServiceProvisionningTest {
                 "succeeded", "succeeded");
     }
 
+    private void create_service_binding() {
+        CreateServiceInstanceBindingRequest serviceInstanceBindingRequest = aBindingRequest(SERVICE_INSTANCE_ID)
+                .withBindingId(SERVICE_BINDING_INSTANCE_ID);
 
-    public String create_async_service_instance() {
+        @SuppressWarnings("unchecked") ResponseEntity<CreateServiceInstanceAppBindingResponse> bindResponse = (ResponseEntity<CreateServiceInstanceAppBindingResponse>) serviceInstanceBindingService.createServiceInstanceBinding(
+                SERVICE_INSTANCE_ID,
+                SERVICE_BINDING_INSTANCE_ID,
+                "api-info",
+                osbProxy.buildOriginatingIdentityHeader(aContext()),
+                serviceInstanceBindingRequest);
+        assertThat(bindResponse.getStatusCode()).isEqualTo(CREATED);
+        assertThat(bindResponse.getBody()).isNotNull();
+    }
 
+    private String create_async_service_instance_using_osb_client() {
+
+        CreateServiceInstanceRequest createServiceInstanceRequest = aCreateServiceInstanceRequest()
+                .withServiceInstanceId(SERVICE_INSTANCE_ID);
+        @SuppressWarnings("unchecked") ResponseEntity<CreateServiceInstanceResponse> createResponse = (ResponseEntity<CreateServiceInstanceResponse>)  serviceInstanceService.createServiceInstance(
+                SERVICE_INSTANCE_ID,
+                true,
+                "api-info",
+                osbProxy.buildOriginatingIdentityHeader(aContext()),
+                createServiceInstanceRequest);
+        assertThat(createResponse.getStatusCode()).isEqualTo(ACCEPTED);
+        assertThat(createResponse.getBody()).isNotNull();
+        return createResponse.getBody().getOperation();
+    }
+
+    public String create_async_service_instance_using_rest_assured() {
 
         @SuppressWarnings("UnnecessaryLocalVariable")
         String operation = given()
@@ -291,6 +361,17 @@ public class CassandraServiceProvisionningTest {
                     path("operation");
 
         return operation;
+    }
+
+    @Test
+    public void exposes_catalog() {
+        Catalog catalog = catalogServiceClient.getCatalog();
+        assertThat(catalog.getServiceDefinitions()).isNotEmpty();
+        Assertions.assertThat(catalog).isNotNull();
+        ServiceDefinition serviceDefinition = catalog.getServiceDefinitions().get(0);
+        Assertions.assertThat(serviceDefinition).isNotNull();
+        Plan defaultPlan = serviceDefinition.getPlans().get(0);
+        Assertions.assertThat(defaultPlan).isNotNull();
     }
 
     public void polls_last_operation(final String operation, int expectedStatusCode, String firstExpectedKeyword, String secondExpectedKeyword) {

@@ -287,7 +287,7 @@ public class OsbProxyImpl<Q extends ServiceBrokerRequest, P extends AsyncService
     /**
      * Inspired from spring-cloud-open-service-broker, see https://github.com/spring-cloud/spring-cloud-cloudfoundry-service-broker/blob/c56080e5ec8ed97ba8fe4e15ac2031073fbc45ae/spring-cloud-open-service-broker-autoconfigure/src/test/java/org/springframework/cloud/servicebroker/autoconfigure/web/servlet/ControllerIntegrationTest.java#L36
      */
-    String buildOriginatingIdentityHeader(Context originatingIdentity) {
+    public String buildOriginatingIdentityHeader(Context originatingIdentity) {
         if (originatingIdentity == null) {
             return null;
         }

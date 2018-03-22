@@ -29,7 +29,7 @@ public class OsbBuilderHelper {
         return new Catalog(Collections.singletonList(serviceDefinition));
     }
 
-    static CreateServiceInstanceBindingRequest aBindingRequest(String serviceInstanceId) {
+    public static CreateServiceInstanceBindingRequest aBindingRequest(String serviceInstanceId) {
         Map<String, Object> routeBindingParams= new HashMap<>();
         Map<String, Object> serviceBindingParams= new HashMap<>();
         serviceBindingParams.put("user-name", "myname");
@@ -71,14 +71,15 @@ public class OsbBuilderHelper {
         return expectedResponse;
     }
 
-    private static Context aContext() {
+    public static Context aContext() {
         Map<String, Object> properties = new HashMap<>();
         properties.put(ORIGINATING_USER_KEY, "user_guid");
         properties.put(ORIGINATING_EMAIL_KEY, "user_email");
         return new Context(ORIGINATING_CLOUDFOUNDRY_PLATFORM, properties);
     }
 
-    static CreateServiceInstanceRequest aCreateServiceInstanceRequest(){
+    @SuppressWarnings("WeakerAccess")
+    public static CreateServiceInstanceRequest aCreateServiceInstanceRequest(){
         //Given a parameter request
         Map<String, Object> parameters = new HashMap<>();
         parameters.put("parameterName", "parameterValue");

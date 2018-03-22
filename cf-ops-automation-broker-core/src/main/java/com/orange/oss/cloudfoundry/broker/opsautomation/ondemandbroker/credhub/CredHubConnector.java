@@ -40,13 +40,13 @@ public class CredHubConnector {
         for (CredentialSummary cs : csList) {
             CredentialName credentialName = cs.getName();
             //Password credentials
-            List<CredentialDetails<PasswordCredential>> cdpList=this.template().getByName(credentialName, PasswordCredential.class);
-            String credentialValue =  cdpList.get(0).getValue().getPassword(); //0 is the last version
+            CredentialDetails<PasswordCredential> cdp=this.template().getByName(credentialName, PasswordCredential.class);
+            String credentialValue =  cdp.getValue().getPassword();
             hm.put(credentialName.getName(), credentialValue);
 
             //Value credentials
-            List<CredentialDetails<ValueCredential>> cdvList=this.template().getByName(credentialName, ValueCredential.class);
-            credentialValue =  cdvList.get(0).getValue().getValue(); //0 is the last version
+            CredentialDetails<ValueCredential> cdv=this.template().getByName(credentialName, ValueCredential.class);
+            credentialValue =  cdv.getValue().getValue();
             hm.put(credentialName.getName(), credentialValue);
         }
         return hm;

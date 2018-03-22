@@ -5,7 +5,7 @@ import org.junit.runner.RunWith;
 import org.mockito.Matchers;
 import org.mockito.Mock;
 import org.mockito.Spy;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.credhub.core.CredHubTemplate;
@@ -48,23 +48,19 @@ public class CredHubConnectorTest {
         csList.add(cs);
         PasswordCredential pc = new PasswordCredential("key_store_pass");
         CredentialDetails<PasswordCredential> cdp = new CredentialDetails<PasswordCredential>("1", scn1, CredentialType.PASSWORD, pc);
-        List<CredentialDetails<PasswordCredential>> cdpList = new ArrayList<CredentialDetails<PasswordCredential>>();
-        cdpList.add(cdp);
 
         SimpleCredentialName scn2 = new SimpleCredentialName("bosh-ondemand", "cassandra", "cassandra_admin_password");
         cs = new CredentialSummary(scn2);
         csList.add(cs);
         ValueCredential vc = new ValueCredential("admin_pass");
         CredentialDetails<ValueCredential> cdv = new CredentialDetails<ValueCredential>("1", scn2, CredentialType.VALUE, vc);
-        List<CredentialDetails<ValueCredential>> cdvList = new ArrayList<CredentialDetails<ValueCredential>>();
-        cdvList.add(cdv);
 
         //Given behaviour
         when (credHubConnector.template()).thenReturn(credHubTemplate);
         when (credHubConnector.getAllDeploymentTree(path)).thenCallRealMethod();
         when (credHubTemplate.findByPath(path)).thenReturn(csList);
-        when (credHubTemplate.getByName(isA(CredentialName.class), eq(PasswordCredential.class))).thenReturn(cdpList);
-        when (credHubTemplate.getByName(isA(CredentialName.class), eq(ValueCredential.class))).thenReturn(cdvList);
+        when (credHubTemplate.getByName(isA(CredentialName.class), eq(PasswordCredential.class))).thenReturn(cdp);
+        when (credHubTemplate.getByName(isA(CredentialName.class), eq(ValueCredential.class))).thenReturn(cdv);
 
         //When
         Map actual = credHubConnector.getAllDeploymentTree(path);

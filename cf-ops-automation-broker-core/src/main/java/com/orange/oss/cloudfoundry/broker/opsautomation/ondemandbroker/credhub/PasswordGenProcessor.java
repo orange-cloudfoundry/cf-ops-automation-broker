@@ -41,10 +41,9 @@ public class PasswordGenProcessor extends DefaultBrokerProcessor {
 	@Override
 	public void preCreate(Context ctx) {
 		//generate password with credhub
-		
 
-		String cred="director/deployment/instance-group-property";
-		
+
+
 		CredentialName credentialParam=new SimpleCredentialName("director","deployment","instance-group");
 		PasswordParameters parameters=new PasswordParameters(20, true, false, true, false);
 		PasswordParametersRequest parametersRequest=PasswordParametersRequest.builder()
@@ -52,11 +51,11 @@ public class PasswordGenProcessor extends DefaultBrokerProcessor {
 				.parameters(parameters)
 				.overwrite(true).build();
 		this.template().generate(parametersRequest);
-		
-		
-		List<CredentialDetails<PasswordCredential>> passwords=this.template().getByName(cred, PasswordCredential.class);
-		PasswordCredential generatedCredential = passwords.get(0).getValue();
-		String password=generatedCredential.getPassword();
+
+
+		SimpleCredentialName credentialName = new SimpleCredentialName("director", "deployment", ",instance-group-property");
+		CredentialDetails<PasswordCredential> passwords=this.template().getByName(credentialName, PasswordCredential.class);
+		String password= passwords.getValue().getPassword();
 		logger.debug("generated password {}",password);
 		
 		

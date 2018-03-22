@@ -12,11 +12,56 @@
    - DONE: record current cassandra broker bind errors 
    - update CassandraServiceProvisionningTest + associated wiremock recordings
         - refactor CassandraServiceProvisionningTest to use OSB client instead of raw rest assured:CassandraServiceProvisionningTest rest-assured based client which is not compliant w.r.t. "X-Broker-API-Originating-Identity" mandatory header.
-           - Pb with service binding invocation : 401 unauthorized
-              - Looks like if the delegated broker password was injected into the CassandraServiceProvisionningTest test case instead 
+           - Pb with service binding invocation **from the unit test OSB client** : 401 unauthorized
+               feign.FeignException: status 401 reading ServiceInstanceBindingServiceClient#createServiceInstanceBinding(String,String,String,String,CreateServiceInstanceBindingRequest); content:
+               {"timestamp":1521650148845,"status":401,"error":"Unauthorized","message":"Bad credentials","path":"/v2/service_instances/111/service_bindings/222"}
+              - Looks like if the delegated broker password was injected into the CassandraServiceProvisionningTest test case instead of the SUT password
+                 - root cause: race condition in OsbClientFactory calling Feign.requestInterceptor() with shared static member.
+                    - reproduce in a unit test: OsbClientFactoryTest
+                    - try to bump openfeign to latest https://github.com/OpenFeign/feign/releases 9.6.0 (currently 9.5.0) https://github.com/OpenFeign/feign/blob/master/CHANGELOG.md
+                       - bump spring-cloud-starter-openfeign from 1.4.0-RELEASE to 1.4.3-RELEASE ?
+                          - No better https://mvnrepository.com/artifact/org.springframework.cloud/spring-cloud-starter-openfeign/1.4.3.RELEASE
+                       - bump to spring-cloud-starter-openfeign 2.0.0 M1 ? Too early ? https://cloud.spring.io/spring-cloud-openfeign/
+                       - dependency management for open-feign ?       
+                       - bump spring boot to 2.0.0-RELEASE ?            
+                 - ~~Suspecting the OsbClient bean from the Junit test to be injected into the OSBProxy instead of the one from the Application~~
+                 
+                 
+              - CassandraBroker keyspaces need to be cleaned up prior to integration test
+                    "status" : 500,
+                    "body" : "{\"description\":\"Keyspace ks111 already exists\"}",
+                    - manual curl
+                        Pb: {"description":"Required String parameter 'service_id' is not present"}
+                        
+                        - inspired from wiremock request recording
+                        - inspired from httpclient request recording
+                        - specify query param on delete 
+                    - test teardown on failures 
+
+               
               - Pb with service provisionning: GSON mapping not resulting into CreateServiceInstanceResponse but rather Map<String,String>
                  - same in OsbClientTestApplicationTest where GSON maps to empty Map<String,String>
                     - would need to refactor matching OsbClientTestApplicationTest methods to be using wiremock responses rather than stubbed in memory OSB app impl.
+                       -copy existing wiremock recording. However, no body returned
+                       -record new binding response in CassandraServiceProvisionningTest
+                            - Pb: enabling recording does not record new mocks with needed non empty payload (binding) 
+                                - displayed empty recording results when recording ends
+                                - suspecting failed test prevents proper recording
+                                   - googled it without luck
+                                   - try to catch exception  
+                                - actual nested osb broker call does not seem issued
+                                   - because OSB client is broken and does not parser correctly broker response => transiently revert back to restassured client
+                       
+                       
+
+                       - Pb with service binding invocation : 401 unauthorized
+            
+                       feign.FeignException: status 401 reading ServiceInstanceBindingServiceClient#createServiceInstanceBinding(String,String,String,String,CreateServiceInstanceBindingRequest); content:
+                       {"timestamp":1521650148845,"status":401,"error":"Unauthorized","message":"Bad credentials","path":"/v2/service_instances/111/service_bindings/222"}
+                       
+                           - weird we don't see wiremock localhost request
+
+                       
                  - Q: how come work on OSBProxyImpl did not yet ran into same issue ?
                  - A: OsbProxyImpl/CompletionTracker currently only leverage response status but not yet payload:
                     - sync provision/unprovision where dashboard url isn't yet dereferenced

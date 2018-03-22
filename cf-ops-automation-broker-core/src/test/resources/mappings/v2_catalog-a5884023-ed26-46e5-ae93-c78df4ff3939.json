@@ -1,0 +1,27 @@
+{
+  "id" : "a5884023-ed26-46e5-ae93-c78df4ff3939",
+  "name" : "v2_catalog",
+  "request" : {
+    "url" : "/v2/catalog",
+    "method" : "GET"
+  },
+  "response" : {
+    "status" : 200,
+    "body" : "{\"services\":[{\"id\":\"ondemand-service\",\"name\":\"ondemand\",\"description\":\"A simple ondemand service broker implementation\",\"bindable\":true,\"plan_updateable\":false,\"plans\":[{\"id\":\"ondemand-plan\",\"name\":\"default\",\"description\":\"This is a default ondemand plan.  All services are created equally.\",\"metadata\":{\"costs\":[{\"amount\":{\"usd\":0.0},\"unit\":\"MONTHLY\"}],\"bullets\":[\"Dedicated ondemand server\",\"100 MB Storage (not enforced)\",\"40 concurrent connections (not enforced)\"]},\"free\":true}],\"tags\":[\"ondemand\",\"document\"],\"metadata\":{\"longDescription\":\"ondemand Service\",\"documentationUrl\":\"https://orange.com\",\"providerDisplayName\":\"Orange\",\"displayName\":\"ondemand\",\"imageUrl\":\"http://info.mongodb.com/rs/mongodb/images/MongoDB_Logo_Full.png\",\"supportUrl\":\"https://orange.com\"},\"requires\":[],\"dashboard_client\":null}]}",
+    "headers" : {
+      "X-Content-Type-Options" : "nosniff",
+      "X-XSS-Protection" : "1; mode=block",
+      "Cache-Control" : "no-cache, no-store, max-age=0, must-revalidate",
+      "Pragma" : "no-cache",
+      "Expires" : "0",
+      "X-Frame-Options" : "DENY",
+      "Strict-Transport-Security" : "max-age=31536000 ; includeSubDomains",
+      "X-Application-Context" : "application:0",
+      "Content-Type" : "application/json;charset=UTF-8",
+      "Date" : "Thu, 22 Mar 2018 16:55:41 GMT"
+    }
+  },
+  "uuid" : "a5884023-ed26-46e5-ae93-c78df4ff3939",
+  "persistent" : true,
+  "insertionIndex" : 7
+}

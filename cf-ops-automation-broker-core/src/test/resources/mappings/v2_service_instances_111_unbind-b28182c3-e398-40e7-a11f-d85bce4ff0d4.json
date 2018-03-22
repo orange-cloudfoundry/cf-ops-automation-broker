@@ -1,0 +1,27 @@
+{
+  "id" : "b28182c3-e398-40e7-a11f-d85bce4ff0d4",
+  "name" : "v2_service_instances_111_service_bindings_service_binding_guid",
+  "request" : {
+    "url" : "/v2/service_instances/111/service_bindings/service_binding_guid?service_id=ondemand-service&plan_id=ondemand-plan",
+    "method" : "DELETE"
+  },
+  "response" : {
+    "status" : 200,
+    "body" : "{}",
+    "headers" : {
+      "X-Content-Type-Options" : "nosniff",
+      "X-XSS-Protection" : "1; mode=block",
+      "Cache-Control" : "no-cache, no-store, max-age=0, must-revalidate",
+      "Pragma" : "no-cache",
+      "Expires" : "0",
+      "X-Frame-Options" : "DENY",
+      "Strict-Transport-Security" : "max-age=31536000 ; includeSubDomains",
+      "X-Application-Context" : "application:0",
+      "Content-Type" : "text/plain;charset=UTF-8",
+      "Date" : "Thu, 22 Mar 2018 16:55:42 GMT"
+    }
+  },
+  "uuid" : "b28182c3-e398-40e7-a11f-d85bce4ff0d4",
+  "persistent" : true,
+  "insertionIndex" : 12
+}

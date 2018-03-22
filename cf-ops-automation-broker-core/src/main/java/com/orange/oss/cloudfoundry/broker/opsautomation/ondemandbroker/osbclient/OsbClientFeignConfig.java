@@ -97,8 +97,8 @@ public class OsbClientFeignConfig {
 
 
     @Bean
-    Feign.Builder customFeignBuilder(okhttp3.OkHttpClient customOkHttpClient) {
-        return Feign.builder().client(new OkHttpClient(customOkHttpClient));
+    OkHttpClient customFeignOkHttpClient(okhttp3.OkHttpClient customOkHttpClient) {
+        return new OkHttpClient(customOkHttpClient);
     }
 
 }

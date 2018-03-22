@@ -10,6 +10,9 @@ import okhttp3.OkHttpClient;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+
 /**
  * Dynamically creates FeignClient bound to url/user/password.
  *
@@ -19,21 +22,15 @@ import org.springframework.stereotype.Service;
 @Service
 public class OsbClientFactory {
 
-    private Feign.Builder builder;
-    private Client client;
     private okhttp3.OkHttpClient okHttpClient;
     private Encoder encoder;
     private Decoder decoder;
     private Contract springMvcContract;
 
-    public OsbClientFactory(@Qualifier(value = "customFeignBuilder") Feign.Builder builder,
-                            Client client,
-                            OkHttpClient okHttpClient,
+    public OsbClientFactory(OkHttpClient okHttpClient,
                             Encoder encoder,
                             Decoder decoder,
                             Contract springMvcContract) {
-        this.builder = builder;
-        this.client = client;
         this.okHttpClient = okHttpClient;
         this.encoder = encoder;
         this.decoder = decoder;
@@ -41,7 +38,7 @@ public class OsbClientFactory {
     }
 
     public <T> T getClient(String url, String user, String password, Class<T> clientClass) {
-        return builder
+        return Feign.builder()
                 .client(new feign.okhttp.OkHttpClient(okHttpClient)) //bypass default client with ribbon that springcloud instanciates by default, failing with "Load balancer does not have available server for client"
                 .encoder(encoder)
                 .decoder(decoder)

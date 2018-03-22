@@ -1,24 +1,7 @@
-- Bump to springboot 2.0.0 https://github.com/spring-projects/spring-boot/wiki/Spring-Boot-2.0-Migration-Guide
-    - clean up unnecessary stubbing mockito warnings in CloudFlareProcessorTest
-    - factor out rest-assured.version 
-    
-    [ERROR] Errors: 
-    [ERROR]   OpsAutomationServiceBrokerAutoConfigurationTests.endToEndTest » IllegalState F...
-    [ERROR]   BoshClientDeployComposedManifestTest.testDeployComposedManifest » IllegalState
-    [ERROR]   BoshClientDeployComposedManifestTest.testDeployGeneratedComposedManifest » IllegalState
-    [ERROR]   OsbClientFactoryTest.creates_client » IllegalState Failed to load ApplicationC...
-    [ERROR]   OsbClientFactoryTest.feign_clients_are_independent » IllegalState Failed to lo...
-    [ERROR]   OsbClientTestApplicationTest.feign_client_handles_server_500_response » IllegalState
-    [ERROR]   OsbClientTestApplicationTest.feign_client_is_compatible_with_current_spring_cloud_service_broker_library » IllegalState
-    [ERROR]   OsbClientTestApplicationTest.feign_client_is_compatible_with_previous_spring_cloud_service_broker_library » IllegalState
-
-    Symptom:
-        org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'requestMappingHandlerMapping' defined in class path resource [org/springframework/boot/autoconfigure/web/servlet/WebMvcAutoConfiguration$EnableWebMvcConfiguration.class]: Invocation of init method failed; nested exception is java.lang.ArrayStoreException: sun.reflect.annotation.TypeNotPresentExceptionProxy
-         Suspecting spring version mismatch with spring cloud service broker, see https://github.com/spring-projects/spring-boot/issues/8667#issuecomment-287783528 
-    
-    - Bump service broker SDK https://github.com/spring-cloud/spring-cloud-open-service-broker/wiki/2.0-Migration-Guide
-       - Need to explicit depend on spring security
-       - Rework Builders & POJO
+- commit and restore green build on circle
+- reproduce binding response issue in OsbClientTestApplicationTest 
+- try to solve it in current 1.0.2 spring service broker version
+- as a fallback, resume bump to springcloud2 and service broker 2   
 
 - refine exception filtering to allow broker framework exceptions 
     from org.springframework.cloud.servicebroker.exception package to get through
@@ -38,7 +21,7 @@
                feign.FeignException: status 401 reading ServiceInstanceBindingServiceClient#createServiceInstanceBinding(String,String,String,String,CreateServiceInstanceBindingRequest); content:
                {"timestamp":1521650148845,"status":401,"error":"Unauthorized","message":"Bad credentials","path":"/v2/service_instances/111/service_bindings/222"}
               - Looks like if the delegated broker password was injected into the CassandraServiceProvisionningTest test case instead of the SUT password
-                 - root cause: race condition in OsbClientFactory calling Feign.requestInterceptor() with shared static member.
+                 - ~~root cause: race condition in OsbClientFactory calling Feign.requestInterceptor() with shared static member.~~
                     - reproduce in a unit test: OsbClientFactoryTest
                     - try to bump openfeign to latest https://github.com/OpenFeign/feign/releases 9.6.0 (currently 9.5.0) https://github.com/OpenFeign/feign/blob/master/CHANGELOG.md
                        - bump spring-cloud-starter-openfeign from 1.4.0-RELEASE to 1.4.3-RELEASE ?
@@ -46,15 +29,9 @@
                        - bump to spring-cloud-starter-openfeign 2.0.0 M1 ? Too early ? https://cloud.spring.io/spring-cloud-openfeign/
                        - dependency management for open-feign ?       
                        - bump spring boot to 2.0.0-RELEASE ?
-                          - not better https://mvnrepository.com/artifact/org.springframework.cloud/spring-cloud-starter-openfeign/2.0.0.M6
-                          - apparently package renames breaks compilation
-```                          
-                            cf-ops-automation-broker/cf-ops-automation-broker-core/src/main/java/com/orange/oss/cloudfoundry/broker/opsautomation/ondemandbroker/osbclient/OsbClientFeignConfig.java:[26,47] package org.springframework.cloud.netflix.feign does not exist
-                            cf-ops-automation-broker/cf-ops-automation-broker-core/src/main/java/com/orange/oss/cloudfoundry/broker/opsautomation/ondemandbroker/osbclient/OsbClientFeignConfig.java:[46,9] cannot find symbol
-                            [ERROR] symbol: class FeignClientsConfiguration
-```                          
-                                        
-                 - ~~Suspecting the OsbClient bean from the Junit test to be injected into the OSBProxy instead of the one from the Application~~
+              - **simply instanciate a distinct Builder for each client**
+                  - commit
+              - ~~Suspecting the OsbClient bean from the Junit test to be injected into the OSBProxy instead of the one from the Application~~
                  
                  
               - CassandraBroker keyspaces need to be cleaned up prior to integration test

@@ -17,6 +17,7 @@
 
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.osbclient;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
 import feign.Logger;
@@ -28,6 +29,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.http.converter.json.GsonHttpMessageConverter;
+import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 
 import java.util.ArrayList;
@@ -94,6 +96,15 @@ public class OsbClientFeignConfig {
         return converter;
     }
 
+    /**
+     * Turn on reading enums from string to deserialize OSB Pojo enums
+     */
+    @Bean
+    public Jackson2ObjectMapperBuilder objectMapperBuilder(){
+        Jackson2ObjectMapperBuilder builder = new Jackson2ObjectMapperBuilder();
+        builder.featuresToEnable(DeserializationFeature.READ_ENUMS_USING_TO_STRING);
+        return builder;
+    }
 
     @Bean
     OkHttpClient customFeignOkHttpClient(okhttp3.OkHttpClient customOkHttpClient) {

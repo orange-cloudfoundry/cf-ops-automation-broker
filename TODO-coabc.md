@@ -1,3 +1,27 @@
+OsbClientTestApplicationTest fails deep reading OSB response: 
+
+Feign.codec.DecodeException: JSON parse error: Can not deserialize value of type org.springframework.cloud.servicebroker.model.OperationState from String "succeeded": value not one of declared Enum instance names: [SUCCEEDED, FAILED, IN_PROGRESS]; nested exception is com.fasterxml.jackson.databind.exc.InvalidFormatException: Can not deserialize value of type org.springframework.cloud.servicebroker.model.OperationState from String "succeeded": value not one of declared Enum instance names: [SUCCEEDED, FAILED, IN_PROGRESS]
+
+Hypothesis
+- object mapper behavior change during springboot Edgware.SR2 bump: test pass after bump
+- jackson version change
+- **put in evidence thanks to increased coverage** ?
+   - succeeded not in recorded mocks,
+   - but likely in embedded springcloud service broker response
+       - did upper case/lower case varied in response ?
+
+2018-03-23 15:48:09.875  INFO 15550 --- [           main] okhttp3.OkHttpClient                     : {"state":"succeeded","description":null,"deleteOperation":false}
+      - last operation response was not previously parsed ?
+        **Right.**
+
+
+Fixes:
+- Turn on READ_ENUMS_USING_TO_STRING feature in jackson. See https://docs.spring.io/spring-boot/docs/current/reference/html/howto-spring-mvc.html#howto-customize-the-jackson-objectmapper https://stackoverflow.com/questions/42874369/spring-boot-1-4-customize-internal-jackson-deserialization
+   - using application.yml
+   - **using configuration class** 
+- transiently revert ServiceInstanceServiceClient.getServiceInstanceLastOperation response typing 
+
+
 - commit and restore green build on circle
 - reproduce binding response issue in OsbClientTestApplicationTest 
 - try to solve it in current 1.0.2 spring service broker version

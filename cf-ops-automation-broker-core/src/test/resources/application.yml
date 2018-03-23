@@ -29,6 +29,7 @@ logging:
     org.springframework.cloud.servicebroker: debug
     org.springframework.web.client.HttpMessageConverterExtractor: debug
     org.springframework.http.converter.json.MappingJackson2HttpMessageConverter: debug
-    com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.osbclient.ServiceInstanceServiceClient: debug #supposed to trigger Feign logging, but did not see it working. Seems similar to https://github.com/spring-cloud/spring-cloud-netflix/issues/1769
+    #supposed to trigger Feign logging, but did not see it working. Seems similar to https://github.com/spring-cloud/spring-cloud-netflix/issues/1769
+    com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.osbclient.ServiceInstanceServiceClient: debug
 
 

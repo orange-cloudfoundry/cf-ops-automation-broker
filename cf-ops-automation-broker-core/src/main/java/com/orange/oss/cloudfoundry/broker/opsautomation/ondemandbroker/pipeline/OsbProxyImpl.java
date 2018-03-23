@@ -87,12 +87,14 @@ public class OsbProxyImpl<Q extends ServiceBrokerRequest, P extends AsyncService
         CreateServiceInstanceBindingRequest mappedRequest = mapBindRequest(request, catalog);
         ServiceInstanceBindingServiceClient serviceInstanceBindingServiceClient = constructServiceInstanceBindingServiceClient(brokerUrl);
 
-        ResponseEntity<CreateServiceInstanceAppBindingResponse> delegatedResponse = null;
-        FeignException bindException = null;
+        ResponseEntity<CreateServiceInstanceAppBindingResponse> delegatedResponse;
+        FeignException bindException;
         try {
-            delegateBind(mappedRequest, serviceInstanceBindingServiceClient);
+            bindException = null;
+            delegatedResponse = delegateBind(mappedRequest, serviceInstanceBindingServiceClient);
         } catch (FeignException e) {
             bindException = e;
+            delegatedResponse = null;
         }
 
         //noinspection UnnecessaryLocalVariable
@@ -241,8 +243,7 @@ public class OsbProxyImpl<Q extends ServiceBrokerRequest, P extends AsyncService
     }
 
     ResponseEntity<CreateServiceInstanceResponse> delegateProvision(CreateServiceInstanceRequest request, ServiceInstanceServiceClient serviceInstanceServiceClient) {
-        //noinspection unchecked
-        return (ResponseEntity<CreateServiceInstanceResponse>) serviceInstanceServiceClient.createServiceInstance(
+        return serviceInstanceServiceClient.createServiceInstance(
                 request.getServiceInstanceId(),
                 false,
                 request.getApiInfoLocation(),
@@ -251,15 +252,13 @@ public class OsbProxyImpl<Q extends ServiceBrokerRequest, P extends AsyncService
     }
 
     ResponseEntity<DeleteServiceInstanceResponse> delegateDeprovision(DeleteServiceInstanceRequest request, ServiceInstanceServiceClient serviceInstanceServiceClient) {
-        //noinspection unchecked
-        @SuppressWarnings("UnnecessaryLocalVariable") ResponseEntity<DeleteServiceInstanceResponse> response = (ResponseEntity<DeleteServiceInstanceResponse>) serviceInstanceServiceClient.deleteServiceInstance(
+        return serviceInstanceServiceClient.deleteServiceInstance(
                 request.getServiceInstanceId(),
                 request.getServiceDefinitionId(),
                 request.getPlanId(),
                 false,
                 request.getApiInfoLocation(),
                 buildOriginatingIdentityHeader(request.getOriginatingIdentity()));
-        return response;
     }
 
     void delegateUnbind(DeleteServiceInstanceBindingRequest request, ServiceInstanceBindingServiceClient serviceInstanceBindingServiceClient) {
@@ -274,14 +273,12 @@ public class OsbProxyImpl<Q extends ServiceBrokerRequest, P extends AsyncService
     }
 
     ResponseEntity<CreateServiceInstanceAppBindingResponse> delegateBind(CreateServiceInstanceBindingRequest request, ServiceInstanceBindingServiceClient serviceInstanceBindingServiceClient) {
-        //noinspection unchecked
-        @SuppressWarnings("UnnecessaryLocalVariable") ResponseEntity<CreateServiceInstanceAppBindingResponse> response = (ResponseEntity<CreateServiceInstanceAppBindingResponse>) serviceInstanceBindingServiceClient.createServiceInstanceBinding(
+        return serviceInstanceBindingServiceClient.createServiceInstanceBinding(
                 request.getServiceInstanceId(),
                 request.getBindingId(),
                 request.getApiInfoLocation(),
                 buildOriginatingIdentityHeader(request.getOriginatingIdentity()),
                 request);
-        return response;
     }
 
     /**

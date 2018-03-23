@@ -136,7 +136,7 @@ public class CassandraProcessorTest {
     @Test
     public void delegates_unbind_request_to_completion_nested_broker() {
         //given
-        DeleteServiceInstanceBindingRequest request = OsbBuilderHelper.anUnbindRequest("service-instance-id");
+        DeleteServiceInstanceBindingRequest request = OsbBuilderHelper.anUnbindRequest("service-instance-id", "service-binding-id");
 
         //Given a populated context
         Context context = new Context();

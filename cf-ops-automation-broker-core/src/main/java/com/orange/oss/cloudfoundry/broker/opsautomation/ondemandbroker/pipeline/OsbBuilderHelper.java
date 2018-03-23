@@ -11,9 +11,10 @@ import static java.util.Arrays.asList;
 import static org.springframework.cloud.servicebroker.model.CloudFoundryContext.CLOUD_FOUNDRY_PLATFORM;
 
 public class OsbBuilderHelper {
-    static DeleteServiceInstanceBindingRequest anUnbindRequest(String serviceInstanceId) {
+    @SuppressWarnings("WeakerAccess")
+    public static DeleteServiceInstanceBindingRequest anUnbindRequest(String serviceInstanceId, String bindingId) {
         ServiceDefinition serviceDefinition = aCatalog().getServiceDefinitions().get(0);
-        DeleteServiceInstanceBindingRequest request = new DeleteServiceInstanceBindingRequest(serviceInstanceId, "service-binding-id","coab-serviceid", "coab-planid", serviceDefinition);
+        DeleteServiceInstanceBindingRequest request = new DeleteServiceInstanceBindingRequest(serviceInstanceId, bindingId,"coab-serviceid", "coab-planid", serviceDefinition);
         request.withApiInfoLocation("api-info");
         request.withOriginatingIdentity(aContext());
         request.withCfInstanceId("cf-instance-id");

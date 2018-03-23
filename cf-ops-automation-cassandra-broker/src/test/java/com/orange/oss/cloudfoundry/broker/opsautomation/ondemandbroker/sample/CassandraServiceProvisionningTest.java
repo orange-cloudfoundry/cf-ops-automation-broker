@@ -27,8 +27,6 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mockito;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -45,16 +43,12 @@ import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Clock;
-import java.time.Instant;
-import java.time.ZoneId;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.function.Consumer;
 
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
 import static com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.GitServer.NO_OP_INITIALIZER;
-import static com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.OsbBuilderHelper.aBindingRequest;
-import static com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.OsbBuilderHelper.aContext;
+import static com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.OsbBuilderHelper.*;
 import static com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.sample.CassandraBrokerApplication.SECRETS_REPOSITORY_ALIAS_NAME;
 import static com.orange.oss.ondemandbroker.ProcessorChainServiceInstanceService.OSB_PROFILE_ORGANIZATION_GUID;
 import static com.orange.oss.ondemandbroker.ProcessorChainServiceInstanceService.OSB_PROFILE_SPACE_GUID;
@@ -77,6 +71,8 @@ import static org.springframework.http.HttpStatus.CREATED;
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 public class CassandraServiceProvisionningTest {
 
+    private static final String SERVICE_DEFINITION_ID = "cassandra-ondemand-service";
+    private static final String SERVICE_PLAN_ID = "cassandra-ondemand-plan";
     /**
      * Define an environment variable to turn on wiremock recording.
      * Set the url of the broker forward requests to (e.g. "https://cassandra-broker.mydomain.com"
@@ -90,7 +86,6 @@ public class CassandraServiceProvisionningTest {
     @Value("${preprodBrokerPassword:}")
     private String preprodBrokerPassword;
 
-    private Clock clock = Clock.fixed(Instant.now(), ZoneId.of("Europe/Paris"));
     private static final String SERVICE_INSTANCE_ID = "111";
     private static final String SERVICE_BINDING_INSTANCE_ID = "222";
     @LocalServerPort
@@ -136,11 +131,7 @@ public class CassandraServiceProvisionningTest {
 
         //when
         catalogServiceClient = clientFactory.getClient(url, user, password, CatalogServiceClient.class);
-        ServiceInstanceServiceClient serviceInstanceServiceClient=
-                clientFactory.getClient(url, user, password, ServiceInstanceServiceClient.class);
-
-        serviceInstanceService =
-                clientFactory.getClient(url, user, password, ServiceInstanceServiceClient.class);
+        serviceInstanceService = clientFactory.getClient(url, user, password, ServiceInstanceServiceClient.class);
         serviceInstanceBindingService = clientFactory.getClient(url, user, password, ServiceInstanceBindingServiceClient.class);
     }
     @Rule
@@ -166,7 +157,7 @@ public class CassandraServiceProvisionningTest {
     @After
     public void stopWireMockRecording() {
         if (isWiremockRecordingEnabled()) {
-            SnapshotRecordResult recordedMappings = WireMock.stopRecording();
+            @SuppressWarnings("unused") SnapshotRecordResult recordedMappings = WireMock.stopRecording();
             // No need to try to print resulting SnapshotRecordResult as wiremock debug traces already do so.
             // When empty, when wiremock indeed received some requests to record
         }
@@ -177,16 +168,6 @@ public class CassandraServiceProvisionningTest {
     public void startGitServer() throws IOException, GitAPIException {
         gitServer = new GitServer();
 
-        Consumer<Git> initPaasSecret = git -> {
-            File gitWorkDir = git.getRepository().getDirectory().getParentFile();
-            try {
-                AddCommand addC = git.add().addFilepattern(".");
-                addC.call();
-                git.commit().setMessage("CassandraServiceProvisionningTest#startGitServer").call();
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-        };
         gitServer.startEphemeralReposServer(NO_OP_INITIALIZER);
         gitServer.initRepo("paas-template.git", this::initPaasTemplate);
         gitServer.initRepo("paas-secrets.git", this::initPaasSecret);
@@ -306,8 +287,8 @@ public class CassandraServiceProvisionningTest {
 
         polls_last_operation(operation, HttpStatus.SC_OK, "succeeded", "");
 
-        // not yet ready
-//        create_service_binding();
+        create_service_binding();
+        delete_service_binding();
 
         String deleteOperation = delete_a_service_instance();
 
@@ -320,7 +301,7 @@ public class CassandraServiceProvisionningTest {
         CreateServiceInstanceBindingRequest serviceInstanceBindingRequest = aBindingRequest(SERVICE_INSTANCE_ID)
                 .withBindingId(SERVICE_BINDING_INSTANCE_ID);
 
-        @SuppressWarnings("unchecked") ResponseEntity<CreateServiceInstanceAppBindingResponse> bindResponse = (ResponseEntity<CreateServiceInstanceAppBindingResponse>) serviceInstanceBindingService.createServiceInstanceBinding(
+        @SuppressWarnings("unchecked") ResponseEntity<CreateServiceInstanceAppBindingResponse> bindResponse = serviceInstanceBindingService.createServiceInstanceBinding(
                 SERVICE_INSTANCE_ID,
                 SERVICE_BINDING_INSTANCE_ID,
                 "api-info",
@@ -328,13 +309,25 @@ public class CassandraServiceProvisionningTest {
                 serviceInstanceBindingRequest);
         assertThat(bindResponse.getStatusCode()).isEqualTo(CREATED);
         assertThat(bindResponse.getBody()).isNotNull();
+        Map<String, Object> credentials = bindResponse.getBody().getCredentials();
+        assertThat(credentials).isNotNull();
+    }
+
+    private void delete_service_binding() {
+        serviceInstanceBindingService.deleteServiceInstanceBinding(
+                SERVICE_INSTANCE_ID,
+                SERVICE_BINDING_INSTANCE_ID,
+                SERVICE_DEFINITION_ID,
+                SERVICE_PLAN_ID,
+                "api-info",
+                osbProxy.buildOriginatingIdentityHeader(aContext()));
     }
 
     private String create_async_service_instance_using_osb_client() {
 
         CreateServiceInstanceRequest createServiceInstanceRequest = aCreateServiceInstanceRequest()
                 .withServiceInstanceId(SERVICE_INSTANCE_ID);
-        @SuppressWarnings("unchecked") ResponseEntity<CreateServiceInstanceResponse> createResponse = (ResponseEntity<CreateServiceInstanceResponse>)  serviceInstanceService.createServiceInstance(
+        @SuppressWarnings("unchecked") ResponseEntity<CreateServiceInstanceResponse> createResponse = serviceInstanceService.createServiceInstance(
                 SERVICE_INSTANCE_ID,
                 true,
                 "api-info",
@@ -380,8 +373,8 @@ public class CassandraServiceProvisionningTest {
                 .basePath("/v2")
                 .contentType("application/json")
                 .param("operation", operation)
-                .param("plan_id", "cassandra-ondemand-plan")
-                .param("service_id", "cassandra-ondemand-service").
+                .param("plan_id", SERVICE_PLAN_ID)
+                .param("service_id", SERVICE_DEFINITION_ID).
                 when()
                 .get("/service_instances/{id}/last_operation", SERVICE_INSTANCE_ID).
                 then()
@@ -395,8 +388,8 @@ public class CassandraServiceProvisionningTest {
         @SuppressWarnings("UnnecessaryLocalVariable")
         String operation = given()
                 .basePath("/v2")
-                .param("service_id", "cassandra-ondemand-service")
-                .param("plan_id", "cassandra-ondemand-plan")
+                .param("service_id", SERVICE_DEFINITION_ID)
+                .param("plan_id", SERVICE_PLAN_ID)
                 .param("accepts_incomplete", true).
                         when()
                 .delete("/service_instances/{id}", SERVICE_INSTANCE_ID).
@@ -428,8 +421,8 @@ public class CassandraServiceProvisionningTest {
                 CLOUD_FOUNDRY_PLATFORM,
                 contextProperties
         );
-        CreateServiceInstanceRequest request = new CreateServiceInstanceRequest("cassandra-ondemand-service",
-                "cassandra-ondemand-plan",
+        CreateServiceInstanceRequest request = new CreateServiceInstanceRequest(SERVICE_DEFINITION_ID,
+                SERVICE_PLAN_ID,
                 "org_id",
                 "space_id",
                 createServiceInstanceContext,

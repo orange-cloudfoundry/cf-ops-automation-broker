@@ -76,6 +76,124 @@ public class OsbClientTestApplicationTest {
         runAsyncCrudLifeCycle(8089, true, true);
     }
 
+    @Test
+    public void feign_client_unmarshalls_bind_responses() throws JsonProcessingException {
+        //given
+        String url = "https://127.0.0.1:" + 8089;
+        String user = "user";
+        String password = "secret";
+
+        //when
+        CatalogServiceClient catalogServiceClient = clientFactory.getClient(url, user, password, CatalogServiceClient.class);
+
+        //then
+        Catalog catalog = catalogServiceClient.getCatalog();
+        assertThat(catalog).isNotNull();
+        ServiceDefinition serviceDefinition = catalog.getServiceDefinitions().get(0);
+        assertThat(serviceDefinition).isNotNull();
+        Plan defaultPlan = serviceDefinition.getPlans().get(0);
+        assertThat(defaultPlan).isNotNull();
+
+
+        //when
+
+        //then
+        Map<String, Object> cfContextProps = new HashMap<>();
+        cfContextProps.put("user_id", "a_user_guid");
+        cfContextProps.put("organization_guid", "org_id");
+        cfContextProps.put("space_guid", "space_id");
+
+        Context cfContext = new Context(CLOUD_FOUNDRY_PLATFORM, cfContextProps);
+        String originatingIdentityHeader = buildOriginatingIdentityHeader("a_user_guid", CLOUD_FOUNDRY_PLATFORM);
+        String serviceInstanceGuid = "111";
+
+
+
+        //when
+        ServiceInstanceBindingServiceClient serviceInstanceBindingServiceClient = clientFactory.getClient(url, user, password, ServiceInstanceBindingServiceClient.class);
+
+        //then
+        Map<String, Object> routeBindingParams = new HashMap<>();
+        Map<String, Object> serviceBindingParams = new HashMap<>();
+        BindResource bindResource = new BindResource("app_guid", "aRoute", routeBindingParams);
+        CreateServiceInstanceBindingRequest createServiceInstanceBindingRequest = new CreateServiceInstanceBindingRequest(
+                serviceDefinition.getId(),
+                defaultPlan.getId(),
+                bindResource,
+                cfContext,
+                serviceBindingParams
+        );
+        @SuppressWarnings("unchecked")
+        ResponseEntity<CreateServiceInstanceAppBindingResponse> bindResponse = serviceInstanceBindingServiceClient.createServiceInstanceBinding(
+                serviceInstanceGuid,
+                "service_binding_guid",
+                null,
+                originatingIdentityHeader,
+                createServiceInstanceBindingRequest);
+        assertThat(bindResponse.getStatusCode()).isEqualTo(CREATED);
+        assertThat(bindResponse.getBody()).isNotNull();
+
+        CreateServiceInstanceAppBindingResponse bindingResponse = bindResponse.getBody();
+        Map<String, Object> credentials = bindingResponse.getCredentials();
+        assertThat(credentials).isNotNull().isNotEmpty();
+
+    }
+
+    @Test
+    @Ignore("Needs fix")
+    public void feign_client_unmarshalls_last_operation_responses() throws JsonProcessingException {
+        //given
+        String url = "https://127.0.0.1:" + 8089;
+        String user = "user";
+        String password = "secret";
+
+        //when
+        CatalogServiceClient catalogServiceClient = clientFactory.getClient(url, user, password, CatalogServiceClient.class);
+
+        //then
+        Catalog catalog = catalogServiceClient.getCatalog();
+        assertThat(catalog).isNotNull();
+        ServiceDefinition serviceDefinition = catalog.getServiceDefinitions().get(0);
+        assertThat(serviceDefinition).isNotNull();
+        Plan defaultPlan = serviceDefinition.getPlans().get(0);
+        assertThat(defaultPlan).isNotNull();
+
+        //when
+        ServiceInstanceServiceClient serviceInstanceServiceClient = clientFactory.getClient(url, user, password, ServiceInstanceServiceClient.class);
+
+        //then
+        Map<String, Object> cfContextProps = new HashMap<>();
+        cfContextProps.put("user_id", "a_user_guid");
+        cfContextProps.put("organization_guid", "org_id");
+        cfContextProps.put("space_guid", "space_id");
+        Map<String, Object> serviceInstanceParams = new HashMap<>();
+
+        Context cfContext = new Context(CLOUD_FOUNDRY_PLATFORM, cfContextProps);
+        CreateServiceInstanceRequest createServiceInstanceRequest = new CreateServiceInstanceRequest(
+                serviceDefinition.getId(),
+                defaultPlan.getId(),
+                "org_id",
+                "space_id",
+                cfContext,
+                serviceInstanceParams
+        );
+        String originatingIdentityHeader = buildOriginatingIdentityHeader("a_user_guid", CLOUD_FOUNDRY_PLATFORM);
+        String serviceInstanceGuid = "111";
+
+        @SuppressWarnings("unchecked")
+        ResponseEntity<CreateServiceInstanceResponse> createResponse = serviceInstanceServiceClient.createServiceInstance(
+                serviceInstanceGuid,
+                false,
+                null,
+                originatingIdentityHeader,
+                createServiceInstanceRequest
+        );
+        assertThat(createResponse.getStatusCode()).isEqualTo(CREATED);
+        assertThat(createResponse.getBody()).isNotNull();
+        CreateServiceInstanceResponse createServiceInstanceResponse = createResponse.getBody();
+        assertThat(createServiceInstanceResponse.getOperation()).isNotEmpty();
+    }
+
     public void runAsyncCrudLifeCycle(int port, boolean useTls, boolean expectNonEmptyResponseBodies) throws JsonProcessingException {
         //given
         String protocol = useTls ? "https" : "http";
@@ -118,7 +236,7 @@ public class OsbClientTestApplicationTest {
         String serviceInstanceGuid = "111";
 
         @SuppressWarnings("unchecked")
-        ResponseEntity<CreateServiceInstanceResponse> createResponse = (ResponseEntity<CreateServiceInstanceResponse>) serviceInstanceServiceClient.createServiceInstance(
+        ResponseEntity<CreateServiceInstanceResponse> createResponse = serviceInstanceServiceClient.createServiceInstance(
                 serviceInstanceGuid,
                 false,
                 null,
@@ -134,7 +252,7 @@ public class OsbClientTestApplicationTest {
 
 
         @SuppressWarnings("unchecked")
-        ResponseEntity<GetLastServiceOperationResponse> lastOperationResponse = (ResponseEntity<GetLastServiceOperationResponse>) serviceInstanceServiceClient.getServiceInstanceLastOperation(
+        ResponseEntity<GetLastServiceOperationResponse> lastOperationResponse = serviceInstanceServiceClient.getServiceInstanceLastOperation(
                 serviceInstanceGuid,
                 serviceDefinition.getId(),
                 defaultPlan.getId(),
@@ -160,7 +278,7 @@ public class OsbClientTestApplicationTest {
                 serviceBindingParams
         );
         @SuppressWarnings("unchecked")
-        ResponseEntity<CreateServiceInstanceAppBindingResponse> bindResponse = (ResponseEntity<CreateServiceInstanceAppBindingResponse>) serviceInstanceBindingServiceClient.createServiceInstanceBinding(
+        ResponseEntity<CreateServiceInstanceAppBindingResponse> bindResponse = serviceInstanceBindingServiceClient.createServiceInstanceBinding(
                 serviceInstanceGuid,
                 "service_binding_guid",
                 null,
@@ -184,7 +302,7 @@ public class OsbClientTestApplicationTest {
                 cfContext
         );
         @SuppressWarnings("unchecked")
-        ResponseEntity<UpdateServiceInstanceResponse> updateResponse = (ResponseEntity<UpdateServiceInstanceResponse>) serviceInstanceServiceClient.updateServiceInstance(
+        ResponseEntity<UpdateServiceInstanceResponse> updateResponse = serviceInstanceServiceClient.updateServiceInstance(
                 serviceInstanceGuid,
                 false,
                 null,
@@ -204,7 +322,7 @@ public class OsbClientTestApplicationTest {
         assertThat(deleteBindingResponse.getBody()).isNotNull();
 
         @SuppressWarnings("unchecked")
-        ResponseEntity<DeleteServiceInstanceResponse> deleteInstanceResponse = (ResponseEntity<DeleteServiceInstanceResponse>) serviceInstanceServiceClient.deleteServiceInstance(
+        ResponseEntity<DeleteServiceInstanceResponse> deleteInstanceResponse = serviceInstanceServiceClient.deleteServiceInstance(
                 serviceInstanceGuid,
                 serviceDefinition.getId(),
                 defaultPlan.getId(),
@@ -230,7 +348,7 @@ public class OsbClientTestApplicationTest {
 
         //when
         @SuppressWarnings("unchecked")
-        ResponseEntity<DeleteServiceInstanceResponse> deleteInstanceResponse = (ResponseEntity<DeleteServiceInstanceResponse>) serviceInstanceServiceClient.deleteServiceInstance(
+        ResponseEntity<DeleteServiceInstanceResponse> deleteInstanceResponse = serviceInstanceServiceClient.deleteServiceInstance(
                 "111",
                 "cassandra-service-broker",
                 "cassandra-plan",
@@ -280,7 +398,7 @@ public class OsbClientTestApplicationTest {
                 "{\"description\":\"Keyspace ks111 already exists\"}");
 
         @SuppressWarnings("unchecked")
-        ResponseEntity<CreateServiceInstanceResponse> createResponse = (ResponseEntity<CreateServiceInstanceResponse>) serviceInstanceServiceClient.createServiceInstance(
+        ResponseEntity<CreateServiceInstanceResponse> createResponse = serviceInstanceServiceClient.createServiceInstance(
                 "222",
                 false,
                 null,

@@ -147,7 +147,7 @@ public class PipelineCompletionTrackerTest {
         //Given an existing manifest file
         generateSampleManifest();
         //and
-        DeleteServiceInstanceBindingRequest request = OsbBuilderHelper.anUnbindRequest(SERVICE_INSTANCE_ID);
+        DeleteServiceInstanceBindingRequest request = OsbBuilderHelper.anUnbindRequest(SERVICE_INSTANCE_ID, "service-binding-id");
         doNothing().when(osbProxy).delegateUnbind(any());
 
         //When

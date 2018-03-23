@@ -1,88 +1,24 @@
-OsbClientTestApplicationTest fails deep reading OSB response: 
-
-Feign.codec.DecodeException: JSON parse error: Can not deserialize value of type org.springframework.cloud.servicebroker.model.OperationState from String "succeeded": value not one of declared Enum instance names: [SUCCEEDED, FAILED, IN_PROGRESS]; nested exception is com.fasterxml.jackson.databind.exc.InvalidFormatException: Can not deserialize value of type org.springframework.cloud.servicebroker.model.OperationState from String "succeeded": value not one of declared Enum instance names: [SUCCEEDED, FAILED, IN_PROGRESS]
-
-Hypothesis
-- object mapper behavior change during springboot Edgware.SR2 bump: test pass after bump
-- jackson version change
-- **put in evidence thanks to increased coverage** ?
-   - succeeded not in recorded mocks,
-   - but likely in embedded springcloud service broker response
-       - did upper case/lower case varied in response ?
-
-2018-03-23 15:48:09.875  INFO 15550 --- [           main] okhttp3.OkHttpClient                     : {"state":"succeeded","description":null,"deleteOperation":false}
-      - last operation response was not previously parsed ?
-        **Right.**
+- Implement OSB provision delegation to nested cassandra broker for bind/unbind:
+    - commit and restore green build on circle
+    - trigger smoke tests
+    - merge branch
 
 
-Fixes:
-- Turn on READ_ENUMS_USING_TO_STRING feature in jackson. See https://docs.spring.io/spring-boot/docs/current/reference/html/howto-spring-mvc.html#howto-customize-the-jackson-objectmapper https://stackoverflow.com/questions/42874369/spring-boot-1-4-customize-internal-jackson-deserialization
-   - using application.yml
-   - **using configuration class** 
-- transiently revert ServiceInstanceServiceClient.getServiceInstanceLastOperation response typing 
+- complete refactoring of  CassandraServiceProvisionningTest to use OSB client instead of raw rest assured:CassandraServiceProvisionningTest rest-assured based client which is not compliant w.r.t. "X-Broker-API-Originating-Identity" mandatory header.
+               
+                                   
+- refine smoke tests to test C* credentials using a CF app 
+   
+
+- future bind request mapping improvements
+   - factor out plan mapping into a method and then a bean 
+   - support route binding responses                 
 
 
-- commit and restore green build on circle
-- reproduce binding response issue in OsbClientTestApplicationTest 
-- try to solve it in current 1.0.2 spring service broker version
-- as a fallback, resume bump to springcloud2 and service broker 2   
+
 
 - refine exception filtering to allow broker framework exceptions 
     from org.springframework.cloud.servicebroker.exception package to get through
-
-- Implement OSB provision delegation to nested cassandra broker
-   - refine PipelineCompletionTracker to call OSB client bind/unbind
-     - DONE: ~~core framework: create/delete service binding~~
-     - DONE: implement bind delegation & mapping in OSBProxy
-     - DONE: implement unbind delegation & mapping in OSBProxy
-        test delegateUnbind()
-     - DONE: cassandra processor: delegate bind/unbind to PipelineCompletionTracker 
-     - DONE: delegate delete request in PipelineCompletionTracker to OSBProxy
-   - DONE: record current cassandra broker bind errors 
-   - update CassandraServiceProvisionningTest + associated wiremock recordings
-        - refactor CassandraServiceProvisionningTest to use OSB client instead of raw rest assured:CassandraServiceProvisionningTest rest-assured based client which is not compliant w.r.t. "X-Broker-API-Originating-Identity" mandatory header.
-               
-              - Pb with service provisionning: GSON mapping not resulting into CreateServiceInstanceResponse but rather Map<String,String>
-                 - same in OsbClientTestApplicationTest where GSON maps to empty Map<String,String>
-                    - try to turn on Feign logs. No much luck. Similar symptoms than https://github.com/spring-cloud/spring-cloud-netflix/issues/1769
-                    - try step into 
-                       - Spring annotation contract
-                       - Json unmarshalling: GSon or Jackson ?
-                       
-                       - **root cause: incorrect annotation on the Feign interface**
-                          - Q: how to deal with CreateServiceInstanceBindingResponse  subtypes:  CreateServiceInstanceAppBindingResponse or CreateServiceInstanceRouteBindingResponse ?
-                             - A: need to annotate POJOs for deserialization https://stackoverflow.com/questions/32766922/jackson-deserialization-on-multiple-types?noredirect=1&lq=1
-                                - would require modifying spring-cloud-service-broker pojo 
-                                   - requires bumping version
-                                      - requires bumping to springcloud 2
-                          => submit an issue for now and delay this until we have to deal with route services.
-                             
-                       - weird provisionning response recorded: missing operation, and extra async field. Is this a side effect of the transient field hack ? 
-                            "body" : "{\"async\":false,\"dashboard_url\":null}",
-  
-                                                                             
-                    - try to bump openfeign to latest https://github.com/OpenFeign/feign/releases 9.6.0 (currently 9.5.0) https://github.com/OpenFeign/feign/blob/master/CHANGELOG.md
-                       - bump spring-cloud-starter-openfeign from 1.4.0-RELEASE to 1.4.3-RELEASE ?
-                          - No better https://mvnrepository.com/artifact/org.springframework.cloud/spring-cloud-starter-openfeign/1.4.3.RELEASE
-                       - bump to spring-cloud-starter-openfeign 2.0.0 M6 ? Too early ? https://cloud.spring.io/spring-cloud-openfeign/
-                          - No better https://mvnrepository.com/artifact/org.springframework.cloud/spring-cloud-starter-openfeign/2.0.0.M6 still pull feign 9.5.1
-                       - dependency management for open-feign ?       
-                       - bump spring boot to 2.0.0-RELEASE ?
-                                   
-                       
-                 - Q: how come work on OSBProxyImpl did not yet ran into same issue ?
-                 - A: OsbProxyImpl/CompletionTracker currently only leverage response status but not yet payload:
-                    - sync provision/unprovision where dashboard url isn't yet dereferenced
-          => this Feign/Gson issue is likely to also occur on service binding response we are dependent for
-          
-            
-   - refine smoke tests to test C* credentials using a CF app 
-   
-
-   - future bind mapping improvements
-       - factor out plan mapping into a method and then a bean 
-       - support route binding responses                 
-
 
 
 - harden smoke tests:

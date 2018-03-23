@@ -19,7 +19,6 @@ package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.osbclien
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
-import feign.Feign;
 import feign.Logger;
 import feign.okhttp.OkHttpClient;
 import feign.slf4j.Slf4jLogger;
@@ -47,13 +46,13 @@ import static org.springframework.http.MediaType.TEXT_PLAIN;
 public class OsbClientFeignConfig {
 
     @Bean
-    Logger.Level customFeignLoggerLevel() {
+    Logger.Level feignLoggerLevel() {
         return Logger.Level.FULL;
     }
 
     @Bean
     Logger customFeignLogger() {
-        return new Slf4jLogger();
+        return new Slf4jLogger(ServiceInstanceServiceClient.class);
     }
 
     /**

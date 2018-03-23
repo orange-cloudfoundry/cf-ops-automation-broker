@@ -20,7 +20,23 @@
                
               - Pb with service provisionning: GSON mapping not resulting into CreateServiceInstanceResponse but rather Map<String,String>
                  - same in OsbClientTestApplicationTest where GSON maps to empty Map<String,String>
-                                   
+                    - try to turn on Feign logs. No much luck. Similar symptoms than https://github.com/spring-cloud/spring-cloud-netflix/issues/1769
+                    - try step into 
+                       - Spring annotation contract
+                       - Json unmarshalling: GSon or Jackson ?
+                       
+                       - **root cause: incorrect annotation on the Feign interface**
+                          - Q: how to deal with CreateServiceInstanceBindingResponse  subtypes:  CreateServiceInstanceAppBindingResponse or CreateServiceInstanceRouteBindingResponse ?
+                             - A: need to annotate POJOs for deserialization https://stackoverflow.com/questions/32766922/jackson-deserialization-on-multiple-types?noredirect=1&lq=1
+                                - would require modifying spring-cloud-service-broker pojo 
+                                   - requires bumping version
+                                      - requires bumping to springcloud 2
+                          => submit an issue for now and delay this until we have to deal with route services.
+                             
+                       - weird provisionning response recorded: missing operation, and extra async field. Is this a side effect of the transient field hack ? 
+                            "body" : "{\"async\":false,\"dashboard_url\":null}",
+  
+                                                                             
                     - try to bump openfeign to latest https://github.com/OpenFeign/feign/releases 9.6.0 (currently 9.5.0) https://github.com/OpenFeign/feign/blob/master/CHANGELOG.md
                        - bump spring-cloud-starter-openfeign from 1.4.0-RELEASE to 1.4.3-RELEASE ?
                           - No better https://mvnrepository.com/artifact/org.springframework.cloud/spring-cloud-starter-openfeign/1.4.3.RELEASE

@@ -22,7 +22,7 @@ import java.text.MessageFormat;
 import java.util.HashMap;
 import java.util.Map;
 
-public class OsbProxyImpl<Q extends ServiceBrokerRequest, P extends AsyncServiceInstanceResponse> implements OsbProxy {
+public class OsbProxyImpl implements OsbProxy {
 
     private String osbDelegateUser;
     private String osbDelegatePassword;
@@ -262,7 +262,6 @@ public class OsbProxyImpl<Q extends ServiceBrokerRequest, P extends AsyncService
     }
 
     void delegateUnbind(DeleteServiceInstanceBindingRequest request, ServiceInstanceBindingServiceClient serviceInstanceBindingServiceClient) {
-        //noinspection unchecked
         serviceInstanceBindingServiceClient.deleteServiceInstanceBinding(
                 request.getServiceInstanceId(),
                 request.getBindingId(),

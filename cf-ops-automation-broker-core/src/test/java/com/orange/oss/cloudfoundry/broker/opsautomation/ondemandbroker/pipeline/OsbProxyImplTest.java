@@ -38,7 +38,7 @@ import static org.springframework.cloud.servicebroker.model.CloudFoundryContext.
 public class OsbProxyImplTest {
 
     private OsbClientFactory clientFactory = mock(OsbClientFactory.class);
-    private OsbProxyImpl osbProxy = new OsbProxyImpl<>("user", "password", "https://{0}-cassandra-broker.mydomain/com", clientFactory);
+    private OsbProxyImpl osbProxy = new OsbProxyImpl("user", "password", "https://{0}-cassandra-broker.mydomain/com", clientFactory);
     GetLastServiceOperationRequest pollingRequest;
     private CreateServiceInstanceRequest request = aCreateServiceInstanceRequest();
     GetLastServiceOperationResponse response;
@@ -277,7 +277,7 @@ public class OsbProxyImplTest {
         request.withApiInfoLocation("api-info");
         request.withOriginatingIdentity(aContext());
         ServiceInstanceServiceClient serviceInstanceServiceClient = mock(ServiceInstanceServiceClient.class);
-        @SuppressWarnings("unchecked") ResponseEntity<DeleteServiceInstanceResponse> responseEntity = osbProxy.delegateDeprovision(request, serviceInstanceServiceClient);
+        @SuppressWarnings("unused") ResponseEntity<DeleteServiceInstanceResponse> responseEntity = osbProxy.delegateDeprovision(request, serviceInstanceServiceClient);
 
         verify(serviceInstanceServiceClient).deleteServiceInstance(
                 "service-instance-id",

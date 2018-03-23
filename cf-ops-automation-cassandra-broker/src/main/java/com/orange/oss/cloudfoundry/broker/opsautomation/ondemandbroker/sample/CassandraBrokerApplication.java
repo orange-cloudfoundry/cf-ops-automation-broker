@@ -56,7 +56,7 @@ public class CassandraBrokerApplication {
 
     @Bean
     public OsbProxy createOsbProxy(OsbProxyProperties osbProxyProperties, OsbClientFactory clientFactory) {
-        return new OsbProxyImpl<>(
+        return new OsbProxyImpl(
                 osbProxyProperties.getOsbDelegateUser(),
                 osbProxyProperties.getOsbDelegatePassword(),
                 osbProxyProperties.getBrokerUrlPattern(),

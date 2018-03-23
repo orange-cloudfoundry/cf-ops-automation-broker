@@ -123,7 +123,6 @@ public class OsbClientTestApplicationTest {
                 cfContext,
                 serviceBindingParams
         );
-        @SuppressWarnings("unchecked")
         ResponseEntity<CreateServiceInstanceAppBindingResponse> bindResponse = serviceInstanceBindingServiceClient.createServiceInstanceBinding(
                 serviceInstanceGuid,
                 "service_binding_guid",
@@ -180,7 +179,6 @@ public class OsbClientTestApplicationTest {
         String originatingIdentityHeader = buildOriginatingIdentityHeader("a_user_guid", CLOUD_FOUNDRY_PLATFORM);
         String serviceInstanceGuid = "111";
 
-        @SuppressWarnings("unchecked")
         ResponseEntity<CreateServiceInstanceResponse> createResponse = serviceInstanceServiceClient.createServiceInstance(
                 serviceInstanceGuid,
                 false,
@@ -235,7 +233,6 @@ public class OsbClientTestApplicationTest {
         String originatingIdentityHeader = buildOriginatingIdentityHeader("a_user_guid", CLOUD_FOUNDRY_PLATFORM);
         String serviceInstanceGuid = "111";
 
-        @SuppressWarnings("unchecked")
         ResponseEntity<CreateServiceInstanceResponse> createResponse = serviceInstanceServiceClient.createServiceInstance(
                 serviceInstanceGuid,
                 false,
@@ -250,8 +247,6 @@ public class OsbClientTestApplicationTest {
             assertThat(createServiceInstanceResponse.getOperation()).isNotEmpty();
         }
 
-
-        @SuppressWarnings("unchecked")
         ResponseEntity<GetLastServiceOperationResponse> lastOperationResponse = serviceInstanceServiceClient.getServiceInstanceLastOperation(
                 serviceInstanceGuid,
                 serviceDefinition.getId(),
@@ -277,7 +272,6 @@ public class OsbClientTestApplicationTest {
                 cfContext,
                 serviceBindingParams
         );
-        @SuppressWarnings("unchecked")
         ResponseEntity<CreateServiceInstanceAppBindingResponse> bindResponse = serviceInstanceBindingServiceClient.createServiceInstanceBinding(
                 serviceInstanceGuid,
                 "service_binding_guid",
@@ -301,7 +295,6 @@ public class OsbClientTestApplicationTest {
                 new UpdateServiceInstanceRequest.PreviousValues(defaultPlan.getId()),
                 cfContext
         );
-        @SuppressWarnings("unchecked")
         ResponseEntity<UpdateServiceInstanceResponse> updateResponse = serviceInstanceServiceClient.updateServiceInstance(
                 serviceInstanceGuid,
                 false,
@@ -321,7 +314,6 @@ public class OsbClientTestApplicationTest {
         assertThat(deleteBindingResponse.getStatusCode()).isEqualTo(OK);
         assertThat(deleteBindingResponse.getBody()).isNotNull();
 
-        @SuppressWarnings("unchecked")
         ResponseEntity<DeleteServiceInstanceResponse> deleteInstanceResponse = serviceInstanceServiceClient.deleteServiceInstance(
                 serviceInstanceGuid,
                 serviceDefinition.getId(),
@@ -347,7 +339,6 @@ public class OsbClientTestApplicationTest {
 
 
         //when
-        @SuppressWarnings("unchecked")
         ResponseEntity<DeleteServiceInstanceResponse> deleteInstanceResponse = serviceInstanceServiceClient.deleteServiceInstance(
                 "111",
                 "cassandra-service-broker",
@@ -397,7 +388,6 @@ public class OsbClientTestApplicationTest {
         thrown.expectMessage("status 500 reading ServiceInstanceServiceClient#createServiceInstance(String,boolean,String,String,CreateServiceInstanceRequest); content:\n" +
                 "{\"description\":\"Keyspace ks111 already exists\"}");
 
-        @SuppressWarnings("unchecked")
         ResponseEntity<CreateServiceInstanceResponse> createResponse = serviceInstanceServiceClient.createServiceInstance(
                 "222",
                 false,

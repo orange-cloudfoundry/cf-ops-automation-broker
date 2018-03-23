@@ -301,7 +301,7 @@ public class CassandraServiceProvisionningTest {
         CreateServiceInstanceBindingRequest serviceInstanceBindingRequest = aBindingRequest(SERVICE_INSTANCE_ID)
                 .withBindingId(SERVICE_BINDING_INSTANCE_ID);
 
-        @SuppressWarnings("unchecked") ResponseEntity<CreateServiceInstanceAppBindingResponse> bindResponse = serviceInstanceBindingService.createServiceInstanceBinding(
+        ResponseEntity<CreateServiceInstanceAppBindingResponse> bindResponse = serviceInstanceBindingService.createServiceInstanceBinding(
                 SERVICE_INSTANCE_ID,
                 SERVICE_BINDING_INSTANCE_ID,
                 "api-info",
@@ -327,7 +327,7 @@ public class CassandraServiceProvisionningTest {
 
         CreateServiceInstanceRequest createServiceInstanceRequest = aCreateServiceInstanceRequest()
                 .withServiceInstanceId(SERVICE_INSTANCE_ID);
-        @SuppressWarnings("unchecked") ResponseEntity<CreateServiceInstanceResponse> createResponse = serviceInstanceService.createServiceInstance(
+        ResponseEntity<CreateServiceInstanceResponse> createResponse = serviceInstanceService.createServiceInstance(
                 SERVICE_INSTANCE_ID,
                 true,
                 "api-info",

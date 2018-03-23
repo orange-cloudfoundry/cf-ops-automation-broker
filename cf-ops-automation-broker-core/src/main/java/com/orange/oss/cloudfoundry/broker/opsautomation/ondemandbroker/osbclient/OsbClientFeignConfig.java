@@ -23,13 +23,13 @@ import com.google.gson.Gson;
 import feign.Logger;
 import feign.okhttp.OkHttpClient;
 import feign.slf4j.Slf4jLogger;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.netflix.feign.FeignClientsConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.http.converter.json.GsonHttpMessageConverter;
-import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 
 import java.util.ArrayList;
@@ -99,11 +99,9 @@ public class OsbClientFeignConfig {
     /**
      * Turn on reading enums from string to deserialize OSB Pojo enums
      */
-    @Bean
-    public Jackson2ObjectMapperBuilder objectMapperBuilder(){
-        Jackson2ObjectMapperBuilder builder = new Jackson2ObjectMapperBuilder();
-        builder.featuresToEnable(DeserializationFeature.READ_ENUMS_USING_TO_STRING);
-        return builder;
+    @Autowired
+    public void configureJacksonEnumDeserialization(ObjectMapper jackson2ObjectMapper) {
+        jackson2ObjectMapper.enable(DeserializationFeature.READ_ENUMS_USING_TO_STRING);
     }
 
     @Bean

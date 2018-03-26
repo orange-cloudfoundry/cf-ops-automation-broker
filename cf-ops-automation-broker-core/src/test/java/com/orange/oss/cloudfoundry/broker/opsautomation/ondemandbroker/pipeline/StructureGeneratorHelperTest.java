@@ -3,7 +3,6 @@ package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline
 import org.junit.Test;
 
 import java.io.File;
-import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -61,8 +60,9 @@ public class StructureGeneratorHelperTest {
         //Then
         assertEquals("---", (String)resultLines.get(0));
         assertEquals("deployment:", (String)resultLines.get(1));
-        assertEquals("  cassandra_aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa0:", (String)resultLines.get(2));
-        assertEquals("  value: cassandra_aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa0", (String)resultLines.get(3));
+        String prefix = CassandraProcessorConstants.SERVICE_INSTANCE_PREFIX_DIRECTORY;
+        assertEquals("  " + prefix + "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa0:", (String)resultLines.get(2));
+        assertEquals("  value: " + prefix + "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa0", (String)resultLines.get(3));
         assertEquals("  value: cassandra-broker_aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa0.((!/secrets/cloudfoundry_system_domain))", (String)resultLines.get(4));
     }
 }

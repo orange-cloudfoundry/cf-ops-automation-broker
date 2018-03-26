@@ -2,14 +2,36 @@
 - Fix regression following varops template introduction: provisionning always fail with a timeout because it's waiting for the manifest at the wrong path
 
     PipelineCompletionTracker uses 
+    ```java
             public Path getTargetManifestFilePath(Path workDir, String serviceInstanceId) {
                 return StructureGeneratorHelper.generatePath(workDir,
                             CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY,
                             CassandraProcessorConstants.SERVICE_INSTANCE_PREFIX_DIRECTORY + serviceInstanceId,
                             CassandraProcessorConstants.SERVICE_INSTANCE_PREFIX_DIRECTORY + serviceInstanceId + CassandraProcessorConstants.YML_SUFFIX);
             }
+    ```
+        
+    PipelineCompletionTrackerTest uses:
+    
+    ```java
+        private void generateSampleManifest() throws IOException {
+            Path serviceInstanceDir = StructureGeneratorHelper.generatePath(workDir,
+                    CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY,
+                    CassandraProcessorConstants.SERVICE_INSTANCE_PREFIX_DIRECTORY + SERVICE_INSTANCE_ID);
+            serviceInstanceDir = Files.createDirectories(serviceInstanceDir);
+            Path targetManifestFile = StructureGeneratorHelper.generatePath(serviceInstanceDir,
+                    CassandraProcessorConstants.SERVICE_INSTANCE_PREFIX_DIRECTORY + SERVICE_INSTANCE_ID + CassandraProcessorConstants.YML_SUFFIX);
+            Files.createFile(targetManifestFile);
+        }
+      
+    ```
+    
+
+
         
     SecretsGenerator uses:
+    
+    ```java
         
                     //Compute instance directory
                     String deploymentInstanceDirectory = this.modelDeployment + DeploymentConstants.UNDERSCORE + serviceInstanceId;
@@ -17,11 +39,13 @@
                     //Generate secrets directory
                     StructureGeneratorHelper.generateDirectory(workDir, this.rootDeployment, deploymentInstanceDirectory, this.secrets);
 
+    ```
 
         where modelDeployment is injected by CassandraBrokerApplication from DeploymentProperties 
 
     + CassandraServiceProvisionningTest don't detect this, as it also uses PipelineCompletionTracker
-    
+
+    ```java
         public void simulateManifestGeneration(GitProcessor gitProcessor) throws IOException {
             Context context = new Context();
             gitProcessor.preCreate(context);
@@ -34,6 +58,7 @@
     
             gitProcessor.postCreate(context);
         }
+    ```
 
         
     Possible fixes:

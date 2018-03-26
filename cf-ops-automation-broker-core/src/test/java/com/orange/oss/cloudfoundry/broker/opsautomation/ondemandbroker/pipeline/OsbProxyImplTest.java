@@ -332,7 +332,7 @@ public class OsbProxyImplTest {
 
 
     @Test
-    public void maps_rejected_deprovision_user_facing_responses() {
+    public void maps_rejected_deprovision_to_success() {
         //Given
         GetLastServiceOperationResponse originalResponse = aPreviousOnGoingOperation();
         Response errorResponse = Response.builder()
@@ -345,8 +345,31 @@ public class OsbProxyImplTest {
         //when
         GetLastServiceOperationResponse mappedResponse = osbProxy.mapDeprovisionResponse(originalResponse, null, provisionException, aCatalog());
 
-        assertThat(mappedResponse.getState()).isSameAs(OperationState.FAILED);
-        assertThat(mappedResponse.getDescription()).isEqualTo("No such service instance 1234");
+        assertThat(mappedResponse.getState()).isSameAs(OperationState.SUCCEEDED);
+        assertThat(mappedResponse.getDescription()).isNull();
+        assertThat(mappedResponse.isDeleteOperation()).isTrue();
+    }
+
+    /**
+     * Brokers that never received service instance requests (e.g. due to timeout, or internal bugs) should not prevent the
+     * bosh deployment from being removed
+     */
+    @Test
+    public void maps_rejected_deprovision_bis_to_success() {
+        //Given
+        GetLastServiceOperationResponse originalResponse = aPreviousOnGoingOperation();
+        Response errorResponse = Response.builder()
+                .status(HttpStatus.INTERNAL_SERVER_ERROR.value())
+                .headers(new HashMap<>())
+                .body("{\"description\":\"Cannot drop non existing keyspace 'ks86f715e3_9450_4faf_9255_9bceb158375f'.\"}", Charset.defaultCharset())
+                .build();
+        FeignException provisionException = FeignException.errorStatus("ServiceInstanceServiceClient#deleteServiceInstance(String,String,String,boolean,String,String)", errorResponse);
+
+        //when
+        GetLastServiceOperationResponse mappedResponse = osbProxy.mapDeprovisionResponse(originalResponse, null, provisionException, aCatalog());
+
+        assertThat(mappedResponse.getState()).isSameAs(OperationState.SUCCEEDED);
+        assertThat(mappedResponse.getDescription()).isNull();
         assertThat(mappedResponse.isDeleteOperation()).isTrue();
     }
 

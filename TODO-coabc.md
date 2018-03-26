@@ -1,7 +1,41 @@
+- Propose OSB client support in spring cloud service broker by submitting an issue  
+
+
 - Implement OSB provision delegation to nested cassandra broker for bind/unbind:
-    - commit and restore green build on circle
     - trigger smoke tests
     - merge branch
+
+
+   2018-03-23T17:29:12.12+0100 [APP/PROC/WEB/0] OUT 2018-03-23 16:29:12.120  INFO 7 --- [nio-8080-exec-5] o.o.ProcessorChainServiceInstanceService : Unable to getLastOperation with request GetLastServiceOperationRequest(super=ServiceBrokerRequest(cfInstanceId=null, apiInfoLocation=api.redacted-domain.org/v2/info","originatingIdentity":{"platform":"cloudfoundry","properties":{"user_id":"2768ab72-546a-4faf-9323-dffcbc4de0ed"}}},"startRequestDate":"2018-03-23T16:28:59.213Z"}), caught org.springframework.cloud.servicebroker.exception.ServiceInstanceDoesNotExistException: Service instance does not exist: id=3aa74379-ff0f-4176-b207-f596f30b972c
+   2018-03-23T17:29:12.12+0100 [APP/PROC/WEB/0] OUT org.springframework.cloud.servicebroker.exception.ServiceInstanceDoesNotExistException: Service instance does not exist: id=3aa74379-ff0f-4176-b207-f596f30b972c
+   2018-03-23T17:29:12.12+0100 [APP/PROC/WEB/0] OUT 	at com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.PipelineCompletionTracker.buildResponse(PipelineCompletionTracker.java:96) ~[cf-ops-automation-broker-core-0.25.0-SNAPSHOT.jar!/:0.25.0-SNAPSHOT]
+   2018-03-23T17:29:12.12+0100 [APP/PROC/WEB/0] OUT 	at com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.ProcessorChain.getLastOperation(ProcessorChain.java:44) ~[cf-ops-automation-broker-framework-0.25.0-SNAPSHOT.jar!/:0.25.0-SNAPSHOT]
+   2018-03-23T17:29:12.12+0100 [APP/PROC/WEB/0] OUT 	at com.orange.oss.ondemandbroker.ProcessorChainServiceInstanceService.getLastOperation(ProcessorChainServiceInstanceService.java:110) ~[cf-ops-automation-broker-core-0.25.0-SNAPSHOT.jar!/:0.25.0-SNAPSHOT]
+   2018-03-23T17:29:12.12+0100 [APP/PROC/WEB/0] OUT 	at org.springframework.cloud.servicebroker.controller.ServiceInstanceController.getServiceInstanceLastOperation(ServiceInstanceController.java:115) [spring-cloud-cloudfoundry-service-broker-1.0.2.RELEASE.jar!/:na]
+
+
+   2018-03-23T17:29:19.31+0100 [APP/PROC/WEB/0] OUT 2018-03-23 16:29:19.318  INFO 7 --- [nio-8080-exec-8] o.o.ProcessorChainServiceInstanceService : Unable to getLastOperation with request GetLastServiceOperationRequest(super=ServiceBrokerRequest(cfInstanceId=null, apiInfoLocation=api.redacted-domain.org/v2/info","originatingIdentity":{"platform":"cloudfoundry","properties":{"user_id":"2768ab72-546a-4faf-9323-dffcbc4de0ed"}}},"startRequestDate":"2018-03-23T16:29:07.768Z"}), caught org.springframework.cloud.servicebroker.exception.ServiceInstanceDoesNotExistException: Service instance does not exist: id=6b041f54-81cf-4575-89e0-8f088e0c9a3c
+   2018-03-23T17:29:19.31+0100 [APP/PROC/WEB/0] OUT 	at com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.PipelineCompletionTracker.buildResponse(PipelineCompletionTracker.java:96) ~[cf-ops-automation-broker-core-0.25.0-SNAPSHOT.jar!/:0.25.0-SNAPSHOT]
+   2018-03-23T17:29:19.31+0100 [APP/PROC/WEB/0] OUT 	at com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.CassandraProcessor.preGetLastOperation(CassandraProcessor.java:72) ~[cf-ops-automation-broker-core-0.25.0-SNAPSHOT.jar!/:0.25.0-SNAPSHOT]
+   2018-03-23T17:29:19.31+0100 [APP/PROC/WEB/0] OUT 	at com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.ProcessorChain.getLastOperation(ProcessorChain.java:44) ~[cf-ops-automation-broker-framework-0.25.0-SNAPSHOT.jar!/:0.25.0-SNAPSHOT]
+   2018-03-23T17:29:19.31+0100 [APP/PROC/WEB/0] OUT 	at org.springframework.cloud.servicebroker.controller.ServiceInstanceController.getServiceInstanceLastOperation
+   
+   
+   
+      2018-03-23T17:29:26.67+0100 [APP/PROC/WEB/0] OUT 2018-03-23 16:29:26.678 ERROR 7 --- [io-8080-exec-10] c.o.o.c.b.o.o.pipeline.OsbProxyImpl      : inner broker deprovision request rejected:feign.FeignException: status 500 reading ServiceInstanceServiceClient#deleteServiceInstance(String,String,String,boolean,String,String); content:
+      2018-03-23T17:29:26.67+0100 [APP/PROC/WEB/0] OUT {"description":"Cannot drop non existing keyspace 'ks86f715e3_9450_4faf_9255_9bceb158375f'."}
+ [...]
+      2018-03-23T17:29:27.11+0100 [APP/PROC/WEB/0] OUT 2018-03-23 16:29:27.117 DEBUG 7 --- [io-8080-exec-10] o.s.c.s.c.ServiceInstanceController      : Getting service instance status succeeded: serviceInstanceId=86f715e3-9450-4faf-9255-9bceb158375f, response=GetLastServiceOperationResponse(state=failed, description=Cannot drop non existing keyspace 'ks86f715e3_9450_4faf_9255_9bceb158375f'., deleteOperation=true)
+
+
+- Bump to springboot 2.0
+- Bump to spring cloud service broker 2.0
+- Upgrade to mockito 2
+- Upgrade to junit5 to benefit from nested junit classes as well as descrptive names https://junit.org/junit5/docs/5.0.1/user-guide/
+   - https://medium.com/@dSebastien/using-junit-5-with-spring-boot-2-kotlin-and-mockito-d5aea5b0c668
+   - https://github.com/mockito/mockito/issues/445
+   - https://github.com/mockito/mockito/issues/1348
+
 
 
 - complete refactoring of  CassandraServiceProvisionningTest to use OSB client instead of raw rest assured:CassandraServiceProvisionningTest rest-assured based client which is not compliant w.r.t. "X-Broker-API-Originating-Identity" mandatory header.

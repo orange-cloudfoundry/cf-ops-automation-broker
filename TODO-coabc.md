@@ -1,31 +1,99 @@
-- Propose OSB client support in spring cloud service broker by submitting an issue  
 
+- Fix regression following varops template introduction: provisionning always fail with a timeout because it's waiting for the manifest at the wrong path
+
+    PipelineCompletionTracker uses 
+            public Path getTargetManifestFilePath(Path workDir, String serviceInstanceId) {
+                return StructureGeneratorHelper.generatePath(workDir,
+                            CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY,
+                            CassandraProcessorConstants.SERVICE_INSTANCE_PREFIX_DIRECTORY + serviceInstanceId,
+                            CassandraProcessorConstants.SERVICE_INSTANCE_PREFIX_DIRECTORY + serviceInstanceId + CassandraProcessorConstants.YML_SUFFIX);
+            }
+        
+    SecretsGenerator uses:
+        
+                    //Compute instance directory
+                    String deploymentInstanceDirectory = this.modelDeployment + DeploymentConstants.UNDERSCORE + serviceInstanceId;
+        
+                    //Generate secrets directory
+                    StructureGeneratorHelper.generateDirectory(workDir, this.rootDeployment, deploymentInstanceDirectory, this.secrets);
+
+
+        where modelDeployment is injected by CassandraBrokerApplication from DeploymentProperties 
+
+    + CassandraServiceProvisionningTest don't detect this, as it also uses PipelineCompletionTracker
+    
+        public void simulateManifestGeneration(GitProcessor gitProcessor) throws IOException {
+            Context context = new Context();
+            gitProcessor.preCreate(context);
+    
+            Path workDirPath = (Path) context.contextKeys.get(SECRETS_REPOSITORY_ALIAS_NAME + GitProcessorContext.workDir.toString());
+            @SuppressWarnings("unchecked") PipelineCompletionTracker tracker = new PipelineCompletionTracker(Clock.systemUTC(), osbProxyProperties.getMaxExecutionDurationSeconds(), Mockito.mock(OsbProxy.class));
+            Path targetManifestFilePath = tracker.getTargetManifestFilePath(workDirPath, SERVICE_INSTANCE_ID);
+            createDir(targetManifestFilePath.getParent());
+            createDummyFile(targetManifestFilePath);
+    
+            gitProcessor.postCreate(context);
+        }
+
+        
+    Possible fixes:
+    - use the same code to generate deployment files in secrets than to watch for concourse completion ion deployment dir, and share this code with test.
+        - refactor PipelineCompletionTracker + CassandraServiceProvisionningTest to delegate the ManifestPath computing to SecretsGenerator
+           - extract code from SecretsGenerator:  
+           
+              /**
+                * Provide path where concourse should generate the manifest once the deployment is complete
+                * @param workDir The local checkout of paas-secret git repo
+                * @param serviceInstanceId the service instance guid
+                */
+               public Path getDeploymentInstancePath(Path workDir, String serviceInstanceId) {
+                   String deploymentInstanceDirName = getDeploymentInstanceDirName(serviceInstanceId);
+                   //Compute path
+                   return StructureGeneratorHelper.generatePath(workDir, this.rootDeployment, deploymentInstanceDirName, this.secrets);
+               }
+           
+               String getDeploymentInstanceDirName(String serviceInstanceId) {
+                   return this.modelDeployment + DeploymentConstants.UNDERSCORE + serviceInstanceId;
+               }
+ 
+             Drawbacks: SecretsGenerator contructor would pull lots of unnecessary to PipelineCompletionTracker, making unit tests heavier
+             Solution:
+                - Extract interface: SecretsReader, ServiceInstanceDeploymentBuilder ...  
+
+
+
+    Q: why are so many flags exported by DeploymentProperties ? Would all be potentially configured by the COAB operator ?
+    Q: why is StructureGeneratorImpl.generate not abstract and subclassed many times ? 
+ 
 
 - Implement OSB provision delegation to nested cassandra broker for bind/unbind:
     - trigger smoke tests
     - merge branch
 
 
-   2018-03-23T17:29:12.12+0100 [APP/PROC/WEB/0] OUT 2018-03-23 16:29:12.120  INFO 7 --- [nio-8080-exec-5] o.o.ProcessorChainServiceInstanceService : Unable to getLastOperation with request GetLastServiceOperationRequest(super=ServiceBrokerRequest(cfInstanceId=null, apiInfoLocation=api.redacted-domain.org/v2/info","originatingIdentity":{"platform":"cloudfoundry","properties":{"user_id":"2768ab72-546a-4faf-9323-dffcbc4de0ed"}}},"startRequestDate":"2018-03-23T16:28:59.213Z"}), caught org.springframework.cloud.servicebroker.exception.ServiceInstanceDoesNotExistException: Service instance does not exist: id=3aa74379-ff0f-4176-b207-f596f30b972c
-   2018-03-23T17:29:12.12+0100 [APP/PROC/WEB/0] OUT org.springframework.cloud.servicebroker.exception.ServiceInstanceDoesNotExistException: Service instance does not exist: id=3aa74379-ff0f-4176-b207-f596f30b972c
-   2018-03-23T17:29:12.12+0100 [APP/PROC/WEB/0] OUT 	at com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.PipelineCompletionTracker.buildResponse(PipelineCompletionTracker.java:96) ~[cf-ops-automation-broker-core-0.25.0-SNAPSHOT.jar!/:0.25.0-SNAPSHOT]
-   2018-03-23T17:29:12.12+0100 [APP/PROC/WEB/0] OUT 	at com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.ProcessorChain.getLastOperation(ProcessorChain.java:44) ~[cf-ops-automation-broker-framework-0.25.0-SNAPSHOT.jar!/:0.25.0-SNAPSHOT]
-   2018-03-23T17:29:12.12+0100 [APP/PROC/WEB/0] OUT 	at com.orange.oss.ondemandbroker.ProcessorChainServiceInstanceService.getLastOperation(ProcessorChainServiceInstanceService.java:110) ~[cf-ops-automation-broker-core-0.25.0-SNAPSHOT.jar!/:0.25.0-SNAPSHOT]
-   2018-03-23T17:29:12.12+0100 [APP/PROC/WEB/0] OUT 	at org.springframework.cloud.servicebroker.controller.ServiceInstanceController.getServiceInstanceLastOperation(ServiceInstanceController.java:115) [spring-cloud-cloudfoundry-service-broker-1.0.2.RELEASE.jar!/:na]
+- harden smoke tests:
+   - use bash instead of ash
+      - https://github.com/smebberson/docker-alpine/issues/43#issuecomment-371537664
+         - apk --update bash
+         https://stackoverflow.com/questions/18351198/what-are-the-uses-of-the-exec-command-in-shell-scripts?utm_medium=organic&utm_source=google_rich_qa&utm_campaign=google_rich_qa
+   - to clean up service instances 
+        - failed
+            - create failed
+                cf s | grep 'create failed' | cut -d ' ' -f 1 | xargs -n 1  cf ds -f 
+    
+        - beyond the quota
+   - to ease CF/concourse correlation: rename service instance with the the service instance guid
+   - refactor to use more readeable syntax: trap, seq, functions, see 
+      - https://github.com/cloudfoundry/capi-release/blob/develop/src/capi_utils/monit_utils.sh
+      - https://github.com/cloudfoundry/cf-deployment-concourse-tasks/blob/master/bosh-delete-deployment/task
+      
 
 
-   2018-03-23T17:29:19.31+0100 [APP/PROC/WEB/0] OUT 2018-03-23 16:29:19.318  INFO 7 --- [nio-8080-exec-8] o.o.ProcessorChainServiceInstanceService : Unable to getLastOperation with request GetLastServiceOperationRequest(super=ServiceBrokerRequest(cfInstanceId=null, apiInfoLocation=api.redacted-domain.org/v2/info","originatingIdentity":{"platform":"cloudfoundry","properties":{"user_id":"2768ab72-546a-4faf-9323-dffcbc4de0ed"}}},"startRequestDate":"2018-03-23T16:29:07.768Z"}), caught org.springframework.cloud.servicebroker.exception.ServiceInstanceDoesNotExistException: Service instance does not exist: id=6b041f54-81cf-4575-89e0-8f088e0c9a3c
-   2018-03-23T17:29:19.31+0100 [APP/PROC/WEB/0] OUT 	at com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.PipelineCompletionTracker.buildResponse(PipelineCompletionTracker.java:96) ~[cf-ops-automation-broker-core-0.25.0-SNAPSHOT.jar!/:0.25.0-SNAPSHOT]
-   2018-03-23T17:29:19.31+0100 [APP/PROC/WEB/0] OUT 	at com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.CassandraProcessor.preGetLastOperation(CassandraProcessor.java:72) ~[cf-ops-automation-broker-core-0.25.0-SNAPSHOT.jar!/:0.25.0-SNAPSHOT]
-   2018-03-23T17:29:19.31+0100 [APP/PROC/WEB/0] OUT 	at com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.ProcessorChain.getLastOperation(ProcessorChain.java:44) ~[cf-ops-automation-broker-framework-0.25.0-SNAPSHOT.jar!/:0.25.0-SNAPSHOT]
-   2018-03-23T17:29:19.31+0100 [APP/PROC/WEB/0] OUT 	at org.springframework.cloud.servicebroker.controller.ServiceInstanceController.getServiceInstanceLastOperation
-   
-   
-   
-      2018-03-23T17:29:26.67+0100 [APP/PROC/WEB/0] OUT 2018-03-23 16:29:26.678 ERROR 7 --- [io-8080-exec-10] c.o.o.c.b.o.o.pipeline.OsbProxyImpl      : inner broker deprovision request rejected:feign.FeignException: status 500 reading ServiceInstanceServiceClient#deleteServiceInstance(String,String,String,boolean,String,String); content:
-      2018-03-23T17:29:26.67+0100 [APP/PROC/WEB/0] OUT {"description":"Cannot drop non existing keyspace 'ks86f715e3_9450_4faf_9255_9bceb158375f'."}
- [...]
-      2018-03-23T17:29:27.11+0100 [APP/PROC/WEB/0] OUT 2018-03-23 16:29:27.117 DEBUG 7 --- [io-8080-exec-10] o.s.c.s.c.ServiceInstanceController      : Getting service instance status succeeded: serviceInstanceId=86f715e3-9450-4faf-9255-9bceb158375f, response=GetLastServiceOperationResponse(state=failed, description=Cannot drop non existing keyspace 'ks86f715e3_9450_4faf_9255_9bceb158375f'., deleteOperation=true)
+
+
+- Propose OSB client support in spring cloud service broker by submitting an issue  
+
+
 
 
 - Bump to springboot 2.0
@@ -54,18 +122,6 @@
 - refine exception filtering to allow broker framework exceptions 
     from org.springframework.cloud.servicebroker.exception package to get through
 
-
-- harden smoke tests:
-   - to clean up service instances 
-        - failed
-            - create failed
-                cf s | grep 'create failed' | cut -d ' ' -f 1 | xargs -n 1  cf ds -f 
-    
-        - beyond the quota
-   - to ease CF/concourse correlation: rename service instance with the the service instance guid
-   - refactor to use more readeable syntax: trap, seq, functions, see 
-      - https://github.com/cloudfoundry/capi-release/blob/develop/src/capi_utils/monit_utils.sh
-      - https://github.com/cloudfoundry/cf-deployment-concourse-tasks/blob/master/bosh-delete-deployment/task
 
 
 - improve coab concourse integration

@@ -1,3 +1,16 @@
+- Fix pipeline merge issue
+- Confirm workaround for manifest wrong path bug works
+- Confirm deprovision errors are now ignored and deployment proceeds
+- Test service binding
+    - edit manifest to bind to newly created service
+    - push & start app
+    - curl to the app
+            $ export APP=cassandra-example-app.example.com
+            $ curl -X POST $APP/myTable
+            $ curl -X DELETE $APP/myTable
+    - delete the app    
+
+
 
 - Fix regression following varops template introduction: provisionning always fail with a timeout because it's waiting for the manifest at the wrong path
 

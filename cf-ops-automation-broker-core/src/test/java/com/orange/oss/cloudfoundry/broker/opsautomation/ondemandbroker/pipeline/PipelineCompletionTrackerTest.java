@@ -64,7 +64,7 @@ public class PipelineCompletionTrackerTest {
     }
 
     @Test
-    public void raises_exception_when_receiving_unsupported_operation_state() throws IOException {
+    public void raises_exception_when_receiving_unsupported_operation_state() {
         //Then
         thrown.expect(RuntimeException.class);
         thrown.expectMessage("Get Deployment Execution status fails (unhandled request class)");
@@ -74,7 +74,7 @@ public class PipelineCompletionTrackerTest {
     }
 
     @Test
-    public void returns_failed_state_if_provision_operation_state_is_timed_out() throws IOException {
+    public void returns_failed_state_if_provision_operation_state_is_timed_out() {
         //TODO : Test with null work dir
         //Given a missing manifest file and a create operation state in the past
         String jsonPipelineOperationState = createProvisionOperationStateInThePast();
@@ -156,7 +156,7 @@ public class PipelineCompletionTrackerTest {
         verify(osbProxy).delegateUnbind(request);
     }
     @Test
-    public void rejects_bind_request_when_manifest_is_absent() throws IOException {
+    public void rejects_bind_request_when_manifest_is_absent() {
         //Given no manifest file
 
         thrown.expect(ServiceInstanceDoesNotExistException.class);
@@ -180,7 +180,7 @@ public class PipelineCompletionTrackerTest {
     }
 
     @Test
-    public void delegates_to_osb_proxy_when_deprovision_completes_with_manifest_being_present() throws IOException {
+    public void delegates_to_osb_proxy_when_deprovision_completes_with_manifest_being_present() {
         DeleteServiceInstanceRequest request = OsbBuilderHelper.aDeleteServiceInstanceRequest();
 
         //Given a proxy that returns a custom response message
@@ -199,7 +199,7 @@ public class PipelineCompletionTrackerTest {
     }
 
     @Test(expected = ServiceInstanceDoesNotExistException.class)
-    public void returns_410_GONE_on_osb_proxy_404_missing_catalog_response_when_deprovision_completes() throws IOException {
+    public void returns_410_GONE_on_osb_proxy_404_missing_catalog_response_when_deprovision_completes() {
         DeleteServiceInstanceRequest request = OsbBuilderHelper.aDeleteServiceInstanceRequest();
 
         //Given a proxy that can not reach the enclosing broker
@@ -219,7 +219,7 @@ public class PipelineCompletionTrackerTest {
     }
 
     @Test
-    public void delegates_to_osb_proxy_when_deprovision_completes_with_manifest_being_absent() throws IOException {
+    public void delegates_to_osb_proxy_when_deprovision_completes_with_manifest_being_absent() {
         DeleteServiceInstanceRequest request = OsbBuilderHelper.aDeleteServiceInstanceRequest();
 
         //Given a proxy that returns a custom response message
@@ -238,7 +238,7 @@ public class PipelineCompletionTrackerTest {
     }
 
     @Test
-    public void delegates_to_osb_proxy_when_deprovision_completes_with_manifest_being_absent_after_timeout() throws IOException {
+    public void delegates_to_osb_proxy_when_deprovision_completes_with_manifest_being_absent_after_timeout() {
         DeleteServiceInstanceRequest request = OsbBuilderHelper.aDeleteServiceInstanceRequest();
 
         //Given a proxy that returns a custom response message
@@ -294,7 +294,7 @@ public class PipelineCompletionTrackerTest {
     }
 
     @Test
-    public void returns_inprogress_state_if_manifest_is_not_present_and_provision_operation_state_before_timeout() throws IOException {
+    public void returns_inprogress_state_if_manifest_is_not_present_and_provision_operation_state_before_timeout() {
         //Given a missing manifest file and a create operation state without timeout
         String jsonPipelineOperationState = tracker.getPipelineOperationStateAsJson(OsbBuilderHelper.aCreateServiceInstanceRequest());
 

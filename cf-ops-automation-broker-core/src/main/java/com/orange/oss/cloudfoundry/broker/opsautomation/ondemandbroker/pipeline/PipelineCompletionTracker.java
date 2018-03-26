@@ -62,7 +62,9 @@ public class PipelineCompletionTracker {
 
     private boolean isBoshDeploymentAvailable(Path secretsWorkDir, String serviceInstanceId) {
         Path targetManifestFile = this.getTargetManifestFilePath(secretsWorkDir, serviceInstanceId);
-        return Files.exists(targetManifestFile);
+        boolean exists = Files.exists(targetManifestFile);
+        logger.debug("Manifest at path {} exists: {}", targetManifestFile, exists);
+        return exists;
     }
 
 

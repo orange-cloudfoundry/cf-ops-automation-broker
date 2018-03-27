@@ -1,14 +1,6 @@
-- Fix pipeline merge issue
 - Confirm workaround for manifest wrong path bug works
 - Confirm deprovision errors are now ignored and deployment proceeds
-- Test service binding
-    - edit manifest to bind to newly created service
-    - push & start app
-    - curl to the app
-            $ export APP=cassandra-example-app.example.com
-            $ curl -X POST $APP/myTable
-            $ curl -X DELETE $APP/myTable
-    - delete the app    
+- merge branch
 
 
 
@@ -104,16 +96,8 @@
     Q: why is StructureGeneratorImpl.generate not abstract and subclassed many times ? 
  
 
-- Implement OSB provision delegation to nested cassandra broker for bind/unbind:
-    - trigger smoke tests
-    - merge branch
-
 
 - harden smoke tests:
-   - use bash instead of ash
-      - https://github.com/smebberson/docker-alpine/issues/43#issuecomment-371537664
-         - apk --update bash
-         https://stackoverflow.com/questions/18351198/what-are-the-uses-of-the-exec-command-in-shell-scripts?utm_medium=organic&utm_source=google_rich_qa&utm_campaign=google_rich_qa
    - to clean up service instances 
         - failed
             - create failed
@@ -126,12 +110,7 @@
       - https://github.com/cloudfoundry/cf-deployment-concourse-tasks/blob/master/bosh-delete-deployment/task
       
 
-
-
-
 - Propose OSB client support in spring cloud service broker by submitting an issue  
-
-
 
 
 - Bump to springboot 2.0

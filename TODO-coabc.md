@@ -110,9 +110,6 @@
       - https://github.com/cloudfoundry/cf-deployment-concourse-tasks/blob/master/bosh-delete-deployment/task
       
 
-- Propose OSB client support in spring cloud service broker by submitting an issue  
-
-
 - Bump to springboot 2.0
 - Bump to spring cloud service broker 2.0
 - Upgrade to mockito 2

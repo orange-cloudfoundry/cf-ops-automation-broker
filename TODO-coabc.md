@@ -2,6 +2,12 @@
 - Confirm deprovision errors are now ignored and deployment proceeds
 - merge branch
 
+- Update README.md 
+   - add TOC
+   - Provide status about cassandra and cloudflare brokers
+   - move framework internals to design.md
+   - move contribution section to contributing.md 
+   
 
 
 - Fix regression following varops template introduction: provisionning always fail with a timeout because it's waiting for the manifest at the wrong path
@@ -123,36 +129,16 @@
 - complete refactoring of  CassandraServiceProvisionningTest to use OSB client instead of raw rest assured:CassandraServiceProvisionningTest rest-assured based client which is not compliant w.r.t. "X-Broker-API-Originating-Identity" mandatory header.
                
                                    
-- refine smoke tests to test C* credentials using a CF app 
-   
-
 - future bind request mapping improvements
    - factor out plan mapping into a method and then a bean 
    - support route binding responses                 
 
 
-
-
-
-
-
 - improve coab concourse integration
-    - schedule smoke test service instance automatic approval 
+    - schedule smoke test service instance deletion automatic approval 
         login -t micro.preprod -c url  -u atc -p password ;  /usr/sbin/fly -t micro.preprod trigger-job --job=coab-depls-generated/approve-and-delete-disabled-deployments) 
     - trigger coab deployment by watching circle ci tar balls    
         
-    - when osb delegation previously failed, support flag to ignore delete errors for brokers that don't maintain external state
-
-      
-    - when broker is missing
-        - skip OsbProxy when manifest is missing
-        - ignore OsbProxy errors during delete 
-            2018-03-01T15:33:52.04+0100 [APP/PROC/WEB/0] OUT feign.FeignException: status 404 reading CatalogServiceClient#getCatalog(); content:
-
-
-- automate inspection of smoke tests broker exceptions
-   - in log search using specific searches
-   
 - stronger configuration validation to avoid following symptom: fail fast 
     - refine spring validation study, see reverted commit b031956e3091da4a77357b0216a7b718bccb6f78
       - keep @ConfigurationProperties annotation except for GitProperties to diagnose

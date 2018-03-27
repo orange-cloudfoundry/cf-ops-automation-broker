@@ -2,11 +2,12 @@ package com.orange.oss.ondemandbroker;
 
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.UserFacingRuntimeException;
 import org.junit.Test;
+import org.springframework.cloud.servicebroker.exception.ServiceInstanceDoesNotExistException;
+import org.springframework.cloud.servicebroker.exception.ServiceInstanceUpdateNotSupportedException;
 
 import java.io.IOException;
 
 import static org.fest.assertions.Assertions.assertThat;
-import static org.junit.Assert.*;
 
 public class ProcessorChainServiceHelperTest {
 
@@ -35,9 +36,21 @@ public class ProcessorChainServiceHelperTest {
         //when
         RuntimeException exception = ProcessorChainServiceHelper.processInternalException(safeException);
 
-        //then the exception is wrapped into a runtime exception, hidding the confidential data
+        //then the exception is not wrapped
+        assertThat(exception).isSameAs(safeException);
+    }
 
-        assertThat(exception.toString()).contains("alphanumerics");
+    @Test
+    public void does_not_filter_OSB_framework_exceptions() {
+
+        //given an exception with confidential internal data thrown
+        ServiceInstanceDoesNotExistException osbException = new ServiceInstanceDoesNotExistException("9ef34c99-a156-4640-b426-5788f3e1db88");
+        ServiceInstanceUpdateNotSupportedException osbException2 = new ServiceInstanceUpdateNotSupportedException("msg");
+        //when
+
+        //then the exception is not wrapped
+        assertThat(ProcessorChainServiceHelper.processInternalException(osbException)).isSameAs(osbException);
+        assertThat(ProcessorChainServiceHelper.processInternalException(osbException2)).isSameAs(osbException2);
     }
 
 

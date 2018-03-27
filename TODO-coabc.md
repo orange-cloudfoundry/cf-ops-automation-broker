@@ -157,8 +157,6 @@
 
 
 
-- refine exception filtering to allow broker framework exceptions 
-    from org.springframework.cloud.servicebroker.exception package to get through
 
 
 

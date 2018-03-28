@@ -100,7 +100,7 @@ public class PipelineCompletionTracker {
                         try {
                             response = osbProxy.delegateDeprovision(pollingRequest, (DeleteServiceInstanceRequest) storedRequest, response);
                         } catch (Exception e) {
-                            logger.info("Unable to delegate delete to enclosed broker, maybe absent/down. Reporting as GONE. Caught:" + e);
+                            logger.info("Unable to delegate delete to enclosed broker, maybe absent/down. Reporting as GONE. Caught:" + e, e);
                             response.withOperationState(OperationState.FAILED);
                         }
                     }

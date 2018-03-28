@@ -1,3 +1,39 @@
+Generated Broker URL is invalid: Hostname is larger than 63 chars
+   Fixes:
+      - modify deployment name to not include "deployment model"
+        - pb: won't distinguish different kind of services
+      - shorten the deployment model
+        - pb: used for symlink to bosh template
+      - modify deployment name to include a short alias
+        - add a new property in DeploymentProperties
+        - propagate to TemplatesGenerator 
+      
+          - update broker.url config to be consistent 
+
+   2018-03-28T18:19:41.19+0200 [APP/PROC/WEB/0] OUT 	at feign.SynchronousMethodHandler.invoke(SynchronousMethodHandler.java:76) ~[feign-core-9.5.0.jar!/:na]
+   2018-03-28T18:19:41.19+0200 [APP/PROC/WEB/0] OUT 2018-03-28 16:19:41.193  INFO 8 --- [nio-8080-exec-2] .o.o.c.b.o.o.p.PipelineCompletionTracker : Unable to delegate delete to enclosed broker, maybe absent/down. Reporting as GONE. Caught:java.lang.IllegalArgumentException: unexpected url: https://cassandra-brokercassandravarsops_1cc4bd10-aadc-4d7d-a1c4-acb955e637db..../v2/catalog
+   2018-03-28T18:19:41.19+0200 [APP/PROC/WEB/0] OUT java.lang.IllegalArgumentException: unexpected url: https://cassandra-brokercassandravarsops_1cc4bd10-aadc-4d7d-a1c4-acb955e637db..../v2/catalog
+   2018-03-28T18:19:41.19+0200 [APP/PROC/WEB/0] OUT 	at okhttp3.Request$Builder.url(Request.java:143) ~[okhttp-3.10.0.jar!/:na]
+   2018-03-28T18:19:41.19+0200 [APP/PROC/WEB/0] OUT 	at feign.okhttp.OkHttpClient.toOkHttpRequest(OkHttpClient.java:53) ~[feign-okhttp-9.6.0.jar!/:na]
+   2018-03-28T18:19:41.19+0200 [APP/PROC/WEB/0] OUT 	at feign.okhttp.OkHttpClient.execute(OkHttpClient.java:158) ~[feign-okhttp-9.6.0.jar!/:na]
+   2018-03-28T18:19:41.19+0200 [APP/PROC/WEB/0] OUT 	at feign.SynchronousMethodHandler.executeAndDecode(SynchronousMethodHandler.java:97) ~[feign-core-9.5.0.jar!/:na]
+   2018-03-28T18:19:41.19+0200 [APP/PROC/WEB/0] OUT 	at feign.ReflectiveFeign$FeignInvocationHandler.invoke(ReflectiveFeign.java:103) ~[feign-core-9.5.0.jar!/:na]
+   2018-03-28T18:19:41.19+0200 [APP/PROC/WEB/0] OUT 	at com.sun.proxy.$Proxy118.getCatalog(Unknown Source) ~[na:na]
+   2018-03-28T18:19:41.19+0200 [APP/PROC/WEB/0] OUT 	at com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.OsbProxyImpl.delegateDeprovision(OsbProxyImpl.java:109) ~[cf-ops-automation-broker-core-0.25.0-SNAPSHOT.jar!/:0.25.0-SNAPSHOT]
+   2018-03-28T18:19:41.19+0200 [APP/PROC/WEB/0] OUT 	at com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.PipelineCompletionTracker.buildResponse(PipelineCompletionTracker.java:101) [cf-ops-automation-broker-core-0.25.0-SNAPSHOT.jar!/:0.25.0-SNAPSHOT]
+   2018-03-28T18:19:41.19+0200 [APP/PROC/WEB/0] OUT 	at com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.PipelineCompletionTracker.getDeploymentExecStatus(PipelineCompletionTracker.java:60) [cf-ops-automation-broker-core-0.25.0-SNAPSHOT.jar!/:0.25.0-SNAPSHOT]
+   2018-03-28T18:19:41.19+0200 [APP/PROC/WEB/0] OUT 	at com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.CassandraProcessor.preGetLastOperation(CassandraProcessor.java:72) [cf-ops-automation-broker-core-0.25.0-SNAPSHOT.jar!/:0.25.0-SNAPSHOT]
+   2018-03-28T18:19:41.19+0200 [APP/PROC/WEB/0] OUT 	at com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.ProcessorChain.getLastOperation(ProcessorChain.java:44) [cf-ops-automation-broker-framework-0.25.0-SNAPSHOT.jar!/:0.25.0-SNAPSHOT]
+
+
+- Understand why smoke tests sometimes fails abrutly before async service creation polling timeout. e.g. build 396
+
+- Fix symptoms from collected  traces:
+
+  2018-03-28T07:07:57.06+0000 [APP/PROC/WEB/0] OUT 2018-03-28 07:07:57.059 ERROR 7 --- [nio-8080-exec-7] c.o.o.c.b.o.o.git.GitProcessor           : [paas-template.] unable to clean up /home/vcap/tmp/broker-7549514514408811704
+
+
+
 - Confirm workaround for manifest wrong path bug works
 - Confirm deprovision errors are now ignored and deployment proceeds
 - merge branch
@@ -14,10 +50,6 @@
    - add service plan name
    - add space_guid,org_guid, originating_user
 
-Fix symptoms from collected  traces:
-
-  2018-03-28T07:07:57.06+0000 [APP/PROC/WEB/0] OUT 2018-03-28 07:07:57.059 ERROR 7 --- [nio-8080-exec-7] c.o.o.c.b.o.o.git.GitProcessor           : [paas-template.] unable to clean up /home/vcap/tm
-p/broker-7549514514408811704
 
 - Refine tarball automatic deployment to filter on the current cassandra PR branch name to avoid deploying old version 
 

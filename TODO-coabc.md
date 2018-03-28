@@ -2,6 +2,16 @@
 - Confirm deprovision errors are now ignored and deployment proceeds
 - merge branch
 
+  2018-03-28T07:07:57.06+0000 [APP/PROC/WEB/0] OUT 2018-03-28 07:07:57.059 ERROR 7 --- [nio-8080-exec-7] c.o.o.c.b.o.o.git.GitProcessor           : [paas-template.] unable to clean up /home/vcap/tm
+p/broker-7549514514408811704
+
+Apparently COAB commits reference stable model template
+- In CassandraServiceProvisionningTest test, the cassandravarsops are properly referenced
+- Check the COAB version deployed
+    - Refine tarball automatic deployment to filter on the current cassandra PR branch name
+
+
+
 - Update README.md 
    - add TOC
    - Provide status about cassandra and cloudflare brokers
@@ -207,7 +217,6 @@ Server error, status code: 409, error code: 60016, message: An operation for ser
      - better map service plans
      - modularize mapping as injected strategies
  
-- Refine tarball automatic deployment to filter on the current cassandra PR branch name
 
 - add support for returning templated dashboard in Cassandra processor provision responses    
 

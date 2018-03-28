@@ -89,7 +89,7 @@ public class PipelineCompletionTrackerTest {
     }
 
     @Test
-    public void returns_succeeded_state_if_manifest_is_present_regardless_of_elapsed_time() throws IOException {
+    public void returns_succeeded_state_during_provision_if_manifest_is_present_regardless_of_elapsed_time() throws IOException {
         //Given an existing manifest file
         generateSampleManifest();
         String jsonPipelineOperationState = createProvisionOperationStateInThePast();
@@ -100,6 +100,7 @@ public class PipelineCompletionTrackerTest {
         //Then
         assertThat(response.getState()).isEqualTo(OperationState.SUCCEEDED);
         assertThat(response.getDescription()).isEqualTo("Creation succeeded");
+        assertThat(response.isDeleteOperation()).isFalse();
         //and proxy is invoked
         verify(osbProxy).delegateProvision(any(), any(), any());
     }
@@ -198,8 +199,8 @@ public class PipelineCompletionTrackerTest {
         verify(osbProxy).delegateDeprovision(any(), any(), any());
     }
 
-    @Test(expected = ServiceInstanceDoesNotExistException.class)
-    public void returns_410_GONE_on_osb_proxy_404_missing_catalog_response_when_deprovision_completes() {
+    @Test
+    public void returns_failed_state_on_osb_proxy_404_missing_catalog_response_when_deprovision_completes() {
         DeleteServiceInstanceRequest request = OsbBuilderHelper.aDeleteServiceInstanceRequest();
 
         //Given a proxy that can not reach the enclosing broker
@@ -212,10 +213,12 @@ public class PipelineCompletionTrackerTest {
         when(osbProxy.delegateDeprovision(any(), any(), any())).thenThrow(catalogException );
 
         //When
-        tracker.buildResponse(request.getClass().getName(), false, false, (long) 10, pollingRequest, request);
+        GetLastServiceOperationResponse response = tracker.buildResponse(request.getClass().getName(), true, false, (long) 10, pollingRequest, request);
 
         //Then
-        verify(osbProxy).delegateDeprovision(any(), any(), any());
+        assertThat(response.getState()).isEqualTo(OperationState.FAILED);
+        assertThat(response.isDeleteOperation()).isTrue();
+        assertThat(response.getDescription()).isNull();
     }
 
     @Test

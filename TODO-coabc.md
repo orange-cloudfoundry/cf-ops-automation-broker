@@ -7,6 +7,7 @@
    - add service plan name
    - add space_guid,org_guid, originating_user
 
+Fix symptoms from collected  traces:
 
   2018-03-28T07:07:57.06+0000 [APP/PROC/WEB/0] OUT 2018-03-28 07:07:57.059 ERROR 7 --- [nio-8080-exec-7] c.o.o.c.b.o.o.git.GitProcessor           : [paas-template.] unable to clean up /home/vcap/tm
 p/broker-7549514514408811704

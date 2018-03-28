@@ -200,7 +200,7 @@ public class PipelineCompletionTrackerTest {
     }
 
     @Test
-    public void returns_failed_state_on_osb_proxy_404_missing_catalog_response_when_deprovision_completes() {
+    public void returns_success_state_on_osb_proxy_404_missing_catalog_response_when_deprovision_completes() {
         DeleteServiceInstanceRequest request = OsbBuilderHelper.aDeleteServiceInstanceRequest();
 
         //Given a proxy that can not reach the enclosing broker
@@ -216,7 +216,7 @@ public class PipelineCompletionTrackerTest {
         GetLastServiceOperationResponse response = tracker.buildResponse(request.getClass().getName(), true, false, (long) 10, pollingRequest, request);
 
         //Then
-        assertThat(response.getState()).isEqualTo(OperationState.FAILED);
+        assertThat(response.getState()).isEqualTo(OperationState.SUCCEEDED);
         assertThat(response.isDeleteOperation()).isTrue();
         assertThat(response.getDescription()).isNull();
     }

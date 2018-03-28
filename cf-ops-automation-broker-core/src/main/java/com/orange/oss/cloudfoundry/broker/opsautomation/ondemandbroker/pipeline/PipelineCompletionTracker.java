@@ -76,7 +76,13 @@ public class PipelineCompletionTracker {
                         response.withOperationState(OperationState.SUCCEEDED);
                         response.withDescription("Creation succeeded");
                         if (osbProxy != null) {
-                            response = osbProxy.delegateProvision(pollingRequest, (CreateServiceInstanceRequest) storedRequest, response);
+                            try {
+                                response = osbProxy.delegateProvision(pollingRequest, (CreateServiceInstanceRequest) storedRequest, response);
+                            } catch (Exception e) {
+                                logger.warn("Caught during provision delegation. Hint: if meeting 404 broker endpoint, check configuration mismatch between broker url endpoint property, and deployment bosh template", e);
+                                response.withOperationState(OperationState.FAILED);
+                                response.withDescription(null);
+                            }
                         }
                     } else {
                         if (isRequestTimedOut) {

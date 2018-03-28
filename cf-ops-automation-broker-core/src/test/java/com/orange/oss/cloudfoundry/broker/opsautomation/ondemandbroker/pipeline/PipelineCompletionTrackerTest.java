@@ -219,6 +219,27 @@ public class PipelineCompletionTrackerTest {
     }
 
     @Test
+    public void returns_failed_state_on_osb_proxy_404_missing_catalog_response_during_provision() {
+        CreateServiceInstanceRequest request = OsbBuilderHelper.aCreateServiceInstanceRequest();
+
+        //Given a proxy that can not reach the enclosing broker
+        Response errorResponse = Response.builder()
+                .status(HttpStatus.NOT_FOUND.value())
+                .headers(new HashMap<>())
+                .body("{\"description\":\"Requested route ('cassandra-broker_85329f8c-40d0-482b-a996-ff8bee2d4b1a.mydomain') does not exist.\"}", Charset.defaultCharset())
+                .build();
+        FeignException catalogException = FeignException.errorStatus("CatalogServiceClient#getCatalog()", errorResponse);
+        when(osbProxy.delegateProvision(any(), any(), any())).thenThrow(catalogException );
+
+        //When
+        GetLastServiceOperationResponse response = tracker.buildResponse(request.getClass().getName(), true, false, (long) 10, pollingRequest, request);
+
+        //Then
+        assertThat(response.getState()).isEqualTo(OperationState.FAILED);
+        assertThat(response.getDescription()).isNull();
+    }
+
+    @Test
     public void delegates_to_osb_proxy_when_deprovision_completes_with_manifest_being_absent() {
         DeleteServiceInstanceRequest request = OsbBuilderHelper.aDeleteServiceInstanceRequest();
 

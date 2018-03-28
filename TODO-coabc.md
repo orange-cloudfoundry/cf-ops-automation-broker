@@ -2,22 +2,30 @@
 - Confirm deprovision errors are now ignored and deployment proceeds
 - merge branch
 
+- Continue generalization of vars/ops
+   - replace deployment_name with service-instance-guid
+   - add service plan name
+   - add space_guid,org_guid, originating_user
+
+
   2018-03-28T07:07:57.06+0000 [APP/PROC/WEB/0] OUT 2018-03-28 07:07:57.059 ERROR 7 --- [nio-8080-exec-7] c.o.o.c.b.o.o.git.GitProcessor           : [paas-template.] unable to clean up /home/vcap/tm
 p/broker-7549514514408811704
 
-Apparently COAB commits reference stable model template
-- In CassandraServiceProvisionningTest test, the cassandravarsops are properly referenced
-- Check the COAB version deployed
-    - Refine tarball automatic deployment to filter on the current cassandra PR branch name
+- Refine tarball automatic deployment to filter on the current cassandra PR branch name to avoid deploying old version 
 
+
+- Improve diagnostics when the requested service instance paas-template does not get merged by the pipeline
+   - checkout a paas-template clone 
+   - feedback to end user "pending deployment" vs "deployment started"
+   - add debugging traces 
 
 
 - Update README.md 
    - add TOC
    - Provide status about cassandra and cloudflare brokers
    - move framework internals to design.md
-   - move contribution section to contributing.md 
-   
+   - move contribution section to contributing.md
+  
 
 
 - Fix regression following varops template introduction: provisionning always fail with a timeout because it's waiting for the manifest at the wrong path

@@ -1,75 +1,3 @@
-Generated Broker URL is invalid: Hostname is larger than 63 chars
-   Fixes:
-      - modify deployment name to not include "deployment model"
-        - pb: won't distinguish different kind of services
-      - shorten the deployment model
-        - pb: used for symlink to bosh template
-      - modify deployment name to include a short alias
-        - add a new property in DeploymentProperties
-        - propagate to TemplatesGenerator 
-      
-          - update broker.url config to be consistent
-   Refactor:
-   - regroup splitted assertions in a single method for each step: generate, check, remove
-      
-
-   2018-03-28T18:19:41.19+0200 [APP/PROC/WEB/0] OUT 	at feign.SynchronousMethodHandler.invoke(SynchronousMethodHandler.java:76) ~[feign-core-9.5.0.jar!/:na]
-   2018-03-28T18:19:41.19+0200 [APP/PROC/WEB/0] OUT 2018-03-28 16:19:41.193  INFO 8 --- [nio-8080-exec-2] .o.o.c.b.o.o.p.PipelineCompletionTracker : Unable to delegate delete to enclosed broker, maybe absent/down. Reporting as GONE. Caught:java.lang.IllegalArgumentException: unexpected url: https://cassandra-brokercassandravarsops_1cc4bd10-aadc-4d7d-a1c4-acb955e637db..../v2/catalog
-   2018-03-28T18:19:41.19+0200 [APP/PROC/WEB/0] OUT java.lang.IllegalArgumentException: unexpected url: https://cassandra-brokercassandravarsops_1cc4bd10-aadc-4d7d-a1c4-acb955e637db..../v2/catalog
-   2018-03-28T18:19:41.19+0200 [APP/PROC/WEB/0] OUT 	at okhttp3.Request$Builder.url(Request.java:143) ~[okhttp-3.10.0.jar!/:na]
-   2018-03-28T18:19:41.19+0200 [APP/PROC/WEB/0] OUT 	at feign.okhttp.OkHttpClient.toOkHttpRequest(OkHttpClient.java:53) ~[feign-okhttp-9.6.0.jar!/:na]
-   2018-03-28T18:19:41.19+0200 [APP/PROC/WEB/0] OUT 	at feign.okhttp.OkHttpClient.execute(OkHttpClient.java:158) ~[feign-okhttp-9.6.0.jar!/:na]
-   2018-03-28T18:19:41.19+0200 [APP/PROC/WEB/0] OUT 	at feign.SynchronousMethodHandler.executeAndDecode(SynchronousMethodHandler.java:97) ~[feign-core-9.5.0.jar!/:na]
-   2018-03-28T18:19:41.19+0200 [APP/PROC/WEB/0] OUT 	at feign.ReflectiveFeign$FeignInvocationHandler.invoke(ReflectiveFeign.java:103) ~[feign-core-9.5.0.jar!/:na]
-   2018-03-28T18:19:41.19+0200 [APP/PROC/WEB/0] OUT 	at com.sun.proxy.$Proxy118.getCatalog(Unknown Source) ~[na:na]
-   2018-03-28T18:19:41.19+0200 [APP/PROC/WEB/0] OUT 	at com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.OsbProxyImpl.delegateDeprovision(OsbProxyImpl.java:109) ~[cf-ops-automation-broker-core-0.25.0-SNAPSHOT.jar!/:0.25.0-SNAPSHOT]
-   2018-03-28T18:19:41.19+0200 [APP/PROC/WEB/0] OUT 	at com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.PipelineCompletionTracker.buildResponse(PipelineCompletionTracker.java:101) [cf-ops-automation-broker-core-0.25.0-SNAPSHOT.jar!/:0.25.0-SNAPSHOT]
-   2018-03-28T18:19:41.19+0200 [APP/PROC/WEB/0] OUT 	at com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.PipelineCompletionTracker.getDeploymentExecStatus(PipelineCompletionTracker.java:60) [cf-ops-automation-broker-core-0.25.0-SNAPSHOT.jar!/:0.25.0-SNAPSHOT]
-   2018-03-28T18:19:41.19+0200 [APP/PROC/WEB/0] OUT 	at com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.CassandraProcessor.preGetLastOperation(CassandraProcessor.java:72) [cf-ops-automation-broker-core-0.25.0-SNAPSHOT.jar!/:0.25.0-SNAPSHOT]
-   2018-03-28T18:19:41.19+0200 [APP/PROC/WEB/0] OUT 	at com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.ProcessorChain.getLastOperation(ProcessorChain.java:44) [cf-ops-automation-broker-framework-0.25.0-SNAPSHOT.jar!/:0.25.0-SNAPSHOT]
-
-
-- Understand why smoke tests sometimes fails abrutly before async service creation polling timeout. e.g. build 396
-
-- Fix symptoms from collected  traces:
-
-  2018-03-28T07:07:57.06+0000 [APP/PROC/WEB/0] OUT 2018-03-28 07:07:57.059 ERROR 7 --- [nio-8080-exec-7] c.o.o.c.b.o.o.git.GitProcessor           : [paas-template.] unable to clean up /home/vcap/tmp/broker-7549514514408811704
-
-
-
-- Confirm workaround for manifest wrong path bug works
-- Confirm deprovision errors are now ignored and deployment proceeds
-- merge branch
-
- 2018-03-28T17:58:58.27+0200 [APP/PROC/WEB/0] OUT 2018-03-28 15:58:58.271  INFO 13 --- [nio-8080-exec-7] .o.o.c.b.o.o.p.PipelineCompletionTracker : Unable to delegate delete to enclosed broker, maybe absent/down. Reporting as GONE. Caught:java.lang.IllegalArgumentException: unexpected url: https://cassandra-brokercassandravarsops_febaea1a-aaac-4266-9a9b-56506eacb356..../v2/catalog
-
-        external_host: cassandra-brokercassandravarsops_febaea1a-aaac-4266-9a9b-56506eacb356.((!/secrets/cloudfoundry_system_domain))
-
-
-
-
-- Continue generalization of vars/ops
-   - replace deployment_name with service-instance-guid
-   - add service plan name
-   - add space_guid,org_guid, originating_user
-
-
-- Refine tarball automatic deployment to filter on the current cassandra PR branch name to avoid deploying old version 
-
-
-- Improve diagnostics when the requested service instance paas-template does not get merged by the pipeline
-   - checkout a paas-template clone 
-   - feedback to end user "pending deployment" vs "deployment started"
-   - add debugging traces 
-
-
-- Update README.md 
-   - add TOC
-   - Provide status about cassandra and cloudflare brokers
-   - move framework internals to design.md
-   - move contribution section to contributing.md
-  
-
 
 - Fix regression following varops template introduction: provisionning always fail with a timeout because it's waiting for the manifest at the wrong path
 
@@ -98,79 +26,119 @@ Generated Broker URL is invalid: Hostname is larger than 63 chars
       
     ```
     
-
-
+        SecretsGenerator uses:
         
-    SecretsGenerator uses:
+        ```java
+            
+                        //Compute instance directory
+                        String deploymentInstanceDirectory = this.modelDeployment + DeploymentConstants.UNDERSCORE + serviceInstanceId;
+            
+                        //Generate secrets directory
+                        StructureGeneratorHelper.generateDirectory(workDir, this.rootDeployment, deploymentInstanceDirectory, this.secrets);
     
-    ```java
-        
-                    //Compute instance directory
-                    String deploymentInstanceDirectory = this.modelDeployment + DeploymentConstants.UNDERSCORE + serviceInstanceId;
-        
-                    //Generate secrets directory
-                    StructureGeneratorHelper.generateDirectory(workDir, this.rootDeployment, deploymentInstanceDirectory, this.secrets);
-
-    ```
-
-        where modelDeployment is injected by CassandraBrokerApplication from DeploymentProperties 
-
-    + CassandraServiceProvisionningTest don't detect this, as it also uses PipelineCompletionTracker
-
-    ```java
-        public void simulateManifestGeneration(GitProcessor gitProcessor) throws IOException {
-            Context context = new Context();
-            gitProcessor.preCreate(context);
+        ```
     
-            Path workDirPath = (Path) context.contextKeys.get(SECRETS_REPOSITORY_ALIAS_NAME + GitProcessorContext.workDir.toString());
-            @SuppressWarnings("unchecked") PipelineCompletionTracker tracker = new PipelineCompletionTracker(Clock.systemUTC(), osbProxyProperties.getMaxExecutionDurationSeconds(), Mockito.mock(OsbProxy.class));
-            Path targetManifestFilePath = tracker.getTargetManifestFilePath(workDirPath, SERVICE_INSTANCE_ID);
-            createDir(targetManifestFilePath.getParent());
-            createDummyFile(targetManifestFilePath);
+            where modelDeployment is injected by CassandraBrokerApplication from DeploymentProperties 
     
-            gitProcessor.postCreate(context);
-        }
-    ```
+        + CassandraServiceProvisionningTest don't detect this, as it also uses PipelineCompletionTracker
+    
+        ```java
+            public void simulateManifestGeneration(GitProcessor gitProcessor) throws IOException {
+                Context context = new Context();
+                gitProcessor.preCreate(context);
+        
+                Path workDirPath = (Path) context.contextKeys.get(SECRETS_REPOSITORY_ALIAS_NAME + GitProcessorContext.workDir.toString());
+                @SuppressWarnings("unchecked") PipelineCompletionTracker tracker = new PipelineCompletionTracker(Clock.systemUTC(), osbProxyProperties.getMaxExecutionDurationSeconds(), Mockito.mock(OsbProxy.class));
+                Path targetManifestFilePath = tracker.getTargetManifestFilePath(workDirPath, SERVICE_INSTANCE_ID);
+                createDir(targetManifestFilePath.getParent());
+                createDummyFile(targetManifestFilePath);
+        
+                gitProcessor.postCreate(context);
+            }
+        ```
+    
+            
+        Possible fixes:
+        - use the same code to generate deployment files in secrets than to watch for concourse completion ion deployment dir, and share this code with test.
+            - refactor PipelineCompletionTracker + CassandraServiceProvisionningTest to delegate the ManifestPath computing to SecretsGenerator
+               - extract code from SecretsGenerator:  
+               
+                  /**
+                    * Provide path where concourse should generate the manifest once the deployment is complete
+                    * @param workDir The local checkout of paas-secret git repo
+                    * @param serviceInstanceId the service instance guid
+                    */
+                   public Path getDeploymentInstancePath(Path workDir, String serviceInstanceId) {
+                       String deploymentInstanceDirName = getDeploymentInstanceDirName(serviceInstanceId);
+                       //Compute path
+                       return StructureGeneratorHelper.generatePath(workDir, this.rootDeployment, deploymentInstanceDirName, this.secrets);
+                   }
+               
+                   String getDeploymentInstanceDirName(String serviceInstanceId) {
+                       return this.modelDeployment + DeploymentConstants.UNDERSCORE + serviceInstanceId;
+                   }
+     
+                 Drawbacks: SecretsGenerator contructor would pull lots of unnecessary to PipelineCompletionTracker, making unit tests heavier
+                 Solution:
+                    - Extract interface: SecretsReader, ServiceInstanceDeploymentBuilder ...  
+    
+    
+    
+        Q: why are so many flags exported by DeploymentProperties ? Would all be potentially configured by the COAB operator ?
+        Q: why is StructureGeneratorImpl.generate not abstract and subclassed many times ? 
+     
+
+    
+   - Refactor:
+        - regroup splitted assertions in a single method for each step: generate, check, remove
+
+
+- Confirm deprovision errors are now ignored and deployment proceeds
+
+ 2018-03-28T17:58:58.27+0200 [APP/PROC/WEB/0] OUT 2018-03-28 15:58:58.271  INFO 13 --- [nio-8080-exec-7] .o.o.c.b.o.o.p.PipelineCompletionTracker : Unable to delegate delete to enclosed broker, maybe absent/down. Reporting as GONE. Caught:java.lang.IllegalArgumentException: unexpected url: https://cassandra-brokercassandravarsops_febaea1a-aaac-4266-9a9b-56506eacb356..../v2/catalog
+
+        external_host: cassandra-brokercassandravarsops_febaea1a-aaac-4266-9a9b-56506eacb356.((!/secrets/cloudfoundry_system_domain))
 
         
-    Possible fixes:
-    - use the same code to generate deployment files in secrets than to watch for concourse completion ion deployment dir, and share this code with test.
-        - refactor PipelineCompletionTracker + CassandraServiceProvisionningTest to delegate the ManifestPath computing to SecretsGenerator
-           - extract code from SecretsGenerator:  
-           
-              /**
-                * Provide path where concourse should generate the manifest once the deployment is complete
-                * @param workDir The local checkout of paas-secret git repo
-                * @param serviceInstanceId the service instance guid
-                */
-               public Path getDeploymentInstancePath(Path workDir, String serviceInstanceId) {
-                   String deploymentInstanceDirName = getDeploymentInstanceDirName(serviceInstanceId);
-                   //Compute path
-                   return StructureGeneratorHelper.generatePath(workDir, this.rootDeployment, deploymentInstanceDirName, this.secrets);
-               }
-           
-               String getDeploymentInstanceDirName(String serviceInstanceId) {
-                   return this.modelDeployment + DeploymentConstants.UNDERSCORE + serviceInstanceId;
-               }
- 
-             Drawbacks: SecretsGenerator contructor would pull lots of unnecessary to PipelineCompletionTracker, making unit tests heavier
-             Solution:
-                - Extract interface: SecretsReader, ServiceInstanceDeploymentBuilder ...  
+
+- Current limitation: COA does not trigger update of service instances when template is modified
+   - Because service instances get resource don't see symlinked changes  
+
+      
+- Understand why smoke tests sometimes fails abrutly before async service creation polling timeout. e.g. build 396 Suspecting set +x obscure exit in while loop
+
+- Fix symptoms from collected  traces:
+
+  2018-03-28T07:07:57.06+0000 [APP/PROC/WEB/0] OUT 2018-03-28 07:07:57.059 ERROR 7 --- [nio-8080-exec-7] c.o.o.c.b.o.o.git.GitProcessor           : [paas-template.] unable to clean up /home/vcap/tmp/broker-7549514514408811704
 
 
 
-    Q: why are so many flags exported by DeploymentProperties ? Would all be potentially configured by the COAB operator ?
-    Q: why is StructureGeneratorImpl.generate not abstract and subclassed many times ? 
- 
+
+
+- Continue generalization of vars/ops
+   - replace deployment_name with service-instance-guid
+   - add service plan name
+   - add space_guid,org_guid, originating_user
+
+
+- Refine tarball automatic deployment to filter on the current cassandra PR branch name to avoid deploying old version 
+
+
+- Improve diagnostics when the requested service instance paas-template does not get merged by the pipeline
+   - checkout a paas-template clone 
+   - feedback to end user "pending deployment" vs "deployment started"
+   - add debugging traces 
+
+
+- Update README.md 
+   - add TOC
+   - Provide status about cassandra and cloudflare brokers
+   - move framework internals to design.md
+   - move contribution section to contributing.md
+  
 
 
 - harden smoke tests:
-   - to clean up service instances 
-        - failed
-            - create failed
-                cf s | grep 'create failed' | cut -d ' ' -f 1 | xargs -n 1  cf ds -f 
-    
-        - beyond the quota
    - to ease CF/concourse correlation: rename service instance with the the service instance guid
    - refactor to use more readeable syntax: trap, seq, functions, see 
       - https://github.com/cloudfoundry/capi-release/blob/develop/src/capi_utils/monit_utils.sh

@@ -1,7 +1,7 @@
+- bump cloudflare version in paas-template
+- fix smoke test syntax issues
 
-- update default logging level in paas-template to trace COA generated manifest presence on disk.
-
-- Fix regression following varops template introduction: provisionning always fail with a timeout because it's waiting for the manifest at the wrong path
+- Long term fix for regression following varops template introduction: provisionning always fail with a timeout because it's waiting for the manifest at the wrong path
 
     PipelineCompletionTracker uses 
     ```java
@@ -61,6 +61,7 @@
     
             
         Possible fixes:
+        - **workaround** transiently hardcode the manifest path unrelated to the deployment model
         - use the same code to generate deployment files in secrets than to watch for concourse completion ion deployment dir, and share this code with test.
             - refactor PipelineCompletionTracker + CassandraServiceProvisionningTest to delegate the ManifestPath computing to SecretsGenerator
                - extract code from SecretsGenerator:  

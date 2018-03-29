@@ -1,25 +1,24 @@
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline;
 
-import java.io.File;
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 
 /**
  * Created by ijly7474 on 15/12/17.
  */
 public class StructureGeneratorImpl implements StructureGenerator {
 
-    protected String rootDeployment;
-    protected String modelDeployment;
+    String rootDeployment;
+    String modelDeployment;
+    String modelDeploymentShortAlias;
 
     public StructureGeneratorImpl(){
     }
 
-    public StructureGeneratorImpl(String rootDeployment, String modelDeployment){
+    public StructureGeneratorImpl(String rootDeployment, String modelDeployment, String modelDeploymentShortAlias){
         this.rootDeployment = rootDeployment;
         this.modelDeployment = modelDeployment;
+        this.modelDeploymentShortAlias = modelDeploymentShortAlias;
     }
 
     public void checkPrerequisites(Path workDir) {
@@ -38,7 +37,7 @@ public class StructureGeneratorImpl implements StructureGenerator {
 
     public void generate(Path workDir, String serviceInstanceId) {
             ////Generate service directory
-            String deploymentInstanceDirectory = this.modelDeployment + DeploymentConstants.UNDERSCORE + serviceInstanceId;
+            String deploymentInstanceDirectory = this.modelDeploymentShortAlias + DeploymentConstants.UNDERSCORE + serviceInstanceId;
             StructureGeneratorHelper.generateDirectory(workDir, this.rootDeployment, deploymentInstanceDirectory);
     }
 

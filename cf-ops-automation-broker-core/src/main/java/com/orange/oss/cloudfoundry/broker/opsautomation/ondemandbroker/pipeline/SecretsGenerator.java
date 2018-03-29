@@ -10,8 +10,8 @@ public class SecretsGenerator extends StructureGeneratorImpl {
     public SecretsGenerator(){
     }
 
-    public SecretsGenerator(String rootDeployment, String modelDeployment, String secrets, String meta){
-        super(rootDeployment,modelDeployment);
+    public SecretsGenerator(String rootDeployment, String modelDeployment, String secrets, String meta, String modelDeploymentShortAlias){
+        super(rootDeployment,modelDeployment, modelDeploymentShortAlias);
         this.secrets = secrets;
         this.meta = meta;
     }
@@ -59,7 +59,7 @@ public class SecretsGenerator extends StructureGeneratorImpl {
             super.generate(workDir, serviceInstanceId);
 
             //Compute instance directory
-            String deploymentInstanceDirectory = this.modelDeployment + DeploymentConstants.UNDERSCORE + serviceInstanceId;
+            String deploymentInstanceDirectory = this.modelDeploymentShortAlias + DeploymentConstants.UNDERSCORE + serviceInstanceId;
 
             //Generate secrets directory
             StructureGeneratorHelper.generateDirectory(workDir, this.rootDeployment, deploymentInstanceDirectory, this.secrets);
@@ -84,7 +84,7 @@ public class SecretsGenerator extends StructureGeneratorImpl {
     public void remove(Path workDir, String serviceInstanceId) {
 
             //Compute instance directory
-            String deploymentInstanceDirectory = this.modelDeployment + DeploymentConstants.UNDERSCORE + serviceInstanceId;
+            String deploymentInstanceDirectory = this.modelDeploymentShortAlias + DeploymentConstants.UNDERSCORE + serviceInstanceId;
 
             //Remove meta file
             this.removeMetaFile(workDir, deploymentInstanceDirectory);
@@ -97,19 +97,19 @@ public class SecretsGenerator extends StructureGeneratorImpl {
 
     }
 
-    protected void removeMetaFile(Path workDir, String deploymentInstanceDirectory) {
+    private void removeMetaFile(Path workDir, String deploymentInstanceDirectory) {
         String[] pathElements = new String[] {this.rootDeployment, deploymentInstanceDirectory, this.secrets};
         String fileName = this.meta + DeploymentConstants.YML_EXTENSION;
         StructureGeneratorHelper.removeFile(workDir, pathElements, fileName);
     }
 
-    protected void removeSecretsFile(Path workDir, String deploymentInstanceDirectory) {
+    private void removeSecretsFile(Path workDir, String deploymentInstanceDirectory) {
         String[] pathElements = new String[] {this.rootDeployment, deploymentInstanceDirectory, this.secrets};
         String fileName = this.secrets + DeploymentConstants.YML_EXTENSION;
         StructureGeneratorHelper.removeFile(workDir, pathElements, fileName);
     }
 
-    protected void removeEnableDeploymentFile(Path workDir, String deploymentInstanceDirectory) {
+    private void removeEnableDeploymentFile(Path workDir, String deploymentInstanceDirectory) {
         String[] pathElements = new String[] {this.rootDeployment, deploymentInstanceDirectory};
         String fileName = DeploymentConstants.ENABLE_DEPLOYMENT_FILENAME;
         StructureGeneratorHelper.removeFile(workDir, pathElements, fileName);

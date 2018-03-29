@@ -20,8 +20,8 @@ public class TemplatesGenerator extends StructureGeneratorImpl{
     public TemplatesGenerator(){
     }
 
-    public TemplatesGenerator(String rootDeployment, String modelDeployment, String template, String vars, String operators){
-        super(rootDeployment,modelDeployment);
+    public TemplatesGenerator(String rootDeployment, String modelDeployment, String template, String vars, String operators, String modelDeploymentShortAlias){
+        super(rootDeployment,modelDeployment, modelDeploymentShortAlias);
         this.template = template;
         this.vars = vars;
         this.operators = operators;
@@ -86,17 +86,17 @@ public class TemplatesGenerator extends StructureGeneratorImpl{
             super.generate(workDir, serviceInstanceId);
 
             //Build deploymentInstanceDirectory
-            String deploymentInstance = this.modelDeployment + DeploymentConstants.UNDERSCORE + serviceInstanceId;
+            String deploymentInstance = this.modelDeploymentShortAlias + DeploymentConstants.UNDERSCORE + serviceInstanceId;
 
             //Generate template directory
             Path deploymentTemplateDir = StructureGeneratorHelper.generatePath(workDir,
                     this.rootDeployment,
-                    this.modelDeployment + DeploymentConstants.UNDERSCORE + serviceInstanceId,
+                    this.modelDeploymentShortAlias + DeploymentConstants.UNDERSCORE + serviceInstanceId,
                     this.template);
             Files.createDirectory(deploymentTemplateDir);
 
             //Generate deployment dependencies file
-            Map<String, String> mapDeploymentDependenciesFile = new HashMap<String, String>();
+            Map<String, String> mapDeploymentDependenciesFile = new HashMap<>();
             mapDeploymentDependenciesFile.put(DeploymentConstants.DEPLOYMENT_NAME_PATTERN, deploymentInstance);
             String[] targetPathElements = new String[] {this.rootDeployment, deploymentInstance};
             String sourceFileName = DeploymentConstants.DEPLOYMENT_DEPENDENCIES_FILENAME;
@@ -120,7 +120,7 @@ public class TemplatesGenerator extends StructureGeneratorImpl{
             StructureGeneratorHelper.generateSymbolicLink(workDir, sourcePathElements, targetPathElements, sourceFileName, sourceFileName);
 
             //Generate coab vars file
-            Map<String, String> mapCoabVarsFile = new HashMap<String, String>();
+            Map<String, String> mapCoabVarsFile = new HashMap<>();
             mapCoabVarsFile.put(DeploymentConstants.DEPLOYMENT_NAME_PATTERN, deploymentInstance);
             targetPathElements = new String[] {this.rootDeployment, deploymentInstance, this.template};
             sourceFileName = DeploymentConstants.COAB + DeploymentConstants.HYPHEN + this.vars + DeploymentConstants.YML_EXTENSION;
@@ -136,7 +136,7 @@ public class TemplatesGenerator extends StructureGeneratorImpl{
 
         try {
             //Read source file content
-            List<String> lines = null;
+            List<String> lines;
             lines = IOUtils.readLines(getClass().getResourceAsStream(File.separator + CassandraProcessorConstants.MODEL_DEPLOYMENT_DIRECTORY + File.separator + sourceFileName), StandardCharsets.UTF_8);
 
             //Update file content

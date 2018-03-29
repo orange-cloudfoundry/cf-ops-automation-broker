@@ -79,7 +79,8 @@ public class CassandraBrokerApplication {
                 deploymentProperties.getRootDeployment(),
                 deploymentProperties.getModelDeployment(),
                 deploymentProperties.getSecrets(),
-                deploymentProperties.getMeta()
+                deploymentProperties.getMeta(),
+                deploymentProperties.getModelDeploymentShortAlias()
         );
     }
 
@@ -92,7 +93,8 @@ public class CassandraBrokerApplication {
                 deploymentProperties.getModelDeployment(),
                 deploymentProperties.getTemplate(),
                 deploymentProperties.getVars(),
-                deploymentProperties.getOperators()
+                deploymentProperties.getOperators(),
+                deploymentProperties.getModelDeploymentShortAlias()
         );
     }
 

@@ -8,7 +8,10 @@ Generated Broker URL is invalid: Hostname is larger than 63 chars
         - add a new property in DeploymentProperties
         - propagate to TemplatesGenerator 
       
-          - update broker.url config to be consistent 
+          - update broker.url config to be consistent
+   Refactor:
+   - regroup splitted assertions in a single method for each step: generate, check, remove
+      
 
    2018-03-28T18:19:41.19+0200 [APP/PROC/WEB/0] OUT 	at feign.SynchronousMethodHandler.invoke(SynchronousMethodHandler.java:76) ~[feign-core-9.5.0.jar!/:na]
    2018-03-28T18:19:41.19+0200 [APP/PROC/WEB/0] OUT 2018-03-28 16:19:41.193  INFO 8 --- [nio-8080-exec-2] .o.o.c.b.o.o.p.PipelineCompletionTracker : Unable to delegate delete to enclosed broker, maybe absent/down. Reporting as GONE. Caught:java.lang.IllegalArgumentException: unexpected url: https://cassandra-brokercassandravarsops_1cc4bd10-aadc-4d7d-a1c4-acb955e637db..../v2/catalog
@@ -334,11 +337,12 @@ Server error, status code: 409, error code: 60016, message: An operation for ser
                Actually check whether okHttpClient support for self signed certs and http proxy is still usefull, otherwise remove it
         - fix OkHttpClientConfig warnings    
      
-- credhub write support
+- credhub 
+   - write support
+   - integration test
+      - record wiremocks 
+         - using tunnels https://starkandwayne.com/blog/accessing-bosh-and-credhub-via-magic-tunnels/
 
 
-- ~~osb processor: create/delete service binding~~
 
-- ~~credhub processor~~
-    - integration test
 

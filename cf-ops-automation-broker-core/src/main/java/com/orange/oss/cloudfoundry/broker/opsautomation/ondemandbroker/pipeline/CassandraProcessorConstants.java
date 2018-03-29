@@ -2,7 +2,7 @@ package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline
 
 public class CassandraProcessorConstants {
     public static final String UNDERSCORE = "_";
-    public static final String SERVICE_INSTANCE_PREFIX_DIRECTORY = "cassandravarsops_";
+    public static final String SERVICE_INSTANCE_PREFIX_DIRECTORY = "c_";
     public static final String BROKER_PREFIX = "cassandra-broker_";
     public static final String SECRETS_DIRECTORY = "secrets";
     public static final String TEMPLATE_DIRECTORY = "template";

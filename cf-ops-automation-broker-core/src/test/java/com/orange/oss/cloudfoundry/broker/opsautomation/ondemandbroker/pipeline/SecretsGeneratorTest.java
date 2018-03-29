@@ -233,7 +233,7 @@ public class SecretsGeneratorTest {
     }
 
     @Test
-    public void check_that_enable_deployment_file_is_generated() throws IOException {
+    public void check_that_enable_deployment_file_is_generated_collocated_with_coa_produced_manifest() throws IOException {
         //Given
         Path modelDeploymentDir = StructureGeneratorHelper.generatePath(this.workDir,
                 this.deploymentProperties.getRootDeployment(),
@@ -249,13 +249,21 @@ public class SecretsGeneratorTest {
                 this.deploymentProperties.getModelDeploymentShortAlias() + DeploymentConstants.UNDERSCORE + SERVICE_INSTANCE_ID,
                 DeploymentConstants.ENABLE_DEPLOYMENT_FILENAME);
         assertThat("Enable deployment file doesn't exist:" + targetEnableDeploymentFile, Files.exists(targetEnableDeploymentFile));
+
+        //And then is consistent between COAB request generation and COAB polling of COA response.
+        Path simulatedCoaGeneratedManifestFile = StructureGeneratorHelper.generatePath(this.workDir,
+                this.deploymentProperties.getRootDeployment(),
+                this.deploymentProperties.getModelDeploymentShortAlias() + DeploymentConstants.UNDERSCORE + SERVICE_INSTANCE_ID,
+                CassandraProcessorConstants.SERVICE_INSTANCE_PREFIX_DIRECTORY + SERVICE_INSTANCE_ID+ CassandraProcessorConstants.YML_SUFFIX);
+
+        assertThat("expected consistency between generated secrets and expected COA manifest at:" + simulatedCoaGeneratedManifestFile, PipelineCompletionTracker.getTargetManifestFilePath(this.workDir, SERVICE_INSTANCE_ID).equals(simulatedCoaGeneratedManifestFile));
     }
 
     @Test
     public void check_that_enable_deployment_file_is_removed() throws IOException {
 
         //Given
-        this.check_that_enable_deployment_file_is_generated();
+        this.check_that_enable_deployment_file_is_generated_collocated_with_coa_produced_manifest();
 
         //When
         this.secretsGenerator.remove(this.workDir, SERVICE_INSTANCE_ID);

@@ -6,7 +6,9 @@ import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processor
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.terraform.*;
 import com.orange.oss.ondemandbroker.ProcessorChainServiceInstanceService;
 import org.junit.Assert;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
@@ -26,6 +28,7 @@ import java.util.Map;
 import static com.orange.oss.ondemandbroker.ProcessorChainServiceInstanceService.OSB_PROFILE_ORGANIZATION_GUID;
 import static com.orange.oss.ondemandbroker.ProcessorChainServiceInstanceService.OSB_PROFILE_SPACE_GUID;
 import static org.fest.assertions.Assertions.assertThat;
+import static org.hamcrest.CoreMatchers.containsString;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
@@ -41,9 +44,10 @@ import static org.springframework.cloud.servicebroker.model.OperationState.IN_PR
 public class CloudFlareProcessorTest {
 
     @Mock
+    private
     TerraformRepository terraformRepository;
 
-    CloudFlareProcessor cloudFlareProcessor = new CloudFlareProcessor(aConfig(), aSuffixValidator(), getRepositoryFactory(), aTracker());
+    private CloudFlareProcessor cloudFlareProcessor = new CloudFlareProcessor(aConfig(), aSuffixValidator(), getRepositoryFactory(), aTracker());
 
 
     @Test(expected = UserFacingRuntimeException.class)
@@ -67,20 +71,43 @@ public class CloudFlareProcessorTest {
         }
     }
 
+    @Rule
+    public ExpectedException thrown = ExpectedException.none();
+
     @Test
-    public void hints_users_when_missing_param() {
+    public void hints_users_when_missing_param_value() {
         //given a user performing
         //cf cs cloudflare -c '{a_wrong_param="myroute"}'
         Context context = aContextWithCreateRequest(CloudFlareProcessor.ROUTE_PREFIX, null);
 
-        try {
-            cloudFlareProcessor.preCreate(context);
-            Assert.fail("expected to be rejected");
-        } catch (UserFacingRuntimeException e) {
-            //Message should indicate to end user the incorrect param name and value
-            assertThat(e.getMessage()).contains(CloudFlareProcessor.ROUTE_PREFIX);
-            assertThat(e.getMessage()).containsIgnoringCase("missing");
-        }
+        thrown.expect(UserFacingRuntimeException.class);
+        thrown.expectMessage(containsString(CloudFlareProcessor.ROUTE_PREFIX));
+        thrown.expectMessage(containsString("Missing"));
+
+        cloudFlareProcessor.preCreate(context);
+    }
+
+    @Test
+    public void hints_users_when_missing_param() {
+        //given a user performing
+        //cf cs cloudflare
+        CreateServiceInstanceRequest request = new CreateServiceInstanceRequest("service_definition_id",
+                "plan_id",
+                "org_id",
+                "space_id",
+                null
+        );
+        request.withServiceInstanceId("service-instance-guid");
+
+        //and the context being injected to a cloudflare processor
+        Context context = new Context();
+        context.contextKeys.put(ProcessorChainServiceInstanceService.CREATE_SERVICE_INSTANCE_REQUEST, request);
+
+        thrown.expect(UserFacingRuntimeException.class);
+        thrown.expectMessage(containsString(CloudFlareProcessor.ROUTE_PREFIX));
+        thrown.expectMessage(containsString("Missing"));
+
+        cloudFlareProcessor.preCreate(context);
     }
 
     @Test
@@ -161,7 +188,7 @@ public class CloudFlareProcessorTest {
         cloudFlareProcessor = new CloudFlareProcessor(aConfig(), aSuffixValidator(), repositoryFactory, null);
 
         //when
-        FileTerraformRepository repository = (FileTerraformRepository) cloudFlareProcessor.getRepository(ctx);
+        @SuppressWarnings("unused") FileTerraformRepository repository = (FileTerraformRepository) cloudFlareProcessor.getRepository(ctx);
 
         //then OSB will retry polling status, or ask user to retry the delete request.
     }
@@ -345,11 +372,11 @@ public class CloudFlareProcessorTest {
         assertThat(customMessage).isEqualTo("cloudflare broker: delete instance id=instance_id with route-prefix=avalidroute");
     }
 
-    protected Path aGitRepoWorkDir() {
+    private Path aGitRepoWorkDir() {
         return FileSystems.getDefault().getPath("/a/git_workdir/path");
     }
 
-    TerraformCompletionTracker aTracker() {
+    private TerraformCompletionTracker aTracker() {
         GetLastServiceOperationResponse expectedResponse = new GetLastServiceOperationResponse();
         expectedResponse.withDescription("module exec in progress");
         expectedResponse.withOperationState(IN_PROGRESS);
@@ -359,12 +386,12 @@ public class CloudFlareProcessorTest {
         return tracker;
     }
 
-    CloudFlareRouteSuffixValidator aSuffixValidator() {
+    private CloudFlareRouteSuffixValidator aSuffixValidator() {
         return new CloudFlareRouteSuffixValidator(aConfig().getRouteSuffix());
     }
 
     @SuppressWarnings("SameParameterValue")
-    Context aContextWithCreateRequest(String key, String value) {
+    private Context aContextWithCreateRequest(String key, String value) {
         Map<String, Object> parameters = new HashMap<>();
         parameters.put(key, value);
         CreateServiceInstanceRequest request = new CreateServiceInstanceRequest("service_definition_id",

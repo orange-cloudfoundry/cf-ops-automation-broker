@@ -17,14 +17,25 @@
 
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.osbclient;
 
-import feign.Feign;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.Gson;
 import feign.Logger;
 import feign.okhttp.OkHttpClient;
 import feign.slf4j.Slf4jLogger;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.netflix.feign.FeignClientsConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
+import org.springframework.http.MediaType;
+import org.springframework.http.converter.json.GsonHttpMessageConverter;
+import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import static org.springframework.http.MediaType.TEXT_PLAIN;
 
 /**
  * Overrides  {@link <a href="http://projects.spring.io/spring-cloud/spring-cloud.html#spring-cloud-feign">Feign</a>} Defaults
@@ -37,18 +48,65 @@ import org.springframework.context.annotation.Import;
 public class OsbClientFeignConfig {
 
     @Bean
-    Logger.Level customFeignLoggerLevel() {
+    Logger.Level feignLoggerLevel() {
         return Logger.Level.FULL;
     }
 
     @Bean
     Logger customFeignLogger() {
-        return new Slf4jLogger();
+        return new Slf4jLogger(ServiceInstanceServiceClient.class);
+    }
+
+    /**
+     * Override default Gson message converter media type support to support
+     * legacy servers sometimes retuning text/plain media type.
+     * This overrides spring boot default, see https://github.com/spring-projects/spring-boot/blob/3fddfee65c901d2aade6eb8a63781b766657d664/spring-boot-project/spring-boot-autoconfigure/src/main/java/org/springframework/boot/autoconfigure/http/GsonHttpMessageConvertersConfiguration.java#L50
+     */
+//    Currently disabled as this has the side effect of changing default spring web Json lib from Jackson to Gson
+//    As a side effects, seems the input validation is stronger and this breaks CassandraServiceProvisionningTest
+//    rest-assured based client which is not compliant w.r.t. "X-Broker-API-Originating-Identity" mandatory header.
+//    @Bean
+    public GsonHttpMessageConverter gsonHttpMessageConverter(Gson gson) {
+        GsonHttpMessageConverter converter = new GsonHttpMessageConverter();
+        converter.setGson(gson);
+        List<MediaType> supportedMediaTypes = converter.getSupportedMediaTypes();
+        if (! supportedMediaTypes.contains(TEXT_PLAIN)) {
+            supportedMediaTypes = new ArrayList<>(supportedMediaTypes);
+            supportedMediaTypes.add(TEXT_PLAIN);
+            converter.setSupportedMediaTypes(supportedMediaTypes);
+        }
+        return converter;
+    }
+
+    /**
+     * Override default Jackson message converter media type support to support
+     * legacy servers sometimes retuning text/plain media type.
+     * This overrides spring boot default, see https://github.com/spring-projects/spring-boot/blob/3fddfee65c901d2aade6eb8a63781b766657d664/spring-boot-project/spring-boot-autoconfigure/src/main/java/org/springframework/boot/autoconfigure/http/JacksonHttpMessageConvertersConfiguration.java#L53
+     */
+    @Bean
+    public MappingJackson2HttpMessageConverter mappingJackson2HttpMessageConverter(
+            ObjectMapper objectMapper) {
+        MappingJackson2HttpMessageConverter converter = new MappingJackson2HttpMessageConverter(objectMapper);
+        List<MediaType> supportedMediaTypes = converter.getSupportedMediaTypes();
+        if (! supportedMediaTypes.contains(TEXT_PLAIN)) {
+            supportedMediaTypes = new ArrayList<>(supportedMediaTypes);
+            supportedMediaTypes.add(TEXT_PLAIN);
+            converter.setSupportedMediaTypes(supportedMediaTypes);
+        }
+        return converter;
+    }
+
+    /**
+     * Turn on reading enums from string to deserialize OSB Pojo enums
+     */
+    @Autowired
+    public void configureJacksonEnumDeserialization(ObjectMapper jackson2ObjectMapper) {
+        jackson2ObjectMapper.enable(DeserializationFeature.READ_ENUMS_USING_TO_STRING);
     }
 
     @Bean
-    Feign.Builder customFeignBuilder(okhttp3.OkHttpClient customOkHttpClient) {
-        return Feign.builder().client(new OkHttpClient(customOkHttpClient));
+    OkHttpClient customFeignOkHttpClient(okhttp3.OkHttpClient customOkHttpClient) {
+        return new OkHttpClient(customOkHttpClient);
     }
 
 }

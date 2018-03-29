@@ -2,6 +2,7 @@ package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline
 
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.GitProcessorContext;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.Context;
+import com.orange.oss.ondemandbroker.ProcessorChainServiceInstanceBindingService;
 import com.orange.oss.ondemandbroker.ProcessorChainServiceInstanceService;
 import org.junit.Test;
 import org.mockito.Mockito;
@@ -18,12 +19,12 @@ import static org.mockito.Mockito.*;
 
 public class CassandraProcessorTest {
 
-    public static final String SERVICE_INSTANCE_ID = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa0";
-    protected static final String TEMPLATES_REPOSITORY_ALIAS_NAME = "paas-template.";
-    protected static final String SECRETS_REPOSITORY_ALIAS_NAME = "paas-secrets.";
+    private static final String SERVICE_INSTANCE_ID = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa0";
+    private static final String TEMPLATES_REPOSITORY_ALIAS_NAME = "paas-template.";
+    private static final String SECRETS_REPOSITORY_ALIAS_NAME = "paas-secrets.";
 
     @Test
-    public void creates_structures_and_returns_response() {
+    public void creates_structures_and_returns_async_response() {
         //Given a creation request
         CreateServiceInstanceRequest creationRequest = new CreateServiceInstanceRequest("service_definition_id",
                 "plan_id",
@@ -43,11 +44,13 @@ public class CassandraProcessorTest {
         TemplatesGenerator templatesGenerator = mock(TemplatesGenerator.class);
         SecretsGenerator secretsGenerator = mock(SecretsGenerator.class);
 
-        //When
-        //given a configured timeout (TODO => must mock tracker)
-        Clock clock = Clock.fixed(Instant.ofEpochMilli(1510680248007L), ZoneId.of("Europe/Paris"));
-        @SuppressWarnings("unchecked") PipelineCompletionTracker tracker = new PipelineCompletionTracker(clock, Mockito.mock(OsbProxy.class));
+        //given a configured timeout
+        @SuppressWarnings("unchecked")
+        PipelineCompletionTracker tracker = aCompletionTracker();
+
         CassandraProcessor cassandraProcessor = new CassandraProcessor(TEMPLATES_REPOSITORY_ALIAS_NAME, SECRETS_REPOSITORY_ALIAS_NAME, templatesGenerator, secretsGenerator, tracker);
+
+        //When
         cassandraProcessor.preCreate(context);
 
         //Then verify parameters and delegation on calls
@@ -60,8 +63,11 @@ public class CassandraProcessorTest {
         CreateServiceInstanceResponse serviceInstanceResponse = (CreateServiceInstanceResponse) context.contextKeys.get(ProcessorChainServiceInstanceService.CREATE_SERVICE_INSTANCE_RESPONSE);
         // specifying asynchronous creations
         assertThat(serviceInstanceResponse.isAsync()).isTrue();
-        //TODO : Uncomment assertion (use json string?)
-        String expectedJsonPipelineOperationState = "{\"org.springframework.cloud.servicebroker.model.CreateServiceInstanceRequest\":{\"serviceDefinitionId\":\"service_definition_id\",\"planId\":\"plan_id\",\"organizationGuid\":\"org_id\",\"spaceGuid\":\"space_id\",\"asyncAccepted\":false},\"startRequestDate\":\"2017-11-14T17:24:08.007Z\"}";
+
+        PipelineCompletionTracker.PipelineOperationState pipelineOperationState = new PipelineCompletionTracker.PipelineOperationState(creationRequest, "2017-11-14T17:24:08.007Z");
+        String expectedJsonPipelineOperationState = tracker.formatAsJson(pipelineOperationState);
+
+        //when
         assertThat(serviceInstanceResponse.getOperation()).isEqualTo(expectedJsonPipelineOperationState);
          // and with a proper commit message
         String customTemplateMessage = (String) context.contextKeys.get(TEMPLATES_REPOSITORY_ALIAS_NAME+GitProcessorContext.commitMessage.toString());
@@ -86,7 +92,6 @@ public class CassandraProcessorTest {
 
         //Given a mock behaviour (in progress state)
         GetLastServiceOperationResponse expectedResponse = new GetLastServiceOperationResponse();
-        expectedResponse.withDescription("Creation is in progress");
         expectedResponse.withOperationState(OperationState.IN_PROGRESS);
         PipelineCompletionTracker tracker = mock(PipelineCompletionTracker.class);
         when(tracker.getDeploymentExecStatus(any(Path.class), eq(SERVICE_INSTANCE_ID), eq(CassandraProcessorConstants.OSB_OPERATION_CREATE), any(GetLastServiceOperationRequest.class))).thenReturn(expectedResponse);
@@ -102,7 +107,57 @@ public class CassandraProcessorTest {
     }
 
     @Test
-    public void responds_to_get_last_service_operation_suceeded() {
+    public void delegates_bind_request_to_completion_nested_broker() {
+
+        //given
+        CreateServiceInstanceBindingRequest request = OsbBuilderHelper.aBindingRequest("service-instance-id");
+
+        //Given a populated context
+        Context context = new Context();
+        context.contextKeys.put(ProcessorChainServiceInstanceBindingService.CREATE_SERVICE_INSTANCE_BINDING_REQUEST, request);
+        context.contextKeys.put(SECRETS_REPOSITORY_ALIAS_NAME + GitProcessorContext.workDir.toString(), aGitRepoWorkDir());
+
+        //Given a mock behaviour (in progress state)
+        PipelineCompletionTracker tracker = mock(PipelineCompletionTracker.class);
+        when(tracker.delegateBindRequest(any(Path.class), any(CreateServiceInstanceBindingRequest.class))).thenReturn(OsbBuilderHelper.aBindingResponse());
+
+
+        //When
+        CassandraProcessor cassandraProcessor = new CassandraProcessor(TEMPLATES_REPOSITORY_ALIAS_NAME, SECRETS_REPOSITORY_ALIAS_NAME, null, null, tracker);
+        cassandraProcessor.preBind(context);
+
+        //Then
+        verify(tracker).delegateBindRequest(any(Path.class), eq(request));
+        //And mapped response from tracker is returned
+        CreateServiceInstanceBindingResponse bindingResponse = (CreateServiceInstanceBindingResponse) context.contextKeys.get(ProcessorChainServiceInstanceBindingService.CREATE_SERVICE_INSTANCE_BINDING_RESPONSE);
+        assertThat(bindingResponse).isEqualTo(OsbBuilderHelper.aBindingResponse());
+    }
+
+    @Test
+    public void delegates_unbind_request_to_completion_nested_broker() {
+        //given
+        DeleteServiceInstanceBindingRequest request = OsbBuilderHelper.anUnbindRequest("service-instance-id", "service-binding-id");
+
+        //Given a populated context
+        Context context = new Context();
+        context.contextKeys.put(ProcessorChainServiceInstanceBindingService.DELETE_SERVICE_INSTANCE_BINDING_REQUEST, request);
+        context.contextKeys.put(SECRETS_REPOSITORY_ALIAS_NAME + GitProcessorContext.workDir.toString(), aGitRepoWorkDir());
+
+        //Given a mock behaviour (in progress state)
+        PipelineCompletionTracker tracker = mock(PipelineCompletionTracker.class);
+        doNothing().when(tracker).delegateUnbindRequest(any(Path.class), any(DeleteServiceInstanceBindingRequest.class));
+
+        //When
+        CassandraProcessor cassandraProcessor = new CassandraProcessor(TEMPLATES_REPOSITORY_ALIAS_NAME, SECRETS_REPOSITORY_ALIAS_NAME, null, null, tracker);
+        cassandraProcessor.preUnBind(context);
+
+        //Then
+        verify(tracker).delegateUnbindRequest(any(Path.class), eq(request));
+    }
+
+
+    @Test
+    public void responds_to_get_last_service_operation_succeeded() {
 
         //Given a get last operation request (asynchronous polling from Cloud Controller)
         GetLastServiceOperationRequest operationRequest = new GetLastServiceOperationRequest(SERVICE_INSTANCE_ID,
@@ -132,7 +187,7 @@ public class CassandraProcessorTest {
     }
 
     @Test
-    public void removes_secrets_structures_and_returns_response() {
+    public void unprovision_removes_secrets_structures_and_returns_async_response() {
         //Given a delete request
         DeleteServiceInstanceRequest request = new DeleteServiceInstanceRequest(SERVICE_INSTANCE_ID,
                 "service_id",
@@ -148,8 +203,13 @@ public class CassandraProcessorTest {
         //Given a mock behaviour
         SecretsGenerator secretsGenerator = mock(SecretsGenerator.class);
 
+        //given a configured timeout within tracker
+        @SuppressWarnings("unchecked")
+        PipelineCompletionTracker tracker = aCompletionTracker();
+
+
         //When
-        CassandraProcessor cassandraProcessor = new CassandraProcessor(TEMPLATES_REPOSITORY_ALIAS_NAME, SECRETS_REPOSITORY_ALIAS_NAME, null, secretsGenerator, null);
+        CassandraProcessor cassandraProcessor = new CassandraProcessor(TEMPLATES_REPOSITORY_ALIAS_NAME, SECRETS_REPOSITORY_ALIAS_NAME, null, secretsGenerator, tracker);
         cassandraProcessor.preDelete(context);
 
         //Then verify parameters and delegation on calls
@@ -159,7 +219,14 @@ public class CassandraProcessorTest {
         //Then verify populated context
         DeleteServiceInstanceResponse serviceInstanceResponse = (DeleteServiceInstanceResponse) context.contextKeys.get(ProcessorChainServiceInstanceService.DELETE_SERVICE_INSTANCE_RESPONSE);
         // specifying asynchronous creations
-        assertThat(serviceInstanceResponse.isAsync()).isFalse();
+        assertThat(serviceInstanceResponse.isAsync()).isTrue();
+
+        //and operation state is specified
+        PipelineCompletionTracker.PipelineOperationState pipelineOperationState = new PipelineCompletionTracker.PipelineOperationState(request, "2017-11-14T17:24:08.007Z");
+        String expectedJsonPipelineOperationState = tracker.formatAsJson(pipelineOperationState);
+
+        assertThat(serviceInstanceResponse.getOperation()).isEqualTo(expectedJsonPipelineOperationState);
+
         // and with a proper commit message
         String customMessage = (String) context.contextKeys.get(SECRETS_REPOSITORY_ALIAS_NAME + GitProcessorContext.commitMessage.toString());
         assertThat(customMessage).isEqualTo("Cassandra broker" + ": "+ CassandraProcessorConstants.OSB_OPERATION_DELETE + " instance id=" + SERVICE_INSTANCE_ID);
@@ -167,7 +234,12 @@ public class CassandraProcessorTest {
 
 
 
-    protected Path aGitRepoWorkDir() {
+    private PipelineCompletionTracker aCompletionTracker() {
+        Clock clock = Clock.fixed(Instant.ofEpochMilli(1510680248007L), ZoneId.of("Europe/Paris"));
+        return new PipelineCompletionTracker(clock, 1200L, Mockito.mock(OsbProxy.class));
+    }
+
+    private Path aGitRepoWorkDir() {
         return FileSystems.getDefault().getPath("/a/git_workdir/path");
     }
 

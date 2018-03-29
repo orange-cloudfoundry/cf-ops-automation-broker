@@ -3,6 +3,7 @@ package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.GitProcessorContext;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.Context;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.DefaultBrokerProcessor;
+import com.orange.oss.ondemandbroker.ProcessorChainServiceInstanceBindingService;
 import com.orange.oss.ondemandbroker.ProcessorChainServiceInstanceService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -74,6 +75,31 @@ public class CassandraProcessor extends DefaultBrokerProcessor {
 		ctx.contextKeys.put(ProcessorChainServiceInstanceService.GET_LAST_SERVICE_OPERATION_RESPONSE, operationResponse);
 	}
 
+    @Override
+    public void preBind(Context ctx) {
+        //retrieve workdir from context
+        Path secretsWorkDir = getPaasSecret(ctx);
+
+        //retrieve request from context
+        CreateServiceInstanceBindingRequest request = (CreateServiceInstanceBindingRequest) ctx.contextKeys.get(ProcessorChainServiceInstanceBindingService.CREATE_SERVICE_INSTANCE_BINDING_REQUEST);
+
+        CreateServiceInstanceBindingResponse response = this.tracker.delegateBindRequest(secretsWorkDir, request);
+
+        //Put the response into context
+        ctx.contextKeys.put(ProcessorChainServiceInstanceBindingService.CREATE_SERVICE_INSTANCE_BINDING_RESPONSE, response);
+    }
+
+    @Override
+    public void preUnBind(Context ctx) {
+        //retrieve workdir from context
+        Path secretsWorkDir = getPaasSecret(ctx);
+
+        //retrieve request from context
+        DeleteServiceInstanceBindingRequest request = (DeleteServiceInstanceBindingRequest) ctx.contextKeys.get(ProcessorChainServiceInstanceBindingService.DELETE_SERVICE_INSTANCE_BINDING_REQUEST);
+
+        this.tracker.delegateUnbindRequest(secretsWorkDir, request);
+    }
+
 	@Override
 	public void preDelete(Context ctx) {
 
@@ -90,20 +116,22 @@ public class CassandraProcessor extends DefaultBrokerProcessor {
 
 		//Create response and put it into context
 		DeleteServiceInstanceResponse deletionResponse = new DeleteServiceInstanceResponse();
-		deletionResponse.withAsync(false);
+		deletionResponse.withAsync(true);
+		deletionResponse.withOperation(this.tracker.getPipelineOperationStateAsJson(request));
+
 		ctx.contextKeys.put(ProcessorChainServiceInstanceService.DELETE_SERVICE_INSTANCE_RESPONSE, deletionResponse);
 
 		//Generate commit message and put it into context
         setCommitMsg(ctx,"Cassandra broker: delete instance id=" + serviceInstanceId);
 	}
 
-	protected Path getPaasSecret(Context ctx) {
+	private Path getPaasSecret(Context ctx) {
 		Path secretsWorkDir = (Path) ctx.contextKeys.get(secretsRepositoryAliasName + GitProcessorContext.workDir.toString());
 		logger.debug("secrets workDir is " + secretsWorkDir.toString());
 		return secretsWorkDir;
 	}
 
-	protected Path getPaasTemplate(Context ctx) {
+	private Path getPaasTemplate(Context ctx) {
 		Path templatesWorkDir = (Path) ctx.contextKeys.get(templatesRepositoryAliasName + GitProcessorContext.workDir.toString());
 		logger.debug("templates workDir is " + templatesWorkDir.toString());
 		return templatesWorkDir;
@@ -112,7 +140,7 @@ public class CassandraProcessor extends DefaultBrokerProcessor {
 	/**
 	 * Set commmit msg for both secrets and template repos. Template repos commit msg will be ignored if not changes
 	 */
-	protected void setCommitMsg(Context ctx, String msg) {
+    private void setCommitMsg(Context ctx, String msg) {
 		ctx.contextKeys.put(templatesRepositoryAliasName + GitProcessorContext.commitMessage.toString(), msg);
 		ctx.contextKeys.put(secretsRepositoryAliasName + GitProcessorContext.commitMessage.toString(), msg);
 	}

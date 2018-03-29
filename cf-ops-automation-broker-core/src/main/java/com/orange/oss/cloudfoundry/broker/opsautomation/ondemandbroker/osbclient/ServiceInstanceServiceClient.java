@@ -17,8 +17,7 @@
 
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.osbclient;
 
-import org.springframework.cloud.servicebroker.model.CreateServiceInstanceRequest;
-import org.springframework.cloud.servicebroker.model.UpdateServiceInstanceRequest;
+import org.springframework.cloud.servicebroker.model.*;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -48,7 +47,7 @@ public interface ServiceInstanceServiceClient {
 //            "/{cfInstanceId}/v2/service_instances/{instanceId}",
             "/v2/service_instances/{instanceId}"
     }, method = RequestMethod.PUT)
-    ResponseEntity<?> createServiceInstance(
+    ResponseEntity<CreateServiceInstanceResponse> createServiceInstance(
 //            @PathVariable Map<String, String> pathVariables,
             @PathVariable("instanceId") String serviceInstanceId,
             @RequestParam(value = ASYNC_REQUEST_PARAMETER, required = false) boolean acceptsIncomplete,
@@ -60,7 +59,7 @@ public interface ServiceInstanceServiceClient {
 //            "/{cfInstanceId}/v2/service_instances/{instanceId}/last_operation",
             "/v2/service_instances/{instanceId}/last_operation"
     }, method = RequestMethod.GET)
-    public ResponseEntity<?> getServiceInstanceLastOperation(
+    public ResponseEntity<GetLastServiceOperationResponse> getServiceInstanceLastOperation(
 //            @PathVariable Map<String, String> pathVariables,
             @PathVariable("instanceId") String serviceInstanceId,
             @RequestParam("service_id") String serviceDefinitionId,
@@ -74,7 +73,7 @@ public interface ServiceInstanceServiceClient {
 //            "/{cfInstanceId}/v2/service_instances/{instanceId}",
             "/v2/service_instances/{instanceId}"
     }, method = RequestMethod.DELETE)
-    public ResponseEntity<?> deleteServiceInstance(
+    public ResponseEntity<DeleteServiceInstanceResponse> deleteServiceInstance(
 //            @PathVariable Map<String, String> pathVariables,
             @PathVariable("instanceId") String serviceInstanceId,
             @RequestParam("service_id") String serviceDefinitionId,
@@ -88,7 +87,7 @@ public interface ServiceInstanceServiceClient {
 //            "/{cfInstanceId}/v2/service_instances/{instanceId}",
             "/v2/service_instances/{instanceId}"
     }, method = RequestMethod.PATCH)
-    public ResponseEntity<?> updateServiceInstance(
+    public ResponseEntity<UpdateServiceInstanceResponse> updateServiceInstance(
 //            @PathVariable Map<String, String> pathVariables,
             @PathVariable("instanceId") String serviceInstanceId,
             @RequestParam(value = ASYNC_REQUEST_PARAMETER, required = false) boolean acceptsIncomplete,

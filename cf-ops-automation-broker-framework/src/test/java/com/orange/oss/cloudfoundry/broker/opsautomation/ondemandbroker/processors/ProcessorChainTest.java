@@ -46,6 +46,11 @@ public class ProcessorChainTest {
 			}
 
 			@Override
+			public void cleanUp(Context ctx) {
+				logger.info("cleanUp 1");
+			}
+
+			@Override
 			public void preDelete(Context ctx) {
 				logger.info("pre delete 1");
 				
@@ -146,6 +151,12 @@ public class ProcessorChainTest {
 				logger.info("pre update 2");
 
 			}
+
+			@Override
+			public void cleanUp(Context ctx) {
+				logger.info("cleanUp 2");
+			}
+
 		});
 
 		
@@ -156,8 +167,8 @@ public class ProcessorChainTest {
 
 		Context ctx1 =new Context();
 		chain.getLastOperation(ctx1);
-		chain.bind();
-		chain.unBind();
+		chain.bind(new Context());
+		chain.unBind(new Context());
 		chain.delete(new Context());
 	
 	

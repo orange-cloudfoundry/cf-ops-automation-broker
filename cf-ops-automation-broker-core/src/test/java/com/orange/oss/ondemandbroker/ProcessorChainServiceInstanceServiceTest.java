@@ -24,20 +24,25 @@ import static org.mockito.Matchers.any;
 public class ProcessorChainServiceInstanceServiceTest {
 
     @Mock
+    private
     ProcessorChain processorChain;
 
     @InjectMocks
-    ProcessorChainServiceInstanceService processorChainServiceInstanceService;
+    private
+    ProcessorChainServiceInstanceService service;
 
     @Test
-    public void should_chain_create_processors_on_service_instance_creation() throws Exception {
+    public void chains_create_processors_on_service_instance_creation() throws Exception {
         //given
         CreateServiceInstanceRequest request = new CreateServiceInstanceRequest();
 
         //when
-        CreateServiceInstanceResponse response = processorChainServiceInstanceService.createServiceInstance(request);
+        CreateServiceInstanceResponse response = service.createServiceInstance(request);
 
-        //then call is properly chained
+        //then the default response is returned
+        Assertions.assertThat(response).isEqualTo(new CreateServiceInstanceResponse());
+
+        //and call is properly chained
         ArgumentCaptor<Context> argument = ArgumentCaptor.forClass(Context.class);
         Assertions.assertThat(response).isEqualTo(new CreateServiceInstanceResponse());
         Mockito.verify(processorChain).create(argument.capture());
@@ -48,50 +53,20 @@ public class ProcessorChainServiceInstanceServiceTest {
     }
 
    @Test(expected = RuntimeException.class)
-    public void create_method_logs_and_rethrows_exceptions() throws Exception {
+    public void creates_method_logs_and_rethrows_exceptions() throws Exception {
        RuntimeException confidentialException = new RuntimeException("unable to push at https://login:pwd@mygit.site.org/secret_path", new IOException());
        CreateServiceInstanceRequest request = new CreateServiceInstanceRequest();
        //given a processor throws an exception
        Mockito.doThrow(confidentialException).when(processorChain).create(any(Context.class));
 
        //when
-        CreateServiceInstanceResponse response = processorChainServiceInstanceService.createServiceInstance(request);
+        CreateServiceInstanceResponse response = service.createServiceInstance(request);
 
         //then exception is logged and rethrown
     }
 
     @Test
-    public void should_filter_internal_exceptions_details() {
-        //given an exception with confidential internal data thrown
-        IOException rootCause = new IOException();
-        RuntimeException confidentialException = new RuntimeException("unable to push at https://login:pwd@mygit.site.org/secret_path", rootCause);
-
-        //when
-        RuntimeException wrappedException = processorChainServiceInstanceService.processInternalException(confidentialException);
-
-        //then the exception is wrapped into a runtime exception, hidding the confidential data
-
-        assertThat(wrappedException.toString()).doesNotContain("login");
-        assertThat(wrappedException.toString()).containsIgnoringCase("internal");
-        assertThat(wrappedException.toString()).containsIgnoringCase("contact");
-    }
-
-    @Test
-    public void should_not_filter_user_facing_exception() {
-
-        //given an exception with confidential internal data thrown
-        RuntimeException safeException = new UserFacingRuntimeException("invalid parameter param with value. Param should only contain alphanumerics");
-
-        //when
-        RuntimeException exception = processorChainServiceInstanceService.processInternalException(safeException);
-
-        //then the exception is wrapped into a runtime exception, hidding the confidential data
-
-        assertThat(exception.toString()).contains("alphanumerics");
-    }
-
-    @Test
-    public void should_use_create_response_from_context_when_set() {
+    public void uses_create_response_from_context_when_set() {
         CreateServiceInstanceRequest request = new CreateServiceInstanceRequest();
 
         //given a processor that generates a response into the context
@@ -105,23 +80,23 @@ public class ProcessorChainServiceInstanceServiceTest {
             }
         };
         processorChain = aProcessorChain(processor);
-        processorChainServiceInstanceService = new ProcessorChainServiceInstanceService(processorChain);
+        service = new ProcessorChainServiceInstanceService(processorChain);
 
 
         //when
-        CreateServiceInstanceResponse response = processorChainServiceInstanceService.createServiceInstance(request);
+        CreateServiceInstanceResponse response = service.createServiceInstance(request);
 
         //then
         Assertions.assertThat(response).isEqualTo(customResponse);
     }
 
     @Test
-    public void should_chain_getLastCreateOperation_processors() throws Exception {
+    public void chains_getLastCreateOperation_processors() throws Exception {
         //given
         GetLastServiceOperationRequest request = new GetLastServiceOperationRequest("instanceId");
 
         //when
-        GetLastServiceOperationResponse response = processorChainServiceInstanceService.getLastOperation(request);
+        GetLastServiceOperationResponse response = service.getLastOperation(request);
 
         //then call is properly chained
         ArgumentCaptor<Context> argument = ArgumentCaptor.forClass(Context.class);
@@ -136,7 +111,7 @@ public class ProcessorChainServiceInstanceServiceTest {
     }
 
     @Test
-    public void should_use_last_create_response_from_context_when_set() {
+    public void uses_last_create_response_from_context_when_set() {
         //given
         GetLastServiceOperationRequest request = new GetLastServiceOperationRequest("instanceId");
 
@@ -151,11 +126,11 @@ public class ProcessorChainServiceInstanceServiceTest {
             }
         };
         processorChain = aProcessorChain(processor);
-        processorChainServiceInstanceService = new ProcessorChainServiceInstanceService(processorChain);
+        service = new ProcessorChainServiceInstanceService(processorChain);
 
 
         //when
-        GetLastServiceOperationResponse response = processorChainServiceInstanceService.getLastOperation(request);
+        GetLastServiceOperationResponse response = service.getLastOperation(request);
 
         //then
         Assertions.assertThat(response).isEqualTo(customResponse);
@@ -163,7 +138,7 @@ public class ProcessorChainServiceInstanceServiceTest {
 
 
     @Test
-    public void should_chain_delete_processors_on_service_instance_deletion() throws Exception {
+    public void chains_delete_processors_on_service_instance_deletion() throws Exception {
         //given
         DeleteServiceInstanceRequest request = new DeleteServiceInstanceRequest("instance_id",
                 "service_id",
@@ -172,12 +147,12 @@ public class ProcessorChainServiceInstanceServiceTest {
                 true);
 
         //when
-        DeleteServiceInstanceResponse response = processorChainServiceInstanceService.deleteServiceInstance(request);
-
+        DeleteServiceInstanceResponse response = service.deleteServiceInstance(request);
         //then call is properly chained
         ArgumentCaptor<Context> argument = ArgumentCaptor.forClass(Context.class);
-        Assertions.assertThat(response).isEqualTo(new DeleteServiceInstanceResponse());
         Mockito.verify(processorChain).delete(argument.capture());
+        //and default response is returned
+        Assertions.assertThat(response).isEqualTo(new DeleteServiceInstanceResponse());
 
         //and context is populated with the request
         Context ctx=argument.getValue();
@@ -186,7 +161,7 @@ public class ProcessorChainServiceInstanceServiceTest {
     }
 
     @Test
-    public void should_use_delete_response_from_context_when_set() {
+    public void uses_delete_response_from_context_when_set() {
         //given
         DeleteServiceInstanceRequest request = new DeleteServiceInstanceRequest("instance_id",
                 "service_id",
@@ -206,18 +181,18 @@ public class ProcessorChainServiceInstanceServiceTest {
             }
         };
         processorChain = aProcessorChain(processor);
-        processorChainServiceInstanceService = new ProcessorChainServiceInstanceService(processorChain);
+        service = new ProcessorChainServiceInstanceService(processorChain);
 
 
         //when
-        DeleteServiceInstanceResponse response = processorChainServiceInstanceService.deleteServiceInstance(request);
+        DeleteServiceInstanceResponse response = service.deleteServiceInstance(request);
 
         //then
         Assertions.assertThat(response).isEqualTo(customResponse);
     }
 
     @Test
-    public void should_chain_update_processors_on_service_instance_update() throws Exception {
+    public void chains_update_processors_on_service_instance_update() throws Exception {
         //given
         UpdateServiceInstanceRequest request = new UpdateServiceInstanceRequest(
                 "service_id",
@@ -225,7 +200,7 @@ public class ProcessorChainServiceInstanceServiceTest {
                 new HashMap<>());
 
         //when
-        UpdateServiceInstanceResponse response = processorChainServiceInstanceService.updateServiceInstance(request);
+        UpdateServiceInstanceResponse response = service.updateServiceInstance(request);
 
         //then call is properly chained
         ArgumentCaptor<Context> argument = ArgumentCaptor.forClass(Context.class);
@@ -239,7 +214,7 @@ public class ProcessorChainServiceInstanceServiceTest {
     }
 
     @Test
-    public void should_use_update_response_from_context_when_set() {
+    public void uses_update_response_from_context_when_set() {
         //given
         UpdateServiceInstanceRequest request = new UpdateServiceInstanceRequest(
                 "service_id",
@@ -258,11 +233,11 @@ public class ProcessorChainServiceInstanceServiceTest {
             }
         };
         processorChain = aProcessorChain(processor);
-        processorChainServiceInstanceService = new ProcessorChainServiceInstanceService(processorChain);
+        service = new ProcessorChainServiceInstanceService(processorChain);
 
 
         //when
-        UpdateServiceInstanceResponse response = processorChainServiceInstanceService.updateServiceInstance(request);
+        UpdateServiceInstanceResponse response = service.updateServiceInstance(request);
 
         //then
         Assertions.assertThat(response).isEqualTo(customResponse);

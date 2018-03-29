@@ -2,7 +2,6 @@ package com.orange.oss.ondemandbroker;
 
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.Context;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.ProcessorChain;
-import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.UserFacingRuntimeException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cloud.servicebroker.model.*;
@@ -26,7 +25,9 @@ public class ProcessorChainServiceInstanceService implements ServiceInstanceServ
     public static final String GET_LAST_SERVICE_OPERATION_RESPONSE = "GetLastServiceOperationResponse";
     public static final String DELETE_SERVICE_INSTANCE_REQUEST = "DeleteServiceInstanceRequest";
     public static final String DELETE_SERVICE_INSTANCE_RESPONSE = "DeleteServiceInstanceResponse";
+    @SuppressWarnings("WeakerAccess")
     public static final String UPDATE_SERVICE_INSTANCE_REQUEST = "UpdateServiceInstanceRequest";
+    @SuppressWarnings("WeakerAccess")
     public static final String UPDATE_SERVICE_INSTANCE_RESPONSE = "UpdateServiceInstanceResponse";
 
     public static final String OSB_PROFILE_ORGANIZATION_GUID = "organization_guid";
@@ -57,7 +58,7 @@ public class ProcessorChainServiceInstanceService implements ServiceInstanceServ
             return response;
         } catch (RuntimeException e) {
             logger.info("Unable to create service with request " + request + ", caught " + e, e);
-            throw processInternalException(e);
+            throw ProcessorChainServiceHelper.processInternalException(e);
         }
     }
 
@@ -77,7 +78,7 @@ public class ProcessorChainServiceInstanceService implements ServiceInstanceServ
             return response;
         } catch (RuntimeException e) {
             logger.info("Unable to update service with request " + request + ", caught " + e, e);
-            throw processInternalException(e);
+            throw ProcessorChainServiceHelper.processInternalException(e);
         }
     }
 
@@ -97,7 +98,7 @@ public class ProcessorChainServiceInstanceService implements ServiceInstanceServ
             return response;
         } catch (RuntimeException e) {
             logger.info("Unable to delete service with request " + request + ", caught " + e, e);
-            throw processInternalException(e);
+            throw ProcessorChainServiceHelper.processInternalException(e);
         }
     }
 
@@ -118,15 +119,7 @@ public class ProcessorChainServiceInstanceService implements ServiceInstanceServ
             return response;
         } catch (RuntimeException e) {
             logger.info("Unable to getLastOperation with request " + request + ", caught " + e, e);
-            throw processInternalException(e);
-        }
-    }
-
-    public RuntimeException processInternalException(RuntimeException exception) {
-        if (exception instanceof UserFacingRuntimeException) {
-            return exception;
-        } else {
-            return new RuntimeException("Internal error condition. Please contact admin to have him check broker logs"); //filter out potential confidential data
+            throw ProcessorChainServiceHelper.processInternalException(e);
         }
     }
 

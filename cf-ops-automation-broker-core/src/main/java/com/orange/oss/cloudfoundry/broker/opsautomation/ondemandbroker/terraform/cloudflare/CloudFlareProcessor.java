@@ -22,7 +22,7 @@ import static com.orange.oss.ondemandbroker.ProcessorChainServiceInstanceService
  */
 public class CloudFlareProcessor extends DefaultBrokerProcessor {
 
-    public static final String ROUTE_PREFIX = "route-prefix";
+    static final String ROUTE_PREFIX = "route-prefix";
     private static Logger logger = LoggerFactory.getLogger(CloudFlareProcessor.class.getName());
 
 
@@ -51,6 +51,9 @@ public class CloudFlareProcessor extends DefaultBrokerProcessor {
         logger.debug("processing request " + request);
 
         //validate input params
+        if (request.getParameters() == null) {
+            throw new UserFacingRuntimeException("Missing parameter " + ROUTE_PREFIX);
+        }
         String routePrefix = (String) request.getParameters().get(ROUTE_PREFIX);
         validateRequestedRoute(routePrefix, ROUTE_PREFIX);
 
@@ -80,7 +83,7 @@ public class CloudFlareProcessor extends DefaultBrokerProcessor {
         ctx.contextKeys.put(ProcessorChainServiceInstanceService.GET_LAST_SERVICE_OPERATION_RESPONSE, operationResponse);
     }
 
-    public ImmutableTerraformModule constructModule(CreateServiceInstanceRequest request) {
+    ImmutableTerraformModule constructModule(CreateServiceInstanceRequest request) {
         String orgGuid = null;
         if (request.getContext() != null) {
             orgGuid = (String) request.getContext().getProperty(OSB_PROFILE_ORGANIZATION_GUID);
@@ -136,7 +139,7 @@ public class CloudFlareProcessor extends DefaultBrokerProcessor {
         insertCommitMsg(context, "delete", serviceInstanceId, terraformModule);
     }
 
-    public void insertCommitMsg(Context context, String action, String serviceInstanceId, TerraformModule terraformModule) {
+    private void insertCommitMsg(Context context, String action, String serviceInstanceId, TerraformModule terraformModule) {
         String routePrefix = null;
         if (terraformModule != null) {
             routePrefix = terraformModule.getProperties().get(ROUTE_PREFIX);
@@ -145,11 +148,11 @@ public class CloudFlareProcessor extends DefaultBrokerProcessor {
         context.contextKeys.put(GitProcessorContext.commitMessage.toString(), msg);
     }
 
-    public String getBrokerNameForCommitLog() {
+    private String getBrokerNameForCommitLog() {
         return "cloudflare broker";
     }
 
-    void validateRequestedRoute(String routePrefix, @SuppressWarnings("SameParameterValue") String paramName) {
+    private void validateRequestedRoute(String routePrefix, @SuppressWarnings("SameParameterValue") String paramName) {
         if (routePrefix == null) {
             throw new UserFacingRuntimeException("Missing parameter " + paramName );
         }
@@ -182,12 +185,12 @@ public class CloudFlareProcessor extends DefaultBrokerProcessor {
         }
     }
 
-    protected TerraformRepository getRepository(Context ctx) {
+    TerraformRepository getRepository(Context ctx) {
         Path gitWorkDir = getGitWorkDir(ctx);
         return repositoryFactory.getInstance(gitWorkDir);
     }
 
-    protected Path getGitWorkDir(Context ctx) {
+    private Path getGitWorkDir(Context ctx) {
         Path path = (Path) ctx.contextKeys.get(GitProcessorContext.workDir.toString());
         if (path == null ) {
             logger.error("expected git repo clone dir to be available, but missing from context");

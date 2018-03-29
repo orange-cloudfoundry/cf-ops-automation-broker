@@ -20,79 +20,119 @@ public class ProcessorChain {
 	}
 
 	public void create(Context ctx) {
-		for (BrokerProcessor m: processors) {
-			m.preCreate(ctx);
-		}
-		sink.create(ctx);
+		try {
+			for (BrokerProcessor m : processors) {
+				m.preCreate(ctx);
+			}
+			sink.create(ctx);
 
-		for (int i = processors.size()-1; i>=0; i--) {
-			BrokerProcessor m= processors.get(i);
-			m.postCreate(ctx);
+			for (int i = processors.size() - 1; i >= 0; i--) {
+				BrokerProcessor m = processors.get(i);
+				m.postCreate(ctx);
+			}
+		} finally {
+			for (int i = processors.size() - 1; i >= 0; i--) {
+				BrokerProcessor m = processors.get(i);
+				m.cleanUp(ctx);
+			}
 		}
 	}
 
 	public void getLastOperation(Context ctx) {
-		for (BrokerProcessor m: processors) {
-			m.preGetLastOperation(ctx);
-		}
-		sink.getLastOperation(ctx);
+		try {
+			for (BrokerProcessor m: processors) {
+                m.preGetLastOperation(ctx);
+            }
+			sink.getLastOperation(ctx);
 
-		for (int i = processors.size()-1; i>=0; i--) {
-			BrokerProcessor m= processors.get(i);
-			m.postGetLastOperation(ctx);
+			for (int i = processors.size()-1; i>=0; i--) {
+                BrokerProcessor m= processors.get(i);
+				m.postGetLastOperation(ctx);
+            }
+		} finally {
+			for (int i = processors.size() - 1; i >= 0; i--) {
+				BrokerProcessor m = processors.get(i);
+				m.cleanUp(ctx);
+			}
 		}
 	}
 
-	public void bind() {
-		Context ctx=new Context();
-		for (BrokerProcessor m: processors) {
-			m.preBind(ctx);
-		}
-		sink.bind(ctx);
+	public void bind(Context ctx) {
+		try {
+			for (BrokerProcessor m: processors) {
+                m.preBind(ctx);
+            }
+			sink.bind(ctx);
 
-		for (int i = processors.size()-1; i>=0; i--) {
-			BrokerProcessor m= processors.get(i);
-			m.postBind(ctx);
+			for (int i = processors.size()-1; i>=0; i--) {
+                BrokerProcessor m= processors.get(i);
+				m.postBind(ctx);
+            }
+		} finally {
+			for (int i = processors.size() - 1; i >= 0; i--) {
+				BrokerProcessor m = processors.get(i);
+				m.cleanUp(ctx);
+			}
 		}
 
 	}
 
 
-	public void unBind() {
-		Context ctx=new Context();
-		for (BrokerProcessor m: processors) {
-			m.preUnBind(ctx);
-		}
-		sink.unBind(ctx);
+	public void unBind(Context ctx) {
+		try {
+			for (BrokerProcessor m: processors) {
+                m.preUnBind(ctx);
+            }
+			sink.unBind(ctx);
 
-		for (int i = processors.size()-1; i>=0; i--) {
-			BrokerProcessor m= processors.get(i);
-			m.postUnBind(ctx);
+			for (int i = processors.size()-1; i>=0; i--) {
+                BrokerProcessor m= processors.get(i);
+				m.postUnBind(ctx);
+            }
+		} finally {
+			for (int i = processors.size() - 1; i >= 0; i--) {
+				BrokerProcessor m = processors.get(i);
+				m.cleanUp(ctx);
+			}
 		}
 
 	}
 
 	public void update(Context ctx) {
-		for (BrokerProcessor m: processors) {
-			m.preUpdate(ctx);
-		}
-		sink.update(ctx);
+		try {
+			for (BrokerProcessor m: processors) {
+                m.preUpdate(ctx);
+            }
+			sink.update(ctx);
 
-		for (int i = processors.size()-1; i>=0; i--) {
-			BrokerProcessor m= processors.get(i);
-			m.postUpdate(ctx);
+			for (int i = processors.size()-1; i>=0; i--) {
+                BrokerProcessor m= processors.get(i);
+				m.postUpdate(ctx);
+            }
+		} finally {
+			for (int i = processors.size() - 1; i >= 0; i--) {
+				BrokerProcessor m = processors.get(i);
+				m.cleanUp(ctx);
+			}
 		}
 	}
 
 	public void delete(Context ctx) {
-		for (BrokerProcessor m: processors) {
-			m.preDelete(ctx);
-		}
-		sink.delete(ctx);
+		try {
+			for (BrokerProcessor m: processors) {
+                m.preDelete(ctx);
+            }
+			sink.delete(ctx);
 
-		for (int i = processors.size()-1; i>=0; i--) {
-			BrokerProcessor m= processors.get(i);
-			m.postDelete(ctx);
+			for (int i = processors.size()-1; i>=0; i--) {
+                BrokerProcessor m= processors.get(i);
+				m.postDelete(ctx);
+            }
+		} finally {
+			for (int i = processors.size() - 1; i >= 0; i--) {
+				BrokerProcessor m = processors.get(i);
+				m.cleanUp(ctx);
+			}
 		}
 	}
 

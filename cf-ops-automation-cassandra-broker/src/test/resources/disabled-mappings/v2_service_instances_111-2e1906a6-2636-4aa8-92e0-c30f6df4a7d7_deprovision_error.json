@@ -1,0 +1,28 @@
+{
+  "id" : "2e1906a6-2636-4aa8-92e0-c30f6df4a7d7",
+  "name" : "v2_service_instances_111",
+  "request" : {
+    "url" : "/v2/service_instances/111?service_id=cassandra-service-broker&plan_id=cassandra-plan&accepts_incomplete=false",
+    "method" : "DELETE"
+  },
+  "response" : {
+    "status" : 500,
+    "body" : "{\"description\":\"Cannot drop non existing keyspace 'ks111'.\"}",
+    "headers" : {
+      "Cache-Control" : "no-cache, no-store, max-age=0, must-revalidate",
+      "Content-Type" : "application/json;charset=UTF-8",
+      "Date" : "Thu, 22 Feb 2018 09:59:57 GMT",
+      "Expires" : "0",
+      "Pragma" : "no-cache",
+      "Strict-Transport-Security" : "max-age=31536000 ; includeSubDomains",
+      "X-Application-Context" : "application:5000",
+      "X-Content-Type-Options" : "nosniff",
+      "X-Frame-Options" : "DENY",
+      "X-Vcap-Request-Id" : "d311c8d0-d594-4c1a-4971-61f24d3832c7",
+      "X-Xss-Protection" : "1; mode=block"
+    }
+  },
+  "uuid" : "2e1906a6-2636-4aa8-92e0-c30f6df4a7d7",
+  "persistent" : true,
+  "insertionIndex" : 4
+}

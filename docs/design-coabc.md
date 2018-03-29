@@ -376,35 +376,41 @@ CC -> COAB: get last operation https://github.com/openservicebrokerapi/servicebr
 
 # Credhub processor behaviour
 
-# Osb processor behaviour
+# Osb Proxy
+
+The Osb client isn't following the processor model and is instead a POJO invoked by CassandraProcessor
+
+- Right now, CassandraProcessor handles delete asynchronous, whereas it could have been synchronous:
+        - we could synchronously execute osbDelegate.unprovision() + delete manifest and return sync successfull delete
+        - However, this makes it asymetrical and more work
+        - May be useful in the future when we will really need async delete support with COA
+            - when refactoring and merging with TF modules
+            - when/if COA implements sync deprovision 
+
+- handling of deprovision errors
+       Symptom: 
+       
+       2018-03-02T09:21:06.67+0100 [APP/PROC/WEB/0] OUT 2018-03-02 08:21:06.665  INFO 7 --- [nio-8080-exec-8] c.o.o.c.b.o.o.pipeline.OsbProxyImpl      : inner broker deprovision request rejected:feign.FeignException: status 500 reading ServiceInstanceServiceClient#deleteServiceInstance(String,String,String,boolean,String,String); content:
+       2018-03-02T09:21:06.67+0100 [APP/PROC/WEB/0] OUT {"description":"Cannot drop non existing keyspace 'kse61bd6bf_6392_40f4_a8bc_3d7726581bf3'."}
+       
+       Implemented behavior:
+         - map sync provision/unprovision unexpected error as async unexpected error 
+            (as to allow for retries until max polling duration is reached, in case of transient error): propagate error
+            Impl:
+               - throw an exception http://www.baeldung.com/spring-mvc-controller-custom-http-status-code with static @ResponseStatus 500 spring mvc annotation
+               
+               Q: is FeignException annotated with @Status 
+         - map missing catalog endpoint as 410 gone to indicate underlying deployment is likely to be unknown.
+          
+         - Corresponding OSB specs for expected behavior
+            https://github.com/openservicebrokerapi/servicebroker/blob/master/spec.md#polling-last-operation
+                Returning "state": "succeeded" or "state": "failed" will cause the Platform to cease polling.
+            https://github.com/openservicebrokerapi/servicebroker/blob/master/spec.md#response-1
+                410 Gone 	Appropriate only for asynchronous delete operations. The Platform MUST consider this response a success and forget about the resource. The expected response body is {}. Returning this while the Platform is polling for create or update operations SHOULD be interpreted as an invalid response and the Platform SHOULD continue polling.
+                
+                Responses with any other status code SHOULD be interpreted as an error or invalid response. The Platform SHOULD continue polling until the Service Broker returns a valid response or the maximum polling duration is reached.
 
 
-* waits for a key in context to start in any processorchain method (regardless of whether create, bind, unbind, delete)
-    * catalog-request: null value
-        * catalog-response: a org.springframework.cloud.servicebroker.model.Catalog object
-    * create-service-instance: a spring-cloud-cloudfoundry-service-broker object
-    * update-service-instance
-    * delete-service-instance
-    * create-service-binding
-    * delete-service-binding
-* maintains current state in context (for credhub processor to persist it)
-* polls service instance creation
-* pushes response in the context
-
-- osb-processor: for any pre method  
-    - reads
-        - credhub key: "credhub_cassandra_deployment"
-            - state=
-                - null
-                - creating
-                - created
-        - operation=mysql-provided-operation (i.e. the state usually persisted by the CC, as part of OSB, see https://github    - writes
-        - "credhub_osb-processor-serviceinstance_state"
-            - state=
-                - null
-                - creating
-                - created
-        - operation=mysql-provided-operation (i.e. the state usually persisted by the CC, as part of OSB, see https://github.com/openservicebrokerapi/servicebroker/blob/master/spec.md#parameters )
 
 
 # faq

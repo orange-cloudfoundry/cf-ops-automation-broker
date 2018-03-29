@@ -1,0 +1,33 @@
+{
+  "id" : "c55024c9-b460-4fae-aed2-5a4c0527b6a4",
+  "name" : "v2_service_instances_111",
+  "request" : {
+    "url" : "/v2/service_instances/111?accepts_incomplete=false",
+    "method" : "PUT",
+    "bodyPatterns" : [ {
+      "equalToJson" : "{\"asyncAccepted\":false,\"parameters\":{},\"context\":{\"platform\":\"Context\",\"platform\":\"cloudfoundry\"},\"service_id\":\"cassandra-service-broker\",\"plan_id\":\"cassandra-plan\",\"organization_guid\":\"org_id\",\"space_guid\":\"space_id\"}",
+      "ignoreArrayOrder" : true,
+      "ignoreExtraElements" : true
+    } ]
+  },
+  "response" : {
+    "status" : 500,
+    "body" : "{\"description\":\"Keyspace ks111 already exists\"}",
+    "headers" : {
+      "Cache-Control" : "no-cache, no-store, max-age=0, must-revalidate",
+      "Content-Type" : "application/json;charset=UTF-8",
+      "Date" : "Wed, 21 Feb 2018 17:27:29 GMT",
+      "Expires" : "0",
+      "Pragma" : "no-cache",
+      "Strict-Transport-Security" : "max-age=31536000 ; includeSubDomains",
+      "X-Application-Context" : "application:5000",
+      "X-Content-Type-Options" : "nosniff",
+      "X-Frame-Options" : "DENY",
+      "X-Vcap-Request-Id" : "762a3f74-3c3d-4f03-5503-8a90a6d2d034",
+      "X-Xss-Protection" : "1; mode=block"
+    }
+  },
+  "uuid" : "c55024c9-b460-4fae-aed2-5a4c0527b6a4",
+  "persistent" : true,
+  "insertionIndex" : 4
+}

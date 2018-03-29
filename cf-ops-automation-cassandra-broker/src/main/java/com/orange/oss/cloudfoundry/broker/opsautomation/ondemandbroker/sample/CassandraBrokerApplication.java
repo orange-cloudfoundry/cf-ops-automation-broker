@@ -10,7 +10,6 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
-import org.springframework.cloud.servicebroker.model.CreateServiceInstanceRequest;
 import org.springframework.context.annotation.Bean;
 
 import java.time.Clock;
@@ -44,6 +43,11 @@ public class CassandraBrokerApplication {
         return new GitProperties();
     }
 
+    @ConfigurationProperties(prefix = "deployment")
+    @Bean
+    public DeploymentProperties deploymentProperties() {
+        return new DeploymentProperties();
+    }
 
     @Bean
     public Clock clock() {
@@ -51,9 +55,8 @@ public class CassandraBrokerApplication {
     }
 
     @Bean
-    public OsbProxy<CreateServiceInstanceRequest> createServiceInstanceResponseOsbProxy(
-            OsbProxyProperties osbProxyProperties, OsbClientFactory clientFactory) {
-        return new OsbProxyImpl<>(
+    public OsbProxy createOsbProxy(OsbProxyProperties osbProxyProperties, OsbClientFactory clientFactory) {
+        return new OsbProxyImpl(
                 osbProxyProperties.getOsbDelegateUser(),
                 osbProxyProperties.getOsbDelegatePassword(),
                 osbProxyProperties.getBrokerUrlPattern(),
@@ -61,22 +64,38 @@ public class CassandraBrokerApplication {
     }
 
     @Bean
-    public PipelineCompletionTracker pipelineCompletionTracker(Clock clock, OsbProxy<CreateServiceInstanceRequest> createServiceInstanceResponseOsbProxy) {
+    public PipelineCompletionTracker pipelineCompletionTracker(Clock clock, OsbProxyProperties osbProxyProperties,OsbProxy createServiceInstanceResponseOsbProxy) {
         return new PipelineCompletionTracker(
                 clock,
-//                createServiceInstanceResponseOsbProxy
-                null
+                osbProxyProperties.getMaxExecutionDurationSeconds(),
+                createServiceInstanceResponseOsbProxy
         );
     }
 
     @Bean
-    public SecretsGenerator secretsGenerator() {
-        return new SecretsGenerator();
+    public SecretsGenerator secretsGenerator(
+            DeploymentProperties deploymentProperties) {
+        return new SecretsGenerator(
+                deploymentProperties.getRootDeployment(),
+                deploymentProperties.getModelDeployment(),
+                deploymentProperties.getSecrets(),
+                deploymentProperties.getMeta(),
+                deploymentProperties.getModelDeploymentShortAlias()
+        );
     }
 
     @Bean
-    public TemplatesGenerator templatesGenerator() {
-        return new TemplatesGenerator();
+    public TemplatesGenerator templatesGenerator(
+            DeploymentProperties deploymentProperties
+    ) {
+        return new TemplatesGenerator(
+                deploymentProperties.getRootDeployment(),
+                deploymentProperties.getModelDeployment(),
+                deploymentProperties.getTemplate(),
+                deploymentProperties.getVars(),
+                deploymentProperties.getOperators(),
+                deploymentProperties.getModelDeploymentShortAlias()
+        );
     }
 
     @Bean

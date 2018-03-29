@@ -1,59 +1,44 @@
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline;
 
-import java.io.File;
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 
 /**
  * Created by ijly7474 on 15/12/17.
  */
 public class StructureGeneratorImpl implements StructureGenerator {
 
-/*
-    protected Path workDir;
-    protected String serviceInstanceId;
+    String rootDeployment;
+    String modelDeployment;
+    String modelDeploymentShortAlias;
 
-    public void setWorkDir(Path workDir){
-        this.workDir = workDir;
+    public StructureGeneratorImpl(){
     }
 
-    public void setServiceInstanceId(String serviceInstanceId){
-        this.serviceInstanceId = serviceInstanceId;
+    public StructureGeneratorImpl(String rootDeployment, String modelDeployment, String modelDeploymentShortAlias){
+        this.rootDeployment = rootDeployment;
+        this.modelDeployment = modelDeployment;
+        this.modelDeploymentShortAlias = modelDeploymentShortAlias;
     }
-
-    public StructureGeneratorImpl(Path workDir, String serviceInstanceId){
-        this.workDir = workDir;
-        this.serviceInstanceId = serviceInstanceId;
-    }
-*/
 
     public void checkPrerequisites(Path workDir) {
         Path rootDeploymentDir = StructureGeneratorHelper.generatePath(workDir,
-                CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY);
+                this.rootDeployment);
         if (Files.notExists(rootDeploymentDir)){
-            throw new CassandraProcessorException(CassandraProcessorConstants.ROOT_DEPLOYMENT_EXCEPTION);
+            throw new DeploymentException(DeploymentConstants.ROOT_DEPLOYMENT_EXCEPTION);
         }
         Path modelDeploymentDir = StructureGeneratorHelper.generatePath(workDir,
-                CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY,
-                CassandraProcessorConstants.MODEL_DEPLOYMENT_DIRECTORY);
+                this.rootDeployment,
+                this.modelDeployment);
         if (Files.notExists(modelDeploymentDir)){
-            throw new CassandraProcessorException(CassandraProcessorConstants.MODEL_DEPLOYMENT_EXCEPTION);
+            throw new DeploymentException(DeploymentConstants.MODEL_DEPLOYMENT_EXCEPTION);
         }
     }
 
     public void generate(Path workDir, String serviceInstanceId) {
-        try {
-            //Generate service directory
-            Path serviceInstanceDir = StructureGeneratorHelper.generatePath(workDir,
-                    CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY,
-                    CassandraProcessorConstants.SERVICE_INSTANCE_PREFIX_DIRECTORY + serviceInstanceId);
-            Files.createDirectory(serviceInstanceDir);
-        } catch (IOException e) {
-            e.printStackTrace();
-            throw new CassandraProcessorException(CassandraProcessorConstants.GENERATION_EXCEPTION);
-        }
+            ////Generate service directory
+            String deploymentInstanceDirectory = this.modelDeploymentShortAlias + DeploymentConstants.UNDERSCORE + serviceInstanceId;
+            StructureGeneratorHelper.generateDirectory(workDir, this.rootDeployment, deploymentInstanceDirectory);
     }
 
 }

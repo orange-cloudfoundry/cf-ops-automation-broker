@@ -1,99 +1,120 @@
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline;
-
-import java.io.File;
-import java.io.IOException;
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.Arrays;
 
-/**
- * Created by ijly7474 on 14/12/17.
- */
 public class SecretsGenerator extends StructureGeneratorImpl {
 
-/*
-    public SecretsGenerator(Path workDir, String serviceInstanceId) {
-        super(workDir, serviceInstanceId);
-    }
-*/
+    private String secrets;
+    private String meta;
 
+    public SecretsGenerator(){
+    }
+
+    public SecretsGenerator(String rootDeployment, String modelDeployment, String secrets, String meta, String modelDeploymentShortAlias){
+        super(rootDeployment,modelDeployment, modelDeploymentShortAlias);
+        this.secrets = secrets;
+        this.meta = meta;
+    }
+
+    @Override
+    public void checkPrerequisites(Path workDir) {
+        //Check common pre-requisites
+        super.checkPrerequisites(workDir);
+
+        //Check specific pre-requisite (secrets directory)
+        Path secretsDir = StructureGeneratorHelper.generatePath(workDir,
+                this.rootDeployment,
+                this.modelDeployment,
+                this.secrets);
+        if (Files.notExists(secretsDir)){
+            throw new DeploymentException(DeploymentConstants.SECRETS_EXCEPTION);
+        }
+
+        //Check specific pre-requisite (meta file in model secrets directory)
+        Path metaFile = StructureGeneratorHelper.generatePath(workDir,
+                this.rootDeployment,
+                this.modelDeployment,
+                this.secrets,
+                this.meta + DeploymentConstants.YML_EXTENSION);
+        if (Files.notExists(metaFile)){
+            throw new DeploymentException(DeploymentConstants.META_FILE_EXCEPTION);
+        }
+
+        //Check specific pre-requisite (secrets file in model secrets directory)
+        Path secretsFile = StructureGeneratorHelper.generatePath(workDir,
+                this.rootDeployment,
+                this.modelDeployment,
+                this.secrets,
+                this.secrets + DeploymentConstants.YML_EXTENSION);
+        if (Files.notExists(secretsFile)){
+            throw new DeploymentException(DeploymentConstants.SECRETS_FILE_EXCEPTION);
+        }
+
+    }
+
+    @Override
     public void generate(Path workDir, String serviceInstanceId) {
 
-        try {
             //Generate service directory
             super.generate(workDir, serviceInstanceId);
 
+            //Compute instance directory
+            String deploymentInstanceDirectory = this.modelDeploymentShortAlias + DeploymentConstants.UNDERSCORE + serviceInstanceId;
+
             //Generate secrets directory
-            Path deploymentSecretsDir = StructureGeneratorHelper.generatePath(workDir,
-                    CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY,
-                    CassandraProcessorConstants.SERVICE_INSTANCE_PREFIX_DIRECTORY + serviceInstanceId,
-                    CassandraProcessorConstants.SECRETS_DIRECTORY);
-            Files.createDirectory(deploymentSecretsDir);
+            StructureGeneratorHelper.generateDirectory(workDir, this.rootDeployment, deploymentInstanceDirectory, this.secrets);
 
             //Generate meta file
-            Path metaFile = StructureGeneratorHelper.generatePath(workDir,
-                    CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY,
-                    CassandraProcessorConstants.SERVICE_INSTANCE_PREFIX_DIRECTORY + serviceInstanceId,
-                    CassandraProcessorConstants.SECRETS_DIRECTORY,
-                    CassandraProcessorConstants.META_FILENAME);
-            Files.write(metaFile, Arrays.asList(CassandraProcessorConstants.META_CONTENT), Charset.forName(StandardCharsets.UTF_8.name()));
+            String[] sourcePathElements = new String[] {this.rootDeployment, this.modelDeployment, this.secrets};
+            String[] targetPathElements = new String[] {this.rootDeployment, deploymentInstanceDirectory, this.secrets};
+            String fileName = this.meta + DeploymentConstants.YML_EXTENSION;
+            StructureGeneratorHelper.generateSymbolicLink(workDir, sourcePathElements, targetPathElements, fileName, fileName);
 
             //Generate secrets file
-            Path secretsFile = StructureGeneratorHelper.generatePath(workDir,
-                    CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY,
-                    CassandraProcessorConstants.SERVICE_INSTANCE_PREFIX_DIRECTORY + serviceInstanceId,
-                    CassandraProcessorConstants.SECRETS_DIRECTORY,
-                    CassandraProcessorConstants.SECRETS_FILENAME);
-            Files.write(secretsFile, Arrays.asList(CassandraProcessorConstants.SECRETS_CONTENT), Charset.forName(StandardCharsets.UTF_8.name()));
+            fileName = this.secrets + DeploymentConstants.YML_EXTENSION;
+            StructureGeneratorHelper.generateSymbolicLink(workDir, sourcePathElements, targetPathElements, fileName, fileName);
 
             //Generate enable deployment file
-            Path enableDeploymentFile = StructureGeneratorHelper.generatePath(workDir,
-                    CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY,
-                    CassandraProcessorConstants.SERVICE_INSTANCE_PREFIX_DIRECTORY + serviceInstanceId,
-                    CassandraProcessorConstants.ENABLE_DEPLOYMENT_FILENAME);
-            Files.write(enableDeploymentFile, Arrays.asList(CassandraProcessorConstants.ENABLE_DEPLOYMENT_CONTENT), Charset.forName(StandardCharsets.UTF_8.name()));
+            targetPathElements = new String[] {this.rootDeployment, deploymentInstanceDirectory};
+            fileName = DeploymentConstants.ENABLE_DEPLOYMENT_FILENAME;
+            StructureGeneratorHelper.generateFile(workDir,  targetPathElements, fileName, fileName, null);
 
-        } catch (IOException e) {
-            e.printStackTrace();
-            throw new CassandraProcessorException(CassandraProcessorConstants.GENERATION_EXCEPTION);
-        }
     }
 
     public void remove(Path workDir, String serviceInstanceId) {
 
-        try {
+            //Compute instance directory
+            String deploymentInstanceDirectory = this.modelDeploymentShortAlias + DeploymentConstants.UNDERSCORE + serviceInstanceId;
 
             //Remove meta file
-            Path metaFile = StructureGeneratorHelper.generatePath(workDir,
-                    CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY,
-                    CassandraProcessorConstants.SERVICE_INSTANCE_PREFIX_DIRECTORY + serviceInstanceId,
-                    CassandraProcessorConstants.SECRETS_DIRECTORY,
-                    CassandraProcessorConstants.META_FILENAME);
-            Files.deleteIfExists(metaFile);
+            this.removeMetaFile(workDir, deploymentInstanceDirectory);
 
             //Remove secrets file
-            Path secretsFile = StructureGeneratorHelper.generatePath(workDir,
-                    CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY,
-                    CassandraProcessorConstants.SERVICE_INSTANCE_PREFIX_DIRECTORY + serviceInstanceId,
-                    CassandraProcessorConstants.SECRETS_DIRECTORY,
-                    CassandraProcessorConstants.SECRETS_FILENAME);
-            Files.deleteIfExists(secretsFile);
+            this.removeSecretsFile(workDir, deploymentInstanceDirectory);
 
             //Remove enable deployment file
-            Path enableDeploymentFile = StructureGeneratorHelper.generatePath(workDir,
-                    CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY,
-                    CassandraProcessorConstants.SERVICE_INSTANCE_PREFIX_DIRECTORY + serviceInstanceId,
-                    CassandraProcessorConstants.ENABLE_DEPLOYMENT_FILENAME);
-            Files.deleteIfExists(enableDeploymentFile);
-
-
-        } catch (IOException e) {
-            e.printStackTrace();
-            throw new CassandraProcessorException(CassandraProcessorConstants.REMOVAL_EXCEPTION);
-        }
+            this.removeEnableDeploymentFile(workDir, deploymentInstanceDirectory);
 
     }
+
+    private void removeMetaFile(Path workDir, String deploymentInstanceDirectory) {
+        String[] pathElements = new String[] {this.rootDeployment, deploymentInstanceDirectory, this.secrets};
+        String fileName = this.meta + DeploymentConstants.YML_EXTENSION;
+        StructureGeneratorHelper.removeFile(workDir, pathElements, fileName);
+    }
+
+    private void removeSecretsFile(Path workDir, String deploymentInstanceDirectory) {
+        String[] pathElements = new String[] {this.rootDeployment, deploymentInstanceDirectory, this.secrets};
+        String fileName = this.secrets + DeploymentConstants.YML_EXTENSION;
+        StructureGeneratorHelper.removeFile(workDir, pathElements, fileName);
+    }
+
+    private void removeEnableDeploymentFile(Path workDir, String deploymentInstanceDirectory) {
+        String[] pathElements = new String[] {this.rootDeployment, deploymentInstanceDirectory};
+        String fileName = DeploymentConstants.ENABLE_DEPLOYMENT_FILENAME;
+        StructureGeneratorHelper.removeFile(workDir, pathElements, fileName);
+    }
+
+
+
 }

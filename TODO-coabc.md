@@ -1,4 +1,6 @@
 
+- update default logging level in paas-template to trace COA generated manifest presence on disk.
+
 - Fix regression following varops template introduction: provisionning always fail with a timeout because it's waiting for the manifest at the wrong path
 
     PipelineCompletionTracker uses 

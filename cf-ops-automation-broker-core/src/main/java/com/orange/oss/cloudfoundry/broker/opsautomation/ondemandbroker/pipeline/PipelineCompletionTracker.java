@@ -61,7 +61,7 @@ public class PipelineCompletionTracker {
     }
 
     private boolean isBoshDeploymentAvailable(Path secretsWorkDir, String serviceInstanceId) {
-        Path targetManifestFile = this.getTargetManifestFilePath(secretsWorkDir, serviceInstanceId);
+        Path targetManifestFile = getTargetManifestFilePath(secretsWorkDir, serviceInstanceId);
         boolean exists = Files.exists(targetManifestFile);
         logger.debug("Manifest at path {} exists: {}", targetManifestFile, exists);
         return exists;
@@ -111,7 +111,7 @@ public class PipelineCompletionTracker {
         return response;
     }
 
-    public Path getTargetManifestFilePath(Path workDir, String serviceInstanceId) {
+    public static Path getTargetManifestFilePath(Path workDir, String serviceInstanceId) {
         return StructureGeneratorHelper.generatePath(workDir,
                     CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY,
                     CassandraProcessorConstants.SERVICE_INSTANCE_PREFIX_DIRECTORY + serviceInstanceId,

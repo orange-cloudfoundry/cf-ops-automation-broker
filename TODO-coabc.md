@@ -124,7 +124,8 @@
    - add space_guid,org_guid, originating_user
 
 
-- Refine tarball automatic deployment to filter on the current cassandra PR branch name to avoid deploying old version 
+- Refine tarball automatic deployment to filter on the current cassandra PR branch name to avoid deploying old version
+   - investigate an additional "branch" filter accepted on the artifact endpoint: https://circleci.com/api/v1.1/project/github/orange-cloudfoundry/cf-ops-automation-broker/latest/artifacts?filter=successful 
 
 
 - Improve diagnostics when the requested service instance paas-template does not get merged by the pipeline

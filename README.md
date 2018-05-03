@@ -35,6 +35,17 @@ The following diagram illustrates COAB interactions
 
 This project is still in a beta state providing POC broker releases for CloudFlare and Cassandra use-cases above. Next step is to generalize the approach.
 
+## Getting Started
+
+Deploy the broker as a CF app:
+* The CF manifest.yml file would be available in [orange-cloudfoundry/paas-templates](https://github.com/orange-cloudfoundry/paas-templates) repo
+   * The documentation reference for supported and required environment variables is in the [integration tests properties](cf-ops-automation-cassandra-broker/src/test/resources/application.properties). 
+   * The broker does not require stateful data service to be bound. 
+
+### Configuring the service broker catalog
+
+Use `CATALOG_YML` environment variable to set catalog config in a YAML format. See [catalog.yml](cf-ops-automation-sample-broker/catalog.yml) for a sample YML file which corresponds to the [Catalog bean](https://github.com/spring-cloud/spring-cloud-open-service-broker/blob/v1.0.2.RELEASE/src/main/java/org/springframework/cloud/servicebroker/model/Catalog.java).
+
 ## Contributing
 
  ### Releasing

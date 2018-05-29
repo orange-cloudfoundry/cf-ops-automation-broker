@@ -3,7 +3,7 @@ package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.cloudfla
 
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.GitServer;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.terraform.TerraformModuleHelper;
-import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.terraform.cloudflare.CloudFlareProperties;
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.terraform.cloudflare.TerraformProperties;
 import io.restassured.RestAssured;
 import org.apache.http.HttpStatus;
 import org.eclipse.jgit.api.AddCommand;
@@ -50,7 +50,7 @@ public class CloudFlareServiceProvisionningTest {
     GitServer gitServer;
 
     @Autowired
-    CloudFlareProperties cloudFlareProperties;
+    TerraformProperties terraformProperties;
 
 
     @Before
@@ -158,7 +158,7 @@ public class CloudFlareServiceProvisionningTest {
     }
 
     public void createTfConfigSpecDir(File gitWorkDir) throws IOException {
-        Path tfSpecsDir = gitWorkDir.toPath().resolve(cloudFlareProperties.getPathTFSpecs());
+        Path tfSpecsDir = gitWorkDir.toPath().resolve(terraformProperties.getPathTFSpecs());
         Files.createDirectories(tfSpecsDir);
         //TODO: create .gitignore
         try(Writer writer = new FileWriter(tfSpecsDir.resolve(".gitkeep").toFile())) {
@@ -167,7 +167,7 @@ public class CloudFlareServiceProvisionningTest {
     }
 
     public void populateRepoWithTfState(Path gitWorkDir) throws IOException {
-        Files.createDirectories(gitWorkDir.resolve(cloudFlareProperties.getPathToTfState()).getParent());
+        Files.createDirectories(gitWorkDir.resolve(terraformProperties.getPathToTfState()).getParent());
 
         File tfStateFile = getFileFromClasspath("/terraform.tfstate");
         Files.copy(tfStateFile.toPath(), gitWorkDir.resolve("terraform.tfstate"));

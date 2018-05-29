@@ -8,12 +8,12 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  *
  * Note: would deserve merging with TerraformConfig in the future
  */
-@ConfigurationProperties(prefix = "cloudflare")
-public class CloudFlareProperties {
+@ConfigurationProperties(prefix = "cloudflare") //FIXME: cloudflare specific default to be changed
+public class TerraformProperties {
     private int maxExecutionDurationSeconds = 600;
-    private String routeSuffix;
+    private String routeSuffix; //FIXME: cloudflare specifics to be moved out
     private String pathTFSpecs;
-    private String filePrefix="cloudflare-instance-";
+    private String filePrefix="cloudflare-instance-"; //FIXME: cloudflare specific default to be changed
     private String pathToTfState;
 
     public int getMaxExecutionDurationSeconds() {
@@ -52,7 +52,7 @@ public class CloudFlareProperties {
     }
 
     /**
-     * e.g. cloudflare-depls/terraform-config/terraform.tfstate
+     * e.g. "cloudflare-depls/terraform-config/terraform.tfstate"
      */
     public String getPathToTfState() {
         return pathToTfState;

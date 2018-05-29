@@ -17,7 +17,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @SpringBootApplication
-@EnableConfigurationProperties({GitProperties.class, CloudFlareProperties.class})
+@EnableConfigurationProperties({GitProperties.class, TerraformProperties.class})
 public class CloudFlareBrokerApplication {
 
     public static void main(String[] args) {
@@ -31,11 +31,11 @@ public class CloudFlareBrokerApplication {
 
 
     @Bean
-    public TerraformConfig cloudFlareConfig(CloudFlareProperties cloudFlareProperties,
+    public TerraformConfig cloudFlareConfig(TerraformProperties terraformProperties,
                                             TerraformModule template) {
         return ImmutableTerraformConfig.builder()
-                .routeSuffix(cloudFlareProperties.getRouteSuffix())
-                .maxExecutionDurationSeconds(cloudFlareProperties.getMaxExecutionDurationSeconds())
+                .routeSuffix(terraformProperties.getRouteSuffix())
+                .maxExecutionDurationSeconds(terraformProperties.getMaxExecutionDurationSeconds())
                 .template(template)
                 .build();
     }
@@ -49,13 +49,13 @@ public class CloudFlareBrokerApplication {
     public TerraformCompletionTracker terraformCompletionTracker(
             TerraformConfig terraformConfig,
             Clock clock,
-            CloudFlareProperties cloudFlareProperties) {
-        return new TerraformCompletionTracker(clock, terraformConfig.getMaxExecutionDurationSeconds(), cloudFlareProperties.getPathToTfState());
+            TerraformProperties terraformProperties) {
+        return new TerraformCompletionTracker(clock, terraformConfig.getMaxExecutionDurationSeconds(), terraformProperties.getPathToTfState());
     }
 
     @Bean
-    public static TerraformRepository.Factory getFactory(CloudFlareProperties cloudFlareProperties) {
-        return path -> new FileTerraformRepository(path.resolve(cloudFlareProperties.getPathTFSpecs()), cloudFlareProperties.getFilePrefix());
+    public static TerraformRepository.Factory getFactory(TerraformProperties terraformProperties) {
+        return path -> new FileTerraformRepository(path.resolve(terraformProperties.getPathTFSpecs()), terraformProperties.getFilePrefix());
     }
 
 
@@ -65,8 +65,8 @@ public class CloudFlareBrokerApplication {
     }
 
     @Bean
-    public CloudFlareProcessor cloudFlareProcessor(TerraformConfig terraformConfig, TerraformRepository.Factory repositoryFactory, TerraformCompletionTracker tracker, CloudFlareRouteSuffixValidator cloudFlareRouteSuffixValidator) {
-        return new CloudFlareProcessor(terraformConfig, cloudFlareRouteSuffixValidator, repositoryFactory, tracker);
+    public TerraformProcessor cloudFlareProcessor(TerraformConfig terraformConfig, TerraformRepository.Factory repositoryFactory, TerraformCompletionTracker tracker, CloudFlareRouteSuffixValidator cloudFlareRouteSuffixValidator) {
+        return new TerraformProcessor(terraformConfig, cloudFlareRouteSuffixValidator, repositoryFactory, tracker);
     }
 
     @Bean

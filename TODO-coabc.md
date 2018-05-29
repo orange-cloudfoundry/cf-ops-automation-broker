@@ -1,7 +1,7 @@
+- bump cloudflare version in paas-template
+- fix smoke test syntax issues
 
-- update default logging level in paas-template to trace COA generated manifest presence on disk.
-
-- Fix regression following varops template introduction: provisionning always fail with a timeout because it's waiting for the manifest at the wrong path
+- Long term fix for regression following varops template introduction: provisionning always fail with a timeout because it's waiting for the manifest at the wrong path
 
     PipelineCompletionTracker uses 
     ```java
@@ -61,6 +61,7 @@
     
             
         Possible fixes:
+        - **workaround** transiently hardcode the manifest path unrelated to the deployment model
         - use the same code to generate deployment files in secrets than to watch for concourse completion ion deployment dir, and share this code with test.
             - refactor PipelineCompletionTracker + CassandraServiceProvisionningTest to delegate the ManifestPath computing to SecretsGenerator
                - extract code from SecretsGenerator:  
@@ -123,7 +124,8 @@
    - add space_guid,org_guid, originating_user
 
 
-- Refine tarball automatic deployment to filter on the current cassandra PR branch name to avoid deploying old version 
+- Refine tarball automatic deployment to filter on the current cassandra PR branch name to avoid deploying old version
+   - investigate an additional "branch" filter accepted on the artifact endpoint: https://circleci.com/api/v1.1/project/github/orange-cloudfoundry/cf-ops-automation-broker/latest/artifacts?filter=successful 
 
 
 - Improve diagnostics when the requested service instance paas-template does not get merged by the pipeline

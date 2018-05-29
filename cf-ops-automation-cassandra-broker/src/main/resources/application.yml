@@ -15,12 +15,12 @@ servicebroker:
           name: default
           description: This is a default ondemand plan.  All services are created equally.
       tags:
-        -ondemand
-        -document
+        - ondemand
+        - document
       metadata:
         displayName: ondemand
         imageUrl: https://orange.com/image.png
-        longDescription: ondemand Service
+        longDescription: A dedicated on-demand cassandra cluster
         providerDisplayName: Orange
         documentationUrl: https://orange.com/doc
         supportUrl: https://orange.com/support

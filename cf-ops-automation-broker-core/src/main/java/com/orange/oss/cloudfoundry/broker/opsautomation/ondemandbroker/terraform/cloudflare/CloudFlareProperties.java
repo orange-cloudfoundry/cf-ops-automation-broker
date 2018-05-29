@@ -6,7 +6,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  * This class is typically imported by SpringBoot apps or Tests by referencing it into
  * EnableConfigurationProperties
  *
- * Note: would deserve merging with CloudFlareConfig in the future
+ * Note: would deserve merging with TerraformConfig in the future
  */
 @ConfigurationProperties(prefix = "cloudflare")
 public class CloudFlareProperties {

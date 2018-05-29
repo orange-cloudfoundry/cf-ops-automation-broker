@@ -31,9 +31,9 @@ public class CloudFlareBrokerApplication {
 
 
     @Bean
-    public CloudFlareConfig cloudFlareConfig(CloudFlareProperties cloudFlareProperties,
-                                             TerraformModule template) {
-        return ImmutableCloudFlareConfig.builder()
+    public TerraformConfig cloudFlareConfig(CloudFlareProperties cloudFlareProperties,
+                                            TerraformModule template) {
+        return ImmutableTerraformConfig.builder()
                 .routeSuffix(cloudFlareProperties.getRouteSuffix())
                 .maxExecutionDurationSeconds(cloudFlareProperties.getMaxExecutionDurationSeconds())
                 .template(template)
@@ -47,10 +47,10 @@ public class CloudFlareBrokerApplication {
 
     @Bean
     public TerraformCompletionTracker terraformCompletionTracker(
-            CloudFlareConfig cloudFlareConfig,
+            TerraformConfig terraformConfig,
             Clock clock,
             CloudFlareProperties cloudFlareProperties) {
-        return new TerraformCompletionTracker(clock, cloudFlareConfig.getMaxExecutionDurationSeconds(), cloudFlareProperties.getPathToTfState());
+        return new TerraformCompletionTracker(clock, terraformConfig.getMaxExecutionDurationSeconds(), cloudFlareProperties.getPathToTfState());
     }
 
     @Bean
@@ -60,13 +60,13 @@ public class CloudFlareBrokerApplication {
 
 
     @Bean
-    public CloudFlareRouteSuffixValidator cloudFlareRouteSuffixValidator(CloudFlareConfig cloudFlareConfig) {
-        return new CloudFlareRouteSuffixValidator(cloudFlareConfig.getRouteSuffix());
+    public CloudFlareRouteSuffixValidator cloudFlareRouteSuffixValidator(TerraformConfig terraformConfig) {
+        return new CloudFlareRouteSuffixValidator(terraformConfig.getRouteSuffix());
     }
 
     @Bean
-    public CloudFlareProcessor cloudFlareProcessor(CloudFlareConfig cloudFlareConfig, TerraformRepository.Factory repositoryFactory, TerraformCompletionTracker tracker, CloudFlareRouteSuffixValidator cloudFlareRouteSuffixValidator) {
-        return new CloudFlareProcessor(cloudFlareConfig, cloudFlareRouteSuffixValidator, repositoryFactory, tracker);
+    public CloudFlareProcessor cloudFlareProcessor(TerraformConfig terraformConfig, TerraformRepository.Factory repositoryFactory, TerraformCompletionTracker tracker, CloudFlareRouteSuffixValidator cloudFlareRouteSuffixValidator) {
+        return new CloudFlareProcessor(terraformConfig, cloudFlareRouteSuffixValidator, repositoryFactory, tracker);
     }
 
     @Bean

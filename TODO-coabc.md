@@ -1,3 +1,16 @@
+
+- rename brokers to more generic names
+   - rename poms and directories
+   - rename jars
+   - search for cassandra specifics
+   - search for cloudflare specifics
+      - config: route-suffix 
+      - arbitrary param: route
+         - + unicity of this param
+   
+   - make a new release
+   - update jars in paas-template
+
 - bump cloudflare version in paas-template
 - Generalization
    - Unify TF and Bosh service provisionning and service binding interfaces so that they can be mixed

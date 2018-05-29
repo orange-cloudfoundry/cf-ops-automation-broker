@@ -1,7 +1,13 @@
 
 ### Introduction
 
-Creates an internet-facing domain protected by cloudflare DOS prevention, and potentially other features such as analytics, rate limiting. The route without hostname ( created in the space where the service instance is created) needs to be bound applications.
+This broker supports service instances that trigger the execution a terraform module.
+
+### Cloudflare example
+
+The terraform module executed sequences usages of the cloudflare provider with a cloudfoundry provider.
+
+As a result, a service instance, creates an internet-facing domain protected by cloudflare DOS prevention, and potentially other features such as analytics, rate limiting. The route without hostname ( created in the space where the service instance is created) needs to be bound applications.
 
 This is similar to https://github.com/cloudflare/Cloudflare-Pivotal-Cloud-Foundry but leverages Terraform [cloudflare provider](https://www.terraform.io/docs/providers/cloudflare/index.html) instead
 

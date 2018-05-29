@@ -14,7 +14,7 @@
 #
 # Example:
 #
-# release.sh github_api_token=TOKEN owner=orange-cloudfoundry repo=cf-ops-automation-broker tag=v0.1.0 filename=./cf-ops-automation-cloudflare-broker-0.5.0-SNAPSHOT.jar
+# release.sh github_api_token=TOKEN owner=orange-cloudfoundry repo=cf-ops-automation-broker tag=v0.1.0 filename=./cf-ops-automation-terraform-broker-0.5.0-SNAPSHOT.jar
 #
 
 #--- Colors and styles

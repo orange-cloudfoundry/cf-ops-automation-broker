@@ -198,7 +198,7 @@ public class CloudFlareProcessorTest {
     public void creates_tf_module() {
         //given a tf module template available in the classpath
         TerraformModule deserialized = TerraformModuleHelper.getTerraformModuleFromClasspath("/terraform/cloudflare-module-template.tf.json");
-        ImmutableCloudFlareConfig cloudFlareConfig = ImmutableCloudFlareConfig.builder()
+        ImmutableTerraformConfig cloudFlareConfig = ImmutableTerraformConfig.builder()
                 .routeSuffix("-cdn-cw-vdr-pprod-apps.redacted-domain.org")
                 .template(deserialized).build();
         cloudFlareProcessor = new CloudFlareProcessor(cloudFlareConfig, aSuffixValidator(), getRepositoryFactory(), aTracker());
@@ -251,7 +251,7 @@ public class CloudFlareProcessorTest {
     public void creates_tf_module_and_persists_into_repository_and_returns_resp() {
         //given a tf module template available in the classpath
         TerraformModule template = TerraformModuleHelper.getTerraformModuleFromClasspath("/terraform/cloudflare-module-template.tf.json");
-        ImmutableCloudFlareConfig cloudFlareConfig = ImmutableCloudFlareConfig.builder()
+        ImmutableTerraformConfig cloudFlareConfig = ImmutableTerraformConfig.builder()
                 .routeSuffix("-cdn-cw-vdr-pprod-apps.redacted-domain.org")
                 .template(template).build();
 
@@ -408,9 +408,9 @@ public class CloudFlareProcessorTest {
         return context;
     }
 
-    public static CloudFlareConfig aConfig() {
+    public static TerraformConfig aConfig() {
         TerraformModule template = TerraformModuleHelper.getTerraformModuleFromClasspath("/terraform/cloudflare-module-template.tf.json");
-        return ImmutableCloudFlareConfig.builder()
+        return ImmutableTerraformConfig.builder()
                 .template(template)
                 .routeSuffix("-cdn-cw-vdr-pprod-apps.redacted-domain.org").build();
     }

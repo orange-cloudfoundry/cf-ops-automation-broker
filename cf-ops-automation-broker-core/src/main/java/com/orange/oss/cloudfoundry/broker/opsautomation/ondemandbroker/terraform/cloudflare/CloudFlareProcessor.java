@@ -26,13 +26,13 @@ public class CloudFlareProcessor extends DefaultBrokerProcessor {
     private static Logger logger = LoggerFactory.getLogger(CloudFlareProcessor.class.getName());
 
 
-    private CloudFlareConfig cloudFlareConfig;
+    private TerraformConfig terraformConfig;
     private CloudFlareRouteSuffixValidator cloudFlareRouteSuffixValidator;
     private TerraformRepository.Factory repositoryFactory;
     private TerraformCompletionTracker completionTracker;
 
-    public CloudFlareProcessor(CloudFlareConfig cloudFlareConfig, CloudFlareRouteSuffixValidator cloudFlareRouteSuffixValidator, TerraformRepository.Factory repositoryFactory, TerraformCompletionTracker completionTracker) {
-        this.cloudFlareConfig = cloudFlareConfig;
+    public CloudFlareProcessor(TerraformConfig terraformConfig, CloudFlareRouteSuffixValidator cloudFlareRouteSuffixValidator, TerraformRepository.Factory repositoryFactory, TerraformCompletionTracker completionTracker) {
+        this.terraformConfig = terraformConfig;
         this.cloudFlareRouteSuffixValidator = cloudFlareRouteSuffixValidator;
         this.repositoryFactory = repositoryFactory;
         this.completionTracker = completionTracker;
@@ -101,7 +101,7 @@ public class CloudFlareProcessor extends DefaultBrokerProcessor {
             spaceGuid = request.getSpaceGuid();
         }
         return ImmutableTerraformModule.builder()
-                .from(cloudFlareConfig.getTemplate())
+                .from(terraformConfig.getTemplate())
                 .moduleName(request.getServiceInstanceId())
                 .putProperties("org_guid", orgGuid)
                 .putProperties(ROUTE_PREFIX, (String) request.getParameters().get(ROUTE_PREFIX))

@@ -49,8 +49,8 @@
         <module>cf-ops-automation-broker-core</module>
         <module>cf-ops-automation-broker-framework</module>
         <module>cf-ops-automation-sample-broker</module>
-        <module>cf-ops-automation-cloudflare-broker</module>
-        <module>cf-ops-automation-cassandra-broker</module>
+        <module>cf-ops-automation-terraform-broker</module>
+        <module>cf-ops-automation-bosh-broker</module>
         <module>spring-boot-starter-servicebroker-catalog</module>
     </modules>
 

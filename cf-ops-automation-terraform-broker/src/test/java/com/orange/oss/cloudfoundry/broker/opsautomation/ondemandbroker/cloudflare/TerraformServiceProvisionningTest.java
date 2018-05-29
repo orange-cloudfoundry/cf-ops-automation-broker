@@ -39,11 +39,11 @@ import static org.springframework.boot.test.context.SpringBootTest.WebEnvironmen
 import static org.springframework.cloud.servicebroker.model.CloudFoundryContext.CLOUD_FOUNDRY_PLATFORM;
 
 /**
- * Will detect all components present in classpath, including CloudFlareBrokerApplication
+ * Will detect all components present in classpath, including TerraformBrokerApplication
  */
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = RANDOM_PORT)
-public class CloudFlareServiceProvisionningTest {
+public class TerraformServiceProvisionningTest {
 
     @LocalServerPort
     int port;
@@ -72,7 +72,7 @@ public class CloudFlareServiceProvisionningTest {
 
                 AddCommand addC = git.add().addFilepattern(".");
                 addC.call();
-                git.commit().setMessage("CloudFlareServiceProvisionningTest#startGitServer").call();
+                git.commit().setMessage("TerraformServiceProvisionningTest#startGitServer").call();
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
@@ -98,6 +98,7 @@ public class CloudFlareServiceProvisionningTest {
     public void create_async_service_instance() {
 
         Map<String, Object> params = new HashMap<>();
+        /*FIXME: cloudflare specifics to be moved out*/
         params.put("route-prefix", "a-valid-route");
 
         Map<String, Object> contextProperties = new HashMap<>();

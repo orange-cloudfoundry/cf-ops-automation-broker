@@ -18,14 +18,15 @@ import java.util.List;
 
 @SpringBootApplication
 @EnableConfigurationProperties({GitProperties.class, TerraformProperties.class})
-public class CloudFlareBrokerApplication {
+public class TerraformBrokerApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(CloudFlareBrokerApplication.class, args);
+        SpringApplication.run(TerraformBrokerApplication.class, args);
     }
 
     @Bean
     public TerraformModule terraformModuleTemplate() {
+        /*FIXME: cloudflare specifics to be moved out */
         return TerraformModuleHelper.getTerraformModuleFromClasspath("/terraform/cloudflare-module-template.tf.json");
     }
 

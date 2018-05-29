@@ -38,6 +38,7 @@ import static org.springframework.boot.test.context.SpringBootTest.WebEnvironmen
 import static org.springframework.cloud.servicebroker.model.CloudFoundryContext.CLOUD_FOUNDRY_PLATFORM;
 
 /**
+ * Uses cloudflare modules.
  * Will detect all components present in classpath, including TerraformBrokerApplication
  */
 @RunWith(SpringRunner.class)

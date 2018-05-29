@@ -11,9 +11,10 @@ import org.springframework.cloud.servicebroker.model.*;
 
 import java.nio.file.Path;
 
-public class CassandraProcessor extends DefaultBrokerProcessor {
+public class BoshProcessor extends DefaultBrokerProcessor {
 
-	private static Logger logger = LoggerFactory.getLogger(CassandraProcessor.class.getName());
+	private static Logger logger = LoggerFactory.getLogger(BoshProcessor.class.getName());
+	private final String brokerDisplayName;
 
 	private String templatesRepositoryAliasName;
 	private String secretsRepositoryAliasName;
@@ -21,12 +22,13 @@ public class CassandraProcessor extends DefaultBrokerProcessor {
 	private TemplatesGenerator templatesGenerator;
 	private SecretsGenerator secretsGenerator;
 
-    public CassandraProcessor(String templatesRepositoryAliasName, String secretsRepositoryAliasName, TemplatesGenerator templatesGenerator, SecretsGenerator secretsGenerator, PipelineCompletionTracker tracker) {
+	public BoshProcessor(String templatesRepositoryAliasName, String secretsRepositoryAliasName, TemplatesGenerator templatesGenerator, SecretsGenerator secretsGenerator, PipelineCompletionTracker tracker, String brokerDisplayName) {
         this.templatesRepositoryAliasName = templatesRepositoryAliasName;
         this.secretsRepositoryAliasName = secretsRepositoryAliasName;
         this.templatesGenerator = templatesGenerator;
 		this.secretsGenerator = secretsGenerator;
 		this.tracker = tracker;
+		this.brokerDisplayName = brokerDisplayName;
 	}
 
 	@Override
@@ -55,7 +57,7 @@ public class CassandraProcessor extends DefaultBrokerProcessor {
 		ctx.contextKeys.put(ProcessorChainServiceInstanceService.CREATE_SERVICE_INSTANCE_RESPONSE, creationResponse);
 
 		//Generate commit message and put it into context
-        setCommitMsg(ctx, "Cassandra broker: create instance id=" + serviceInstanceId);
+        setCommitMsg(ctx, brokerDisplayName + " broker: create instance id=" + serviceInstanceId);
 	}
 
 	@Override
@@ -122,7 +124,7 @@ public class CassandraProcessor extends DefaultBrokerProcessor {
 		ctx.contextKeys.put(ProcessorChainServiceInstanceService.DELETE_SERVICE_INSTANCE_RESPONSE, deletionResponse);
 
 		//Generate commit message and put it into context
-        setCommitMsg(ctx,"Cassandra broker: delete instance id=" + serviceInstanceId);
+        setCommitMsg(ctx,brokerDisplayName+" broker: delete instance id=" + serviceInstanceId);
 	}
 
 	private Path getPaasSecret(Context ctx) {

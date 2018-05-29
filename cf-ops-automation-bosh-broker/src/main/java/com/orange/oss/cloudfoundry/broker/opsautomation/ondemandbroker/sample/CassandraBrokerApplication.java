@@ -103,12 +103,12 @@ public class CassandraBrokerApplication {
                                               TemplatesGenerator templatesGenerator,
                                               SecretsGenerator secretsGenerator,
                                               PipelineCompletionTracker pipelineCompletionTracker) {
-        return new CassandraProcessor(
+        return new BoshProcessor(
                 TEMPLATES_REPOSITORY_ALIAS_NAME,
                 SECRETS_REPOSITORY_ALIAS_NAME,
                 templatesGenerator,
                 secretsGenerator,
-                pipelineCompletionTracker);
+                pipelineCompletionTracker, "Cassandra");
     }
 
     @Bean

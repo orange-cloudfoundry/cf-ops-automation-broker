@@ -17,7 +17,7 @@ import java.time.ZoneId;
 import static org.fest.assertions.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
-public class CassandraProcessorTest {
+public class BoshProcessorTest {
 
     private static final String SERVICE_INSTANCE_ID = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa0";
     private static final String TEMPLATES_REPOSITORY_ALIAS_NAME = "paas-template.";
@@ -48,10 +48,10 @@ public class CassandraProcessorTest {
         @SuppressWarnings("unchecked")
         PipelineCompletionTracker tracker = aCompletionTracker();
 
-        CassandraProcessor cassandraProcessor = new CassandraProcessor(TEMPLATES_REPOSITORY_ALIAS_NAME, SECRETS_REPOSITORY_ALIAS_NAME, templatesGenerator, secretsGenerator, tracker);
+        BoshProcessor boshProcessor = new BoshProcessor(TEMPLATES_REPOSITORY_ALIAS_NAME, SECRETS_REPOSITORY_ALIAS_NAME, templatesGenerator, secretsGenerator, tracker, "Cassandra");
 
         //When
-        cassandraProcessor.preCreate(context);
+        boshProcessor.preCreate(context);
 
         //Then verify parameters and delegation on calls
         verify(templatesGenerator).checkPrerequisites(aGitRepoWorkDir());
@@ -98,8 +98,8 @@ public class CassandraProcessorTest {
 
 
         //When
-        CassandraProcessor cassandraProcessor = new CassandraProcessor(TEMPLATES_REPOSITORY_ALIAS_NAME, SECRETS_REPOSITORY_ALIAS_NAME, null, null, tracker);
-        cassandraProcessor.preGetLastOperation(context);
+        BoshProcessor boshProcessor = new BoshProcessor(TEMPLATES_REPOSITORY_ALIAS_NAME, SECRETS_REPOSITORY_ALIAS_NAME, null, null, tracker, "Cassandra");
+        boshProcessor.preGetLastOperation(context);
 
         //Then mapped response from tracker is returned
         GetLastServiceOperationResponse operationResponse = (GetLastServiceOperationResponse) context.contextKeys.get(ProcessorChainServiceInstanceService.GET_LAST_SERVICE_OPERATION_RESPONSE);
@@ -123,8 +123,8 @@ public class CassandraProcessorTest {
 
 
         //When
-        CassandraProcessor cassandraProcessor = new CassandraProcessor(TEMPLATES_REPOSITORY_ALIAS_NAME, SECRETS_REPOSITORY_ALIAS_NAME, null, null, tracker);
-        cassandraProcessor.preBind(context);
+        BoshProcessor boshProcessor = new BoshProcessor(TEMPLATES_REPOSITORY_ALIAS_NAME, SECRETS_REPOSITORY_ALIAS_NAME, null, null, tracker, "Cassandra");
+        boshProcessor.preBind(context);
 
         //Then
         verify(tracker).delegateBindRequest(any(Path.class), eq(request));
@@ -148,8 +148,8 @@ public class CassandraProcessorTest {
         doNothing().when(tracker).delegateUnbindRequest(any(Path.class), any(DeleteServiceInstanceBindingRequest.class));
 
         //When
-        CassandraProcessor cassandraProcessor = new CassandraProcessor(TEMPLATES_REPOSITORY_ALIAS_NAME, SECRETS_REPOSITORY_ALIAS_NAME, null, null, tracker);
-        cassandraProcessor.preUnBind(context);
+        BoshProcessor boshProcessor = new BoshProcessor(TEMPLATES_REPOSITORY_ALIAS_NAME, SECRETS_REPOSITORY_ALIAS_NAME, null, null, tracker, "Cassandra");
+        boshProcessor.preUnBind(context);
 
         //Then
         verify(tracker).delegateUnbindRequest(any(Path.class), eq(request));
@@ -178,8 +178,8 @@ public class CassandraProcessorTest {
         when(tracker.getDeploymentExecStatus(any(Path.class), eq(SERVICE_INSTANCE_ID), eq(CassandraProcessorConstants.OSB_OPERATION_CREATE), any(GetLastServiceOperationRequest.class))).thenReturn(expectedResponse);
 
         //When
-        CassandraProcessor cassandraProcessor = new CassandraProcessor(TEMPLATES_REPOSITORY_ALIAS_NAME, SECRETS_REPOSITORY_ALIAS_NAME, null, null, tracker);
-        cassandraProcessor.preGetLastOperation(context);
+        BoshProcessor boshProcessor = new BoshProcessor(TEMPLATES_REPOSITORY_ALIAS_NAME, SECRETS_REPOSITORY_ALIAS_NAME, null, null, tracker, "Cassandra");
+        boshProcessor.preGetLastOperation(context);
 
         //Then mapped response from tracker is returned
         GetLastServiceOperationResponse operationResponse = (GetLastServiceOperationResponse) context.contextKeys.get(ProcessorChainServiceInstanceService.GET_LAST_SERVICE_OPERATION_RESPONSE);
@@ -209,8 +209,8 @@ public class CassandraProcessorTest {
 
 
         //When
-        CassandraProcessor cassandraProcessor = new CassandraProcessor(TEMPLATES_REPOSITORY_ALIAS_NAME, SECRETS_REPOSITORY_ALIAS_NAME, null, secretsGenerator, tracker);
-        cassandraProcessor.preDelete(context);
+        BoshProcessor boshProcessor = new BoshProcessor(TEMPLATES_REPOSITORY_ALIAS_NAME, SECRETS_REPOSITORY_ALIAS_NAME, null, secretsGenerator, tracker, "Cassandra");
+        boshProcessor.preDelete(context);
 
         //Then verify parameters and delegation on calls
         verify(secretsGenerator).checkPrerequisites(aGitRepoWorkDir());

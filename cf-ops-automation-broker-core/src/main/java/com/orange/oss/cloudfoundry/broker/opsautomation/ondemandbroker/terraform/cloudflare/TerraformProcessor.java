@@ -150,6 +150,7 @@ public class TerraformProcessor extends DefaultBrokerProcessor {
     }
 
     private String getBrokerNameForCommitLog() {
+        //FIXME: cloudflare specifics to be moved out
         return "cloudflare broker";
     }
 

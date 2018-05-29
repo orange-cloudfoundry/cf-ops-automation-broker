@@ -1,11 +1,10 @@
-package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.cloudflare;
+package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.terraform;
 
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.GitProcessor;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.GitProperties;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.BrokerProcessor;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.DefaultBrokerSink;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.ProcessorChain;
-import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.terraform.*;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.terraform.cloudflare.*;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

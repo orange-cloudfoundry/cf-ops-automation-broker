@@ -1,5 +1,7 @@
 - bump cloudflare version in paas-template
-- fix smoke test syntax issues
+- Generalization
+   - Unify TF and Bosh service provisionning and service binding interfaces so that they can be mixed
+
 
 - Long term fix for regression following varops template introduction: provisionning always fail with a timeout because it's waiting for the manifest at the wrong path
 

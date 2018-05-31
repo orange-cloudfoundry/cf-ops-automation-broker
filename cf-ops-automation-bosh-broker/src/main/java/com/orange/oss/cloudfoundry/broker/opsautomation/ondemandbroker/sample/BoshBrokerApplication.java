@@ -99,16 +99,18 @@ public class BoshBrokerApplication {
     }
 
     @Bean
-    public BrokerProcessor cassandraProcessor(Clock clock,
-                                              TemplatesGenerator templatesGenerator,
-                                              SecretsGenerator secretsGenerator,
-                                              PipelineCompletionTracker pipelineCompletionTracker) {
+    public BrokerProcessor boshProcessor(Clock clock,
+                                         TemplatesGenerator templatesGenerator,
+                                         SecretsGenerator secretsGenerator,
+                                         PipelineCompletionTracker pipelineCompletionTracker) {
         return new BoshProcessor(
                 TEMPLATES_REPOSITORY_ALIAS_NAME,
                 SECRETS_REPOSITORY_ALIAS_NAME,
                 templatesGenerator,
                 secretsGenerator,
-                pipelineCompletionTracker, "Cassandra");
+                pipelineCompletionTracker,
+                //FIXME: cassandra specifics to be moved out
+                "Cassandra");
     }
 
     @Bean
@@ -135,13 +137,13 @@ public class BoshBrokerApplication {
 
 
     @Bean
-    public ProcessorChain processorChain(BrokerProcessor cassandraProcessor, BrokerProcessor secretsGitProcessor, BrokerProcessor templateGitProcessor, BrokerProcessor paasTemplateBranchSelector) {
+    public ProcessorChain processorChain(BrokerProcessor boshProcessor, BrokerProcessor secretsGitProcessor, BrokerProcessor templateGitProcessor, BrokerProcessor paasTemplateBranchSelector) {
         List<BrokerProcessor> processors = new ArrayList<>();
 
         processors.add(paasTemplateBranchSelector);
         processors.add(secretsGitProcessor);
         processors.add(templateGitProcessor);
-        processors.add(cassandraProcessor);
+        processors.add(boshProcessor);
 
         DefaultBrokerSink sink = new DefaultBrokerSink();
         return new ProcessorChain(processors, sink);

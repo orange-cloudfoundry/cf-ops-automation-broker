@@ -2,8 +2,9 @@
 - rename brokers to more generic names
    - rename poms and directories
    - rename jars
-   - search for cassandra specifics
-   - search for cloudflare specifics:  
+   - search for cassandra specifics: see
+      - //FIXME: cassandra specifics to be moved out 
+   - search for cloudflare specifics: see  
       - //FIXME: cloudflare specifics to be moved out
       - //FIXME: cloudflare specific default to be changed
       - config: route-suffix 

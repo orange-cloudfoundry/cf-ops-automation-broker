@@ -49,7 +49,7 @@ import java.util.Map;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
 import static com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.GitServer.NO_OP_INITIALIZER;
 import static com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.OsbBuilderHelper.*;
-import static com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.sample.CassandraBrokerApplication.SECRETS_REPOSITORY_ALIAS_NAME;
+import static com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.sample.BoshBrokerApplication.SECRETS_REPOSITORY_ALIAS_NAME;
 import static com.orange.oss.ondemandbroker.ProcessorChainServiceInstanceService.OSB_PROFILE_ORGANIZATION_GUID;
 import static com.orange.oss.ondemandbroker.ProcessorChainServiceInstanceService.OSB_PROFILE_SPACE_GUID;
 import static io.restassured.RestAssured.basic;
@@ -65,11 +65,11 @@ import static org.springframework.http.HttpStatus.CREATED;
 
 
 /**
- * Will detect all components present in classpath, including CassandraBrokerApplication
+ * Will detect all components present in classpath, including BoshBrokerApplication
  */
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = RANDOM_PORT)
-public class CassandraServiceProvisionningTest {
+public class BoshServiceProvisionningTest {
 
     private static final String SERVICE_DEFINITION_ID = "cassandra-ondemand-service";
     private static final String SERVICE_PLAN_ID = "cassandra-ondemand-plan";
@@ -204,7 +204,7 @@ public class CassandraServiceProvisionningTest {
 //            git.submoduleInit().call();
 //            git.submoduleAdd().setPath("bosh-deployment").setURI(GIT_BASE_URL + "bosh-deployment.git").call();
 //            git.submoduleAdd().setPath("mysql-deployment").setURI(GIT_BASE_URL + "mysql-deployment").call();
-            git.commit().setMessage("CassandraServiceProvisionningTest#initPaasTemplate").call();
+            git.commit().setMessage("BoshServiceProvisionningTest#initPaasTemplate").call();
 
             git.checkout().setName("master").call();
         } catch (Exception e) {
@@ -233,7 +233,7 @@ public class CassandraServiceProvisionningTest {
 //            git.submoduleInit().call();
 //            git.submoduleAdd().setPath("bosh-deployment").setURI(GIT_BASE_URL + "bosh-deployment.git").call();
 //            git.submoduleAdd().setPath("mysql-deployment").setURI(GIT_BASE_URL + "mysql-deployment").call();
-            git.commit().setMessage("CassandraServiceProvisionningTest#initPaasSecret").call();
+            git.commit().setMessage("BoshServiceProvisionningTest#initPaasSecret").call();
 
             git.checkout().setName("master").call();
         } catch (Exception e) {

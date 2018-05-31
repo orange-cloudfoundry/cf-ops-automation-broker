@@ -18,14 +18,14 @@ import java.util.List;
 
 @SpringBootApplication
 @EnableConfigurationProperties({GitProperties.class, PipelineProperties.class, OsbProxyProperties.class})
-public class CassandraBrokerApplication {
+public class BoshBrokerApplication {
 
     @SuppressWarnings("WeakerAccess")
     static final String TEMPLATES_REPOSITORY_ALIAS_NAME = "paas-template.";
     static final String SECRETS_REPOSITORY_ALIAS_NAME = "paas-secrets.";
 
     public static void main(String[] args) {
-        SpringApplication.run(CassandraBrokerApplication.class, args);
+        SpringApplication.run(BoshBrokerApplication.class, args);
     }
 
 

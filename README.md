@@ -39,7 +39,7 @@ This project is still in a beta state providing POC broker releases for CloudFla
 
 Deploy the broker as a CF app:
 * The CF manifest.yml file would be available in [orange-cloudfoundry/paas-templates](https://github.com/orange-cloudfoundry/paas-templates) repo
-   * The documentation reference for supported and required environment variables is in the [integration tests properties](cf-ops-automation-cassandra-broker/src/test/resources/application.properties). 
+   * The documentation reference for supported and required environment variables is in the [integration tests properties](cf-ops-automation-bosh-broker/src/test/resources/application.properties). 
    * The broker does not require stateful data service to be bound. 
 
 ### Configuring the service broker catalog

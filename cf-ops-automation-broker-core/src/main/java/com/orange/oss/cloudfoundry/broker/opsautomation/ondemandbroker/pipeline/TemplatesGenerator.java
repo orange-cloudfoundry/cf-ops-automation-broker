@@ -128,7 +128,7 @@ public class TemplatesGenerator extends StructureGeneratorImpl{
 
         } catch (IOException e) {
             e.printStackTrace();
-            throw new CassandraProcessorException(CassandraProcessorConstants.GENERATION_EXCEPTION);
+            throw new BoshProcessorException(CassandraProcessorConstants.GENERATION_EXCEPTION);
         }
     }
 
@@ -146,7 +146,7 @@ public class TemplatesGenerator extends StructureGeneratorImpl{
             Files.write(targetFile, resultLines, Charset.forName(StandardCharsets.UTF_8.name()));
         } catch (IOException e) {
             e.printStackTrace();
-            throw new CassandraProcessorException(CassandraProcessorConstants.GENERATION_EXCEPTION);
+            throw new BoshProcessorException(CassandraProcessorConstants.GENERATION_EXCEPTION);
         }
     }
 }

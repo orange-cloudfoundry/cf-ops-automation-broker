@@ -11,7 +11,7 @@ public class CloudFlareRouteSuffixValidator {
     private String suffix;
     private DomainValidator domainValidator;
 
-    private static Logger logger = LoggerFactory.getLogger(CloudFlareProcessor.class.getName());
+    private static Logger logger = LoggerFactory.getLogger(TerraformProcessor.class.getName());
 
 
     public CloudFlareRouteSuffixValidator(String suffix) {

@@ -102,15 +102,15 @@ public class BoshBrokerApplication {
     public BrokerProcessor boshProcessor(Clock clock,
                                          TemplatesGenerator templatesGenerator,
                                          SecretsGenerator secretsGenerator,
-                                         PipelineCompletionTracker pipelineCompletionTracker) {
+                                         PipelineCompletionTracker pipelineCompletionTracker,
+                                         DeploymentProperties deploymentProperties) {
         return new BoshProcessor(
                 TEMPLATES_REPOSITORY_ALIAS_NAME,
                 SECRETS_REPOSITORY_ALIAS_NAME,
                 templatesGenerator,
                 secretsGenerator,
                 pipelineCompletionTracker,
-                //FIXME: cassandra specifics to be moved out
-                "Cassandra");
+                deploymentProperties.getBrokerDisplayName());
     }
 
     @Bean

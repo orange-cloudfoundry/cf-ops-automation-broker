@@ -1,7 +1,5 @@
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline;
 
-import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
@@ -49,9 +47,6 @@ public class TemplatesGenerator extends StructureGeneratorImpl{
         //Generate service directory
         super.generate(workDir, serviceInstanceId);
 
-        //Build deploymentInstanceDirectory
-        String deploymentInstance = this.modelDeploymentShortAlias + DeploymentConstants.UNDERSCORE + serviceInstanceId;
-
         //Generate template directory
         this.generateTemplateDirectory(workDir, serviceInstanceId);
 
@@ -77,7 +72,7 @@ public class TemplatesGenerator extends StructureGeneratorImpl{
                 this.rootDeployment,
                 this.modelDeployment,
                 this.template);
-        if (Files.notExists(templateDir)){
+        if (StructureGeneratorHelper.isMissingResource(templateDir)){
             throw new DeploymentException(DeploymentConstants.TEMPLATE_EXCEPTION);
         }
     }
@@ -87,7 +82,7 @@ public class TemplatesGenerator extends StructureGeneratorImpl{
                 this.rootDeployment,
                 this.modelDeployment,
                 this.operators);
-        if (Files.notExists(operatorsDir)){
+        if (StructureGeneratorHelper.isMissingResource(operatorsDir)){
             throw new DeploymentException(DeploymentConstants.OPERATORS_EXCEPTION);
         }
     }
@@ -98,7 +93,7 @@ public class TemplatesGenerator extends StructureGeneratorImpl{
                 this.modelDeployment,
                 this.template,
                 this.modelDeployment + DeploymentConstants.YML_EXTENSION);
-        if (Files.notExists(modelManifestFile)){
+        if (StructureGeneratorHelper.isMissingResource(modelManifestFile)){
             throw new DeploymentException(DeploymentConstants.MANIFEST_FILE_EXCEPTION);
         }
     }
@@ -109,7 +104,7 @@ public class TemplatesGenerator extends StructureGeneratorImpl{
                 this.modelDeployment,
                 this.template,
                 this.modelDeployment + DeploymentConstants.HYPHEN + this.vars + DeploymentConstants.YML_EXTENSION);
-        if (Files.notExists(modelVarsFile)){
+        if (StructureGeneratorHelper.isMissingResource(modelVarsFile)){
             throw new DeploymentException(DeploymentConstants.VARS_FILE_EXCEPTION);
         }
     }
@@ -120,26 +115,17 @@ public class TemplatesGenerator extends StructureGeneratorImpl{
                 this.modelDeployment,
                 this.operators,
                 DeploymentConstants.COAB + DeploymentConstants.HYPHEN + this.operators + DeploymentConstants.YML_EXTENSION);
-        if (Files.notExists(modelOperatorsFile)){
+        if (StructureGeneratorHelper.isMissingResource(modelOperatorsFile)){
             throw new DeploymentException(DeploymentConstants.COAB_OPERATORS_FILE_EXCEPTION);
         }
     }
 
-    private String computeDeploymentInstance(String serviceInstanceId){
-        return this.modelDeploymentShortAlias + DeploymentConstants.UNDERSCORE + serviceInstanceId;
-    }
-
     private void generateTemplateDirectory(Path workDir, String serviceInstanceId){
-        try{
             Path deploymentTemplateDir = StructureGeneratorHelper.generatePath(workDir,
                     this.rootDeployment,
                     this.computeDeploymentInstance(serviceInstanceId),
                     this.template);
-            Files.createDirectory(deploymentTemplateDir);
-        } catch (IOException e) {
-            e.printStackTrace();
-            throw new BoshProcessorException(CassandraProcessorConstants.GENERATION_EXCEPTION);
-        }
+            StructureGeneratorHelper.generateDirectory(deploymentTemplateDir, null);
     }
 
     private void generateDeploymentDependenciesFile(Path workDir, String serviceInstanceId){

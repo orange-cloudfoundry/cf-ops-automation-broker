@@ -1,5 +1,4 @@
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline;
-import java.nio.file.Files;
 import java.nio.file.Path;
 
 public class SecretsGenerator extends StructureGeneratorImpl {
@@ -26,7 +25,7 @@ public class SecretsGenerator extends StructureGeneratorImpl {
                 this.rootDeployment,
                 this.modelDeployment,
                 this.secrets);
-        if (Files.notExists(secretsDir)){
+        if (StructureGeneratorHelper.isMissingResource(secretsDir)){
             throw new DeploymentException(DeploymentConstants.SECRETS_EXCEPTION);
         }
 
@@ -36,7 +35,7 @@ public class SecretsGenerator extends StructureGeneratorImpl {
                 this.modelDeployment,
                 this.secrets,
                 this.meta + DeploymentConstants.YML_EXTENSION);
-        if (Files.notExists(metaFile)){
+        if (StructureGeneratorHelper.isMissingResource(metaFile)){
             throw new DeploymentException(DeploymentConstants.META_FILE_EXCEPTION);
         }
 
@@ -46,39 +45,59 @@ public class SecretsGenerator extends StructureGeneratorImpl {
                 this.modelDeployment,
                 this.secrets,
                 this.secrets + DeploymentConstants.YML_EXTENSION);
-        if (Files.notExists(secretsFile)){
+        if (StructureGeneratorHelper.isMissingResource(secretsFile)){
             throw new DeploymentException(DeploymentConstants.SECRETS_FILE_EXCEPTION);
         }
-
     }
 
     @Override
     public void generate(Path workDir, String serviceInstanceId) {
 
-            //Generate service directory
-            super.generate(workDir, serviceInstanceId);
+        //Generate service directory
+        super.generate(workDir, serviceInstanceId);
 
-            //Compute instance directory
-            String deploymentInstanceDirectory = this.modelDeploymentShortAlias + DeploymentConstants.UNDERSCORE + serviceInstanceId;
+        //Compute instance directory
+        String deploymentInstanceDirectory = this.modelDeploymentShortAlias + DeploymentConstants.UNDERSCORE + serviceInstanceId;
 
-            //Generate secrets directory
-            StructureGeneratorHelper.generateDirectory(workDir, this.rootDeployment, deploymentInstanceDirectory, this.secrets);
+        //Generate secrets directory
+        this.generateSecretsDirectory(workDir, serviceInstanceId);
 
-            //Generate meta file
-            String[] sourcePathElements = new String[] {this.rootDeployment, this.modelDeployment, this.secrets};
-            String[] targetPathElements = new String[] {this.rootDeployment, deploymentInstanceDirectory, this.secrets};
-            String fileName = this.meta + DeploymentConstants.YML_EXTENSION;
-            StructureGeneratorHelper.generateSymbolicLink(workDir, sourcePathElements, targetPathElements, fileName, fileName);
+        //Generate meta file
+        this.generateMetaFile(workDir, serviceInstanceId);
 
-            //Generate secrets file
-            fileName = this.secrets + DeploymentConstants.YML_EXTENSION;
-            StructureGeneratorHelper.generateSymbolicLink(workDir, sourcePathElements, targetPathElements, fileName, fileName);
+        //Generate secrets file
+        this.generateSecretsFile(workDir, serviceInstanceId);
 
-            //Generate enable deployment file
-            targetPathElements = new String[] {this.rootDeployment, deploymentInstanceDirectory};
-            fileName = DeploymentConstants.ENABLE_DEPLOYMENT_FILENAME;
-            StructureGeneratorHelper.generateFile(workDir,  targetPathElements, fileName, fileName, null);
+        //Generate enable deployment file
+        this.generateEnableDeploymentFile(workDir, serviceInstanceId);
+    }
 
+    private void generateSecretsDirectory(Path workDir, String serviceInstanceId){
+        Path deploymentSecretsDir = StructureGeneratorHelper.generatePath(workDir,
+                this.rootDeployment,
+                this.computeDeploymentInstance(serviceInstanceId),
+                this.secrets);
+        StructureGeneratorHelper.generateDirectory(deploymentSecretsDir, null);
+    }
+
+    private void generateMetaFile(Path workDir, String serviceInstanceId){
+        String[] sourcePathElements = new String[] {this.rootDeployment, this.modelDeployment, this.secrets};
+        String[] targetPathElements = new String[] {this.rootDeployment, this.computeDeploymentInstance(serviceInstanceId), this.secrets};
+        String fileName = this.meta + DeploymentConstants.YML_EXTENSION;
+        StructureGeneratorHelper.generateSymbolicLink(workDir, sourcePathElements, targetPathElements, fileName, fileName);
+    }
+
+    private void generateSecretsFile(Path workDir, String serviceInstanceId){
+        String[] sourcePathElements = new String[] {this.rootDeployment, this.modelDeployment, this.secrets};
+        String[] targetPathElements = new String[] {this.rootDeployment, this.computeDeploymentInstance(serviceInstanceId), this.secrets};
+        String fileName = this.secrets + DeploymentConstants.YML_EXTENSION;
+        StructureGeneratorHelper.generateSymbolicLink(workDir, sourcePathElements, targetPathElements, fileName, fileName);
+    }
+
+    private void generateEnableDeploymentFile(Path workDir, String serviceInstanceId){
+        String[] targetPathElements = new String[] {this.rootDeployment, this.computeDeploymentInstance(serviceInstanceId)};
+        String fileName = DeploymentConstants.ENABLE_DEPLOYMENT_FILENAME;
+        StructureGeneratorHelper.generateFile(workDir,  targetPathElements, fileName, fileName, null);
     }
 
     public void remove(Path workDir, String serviceInstanceId) {
@@ -114,7 +133,5 @@ public class SecretsGenerator extends StructureGeneratorImpl {
         String fileName = DeploymentConstants.ENABLE_DEPLOYMENT_FILENAME;
         StructureGeneratorHelper.removeFile(workDir, pathElements, fileName);
     }
-
-
 
 }

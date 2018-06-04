@@ -56,10 +56,10 @@ public class StructureGeneratorHelperTest {
         List<String> resultLines = StructureGeneratorHelper.findAndReplace(lines, map);
 
         //Then
-        assertEquals("---", (String)resultLines.get(0));
-        assertEquals("deployment:", (String)resultLines.get(1));
-        assertEquals("  c_aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa0:", (String)resultLines.get(2));
-        assertEquals("  value: c_aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa0", (String)resultLines.get(3));
-        assertEquals("  value: cassandra-broker_aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa0.((!/secrets/cloudfoundry_system_domain))", (String)resultLines.get(4));
+        assertEquals("---", resultLines.get(0));
+        assertEquals("deployment:", resultLines.get(1));
+        assertEquals("  c_aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa0:", resultLines.get(2));
+        assertEquals("  value: c_aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa0", resultLines.get(3));
+        assertEquals("  value: cassandra-broker_aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa0.((!/secrets/cloudfoundry_system_domain))", resultLines.get(4));
     }
 }

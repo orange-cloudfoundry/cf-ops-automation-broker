@@ -56,7 +56,7 @@ public class SecretsGenerator extends StructureGeneratorImpl {
         //Generate service directory
         super.generate(workDir, serviceInstanceId);
 
-œœ        //Generate secrets directory
+        //Generate secrets directory
         this.generateSecretsDirectory(workDir, serviceInstanceId);
 
         //Generate meta file
@@ -99,17 +99,14 @@ public class SecretsGenerator extends StructureGeneratorImpl {
 
     public void remove(Path workDir, String serviceInstanceId) {
 
-            //Compute instance directory
-            String deploymentInstanceDirectory = this.modelDeploymentShortAlias + DeploymentConstants.UNDERSCORE + serviceInstanceId;
-
             //Remove meta file
-            this.removeMetaFile(workDir, deploymentInstanceDirectory);
+            this.removeMetaFile(workDir, this.computeDeploymentInstance(serviceInstanceId));
 
             //Remove secrets file
-            this.removeSecretsFile(workDir, deploymentInstanceDirectory);
+            this.removeSecretsFile(workDir, this.computeDeploymentInstance(serviceInstanceId));
 
             //Remove enable deployment file
-            this.removeEnableDeploymentFile(workDir, deploymentInstanceDirectory);
+            this.removeEnableDeploymentFile(workDir, this.computeDeploymentInstance(serviceInstanceId));
 
     }
 

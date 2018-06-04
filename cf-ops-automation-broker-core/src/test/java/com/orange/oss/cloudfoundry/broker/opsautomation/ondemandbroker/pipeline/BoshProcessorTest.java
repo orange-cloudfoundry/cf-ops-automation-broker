@@ -236,7 +236,7 @@ public class BoshProcessorTest {
 
     private PipelineCompletionTracker aCompletionTracker() {
         Clock clock = Clock.fixed(Instant.ofEpochMilli(1510680248007L), ZoneId.of("Europe/Paris"));
-        return new PipelineCompletionTracker(clock, 1200L, Mockito.mock(OsbProxy.class));
+        return new PipelineCompletionTracker(clock, 1200L, Mockito.mock(OsbProxy.class), Mockito.mock(SecretsReader.class));
     }
 
     private Path aGitRepoWorkDir() {

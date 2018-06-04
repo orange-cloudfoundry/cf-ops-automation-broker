@@ -22,13 +22,15 @@ public class PipelineCompletionTracker {
 
     private Clock clock;
     private OsbProxy osbProxy;
+    private SecretsReader secretsReader;
     private Gson gson;
     private long maxExecutionDurationSeconds;
 
-    public PipelineCompletionTracker(Clock clock, long maxExecutionDurationSeconds, OsbProxy osbProxy) {
+    public PipelineCompletionTracker(Clock clock, long maxExecutionDurationSeconds, OsbProxy osbProxy, SecretsReader secretsReader) {
         this.clock = clock;
         this.maxExecutionDurationSeconds = maxExecutionDurationSeconds;
         this.osbProxy = osbProxy;
+        this.secretsReader = secretsReader;
         final GsonBuilder gsonBuilder = new GsonBuilder();
         gsonBuilder.registerTypeAdapter(PipelineCompletionTracker.PipelineOperationState.class, new PipelineOperationStateGsonAdapter());
 

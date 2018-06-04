@@ -7,6 +7,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.rules.TemporaryFolder;
+import org.mockito.Mockito;
 import org.springframework.cloud.servicebroker.exception.ServiceBrokerException;
 import org.springframework.cloud.servicebroker.exception.ServiceInstanceDoesNotExistException;
 import org.springframework.cloud.servicebroker.model.*;
@@ -49,7 +50,7 @@ public class PipelineCompletionTrackerTest {
     @SuppressWarnings("unchecked")
     private OsbProxy osbProxy = mock(OsbProxy.class);
 
-    private PipelineCompletionTracker tracker = new PipelineCompletionTracker(clock, 1200L, osbProxy);
+    private PipelineCompletionTracker tracker = new PipelineCompletionTracker(clock, 1200L, osbProxy, Mockito.mock(SecretsReader.class));
 
 
     @Before
@@ -169,7 +170,7 @@ public class PipelineCompletionTrackerTest {
     @Test
     public void rejects_bind_request_when_no_osb_proxy_configured() throws IOException {
         //Given a null proxy was configured
-        tracker = new PipelineCompletionTracker(clock, 1200L, null);
+        tracker = new PipelineCompletionTracker(clock, 1200L, null, Mockito.mock(SecretsReader.class));
         //Given a manifest file
         generateSampleManifest();
 
@@ -345,7 +346,7 @@ public class PipelineCompletionTrackerTest {
         PipelineCompletionTracker.PipelineOperationState pipelineOperationState = new PipelineCompletionTracker.PipelineOperationState(request, "2018-01-22T14:00:00.000Z");
 
         //when
-        @SuppressWarnings("unchecked") PipelineCompletionTracker tracker = new PipelineCompletionTracker(Clock.systemUTC(), 1200L, mock(OsbProxy.class));
+        @SuppressWarnings("unchecked") PipelineCompletionTracker tracker = new PipelineCompletionTracker(Clock.systemUTC(), 1200L, mock(OsbProxy.class), Mockito.mock(SecretsReader.class));
         return tracker.formatAsJson(pipelineOperationState);
     }
 
@@ -356,7 +357,7 @@ public class PipelineCompletionTrackerTest {
         PipelineCompletionTracker.PipelineOperationState pipelineOperationState = new PipelineCompletionTracker.PipelineOperationState(originalRequest, "2018-01-22T14:00:00.000Z");
 
         //when
-        @SuppressWarnings("unchecked") PipelineCompletionTracker tracker = new PipelineCompletionTracker(Clock.systemUTC(), 1200L, mock(OsbProxy.class));
+        @SuppressWarnings("unchecked") PipelineCompletionTracker tracker = new PipelineCompletionTracker(Clock.systemUTC(), 1200L, mock(OsbProxy.class), Mockito.mock(SecretsReader.class));
         String json = tracker.formatAsJson(pipelineOperationState);
         System.out.println(json);
 

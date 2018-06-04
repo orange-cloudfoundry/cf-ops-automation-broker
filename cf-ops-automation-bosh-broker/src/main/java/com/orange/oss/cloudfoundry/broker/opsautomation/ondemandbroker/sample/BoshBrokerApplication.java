@@ -64,11 +64,13 @@ public class BoshBrokerApplication {
     }
 
     @Bean
-    public PipelineCompletionTracker pipelineCompletionTracker(Clock clock, OsbProxyProperties osbProxyProperties,OsbProxy createServiceInstanceResponseOsbProxy) {
+    public PipelineCompletionTracker pipelineCompletionTracker(Clock clock, OsbProxyProperties osbProxyProperties,OsbProxy createServiceInstanceResponseOsbProxy, SecretsGenerator secretsGenerator) {
+
         return new PipelineCompletionTracker(
                 clock,
                 osbProxyProperties.getMaxExecutionDurationSeconds(),
-                createServiceInstanceResponseOsbProxy
+                createServiceInstanceResponseOsbProxy,
+                (SecretsReader) secretsGenerator
         );
     }
 

@@ -104,6 +104,10 @@ public class BoshServiceProvisionningTest {
 
     @Autowired
     DeploymentProperties deploymentProperties;
+
+    @Autowired
+    SecretsGenerator secretsGenerator;
+
     @Autowired
     OsbClientFactory clientFactory;
 
@@ -246,8 +250,7 @@ public class BoshServiceProvisionningTest {
         gitProcessor.preCreate(context);
 
         Path workDirPath = (Path) context.contextKeys.get(SECRETS_REPOSITORY_ALIAS_NAME + GitProcessorContext.workDir.toString());
-        @SuppressWarnings("unchecked") PipelineCompletionTracker tracker = new PipelineCompletionTracker(Clock.systemUTC(), osbProxyProperties.getMaxExecutionDurationSeconds(), Mockito.mock(OsbProxy.class), Mockito.mock(SecretsReader.class));
-        Path targetManifestFilePath = tracker.getTargetManifestFilePath(workDirPath, SERVICE_INSTANCE_ID);
+        Path targetManifestFilePath = secretsGenerator.getTargetManifestFilePath(workDirPath, SERVICE_INSTANCE_ID);
         createDir(targetManifestFilePath.getParent());
         createDummyFile(targetManifestFilePath);
 

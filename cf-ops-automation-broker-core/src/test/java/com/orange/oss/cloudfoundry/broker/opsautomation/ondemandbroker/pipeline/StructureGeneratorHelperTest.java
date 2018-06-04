@@ -41,26 +41,25 @@ public class StructureGeneratorHelperTest {
 
     @Test
     public void check_find_and_replace(){
-        //Given an array list and a map
+        //Given a template with markers
         List<String> lines = new ArrayList<String>();
         lines.add("---");
         lines.add("deployment:");
         lines.add("  @service_instance@:");
         lines.add("  value: @service_instance@");
         lines.add("  value: @url@.((!/secrets/cloudfoundry_system_domain))");
-        Map<String, String> map = new HashMap<String, String>();
-        map.put("@service_instance@", CassandraProcessorConstants.SERVICE_INSTANCE_PREFIX_DIRECTORY + "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa0");
-        map.put("@url@", "cassandra-broker_aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa0");
 
-        //When
+        //When asking to replace some markers
+        Map<String, String> map = new HashMap<String, String>();
+        map.put("@service_instance@", "c_aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa0");
+        map.put("@url@", "cassandra-broker_aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa0");
         List<String> resultLines = StructureGeneratorHelper.findAndReplace(lines, map);
 
         //Then
         assertEquals("---", (String)resultLines.get(0));
         assertEquals("deployment:", (String)resultLines.get(1));
-        String prefix = CassandraProcessorConstants.SERVICE_INSTANCE_PREFIX_DIRECTORY;
-        assertEquals("  " + prefix + "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa0:", (String)resultLines.get(2));
-        assertEquals("  value: " + prefix + "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa0", (String)resultLines.get(3));
+        assertEquals("  c_aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa0:", (String)resultLines.get(2));
+        assertEquals("  value: c_aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa0", (String)resultLines.get(3));
         assertEquals("  value: cassandra-broker_aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa0.((!/secrets/cloudfoundry_system_domain))", (String)resultLines.get(4));
     }
 }

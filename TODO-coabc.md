@@ -1,7 +1,8 @@
 
-- Fix BoshServiceProvisionningTest
-- Restore assertion in SecretsGenerator.check_that_enable_deployment_file_is_generated_collocated_with_coa_produced_manifest
-
+- Write test for ServiceGenerator introduced SecretsReader methods: take examples of cassandra and mongo with distinct paths
+    - Restore assertion in SecretsGenerator.check_that_enable_deployment_file_is_generated_collocated_with_coa_produced_manifest
+- Modify SecretsGenerator.getTargetManifestFilePath to not use CassandraConstants anymore
+- clean up CassandraConstants 
 
 - rename brokers to more generic names
    - rename jars

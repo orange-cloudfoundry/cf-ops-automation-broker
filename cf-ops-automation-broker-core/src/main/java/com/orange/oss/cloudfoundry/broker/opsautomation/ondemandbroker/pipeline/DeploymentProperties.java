@@ -12,7 +12,7 @@ public class DeploymentProperties {
     private String brokerDisplayName = "Cassandra"; //used in broker traces.
     private String rootDeployment = "coab-depls"; //Root deployment (i.e coab-depls)
     private String modelDeployment = "cassandravarsops"; //Model deployment (i.e cassandra, cassandravarsops, ...)
-    private String modelDeploymentShortAlias = "c"; //shortname for the model deployment. Enables distinguishing services. Shoulb be short so that broker URL remains shorter than 63 chars
+œ    private String modelDeploymentShortAlias = "c"; //shortname for the model deployment. Enables distinguishing services. Should be short so that broker URL remains shorter than 63 chars
     private String secrets = "secrets"; //Secrets directory (i.e secrets)
     private String meta = "meta"; //Meta directory (i.e meta)
     private String template = "template"; //Template directory (i.e template)

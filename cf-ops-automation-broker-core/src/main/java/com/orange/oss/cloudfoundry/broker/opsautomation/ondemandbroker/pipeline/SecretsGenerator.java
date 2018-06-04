@@ -56,10 +56,7 @@ public class SecretsGenerator extends StructureGeneratorImpl {
         //Generate service directory
         super.generate(workDir, serviceInstanceId);
 
-        //Compute instance directory
-        String deploymentInstanceDirectory = this.modelDeploymentShortAlias + DeploymentConstants.UNDERSCORE + serviceInstanceId;
-
-        //Generate secrets directory
+œœ        //Generate secrets directory
         this.generateSecretsDirectory(workDir, serviceInstanceId);
 
         //Generate meta file

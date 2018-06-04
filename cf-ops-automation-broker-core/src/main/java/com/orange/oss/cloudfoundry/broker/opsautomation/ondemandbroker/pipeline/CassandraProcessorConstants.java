@@ -2,10 +2,7 @@ package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline
 
 public class CassandraProcessorConstants {
     public static final String SERVICE_INSTANCE_PREFIX_DIRECTORY = "c_";
-    public static final String BROKER_PREFIX = "cassandra-broker_";
     public static final String ROOT_DEPLOYMENT_DIRECTORY = "coab-depls";
-    public static final String SERVICE_INSTANCE_PATTERN = "@service_instance@";
-    public static final String URL_PATTERN = "@url@";
     public static final String YML_SUFFIX = ".yml";
     public static final String OSB_OPERATION_CREATE = "create";
     public static final String OSB_OPERATION_DELETE = "delete";

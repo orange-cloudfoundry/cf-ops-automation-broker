@@ -17,8 +17,6 @@ import static org.junit.Assert.assertEquals;
  */
 public class StructureGeneratorHelperTest {
 
-    public static final String SERVICE_INSTANCE_ID = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa0";
-
     @Test
     public void check_generated_path(){
             //Given a root path and path elements
@@ -51,8 +49,8 @@ public class StructureGeneratorHelperTest {
         lines.add("  value: @service_instance@");
         lines.add("  value: @url@.((!/secrets/cloudfoundry_system_domain))");
         Map<String, String> map = new HashMap<String, String>();
-        map.put(CassandraProcessorConstants.SERVICE_INSTANCE_PATTERN, CassandraProcessorConstants.SERVICE_INSTANCE_PREFIX_DIRECTORY + SERVICE_INSTANCE_ID);
-        map.put(CassandraProcessorConstants.URL_PATTERN, CassandraProcessorConstants.BROKER_PREFIX + SERVICE_INSTANCE_ID);
+        map.put("@service_instance@", CassandraProcessorConstants.SERVICE_INSTANCE_PREFIX_DIRECTORY + "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa0");
+        map.put("@url@", "cassandra-broker_aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa0");
 
         //When
         List<String> resultLines = StructureGeneratorHelper.findAndReplace(lines, map);

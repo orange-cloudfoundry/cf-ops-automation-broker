@@ -16,7 +16,6 @@ import org.springframework.http.HttpStatus;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Clock;
 import java.time.Instant;
@@ -50,7 +49,8 @@ public class PipelineCompletionTrackerTest {
     @SuppressWarnings("unchecked")
     private OsbProxy osbProxy = mock(OsbProxy.class);
 
-    private PipelineCompletionTracker tracker = new PipelineCompletionTracker(clock, 1200L, osbProxy, Mockito.mock(SecretsReader.class));
+    private SecretsReader secretsReader = Mockito.mock(SecretsReader.class);
+    private PipelineCompletionTracker tracker = new PipelineCompletionTracker(clock, 1200L, osbProxy, secretsReader);
 
 
     @Before
@@ -90,9 +90,9 @@ public class PipelineCompletionTrackerTest {
     }
 
     @Test
-    public void returns_succeeded_state_during_provision_if_manifest_is_present_regardless_of_elapsed_time() throws IOException {
+    public void returns_succeeded_state_during_provision_if_manifest_is_present_regardless_of_elapsed_time() {
         //Given an existing manifest file
-        generateSampleManifest();
+        Mockito.when(secretsReader.isBoshDeploymentAvailable(any(), any())).thenReturn(true);
         String jsonPipelineOperationState = createProvisionOperationStateInThePast();
 
         //When
@@ -107,9 +107,9 @@ public class PipelineCompletionTrackerTest {
     }
 
     @Test
-    public void delegates_to_osb_proxy_when_provision_completes_with_manifest_being_present() throws IOException {
+    public void delegates_to_osb_proxy_when_provision_completes_with_manifest_being_present() {
         //Given an existing manifest file
-        generateSampleManifest();
+        Mockito.when(secretsReader.isBoshDeploymentAvailable(any(), any())).thenReturn(true);
         String jsonPipelineOperationState = createProvisionOperationStateInThePast();
         //Given a proxy that returns a custom response message
         GetLastServiceOperationResponse proxiedResponse = new GetLastServiceOperationResponse();
@@ -129,9 +129,9 @@ public class PipelineCompletionTrackerTest {
     }
 
     @Test
-    public void delegates_bind_to_osb_proxy_when_manifest_is_present() throws IOException {
+    public void delegates_bind_to_osb_proxy_when_manifest_is_present() {
         //Given an existing manifest file
-        generateSampleManifest();
+        Mockito.when(secretsReader.isBoshDeploymentAvailable(any(), any())).thenReturn(true);
         //and
         CreateServiceInstanceBindingRequest request = aBindingRequest(SERVICE_INSTANCE_ID);
         when(osbProxy.delegateBind(any())).thenReturn(aBindingResponse());
@@ -145,9 +145,9 @@ public class PipelineCompletionTrackerTest {
     }
 
     @Test
-    public void delegates_unbind_to_osb_proxy_when_manifest_is_present() throws IOException {
+    public void delegates_unbind_to_osb_proxy_when_manifest_is_present() {
         //Given an existing manifest file
-        generateSampleManifest();
+        Mockito.when(secretsReader.isBoshDeploymentAvailable(any(), any())).thenReturn(true);
         //and
         DeleteServiceInstanceBindingRequest request = OsbBuilderHelper.anUnbindRequest(SERVICE_INSTANCE_ID, "service-binding-id");
         doNothing().when(osbProxy).delegateUnbind(any());
@@ -168,11 +168,11 @@ public class PipelineCompletionTrackerTest {
         tracker.checkBindingRequestsPrereqs(workDir, SERVICE_INSTANCE_ID);
     }
     @Test
-    public void rejects_bind_request_when_no_osb_proxy_configured() throws IOException {
+    public void rejects_bind_request_when_no_osb_proxy_configured() {
         //Given a null proxy was configured
-        tracker = new PipelineCompletionTracker(clock, 1200L, null, Mockito.mock(SecretsReader.class));
-        //Given a manifest file
-        generateSampleManifest();
+        tracker = new PipelineCompletionTracker(clock, 1200L, null, secretsReader);
+        //Given a manifest file is available
+        Mockito.when(secretsReader.isBoshDeploymentAvailable(any(), any())).thenReturn(true);
 
         thrown.expect(ServiceBrokerException.class);
         thrown.expectMessage(containsString("Bindings not supported for this service"));
@@ -305,9 +305,9 @@ public class PipelineCompletionTrackerTest {
 //    }
 
     @Test
-    public void returns_succeeded_state_if_manifest_is_present_and_provision_operation_state_without_timeout() throws IOException {
+    public void returns_succeeded_state_if_manifest_is_present_and_provision_operation_state_without_timeout() {
         //Given an existing manifest file and a create operation state without timeout
-        generateSampleManifest();
+        Mockito.when(secretsReader.isBoshDeploymentAvailable(any(), any())).thenReturn(true);
         String jsonPipelineOperationState = tracker.getPipelineOperationStateAsJson(OsbBuilderHelper.aCreateServiceInstanceRequest());
 
         //When
@@ -370,17 +370,6 @@ public class PipelineCompletionTrackerTest {
         //CreateServiceInstanceRequest.equals ignores transient fields that we need to preserve in our context
         assertEquals(actualServiceBrokerRequest.getServiceInstanceId(), originalRequest.getServiceInstanceId());
         assertEquals(actualServiceBrokerRequest.getServiceDefinitionId(), originalRequest.getServiceDefinitionId());
-    }
-
-
-    private void generateSampleManifest() throws IOException {
-        Path serviceInstanceDir = StructureGeneratorHelper.generatePath(workDir,
-                CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY,
-                CassandraProcessorConstants.SERVICE_INSTANCE_PREFIX_DIRECTORY + SERVICE_INSTANCE_ID);
-        serviceInstanceDir = Files.createDirectories(serviceInstanceDir);
-        Path targetManifestFile = StructureGeneratorHelper.generatePath(serviceInstanceDir,
-                CassandraProcessorConstants.SERVICE_INSTANCE_PREFIX_DIRECTORY + SERVICE_INSTANCE_ID + CassandraProcessorConstants.YML_SUFFIX);
-        Files.createFile(targetManifestFile);
     }
 
 

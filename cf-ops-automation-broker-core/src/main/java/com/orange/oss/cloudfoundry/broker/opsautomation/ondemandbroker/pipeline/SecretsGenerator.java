@@ -1,8 +1,13 @@
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.nio.file.Files;
 import java.nio.file.Path;
 
-public class SecretsGenerator extends StructureGeneratorImpl {
+public class SecretsGenerator extends StructureGeneratorImpl implements SecretsReader {
 
+    private static Logger logger = LoggerFactory.getLogger(SecretsGenerator.class.getName());
     private String secrets;
     private String meta;
 
@@ -69,6 +74,42 @@ public class SecretsGenerator extends StructureGeneratorImpl {
         this.generateEnableDeploymentFile(workDir, serviceInstanceId);
     }
 
+    //
+    // SecretsReader impl
+    //
+
+    @Override
+    public Path getTargetManifestFilePath(Path workDir, String serviceInstanceId) {
+        return StructureGeneratorHelper.generatePath(workDir,
+                CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY,
+                CassandraProcessorConstants.SERVICE_INSTANCE_PREFIX_DIRECTORY + serviceInstanceId,
+                CassandraProcessorConstants.SERVICE_INSTANCE_PREFIX_DIRECTORY + serviceInstanceId + CassandraProcessorConstants.YML_SUFFIX);
+    }
+
+    @Override
+    public boolean isBoshDeploymentAvailable(Path secretsWorkDir, String serviceInstanceId) {
+        Path targetManifestFile = getTargetManifestFilePath(secretsWorkDir, serviceInstanceId);
+        boolean exists = Files.exists(targetManifestFile);
+        logger.debug("Manifest at path {} exists: {}", targetManifestFile, exists);
+        return exists;
+    }
+
+
+
+    public void remove(Path workDir, String serviceInstanceId) {
+
+        //Remove meta file
+        this.removeMetaFile(workDir, this.computeDeploymentInstance(serviceInstanceId));
+
+        //Remove secrets file
+        this.removeSecretsFile(workDir, this.computeDeploymentInstance(serviceInstanceId));
+
+        //Remove enable deployment file
+        this.removeEnableDeploymentFile(workDir, this.computeDeploymentInstance(serviceInstanceId));
+
+    }
+
+
     private void generateSecretsDirectory(Path workDir, String serviceInstanceId){
         Path deploymentSecretsDir = StructureGeneratorHelper.generatePath(workDir,
                 this.rootDeployment,
@@ -95,19 +136,6 @@ public class SecretsGenerator extends StructureGeneratorImpl {
         String[] targetPathElements = new String[] {this.rootDeployment, this.computeDeploymentInstance(serviceInstanceId)};
         String fileName = DeploymentConstants.ENABLE_DEPLOYMENT_FILENAME;
         StructureGeneratorHelper.generateFile(workDir,  targetPathElements, fileName, fileName, null);
-    }
-
-    public void remove(Path workDir, String serviceInstanceId) {
-
-            //Remove meta file
-            this.removeMetaFile(workDir, this.computeDeploymentInstance(serviceInstanceId));
-
-            //Remove secrets file
-            this.removeSecretsFile(workDir, this.computeDeploymentInstance(serviceInstanceId));
-
-            //Remove enable deployment file
-            this.removeEnableDeploymentFile(workDir, this.computeDeploymentInstance(serviceInstanceId));
-
     }
 
     private void removeMetaFile(Path workDir, String deploymentInstanceDirectory) {

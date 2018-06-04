@@ -1,4 +1,8 @@
 
+- Fix BoshServiceProvisionningTest
+- Restore assertion in SecretsGenerator.check_that_enable_deployment_file_is_generated_collocated_with_coa_produced_manifest
+
+
 - rename brokers to more generic names
    - rename jars
    - search for cassandra specifics: 

@@ -52,6 +52,12 @@ public class PipelineCompletionTrackerTest {
     private SecretsReader secretsReader = Mockito.mock(SecretsReader.class);
     private PipelineCompletionTracker tracker = new PipelineCompletionTracker(clock, 1200L, osbProxy, secretsReader);
 
+    @Before
+    public void setUp_SecretsReader_to_report_missing_manifest() {
+        //Mockito happens to return false by default on boolean method, but let's be explicit so that
+        //future refactorings would not break by accident
+        Mockito.when(secretsReader.isBoshDeploymentAvailable(any(), any())).thenReturn(false);
+    }
 
     @Before
     public void preparePaasSecretWorkDir() throws IOException {

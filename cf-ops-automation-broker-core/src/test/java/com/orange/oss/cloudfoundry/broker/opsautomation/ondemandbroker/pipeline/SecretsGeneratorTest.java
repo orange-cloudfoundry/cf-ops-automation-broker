@@ -1,4 +1,5 @@
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline;
+
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Rule;
@@ -11,7 +12,9 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
 
 //$ tree coab-depls
 //coab-depls
@@ -52,8 +55,8 @@ public class SecretsGeneratorTest {
         this.secretsGenerator = new SecretsGenerator(this.deploymentProperties.getRootDeployment(),
                                     this.deploymentProperties.getModelDeployment(),
                                     this.deploymentProperties.getSecrets(),
-                                    this.deploymentProperties.getMeta(), "c"
-        );
+                                    this.deploymentProperties.getMeta(),
+                                    this.deploymentProperties.getModelDeploymentShortAlias());
     }
 
     @Test
@@ -251,22 +254,22 @@ public class SecretsGeneratorTest {
     }
 
     @Test
-    public void check_that_coa_produced_manifest_is_searched_at_right_place()  {
-        //Given a DeploymentProperties for cassandra
-        //Given a DeploymentProperties for mongo
+    public void check_that_coa_produced_manifest_is_parametrized()  {
+        //Given a DeploymentProperties for cassandra with "m" prefix (e.g. mongo)
+        secretsGenerator = new SecretsGenerator("coab-depls",
+                "cassandravarsops",
+                "secrets",
+                "meta",
+                "m");
+
 
         //When
-        Path targetManifestFilePath = secretsGenerator.getTargetManifestFilePath(this.workDir, SERVICE_INSTANCE_ID);
+        Path targetManifestFilePath = secretsGenerator.getTargetManifestFilePath(this.workDir, "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa10");
 
         //Then
-        //FIXME: fix assertion to correct path
-//        Path expectedCoaGeneratedManifestFile = StructureGeneratorHelper.generatePath(this.workDir,
-//                this.deploymentProperties.getRootDeployment(),
-//                this.secretsGenerator.computeDeploymentInstance(SERVICE_INSTANCE_ID),
-//                DeploymentConstants.ENABLE_DEPLOYMENT_FILENAME);
-//        assertThat("expected consistency between generated secrets and expected COA manifest at:" + expectedCoaGeneratedManifestFile,
-//                targetManifestFilePath.equals(expectedCoaGeneratedManifestFile)
-//        );
+        Path expectedCoaGeneratedManifestFile = this.workDir.resolve("coab-depls/m_aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa10/m_aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa10.yml");
+
+        assertThat("manifest file location", targetManifestFilePath, equalTo(expectedCoaGeneratedManifestFile));
     }
 
     @Test
@@ -329,6 +332,7 @@ public class SecretsGeneratorTest {
         deploymentProperties.setRootDeployment("coab-depls");
         deploymentProperties.setModelDeployment("cassandravarsops");
         deploymentProperties.setSecrets("secrets");
+        deploymentProperties.setModelDeploymentShortAlias("c");
         deploymentProperties.setMeta("meta");
         return deploymentProperties;
     }

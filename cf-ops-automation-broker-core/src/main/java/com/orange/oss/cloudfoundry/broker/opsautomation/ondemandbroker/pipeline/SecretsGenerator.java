@@ -26,33 +26,13 @@ public class SecretsGenerator extends StructureGeneratorImpl implements SecretsR
         super.checkPrerequisites(workDir);
 
         //Check specific pre-requisite (secrets directory)
-        Path secretsDir = StructureGeneratorHelper.generatePath(workDir,
-                this.rootDeployment,
-                this.modelDeployment,
-                this.secrets);
-        if (StructureGeneratorHelper.isMissingResource(secretsDir)){
-            throw new DeploymentException(DeploymentConstants.SECRETS_EXCEPTION);
-        }
+        this.checkThatSecretsDirectoryExists(workDir);
 
         //Check specific pre-requisite (meta file in model secrets directory)
-        Path metaFile = StructureGeneratorHelper.generatePath(workDir,
-                this.rootDeployment,
-                this.modelDeployment,
-                this.secrets,
-                this.meta + DeploymentConstants.YML_EXTENSION);
-        if (StructureGeneratorHelper.isMissingResource(metaFile)){
-            throw new DeploymentException(DeploymentConstants.META_FILE_EXCEPTION);
-        }
+        this.checkThatMetaFileExists(workDir);
 
         //Check specific pre-requisite (secrets file in model secrets directory)
-        Path secretsFile = StructureGeneratorHelper.generatePath(workDir,
-                this.rootDeployment,
-                this.modelDeployment,
-                this.secrets,
-                this.secrets + DeploymentConstants.YML_EXTENSION);
-        if (StructureGeneratorHelper.isMissingResource(secretsFile)){
-            throw new DeploymentException(DeploymentConstants.SECRETS_FILE_EXCEPTION);
-        }
+        this.checkThatSecretsFileExists(workDir);
     }
 
     @Override
@@ -89,12 +69,10 @@ public class SecretsGenerator extends StructureGeneratorImpl implements SecretsR
     @Override
     public boolean isBoshDeploymentAvailable(Path secretsWorkDir, String serviceInstanceId) {
         Path targetManifestFile = getTargetManifestFilePath(secretsWorkDir, serviceInstanceId);
-        boolean exists = Files.exists(targetManifestFile);
+        boolean exists = StructureGeneratorHelper.isMissingResource(targetManifestFile) ? false : true;
         logger.debug("Manifest at path {} exists: {}", targetManifestFile, exists);
         return exists;
     }
-
-
 
     public void remove(Path workDir, String serviceInstanceId) {
 
@@ -109,6 +87,37 @@ public class SecretsGenerator extends StructureGeneratorImpl implements SecretsR
 
     }
 
+    private void checkThatSecretsDirectoryExists(Path workDir){
+        Path secretsDir = StructureGeneratorHelper.generatePath(workDir,
+                this.rootDeployment,
+                this.modelDeployment,
+                this.secrets);
+        if (StructureGeneratorHelper.isMissingResource(secretsDir)){
+            throw new DeploymentException(DeploymentConstants.SECRETS_EXCEPTION);
+        }
+    }
+
+    private void checkThatMetaFileExists(Path workDir){
+        Path metaFile = StructureGeneratorHelper.generatePath(workDir,
+                this.rootDeployment,
+                this.modelDeployment,
+                this.secrets,
+                this.meta + DeploymentConstants.YML_EXTENSION);
+        if (StructureGeneratorHelper.isMissingResource(metaFile)){
+            throw new DeploymentException(DeploymentConstants.META_FILE_EXCEPTION);
+        }
+    }
+
+    private void checkThatSecretsFileExists(Path workDir){
+        Path secretsFile = StructureGeneratorHelper.generatePath(workDir,
+                this.rootDeployment,
+                this.modelDeployment,
+                this.secrets,
+                this.secrets + DeploymentConstants.YML_EXTENSION);
+        if (StructureGeneratorHelper.isMissingResource(secretsFile)){
+            throw new DeploymentException(DeploymentConstants.SECRETS_FILE_EXCEPTION);
+        }
+    }
 
     private void generateSecretsDirectory(Path workDir, String serviceInstanceId){
         Path deploymentSecretsDir = StructureGeneratorHelper.generatePath(workDir,

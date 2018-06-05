@@ -1,8 +1,12 @@
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline;
 
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -10,6 +14,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
 import static org.junit.Assert.assertEquals;
 
 /**
@@ -17,27 +23,98 @@ import static org.junit.Assert.assertEquals;
  */
 public class StructureGeneratorHelperTest {
 
+
+    @Rule
+    public TemporaryFolder temporaryFolder = new TemporaryFolder();
+
+
     @Test
     public void check_generated_path(){
-            //Given a root path and path elements
-            Path rootPath = Paths.get("/tmp");
-            String element1 = "element1";
-            String element2 = "element2";
-            String element3 = "element3";
+        //Given a root path and path elements
+        Path rootPath = this.temporaryFolder.getRoot().toPath();
+        String element1 = "element1";
+        String element2 = "element2";
+        String element3 = "element3";
 
-            //When
-            Path path = StructureGeneratorHelper.generatePath(rootPath, element1, element2, element3);
-            String actual = String.valueOf(path);
+        //When
+        Path path = StructureGeneratorHelper.generatePath(rootPath, element1, element2, element3);
+        String actual = String.valueOf(path);
 
-            //Then
-            StringBuffer sb = new StringBuffer(String.valueOf(rootPath));
-            sb.append(File.separator)
-                    .append(element1).append(File.separator)
-                    .append(element2).append(File.separator)
-                    .append(element3);
-            String expected = sb.toString();
-            assertEquals(expected, actual);
+        //Then
+        StringBuffer sb = new StringBuffer(String.valueOf(rootPath));
+        sb.append(File.separator)
+                .append(element1).append(File.separator)
+                .append(element2).append(File.separator)
+                .append(element3);
+        String expected = sb.toString();
+        assertEquals(expected, actual);
     }
+
+    @Test
+    public void check_generate_directory(){
+        //Given a root path and path elements to create
+        Path rootPath = this.temporaryFolder.getRoot().toPath();
+        String aDirectory = "directory";
+
+        //When
+        StructureGeneratorHelper.generateDirectory(rootPath, aDirectory);
+
+        //Then
+        Path expectedPath = rootPath.resolve("directory");
+        assertThat("Generate directory doesn't exist", Files.exists(expectedPath));
+    }
+
+    @Test
+    public void check_generate_symbolic_link(){
+        //Given a root path and path elements to create
+        Path rootPath = this.temporaryFolder.getRoot().toPath();
+
+        //When
+
+        //Then
+
+
+    }
+
+    @Test
+    public void check_generate_file(){
+        //Given a root path and path elements to create
+        Path rootPath = this.temporaryFolder.getRoot().toPath();
+        try {
+            Path path = this.temporaryFolder.newFolder("aPath").toPath();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        //When
+        StructureGeneratorHelper.generateFile(rootPath, new String[] {"aPath"},"aTargetFile",DeploymentConstants.ENABLE_DEPLOYMENT_FILENAME,null);
+
+        //Then
+        Path expectedPath = rootPath.resolve("aPath").resolve("aTargetFile");
+        assertThat("File doesn't exist", Files.exists(expectedPath));
+    }
+
+    @Test
+    public void check_remove_file(){
+        //Given a root path and path elements to create
+        Path rootPath = this.temporaryFolder.getRoot().toPath();
+        try {
+            Path path = this.temporaryFolder.newFolder("aPath").toPath();
+            path = path.resolve("aFile");
+            Files.createFile(path);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        //When
+        Path expectedPath = rootPath.resolve("aPath").resolve("aFile");
+        assertThat("File exists", Files.exists(expectedPath));
+        StructureGeneratorHelper.removeFile(rootPath, new String[] {"aPath"},"aFile");
+
+        //Then
+        assertThat("File still exists", Files.notExists(expectedPath));
+    }
+
 
     @Test
     public void check_find_and_replace(){
@@ -62,4 +139,5 @@ public class StructureGeneratorHelperTest {
         assertEquals("  value: c_aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa0", resultLines.get(3));
         assertEquals("  value: cassandra-broker_aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa0.((!/secrets/cloudfoundry_system_domain))", resultLines.get(4));
     }
+
 }

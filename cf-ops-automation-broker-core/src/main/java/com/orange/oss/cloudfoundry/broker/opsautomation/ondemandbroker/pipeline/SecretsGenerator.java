@@ -63,7 +63,7 @@ public class SecretsGenerator extends StructureGeneratorImpl implements SecretsR
         return StructureGeneratorHelper.generatePath(workDir,
                 this.rootDeployment,
                 this.modelDeploymentShortAlias + DeploymentConstants.UNDERSCORE  + serviceInstanceId,
-                this.modelDeploymentShortAlias + DeploymentConstants.UNDERSCORE + serviceInstanceId + CassandraProcessorConstants.YML_SUFFIX);
+                this.modelDeploymentShortAlias + DeploymentConstants.UNDERSCORE + serviceInstanceId + DeploymentConstants.YML_EXTENSION);
     }
 
     @Override

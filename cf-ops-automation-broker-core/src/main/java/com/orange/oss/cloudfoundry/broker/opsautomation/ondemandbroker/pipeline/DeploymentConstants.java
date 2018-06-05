@@ -20,4 +20,8 @@ public class DeploymentConstants {
     public static final String SECRETS_EXCEPTION = "Secrets directory doesn't exist";;
     public static final String META_FILE_EXCEPTION = "Model meta file doesn't exist";
     public static final String SECRETS_FILE_EXCEPTION = "Model secrets file doesn't exist";
+    public static final String OSB_OPERATION_CREATE = "create";
+    public static final String OSB_OPERATION_DELETE = "delete";
+    public static final String OSB_CREATE_REQUEST_CLASS_NAME = "org.springframework.cloud.servicebroker.model.CreateServiceInstanceRequest";
+    public static final String OSB_DELETE_REQUEST_CLASS_NAME = "org.springframework.cloud.servicebroker.model.DeleteServiceInstanceRequest";
 }

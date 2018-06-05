@@ -83,7 +83,7 @@ public class BoshProcessorTest {
         GetLastServiceOperationRequest operationRequest = new GetLastServiceOperationRequest(SERVICE_INSTANCE_ID,
                 "service_definition_id",
                 "plan_id",
-                CassandraProcessorConstants.OSB_OPERATION_CREATE);
+                DeploymentConstants.OSB_OPERATION_CREATE);
 
         //Given a populated context
         Context context = new Context();
@@ -94,7 +94,7 @@ public class BoshProcessorTest {
         GetLastServiceOperationResponse expectedResponse = new GetLastServiceOperationResponse();
         expectedResponse.withOperationState(OperationState.IN_PROGRESS);
         PipelineCompletionTracker tracker = mock(PipelineCompletionTracker.class);
-        when(tracker.getDeploymentExecStatus(any(Path.class), eq(SERVICE_INSTANCE_ID), eq(CassandraProcessorConstants.OSB_OPERATION_CREATE), any(GetLastServiceOperationRequest.class))).thenReturn(expectedResponse);
+        when(tracker.getDeploymentExecStatus(any(Path.class), eq(SERVICE_INSTANCE_ID), eq(DeploymentConstants.OSB_OPERATION_CREATE), any(GetLastServiceOperationRequest.class))).thenReturn(expectedResponse);
 
 
         //When
@@ -163,7 +163,7 @@ public class BoshProcessorTest {
         GetLastServiceOperationRequest operationRequest = new GetLastServiceOperationRequest(SERVICE_INSTANCE_ID,
                 "service_definition_id",
                 "plan_id",
-                CassandraProcessorConstants.OSB_OPERATION_CREATE);
+                DeploymentConstants.OSB_OPERATION_CREATE);
 
         //Given a populated context
         Context context = new Context();
@@ -175,7 +175,7 @@ public class BoshProcessorTest {
         expectedResponse.withDescription("Creation is succeeded");
         expectedResponse.withOperationState(OperationState.SUCCEEDED);
         PipelineCompletionTracker tracker = mock(PipelineCompletionTracker.class);
-        when(tracker.getDeploymentExecStatus(any(Path.class), eq(SERVICE_INSTANCE_ID), eq(CassandraProcessorConstants.OSB_OPERATION_CREATE), any(GetLastServiceOperationRequest.class))).thenReturn(expectedResponse);
+        when(tracker.getDeploymentExecStatus(any(Path.class), eq(SERVICE_INSTANCE_ID), eq(DeploymentConstants.OSB_OPERATION_CREATE), any(GetLastServiceOperationRequest.class))).thenReturn(expectedResponse);
 
         //When
         BoshProcessor boshProcessor = new BoshProcessor(TEMPLATES_REPOSITORY_ALIAS_NAME, SECRETS_REPOSITORY_ALIAS_NAME, null, null, tracker, "Cassandra");
@@ -229,7 +229,7 @@ public class BoshProcessorTest {
 
         // and with a proper commit message
         String customMessage = (String) context.contextKeys.get(SECRETS_REPOSITORY_ALIAS_NAME + GitProcessorContext.commitMessage.toString());
-        assertThat(customMessage).isEqualTo("Cassandra broker" + ": "+ CassandraProcessorConstants.OSB_OPERATION_DELETE + " instance id=" + SERVICE_INSTANCE_ID);
+        assertThat(customMessage).isEqualTo("Cassandra broker" + ": "+ DeploymentConstants.OSB_OPERATION_DELETE + " instance id=" + SERVICE_INSTANCE_ID);
     }
 
 

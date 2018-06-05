@@ -65,7 +65,7 @@ public class PipelineCompletionTracker {
     GetLastServiceOperationResponse buildResponse(String classFullyQualifiedName, boolean isManifestFilePresent, boolean isRequestTimedOut, long displayedElapsedTimeSecs, GetLastServiceOperationRequest pollingRequest, ServiceBrokerRequest storedRequest) {
         GetLastServiceOperationResponse response = new GetLastServiceOperationResponse();
             switch (classFullyQualifiedName) {
-                case CassandraProcessorConstants.OSB_CREATE_REQUEST_CLASS_NAME:
+                case DeploymentConstants.OSB_CREATE_REQUEST_CLASS_NAME:
                     if (isManifestFilePresent) {
                         response.withOperationState(OperationState.SUCCEEDED);
                         response.withDescription("Creation succeeded");
@@ -88,7 +88,7 @@ public class PipelineCompletionTracker {
                     }
                     break;
 
-                case CassandraProcessorConstants.OSB_DELETE_REQUEST_CLASS_NAME:
+                case DeploymentConstants.OSB_DELETE_REQUEST_CLASS_NAME:
                     response.withDeleteOperation(true);
                     if (osbProxy != null) {
                         try {

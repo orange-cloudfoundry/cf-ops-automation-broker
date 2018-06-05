@@ -81,9 +81,9 @@ public class SecretsGenerator extends StructureGeneratorImpl implements SecretsR
     @Override
     public Path getTargetManifestFilePath(Path workDir, String serviceInstanceId) {
         return StructureGeneratorHelper.generatePath(workDir,
-                CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY,
-                CassandraProcessorConstants.SERVICE_INSTANCE_PREFIX_DIRECTORY + serviceInstanceId,
-                CassandraProcessorConstants.SERVICE_INSTANCE_PREFIX_DIRECTORY + serviceInstanceId + CassandraProcessorConstants.YML_SUFFIX);
+                this.rootDeployment,
+                this.modelDeploymentShortAlias + DeploymentConstants.UNDERSCORE  + serviceInstanceId,
+                this.modelDeploymentShortAlias + DeploymentConstants.UNDERSCORE + serviceInstanceId + CassandraProcessorConstants.YML_SUFFIX);
     }
 
     @Override

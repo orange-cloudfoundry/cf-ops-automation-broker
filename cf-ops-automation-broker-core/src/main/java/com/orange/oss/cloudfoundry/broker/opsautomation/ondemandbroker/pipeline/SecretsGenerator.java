@@ -120,11 +120,18 @@ public class SecretsGenerator extends StructureGeneratorImpl implements SecretsR
     }
 
     private void generateSecretsDirectory(Path workDir, String serviceInstanceId){
+/*
         Path deploymentSecretsDir = StructureGeneratorHelper.generatePath(workDir,
                 this.rootDeployment,
                 this.computeDeploymentInstance(serviceInstanceId),
                 this.secrets);
         StructureGeneratorHelper.generateDirectory(deploymentSecretsDir, null);
+
+*/
+        StructureGeneratorHelper.generateDirectory(workDir,
+                this.rootDeployment,
+                this.computeDeploymentInstance(serviceInstanceId),
+                this.secrets);
     }
 
     private void generateMetaFile(Path workDir, String serviceInstanceId){

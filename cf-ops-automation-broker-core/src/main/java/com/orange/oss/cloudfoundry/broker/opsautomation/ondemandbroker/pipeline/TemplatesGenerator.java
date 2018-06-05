@@ -121,11 +121,10 @@ public class TemplatesGenerator extends StructureGeneratorImpl{
     }
 
     private void generateTemplateDirectory(Path workDir, String serviceInstanceId){
-            Path deploymentTemplateDir = StructureGeneratorHelper.generatePath(workDir,
-                    this.rootDeployment,
-                    this.computeDeploymentInstance(serviceInstanceId),
-                    this.template);
-            StructureGeneratorHelper.generateDirectory(deploymentTemplateDir, null);
+        StructureGeneratorHelper.generateDirectory(workDir,
+                this.rootDeployment,
+                this.computeDeploymentInstance(serviceInstanceId),
+                this.template);
     }
 
     private void generateDeploymentDependenciesFile(Path workDir, String serviceInstanceId){

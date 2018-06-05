@@ -174,13 +174,13 @@ Server error, status code: 409, error code: 60016, message: An operation for ser
 --------------------------------
 
 - Refactor to generalize to another deployment (e.g. mysql)
-   - Introduce configuration class and builder in order to hold secrets/templates static information (TODO)
+   - Introduce configuration class and builder in order to hold secrets/templates static information
    - Refactor secrets and templates generator to have little methods
    - Split Junit tests between check and generate in order to improve readability (target little methods instead of global method)
    - Use MessageFormat in StructureGeneratorHelper
    - Use Builder in Junit tests to improve readability
    - Manage “-tpl” files
-   - Improve test coverage StructureGeneratorHelper
+   - Improve test coverage StructureGeneratorHelper (ONGOING)
    - Update integration test to use a builder (e.g. for OSB req/resps) 
    
    

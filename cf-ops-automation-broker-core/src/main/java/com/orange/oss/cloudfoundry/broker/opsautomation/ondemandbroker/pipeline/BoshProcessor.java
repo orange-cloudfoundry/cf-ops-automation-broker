@@ -57,10 +57,10 @@ public class BoshProcessor extends DefaultBrokerProcessor {
 		ctx.contextKeys.put(ProcessorChainServiceInstanceService.CREATE_SERVICE_INSTANCE_RESPONSE, creationResponse);
 
 		//Generate commit message and put it into context
-        setCommitMsg(ctx, brokerDisplayName + " broker: create instance id=" + serviceInstanceId);
+		setCommitMsg(ctx, formatProvisionCommitMsg(creationRequest));
 	}
 
-	@Override
+    @Override
 	public void preGetLastOperation(Context ctx) {
 
 		//Need to retrieve workdir from context
@@ -124,8 +124,31 @@ public class BoshProcessor extends DefaultBrokerProcessor {
 		ctx.contextKeys.put(ProcessorChainServiceInstanceService.DELETE_SERVICE_INSTANCE_RESPONSE, deletionResponse);
 
 		//Generate commit message and put it into context
-        setCommitMsg(ctx,brokerDisplayName+" broker: delete instance id=" + serviceInstanceId);
+		setCommitMsg(ctx, formatUnprovisionCommitMsg(request));
 	}
+
+    protected String formatProvisionCommitMsg(CreateServiceInstanceRequest request) {
+        Object userKey = extractUserKeyFromOsbContext(request.getOriginatingIdentity());
+
+        return brokerDisplayName + " broker: create instance id=" + request.getServiceInstanceId()
+                + "\n\nRequested from space_guid=" + request.getSpaceGuid() +  " org_guid=" + request.getOrganizationGuid() + " by user_guid=" + userKey;
+    }
+
+	protected String formatUnprovisionCommitMsg(DeleteServiceInstanceRequest request) {
+        Object userKey = extractUserKeyFromOsbContext(request.getOriginatingIdentity());
+
+		return brokerDisplayName + " broker: delete instance id=" + request.getServiceInstanceId()
+				+ "\n\nRequested by user_guid=" + userKey;
+	}
+
+    private Object extractUserKeyFromOsbContext(org.springframework.cloud.servicebroker.model.Context context) {
+        Object userKey = null;
+        String platform = context.getPlatform();
+        if (OsbConstants.ORIGINATING_CLOUDFOUNDRY_PLATFORM.equals(platform)) {
+            userKey = context.getProperty(OsbConstants.ORIGINATING_USER_KEY);
+        }
+        return userKey;
+    }
 
 	private Path getPaasSecret(Context ctx) {
 		Path secretsWorkDir = (Path) ctx.contextKeys.get(secretsRepositoryAliasName + GitProcessorContext.workDir.toString());

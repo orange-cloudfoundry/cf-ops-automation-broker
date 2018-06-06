@@ -13,6 +13,8 @@ import java.nio.file.Path;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneId;
+import java.util.HashMap;
+import java.util.Map;
 
 import static org.fest.assertions.Assertions.assertThat;
 import static org.mockito.Mockito.*;
@@ -75,6 +77,61 @@ public class BoshProcessorTest {
         String customSecretsMessage = (String) context.contextKeys.get(SECRETS_REPOSITORY_ALIAS_NAME+GitProcessorContext.commitMessage.toString());
         assertThat(customSecretsMessage).isEqualTo("Cassandra broker: create instance id=" + SERVICE_INSTANCE_ID);
     }
+
+    @Test
+    public void provision_commit_msg_includes_requester_details() {
+        //Given a creation request
+        CreateServiceInstanceRequest request = new CreateServiceInstanceRequest("service_definition_id",
+                "plan_id",
+                "org_id1",
+                "space_id1",
+                null
+        );
+        request.withServiceInstanceId(SERVICE_INSTANCE_ID);
+
+        Map<String, Object> properties = new HashMap<>();
+        properties.put(OsbConstants.ORIGINATING_USER_KEY, "user_guid1");
+        request.withOriginatingIdentity(new org.springframework.cloud.servicebroker.model.Context(OsbConstants.ORIGINATING_CLOUDFOUNDRY_PLATFORM, properties));
+
+
+        //Given mocked dependencies
+        TemplatesGenerator templatesGenerator = mock(TemplatesGenerator.class);
+        SecretsGenerator secretsGenerator = mock(SecretsGenerator.class);
+        PipelineCompletionTracker tracker = aCompletionTracker();
+
+        BoshProcessor boshProcessor = new BoshProcessor(TEMPLATES_REPOSITORY_ALIAS_NAME, SECRETS_REPOSITORY_ALIAS_NAME, templatesGenerator, secretsGenerator, tracker, "Cassandra");
+
+        //When
+        assertThat(boshProcessor.formatProvisionCommitMsg(request)).isEqualTo("Cassandra broker: create instance id=aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa0" +
+                "\n\nRequested from space_guid=space_id1 org_guid=org_id1 by user_guid=user_guid1");
+    }
+
+    @Test
+    public void unprovision_commit_msg_includes_requester_details() {
+        //Given a delete request
+        DeleteServiceInstanceRequest request = new DeleteServiceInstanceRequest(SERVICE_INSTANCE_ID,
+                "service_id",
+                "plan_id",
+                new ServiceDefinition(),
+                false);
+
+        Map<String, Object> properties = new HashMap<>();
+        properties.put(OsbConstants.ORIGINATING_USER_KEY, "user_guid1");
+        request.withOriginatingIdentity(new org.springframework.cloud.servicebroker.model.Context(OsbConstants.ORIGINATING_CLOUDFOUNDRY_PLATFORM, properties));
+
+
+        //Given mocked dependencies
+        TemplatesGenerator templatesGenerator = mock(TemplatesGenerator.class);
+        SecretsGenerator secretsGenerator = mock(SecretsGenerator.class);
+        PipelineCompletionTracker tracker = aCompletionTracker();
+
+        BoshProcessor boshProcessor = new BoshProcessor(TEMPLATES_REPOSITORY_ALIAS_NAME, SECRETS_REPOSITORY_ALIAS_NAME, templatesGenerator, secretsGenerator, tracker, "Cassandra");
+
+        //When
+        assertThat(boshProcessor.formatUnprovisionCommitMsg(request)).isEqualTo("Cassandra broker: delete instance id=aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa0" +
+                "\n\nRequested by user_guid=user_guid1");
+    }
+
 
     @Test
     public void responds_to_get_last_service_operation_in_progress() {

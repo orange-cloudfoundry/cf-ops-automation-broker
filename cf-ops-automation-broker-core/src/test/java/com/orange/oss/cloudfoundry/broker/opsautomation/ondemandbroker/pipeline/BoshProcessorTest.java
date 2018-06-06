@@ -28,17 +28,19 @@ public class BoshProcessorTest {
     @Test
     public void creates_structures_and_returns_async_response() {
         //Given a creation request
-        CreateServiceInstanceRequest creationRequest = new CreateServiceInstanceRequest("service_definition_id",
+        CreateServiceInstanceRequest request = new CreateServiceInstanceRequest("service_definition_id",
                 "plan_id",
                 "org_id",
                 "space_id",
                 null
         );
-        creationRequest.withServiceInstanceId(SERVICE_INSTANCE_ID);
+        request.withServiceInstanceId(SERVICE_INSTANCE_ID);
+        request.withOriginatingIdentity(aContext());
+
 
         //Given a populated context
         Context context = new Context();
-        context.contextKeys.put(ProcessorChainServiceInstanceService.CREATE_SERVICE_INSTANCE_REQUEST, creationRequest);
+        context.contextKeys.put(ProcessorChainServiceInstanceService.CREATE_SERVICE_INSTANCE_REQUEST, request);
         context.contextKeys.put(TEMPLATES_REPOSITORY_ALIAS_NAME + GitProcessorContext.workDir.toString(), aGitRepoWorkDir());
         context.contextKeys.put(SECRETS_REPOSITORY_ALIAS_NAME + GitProcessorContext.workDir.toString(), aGitRepoWorkDir());
 
@@ -66,16 +68,16 @@ public class BoshProcessorTest {
         // specifying asynchronous creations
         assertThat(serviceInstanceResponse.isAsync()).isTrue();
 
-        PipelineCompletionTracker.PipelineOperationState pipelineOperationState = new PipelineCompletionTracker.PipelineOperationState(creationRequest, "2017-11-14T17:24:08.007Z");
+        PipelineCompletionTracker.PipelineOperationState pipelineOperationState = new PipelineCompletionTracker.PipelineOperationState(request, "2017-11-14T17:24:08.007Z");
         String expectedJsonPipelineOperationState = tracker.formatAsJson(pipelineOperationState);
 
         //when
         assertThat(serviceInstanceResponse.getOperation()).isEqualTo(expectedJsonPipelineOperationState);
-         // and with a proper commit message
+         // and with a non-null commit message (asserted in a specific test)
         String customTemplateMessage = (String) context.contextKeys.get(TEMPLATES_REPOSITORY_ALIAS_NAME+GitProcessorContext.commitMessage.toString());
-        assertThat(customTemplateMessage).isEqualTo("Cassandra broker: create instance id=" + SERVICE_INSTANCE_ID);
+        assertThat(customTemplateMessage).isNotNull();
         String customSecretsMessage = (String) context.contextKeys.get(SECRETS_REPOSITORY_ALIAS_NAME+GitProcessorContext.commitMessage.toString());
-        assertThat(customSecretsMessage).isEqualTo("Cassandra broker: create instance id=" + SERVICE_INSTANCE_ID);
+        assertThat(customSecretsMessage).isNotNull();
     }
 
     @Test
@@ -251,6 +253,7 @@ public class BoshProcessorTest {
                 "plan_id",
                 new ServiceDefinition(),
                 false);
+        request.withOriginatingIdentity(aContext());
 
         //Given a populated context
         Context context = new Context();
@@ -284,9 +287,9 @@ public class BoshProcessorTest {
 
         assertThat(serviceInstanceResponse.getOperation()).isEqualTo(expectedJsonPipelineOperationState);
 
-        // and with a proper commit message
+        // and with a commit message (asserted in a distinct test)
         String customMessage = (String) context.contextKeys.get(SECRETS_REPOSITORY_ALIAS_NAME + GitProcessorContext.commitMessage.toString());
-        assertThat(customMessage).isEqualTo("Cassandra broker" + ": "+ DeploymentConstants.OSB_OPERATION_DELETE + " instance id=" + SERVICE_INSTANCE_ID);
+        assertThat(customMessage).isNotNull();
     }
 
 
@@ -299,5 +302,13 @@ public class BoshProcessorTest {
     private Path aGitRepoWorkDir() {
         return FileSystems.getDefault().getPath("/a/git_workdir/path");
     }
+
+    private org.springframework.cloud.servicebroker.model.Context aContext() {
+        Map<String, Object> properties = new HashMap<>();
+        properties.put(OsbConstants.ORIGINATING_USER_KEY, "user_guid");
+        properties.put(OsbConstants.ORIGINATING_EMAIL_KEY, "user_email");
+        return new org.springframework.cloud.servicebroker.model.Context(OsbConstants.ORIGINATING_CLOUDFOUNDRY_PLATFORM, properties);
+    }
+
 
 }

@@ -4,15 +4,18 @@ Support for multiple operators:
     > By convention, all files in template dir matching *-operators.yml are used by bosh-deployment as ops-files inputs.
 - remove prereq to have a file `operators/coab-operators.yml` present but still preserve symlinking it
    - it is fine to have a deployment without any operators file
-- add systematic symlink of any template/ file (regardless of their name if their present as file in this directory, ignoring subdirs)  
+- add systematic symlink of any template/ file 
+   - 1st step: ignoring subdirs, regardless of their name if their present as file in this directory,
+   - 2nd step: also mirror the subdirs with nested symlinks to support iaas-specific templates   
   
 Vars files that include OSB input params (org,space,user, as well as arbitrary params)
-- Modify TemplatesGenerator#generate(Path workDir, String serviceInstanceId) to accept CreateServiceRequest as argument instead of serviceInstanceId
+- Modify TemplatesGenerator#generate(Path workDir, String serviceInstanceId) to accept DTO or CreateServiceRequest/UpdateServiceInstanceRequest as argument instead of serviceInstanceId
 - Bump jackson to 2.9.2 or later and pull https://github.com/FasterXML/jackson-dataformats-text/tree/master/yaml
 - Define formatting output amongs
    - Create dedicated Pojo
    - Create dedicated + reference CreateServiceInstanceRequest
    - use untyped structure  
+
 
 
 - gracefully log case when operation state missing from Request? 

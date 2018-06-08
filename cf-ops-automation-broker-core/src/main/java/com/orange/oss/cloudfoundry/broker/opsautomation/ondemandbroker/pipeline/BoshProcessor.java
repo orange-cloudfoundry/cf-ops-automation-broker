@@ -131,22 +131,23 @@ public class BoshProcessor extends DefaultBrokerProcessor {
 	}
 
     protected String formatProvisionCommitMsg(CreateServiceInstanceRequest request) {
-        Object userKey = extractUserKeyFromOsbContext(request.getOriginatingIdentity());
-		String spaceGuid;
-		String organizationGuid;
+		String originDetails;
+
+		Object userKey = extractUserKeyFromOsbContext(request.getOriginatingIdentity());
+		String spaceGuid = null;
+		String organizationGuid = null;
 
 		org.springframework.cloud.servicebroker.model.Context context = request.getContext();
-		String platform = context.getPlatform();
-		if (OsbConstants.ORIGINATING_CLOUDFOUNDRY_PLATFORM.equals(platform)) {
+		if ((context != null) && OsbConstants.ORIGINATING_CLOUDFOUNDRY_PLATFORM.equals(context.getPlatform())) {
 			spaceGuid = (String) context.getProperty(OSB_PROFILE_SPACE_GUID);
 			organizationGuid = (String) context.getProperty(OSB_PROFILE_ORGANIZATION_GUID);
-		} else {
-			spaceGuid = request.getSpaceGuid();
-			organizationGuid = request.getOrganizationGuid();
 		}
+		spaceGuid = (spaceGuid == null) ? request.getSpaceGuid() : spaceGuid;
+		organizationGuid = (organizationGuid == null) ? request.getOrganizationGuid() : organizationGuid;
 
+		originDetails = "Requested from space_guid=" + spaceGuid + " org_guid=" + organizationGuid + " by user_guid=" + userKey;
 		return brokerDisplayName + " broker: create instance id=" + request.getServiceInstanceId()
-                + "\n\nRequested from space_guid=" + spaceGuid +  " org_guid=" + organizationGuid + " by user_guid=" + userKey;
+				+ "\n\n" + originDetails;
     }
 
 	protected String formatUnprovisionCommitMsg(DeleteServiceInstanceRequest request) {

@@ -85,7 +85,27 @@ public class BoshProcessorTest {
 
 
     @Test
-    public void provision_commit_msg_includes_requester_details() {
+    public void provision_commit_msg_includes_requester_details_without_context() {
+        //Given a creation request with both deprecated OSB syntax
+
+        CreateServiceInstanceRequest request = new CreateServiceInstanceRequest("service_definition_id",
+                "plan_id",
+                "org_id1",
+                "space_id1",
+                new org.springframework.cloud.servicebroker.model.Context(
+                        CLOUD_FOUNDRY_PLATFORM,
+                        null
+                ),
+                null
+        );
+        request.withServiceInstanceId(SERVICE_INSTANCE_ID);
+
+        //then commit msg is valid
+        provision_commit_msg_includes_requester_details(request);
+    }
+
+    @Test
+    public void provision_commit_msg_includes_requester_details_with_context() {
         //Given a creation request with both deprecated OSB syntax and new context syntax
         Map<String, Object> contextProperties = new HashMap<>();
         contextProperties.put(OSB_PROFILE_ORGANIZATION_GUID, "org_id1");
@@ -103,6 +123,10 @@ public class BoshProcessorTest {
         );
         request.withServiceInstanceId(SERVICE_INSTANCE_ID);
 
+        provision_commit_msg_includes_requester_details(request);
+    }
+
+    protected void provision_commit_msg_includes_requester_details(CreateServiceInstanceRequest request) {
         Map<String, Object> properties = new HashMap<>();
         properties.put(OsbConstants.ORIGINATING_USER_KEY, "user_guid1");
         request.withOriginatingIdentity(new org.springframework.cloud.servicebroker.model.Context(OsbConstants.ORIGINATING_CLOUDFOUNDRY_PLATFORM, properties));

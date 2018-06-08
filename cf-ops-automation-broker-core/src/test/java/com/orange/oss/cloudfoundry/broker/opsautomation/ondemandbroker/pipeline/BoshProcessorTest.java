@@ -16,8 +16,11 @@ import java.time.ZoneId;
 import java.util.HashMap;
 import java.util.Map;
 
+import static com.orange.oss.ondemandbroker.ProcessorChainServiceInstanceService.OSB_PROFILE_ORGANIZATION_GUID;
+import static com.orange.oss.ondemandbroker.ProcessorChainServiceInstanceService.OSB_PROFILE_SPACE_GUID;
 import static org.fest.assertions.Assertions.assertThat;
 import static org.mockito.Mockito.*;
+import static org.springframework.cloud.servicebroker.model.CloudFoundryContext.CLOUD_FOUNDRY_PLATFORM;
 
 public class BoshProcessorTest {
 
@@ -80,13 +83,22 @@ public class BoshProcessorTest {
         assertThat(customSecretsMessage).isNotNull();
     }
 
+
     @Test
     public void provision_commit_msg_includes_requester_details() {
-        //Given a creation request
+        //Given a creation request with both deprecated OSB syntax and new context syntax
+        Map<String, Object> contextProperties = new HashMap<>();
+        contextProperties.put(OSB_PROFILE_ORGANIZATION_GUID, "org_id1");
+        contextProperties.put(OSB_PROFILE_SPACE_GUID, "space_id1");
+
         CreateServiceInstanceRequest request = new CreateServiceInstanceRequest("service_definition_id",
                 "plan_id",
                 "org_id1",
                 "space_id1",
+                new org.springframework.cloud.servicebroker.model.Context(
+                        CLOUD_FOUNDRY_PLATFORM,
+                        contextProperties
+                ),
                 null
         );
         request.withServiceInstanceId(SERVICE_INSTANCE_ID);

@@ -17,6 +17,7 @@
 
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.osbclient;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
@@ -25,6 +26,7 @@ import feign.okhttp.OkHttpClient;
 import feign.slf4j.Slf4jLogger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.netflix.feign.FeignClientsConfiguration;
+import org.springframework.cloud.servicebroker.model.CreateServiceInstanceResponse;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
@@ -102,6 +104,17 @@ public class OsbClientFeignConfig {
     @Autowired
     public void configureJacksonEnumDeserialization(ObjectMapper jackson2ObjectMapper) {
         jackson2ObjectMapper.enable(DeserializationFeature.READ_ENUMS_USING_TO_STRING);
+    }
+
+    abstract class CreateServiceInstanceResponseMixIn {
+        CreateServiceInstanceResponseMixIn(@JsonProperty("width") int w, @JsonProperty("height") int h) { }
+
+        @JsonProperty("operation") abstract CreateServiceInstanceResponse withOperation(final String operation);
+    }
+
+    @Autowired
+    public void configureJacksonOsbResponseInheritanceMapping(ObjectMapper jackson2ObjectMapper) {
+        jackson2ObjectMapper.addMixIn(CreateServiceInstanceResponse.class, CreateServiceInstanceResponseMixIn.class);
     }
 
     @Bean

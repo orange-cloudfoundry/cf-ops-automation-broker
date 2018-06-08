@@ -12,7 +12,7 @@
   },
   "response" : {
     "status" : 201,
-    "body" : "{}",
+    "body" : "{\"operation\":\"a manually crafted opaque string\"}",
     "headers" : {
       "X-Content-Type-Options" : "nosniff",
       "X-XSS-Protection" : "1; mode=block",

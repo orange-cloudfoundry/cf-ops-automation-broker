@@ -12,7 +12,10 @@ import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.osbclient
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.osbclient.OsbClientFactory;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.osbclient.ServiceInstanceBindingServiceClient;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.osbclient.ServiceInstanceServiceClient;
-import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.*;
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.DeploymentConstants;
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.DeploymentProperties;
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.OsbProxyImpl;
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.SecretsGenerator;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.Context;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.terraform.TerraformModuleHelper;
 import io.restassured.RestAssured;
@@ -26,7 +29,6 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -42,13 +44,13 @@ import java.io.IOException;
 import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.time.Clock;
 import java.util.HashMap;
 import java.util.Map;
 
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
 import static com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.GitServer.NO_OP_INITIALIZER;
-import static com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.OsbBuilderHelper.*;
+import static com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.OsbBuilderHelper.aBindingRequest;
+import static com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.OsbBuilderHelper.aCfUserContext;
 import static com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.sample.BoshBrokerApplication.SECRETS_REPOSITORY_ALIAS_NAME;
 import static com.orange.oss.ondemandbroker.ProcessorChainServiceInstanceService.OSB_PROFILE_ORGANIZATION_GUID;
 import static com.orange.oss.ondemandbroker.ProcessorChainServiceInstanceService.OSB_PROFILE_SPACE_GUID;
@@ -280,9 +282,8 @@ public class BoshServiceProvisionningTest {
     @Test
     public void supports_crud_lifecycle() throws IOException {
         exposes_catalog();
-        // not yet ready
-//        String operation = create_async_service_instance_using_osb_client();
-        String operation = create_async_service_instance_using_rest_assured();
+
+        String operation = create_async_service_instance_using_osb_client();
 
         polls_last_operation(operation, HttpStatus.SC_OK, "in progress", "");
 
@@ -293,7 +294,7 @@ public class BoshServiceProvisionningTest {
         create_service_binding();
         delete_service_binding();
 
-        String deleteOperation = delete_a_service_instance();
+        String deleteOperation = delete_a_service_instance_using_osb_client();
 
         polls_last_operation(deleteOperation,
                 HttpStatus.SC_GONE, //async delete expects a 410 status
@@ -308,7 +309,7 @@ public class BoshServiceProvisionningTest {
                 SERVICE_INSTANCE_ID,
                 SERVICE_BINDING_INSTANCE_ID,
                 "api-info",
-                osbProxy.buildOriginatingIdentityHeader(aContext()),
+                osbProxy.buildOriginatingIdentityHeader(aCfUserContext()),
                 serviceInstanceBindingRequest);
         assertThat(bindResponse.getStatusCode()).isEqualTo(CREATED);
         assertThat(bindResponse.getBody()).isNotNull();
@@ -323,7 +324,7 @@ public class BoshServiceProvisionningTest {
                 SERVICE_DEFINITION_ID,
                 SERVICE_PLAN_ID,
                 "api-info",
-                osbProxy.buildOriginatingIdentityHeader(aContext()));
+                osbProxy.buildOriginatingIdentityHeader(aCfUserContext()));
     }
 
     private String create_async_service_instance_using_osb_client() {
@@ -334,29 +335,11 @@ public class BoshServiceProvisionningTest {
                 SERVICE_INSTANCE_ID,
                 true,
                 "api-info",
-                osbProxy.buildOriginatingIdentityHeader(aContext()),
+                osbProxy.buildOriginatingIdentityHeader(aCfUserContext()),
                 createServiceInstanceRequest);
         assertThat(createResponse.getStatusCode()).isEqualTo(ACCEPTED);
         assertThat(createResponse.getBody()).isNotNull();
         return createResponse.getBody().getOperation();
-    }
-
-    public String create_async_service_instance_using_rest_assured() {
-
-        @SuppressWarnings("UnnecessaryLocalVariable")
-        String operation = given()
-                .basePath("/v2")
-                .contentType("application/json")
-                .body(aCreateServiceInstanceRequest()).
-                when()
-                .put("/service_instances/{id}", SERVICE_INSTANCE_ID).
-                then()
-                .statusCode(HttpStatus.SC_ACCEPTED)
-                .body("operation", not(isEmptyString()))
-                .extract().
-                    path("operation");
-
-        return operation;
     }
 
     @Test
@@ -386,24 +369,20 @@ public class BoshServiceProvisionningTest {
                 .body(containsString(secondExpectedKeyword)); //hard coded start date way in the past
     }
 
-    public String delete_a_service_instance() {
+    private String delete_a_service_instance_using_osb_client() {
 
-        @SuppressWarnings("UnnecessaryLocalVariable")
-        String operation = given()
-                .basePath("/v2")
-                .param("service_id", SERVICE_DEFINITION_ID)
-                .param("plan_id", SERVICE_PLAN_ID)
-                .param("accepts_incomplete", true).
-                        when()
-                .delete("/service_instances/{id}", SERVICE_INSTANCE_ID).
-                        then()
-                .statusCode(HttpStatus.SC_ACCEPTED)
-                .body("operation", not(isEmptyString()))
-                .extract().
-                        path("operation");
-
-        return operation;
+        ResponseEntity<DeleteServiceInstanceResponse> response = serviceInstanceService.deleteServiceInstance(
+                SERVICE_INSTANCE_ID,
+                SERVICE_DEFINITION_ID,
+                SERVICE_PLAN_ID,
+                true,
+                "api-info",
+                osbProxy.buildOriginatingIdentityHeader(aCfUserContext()));
+        assertThat(response.getStatusCode()).isEqualTo(ACCEPTED);
+        assertThat(response.getBody()).isNotNull();
+        return response.getBody().getOperation();
     }
+
 
 
     public static File getFileFromClasspath(String tfStateFileInClasspath) {
@@ -415,24 +394,25 @@ public class BoshServiceProvisionningTest {
 
     private CreateServiceInstanceRequest aCreateServiceInstanceRequest() {
 
-        Map<String, Object> params = new HashMap<>();
-
-        Map<String, Object> contextProperties = new HashMap<>();
-        contextProperties.put(OSB_PROFILE_ORGANIZATION_GUID, "org_id");
-        contextProperties.put(OSB_PROFILE_SPACE_GUID, "space_id");
-        org.springframework.cloud.servicebroker.model.Context createServiceInstanceContext = new org.springframework.cloud.servicebroker.model.Context(
-                CLOUD_FOUNDRY_PLATFORM,
-                contextProperties
-        );
         CreateServiceInstanceRequest request = new CreateServiceInstanceRequest(SERVICE_DEFINITION_ID,
                 SERVICE_PLAN_ID,
                 "org_id",
                 "space_id",
-                createServiceInstanceContext,
-                params
+                aCfOsbContext(),
+                new HashMap<>()
         );
         request.withServiceInstanceId(SERVICE_INSTANCE_ID);
         return request;
+    }
+
+    private org.springframework.cloud.servicebroker.model.Context aCfOsbContext() {
+        Map<String, Object> contextProperties = new HashMap<>();
+        contextProperties.put(OSB_PROFILE_ORGANIZATION_GUID, "org_id");
+        contextProperties.put(OSB_PROFILE_SPACE_GUID, "space_id");
+        return new org.springframework.cloud.servicebroker.model.Context(
+                CLOUD_FOUNDRY_PLATFORM,
+                contextProperties
+        );
     }
 
 }

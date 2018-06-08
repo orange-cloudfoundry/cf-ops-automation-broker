@@ -1,4 +1,47 @@
+- fix BoshServiceProvisionningTest: OSB client returns an empty CreateServiceInstanceResponse.operation field
+   - why ? 
+      - debugger shows the field is indeed parsed but ignored 
+      - Suspecting inheritance CreateServiceInstanceResponse extends AsyncServiceInstanceResponse
+            as polymorphism is'nt explicitly configured http://www.baeldung.com/jackson-inheritance
+            and super
+   - Q: why doesn't this occur with OSB client to nested broker ?
+   - A: it may, but we don't see it yet: we only support sync provisionning for nested brokers
+   - potential fixes:
+      - modify POJOs through annotations: means diverging from spring-cloud-service-broker
+      - **register a MixIn to map the operation field to the withOperation field**  https://github.com/FasterXML/jackson-docs/wiki/JacksonMixInAnnotations
+         - Q: would this affect the OsbProxy as well ?
+         - A: yes, this is fine, its also broken there
+         - Inspirations 
+            https://dzone.com/articles/jackson-mixin-to-the-rescue
+            https://gist.github.com/theotherian/9285448
+         - How to test ?
+            - Integration test OsbClientTestApplicationTest#feign_client_unmarshalls_last_operation_responses()
+               -with wiremock: pb recorded response don't contain operation
+                  - record them
+                  - edit them in the wiremock capture. Pb: which encoding/escape to use ? 
+               -without wiremock 
+      - use a custom deserializer http://www.baeldung.com/jackson-deserialization
 
+DONE:
+- refine space/org/user guid fetching to fetch from context first
+- commit mixin fix covered by integration test
+- add unit case of Jackson Mixin config
+    - refine integration test of OSB client
+    - Q: write unit test for Jackson object mapper ? A: no prefer covering spring config instead
+    - write test that starts spring context: OsbClientFeignConfig  
+{"operation":"{\"org.springframework.cloud.servicebroker.model.CreateServiceInstanceRequest\":{\"serviceDefinitionId\":\"cassandra-ondemand-service\",\"planId\":\"cassandra-ondemand-plan\",\"organizationGuid\":\"org_id\",\"spaceGuid\":\"space_id\",\"serviceInstanceId\":\"111\",\"serviceDefinition\":{\"id\":\"cassandra-ondemand-service\",\"name\":\"cassandra-ondemand\",\"description\":\"On demand cassandra dedicated clusters\",\"bindable\":true,\"planUpdateable\":true,\"plans\":[{\"id\":\"cassandra-ondemand-plan\",\"name\":\"default\",\"description\":\"This is a default ondemand plan.  All services are created equally.\",\"metadata\":{},\"free\":true}],\"tags\":[\"ondemand\",\"document\"],\"metadata\":{\"displayName\":\"ondemand\",\"imageUrl\":\"https://orange.com/image.png\",\"longDescription\":\"A dedicated on-demand cassandra cluster\",\"providerDisplayName\":\"Orange\",\"documentationUrl\":\"https://orange.com/doc\",\"supportUrl\":\"https://orange.com/support\"}},\"parameters\":{},\"context\":{\"platform\":\"cloudfoundry\",\"properties\":{}},\"asyncAccepted\":true,\"apiInfoLocation\":\"api-info\",\"originatingIdentity\":{\"platform\":\"cloudfoundry\",\"properties\":{\"user_id\":\"user_guid\",\"email\":\"user_email\"}}},\"startRequestDate\":\"2018-06-07T16:55:48.121Z\"}"}
+
+
+Next:
+- Extend fix to cover returned binding credentials: CreateServiceInstanceAppBindingResponse 
+
+- gracefully log case when operation state missing from Request? 
+ 
+java.lang.NullPointerException: null
+	at com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.PipelineCompletionTracker.getDeploymentExecStatus(PipelineCompletionTracker.java:55) ~[classes/:na]
+	at com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.BoshProcessor.preGetLastOperation(BoshProcessor.java:74) ~[classes/:na]
+
+       
 
 - rename brokers to more generic names
    - rename jars

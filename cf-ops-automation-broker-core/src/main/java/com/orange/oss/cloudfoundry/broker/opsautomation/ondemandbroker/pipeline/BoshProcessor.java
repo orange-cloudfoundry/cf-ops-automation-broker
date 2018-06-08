@@ -11,6 +11,9 @@ import org.springframework.cloud.servicebroker.model.*;
 
 import java.nio.file.Path;
 
+import static com.orange.oss.ondemandbroker.ProcessorChainServiceInstanceService.OSB_PROFILE_ORGANIZATION_GUID;
+import static com.orange.oss.ondemandbroker.ProcessorChainServiceInstanceService.OSB_PROFILE_SPACE_GUID;
+
 public class BoshProcessor extends DefaultBrokerProcessor {
 
 	private static Logger logger = LoggerFactory.getLogger(BoshProcessor.class.getName());
@@ -129,9 +132,21 @@ public class BoshProcessor extends DefaultBrokerProcessor {
 
     protected String formatProvisionCommitMsg(CreateServiceInstanceRequest request) {
         Object userKey = extractUserKeyFromOsbContext(request.getOriginatingIdentity());
+		String spaceGuid;
+		String organizationGuid;
 
-        return brokerDisplayName + " broker: create instance id=" + request.getServiceInstanceId()
-                + "\n\nRequested from space_guid=" + request.getSpaceGuid() +  " org_guid=" + request.getOrganizationGuid() + " by user_guid=" + userKey;
+		org.springframework.cloud.servicebroker.model.Context context = request.getContext();
+		String platform = context.getPlatform();
+		if (OsbConstants.ORIGINATING_CLOUDFOUNDRY_PLATFORM.equals(platform)) {
+			spaceGuid = (String) context.getProperty(OSB_PROFILE_SPACE_GUID);
+			organizationGuid = (String) context.getProperty(OSB_PROFILE_ORGANIZATION_GUID);
+		} else {
+			spaceGuid = request.getSpaceGuid();
+			organizationGuid = request.getOrganizationGuid();
+		}
+
+		return brokerDisplayName + " broker: create instance id=" + request.getServiceInstanceId()
+                + "\n\nRequested from space_guid=" + spaceGuid +  " org_guid=" + organizationGuid + " by user_guid=" + userKey;
     }
 
 	protected String formatUnprovisionCommitMsg(DeleteServiceInstanceRequest request) {

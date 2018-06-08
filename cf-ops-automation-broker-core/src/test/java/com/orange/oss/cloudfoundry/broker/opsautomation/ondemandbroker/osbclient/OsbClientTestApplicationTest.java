@@ -139,25 +139,20 @@ public class OsbClientTestApplicationTest {
     }
 
     @Test
-    @Ignore("Needs fix")
+    // Note this is also covered by OsbClientFeignConfigTest
     public void feign_client_unmarshalls_last_operation_responses() throws JsonProcessingException {
         //given
         String url = "https://127.0.0.1:" + 8089;
         String user = "user";
         String password = "secret";
 
-        //when
+        //and a catalog is fetched (as a prereq)
         CatalogServiceClient catalogServiceClient = clientFactory.getClient(url, user, password, CatalogServiceClient.class);
-
-        //then
         Catalog catalog = catalogServiceClient.getCatalog();
-        assertThat(catalog).isNotNull();
         ServiceDefinition serviceDefinition = catalog.getServiceDefinitions().get(0);
-        assertThat(serviceDefinition).isNotNull();
         Plan defaultPlan = serviceDefinition.getPlans().get(0);
-        assertThat(defaultPlan).isNotNull();
 
-        //when
+        //when querying against recorded mock response
         ServiceInstanceServiceClient serviceInstanceServiceClient = clientFactory.getClient(url, user, password, ServiceInstanceServiceClient.class);
 
         //then
@@ -179,6 +174,7 @@ public class OsbClientTestApplicationTest {
         String originatingIdentityHeader = buildOriginatingIdentityHeader("a_user_guid", CLOUD_FOUNDRY_PLATFORM);
         String serviceInstanceGuid = "111";
 
+        //Then response is properly parsed out
         ResponseEntity<CreateServiceInstanceResponse> createResponse = serviceInstanceServiceClient.createServiceInstance(
                 serviceInstanceGuid,
                 false,
@@ -189,7 +185,7 @@ public class OsbClientTestApplicationTest {
         assertThat(createResponse.getStatusCode()).isEqualTo(CREATED);
         assertThat(createResponse.getBody()).isNotNull();
         CreateServiceInstanceResponse createServiceInstanceResponse = createResponse.getBody();
-        assertThat(createServiceInstanceResponse.getOperation()).isNotEmpty();
+        assertThat(createServiceInstanceResponse.getOperation()).isEqualTo("a manually crafted opaque string");
     }
 
     public void runAsyncCrudLifeCycle(int port, boolean useTls, boolean expectNonEmptyResponseBodies) throws JsonProcessingException {

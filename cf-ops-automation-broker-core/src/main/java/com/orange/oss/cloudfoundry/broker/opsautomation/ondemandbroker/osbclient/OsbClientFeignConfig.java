@@ -27,6 +27,8 @@ import feign.slf4j.Slf4jLogger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.netflix.feign.FeignClientsConfiguration;
 import org.springframework.cloud.servicebroker.model.CreateServiceInstanceResponse;
+import org.springframework.cloud.servicebroker.model.DeleteServiceInstanceResponse;
+import org.springframework.cloud.servicebroker.model.UpdateServiceInstanceResponse;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
@@ -107,14 +109,20 @@ public class OsbClientFeignConfig {
     }
 
     abstract class CreateServiceInstanceResponseMixIn {
-        CreateServiceInstanceResponseMixIn(@JsonProperty("width") int w, @JsonProperty("height") int h) { }
-
         @JsonProperty("operation") abstract CreateServiceInstanceResponse withOperation(final String operation);
+    }
+    abstract class DeleteServiceInstanceResponseMixIn {
+        @JsonProperty("operation") abstract DeleteServiceInstanceResponse withOperation(final String operation);
+    }
+    abstract class UpdateServiceInstanceResponseMixIn {
+        @JsonProperty("operation") abstract UpdateServiceInstanceResponse withOperation(final String operation);
     }
 
     @Autowired
     public void configureJacksonOsbResponseInheritanceMapping(ObjectMapper jackson2ObjectMapper) {
         jackson2ObjectMapper.addMixIn(CreateServiceInstanceResponse.class, CreateServiceInstanceResponseMixIn.class);
+        jackson2ObjectMapper.addMixIn(UpdateServiceInstanceResponse.class, UpdateServiceInstanceResponseMixIn.class);
+        jackson2ObjectMapper.addMixIn(DeleteServiceInstanceResponse.class, DeleteServiceInstanceResponseMixIn.class);
     }
 
     @Bean

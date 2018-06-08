@@ -5,6 +5,11 @@ public class DeploymentConstants {
     public static final String UNDERSCORE = "_";
     public static final String HYPHEN = "-";
     public static final String YML_EXTENSION = ".yml";
+    /**
+     * <A href="https://github.com/orange-cloudfoundry/cf-ops-automation#ops-files">COA operators</A>
+     * <blockquote>By convention, all files in template dir matching *-operators.yml are used by bosh-deployment as ops-files inputs.</blockquote>
+     */
+    public static final String COA_OPERATORS_FILE_PREFIX= HYPHEN + "operators" + YML_EXTENSION;
     public static final String DEPLOYMENT_DEPENDENCIES_FILENAME = "deployment-dependencies.yml";
     public static final String ENABLE_DEPLOYMENT_FILENAME = "enable-deployment.yml";
     public static final String DEPLOYMENT = "bosh";

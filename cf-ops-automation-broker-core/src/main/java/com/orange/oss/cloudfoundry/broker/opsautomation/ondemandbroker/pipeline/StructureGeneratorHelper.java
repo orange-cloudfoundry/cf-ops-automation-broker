@@ -19,8 +19,10 @@ public class StructureGeneratorHelper {
 
     public static Path generatePath(Path rootPath, String... pathElements){
         Path generatedPath = rootPath;
-        for ( String s : pathElements )
-            generatedPath = generatedPath.resolve(s);
+        if (pathElements != null){
+            for ( String s : pathElements )
+                generatedPath = generatedPath.resolve(s);
+        }
         return generatedPath;
     }
 
@@ -93,7 +95,7 @@ public class StructureGeneratorHelper {
 
         } catch (IOException e) {
             e.printStackTrace();
-            throw new DeploymentException(DeploymentConstants.GENERATION_EXCEPTION);
+            throw new DeploymentException(DeploymentConstants.REMOVAL_EXCEPTION);
         }
     }
 
@@ -110,5 +112,9 @@ public class StructureGeneratorHelper {
             resultLines.add(resultLine);
         }
         return resultLines;
+    }
+
+    public static boolean isMissingResource(Path path){
+        return Files.notExists(path);
     }
 }

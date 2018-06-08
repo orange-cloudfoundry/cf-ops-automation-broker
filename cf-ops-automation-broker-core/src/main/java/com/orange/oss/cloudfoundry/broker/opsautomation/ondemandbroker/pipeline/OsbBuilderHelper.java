@@ -16,7 +16,7 @@ public class OsbBuilderHelper {
         ServiceDefinition serviceDefinition = aCatalog().getServiceDefinitions().get(0);
         DeleteServiceInstanceBindingRequest request = new DeleteServiceInstanceBindingRequest(serviceInstanceId, bindingId,"coab-serviceid", "coab-planid", serviceDefinition);
         request.withApiInfoLocation("api-info");
-        request.withOriginatingIdentity(aContext());
+        request.withOriginatingIdentity(aCfUserContext());
         request.withCfInstanceId("cf-instance-id");
         return request;
     }
@@ -53,7 +53,7 @@ public class OsbBuilderHelper {
         request.withBindingId("service-instance-binding-id");
         request.withServiceInstanceId(serviceInstanceId);
         request.withApiInfoLocation("api-info");
-        request.withOriginatingIdentity(aContext());
+        request.withOriginatingIdentity(aCfUserContext());
         request.withCfInstanceId("cf-instance-id");
         return request;
     }
@@ -72,7 +72,7 @@ public class OsbBuilderHelper {
         return expectedResponse;
     }
 
-    public static Context aContext() {
+    public static Context aCfUserContext() {
         Map<String, Object> properties = new HashMap<>();
         properties.put(ORIGINATING_USER_KEY, "user_guid");
         properties.put(ORIGINATING_EMAIL_KEY, "user_email");

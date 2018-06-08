@@ -13,9 +13,14 @@ import java.nio.file.Path;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneId;
+import java.util.HashMap;
+import java.util.Map;
 
+import static com.orange.oss.ondemandbroker.ProcessorChainServiceInstanceService.OSB_PROFILE_ORGANIZATION_GUID;
+import static com.orange.oss.ondemandbroker.ProcessorChainServiceInstanceService.OSB_PROFILE_SPACE_GUID;
 import static org.fest.assertions.Assertions.assertThat;
 import static org.mockito.Mockito.*;
+import static org.springframework.cloud.servicebroker.model.CloudFoundryContext.CLOUD_FOUNDRY_PLATFORM;
 
 public class BoshProcessorTest {
 
@@ -26,17 +31,19 @@ public class BoshProcessorTest {
     @Test
     public void creates_structures_and_returns_async_response() {
         //Given a creation request
-        CreateServiceInstanceRequest creationRequest = new CreateServiceInstanceRequest("service_definition_id",
+        CreateServiceInstanceRequest request = new CreateServiceInstanceRequest("service_definition_id",
                 "plan_id",
                 "org_id",
                 "space_id",
                 null
         );
-        creationRequest.withServiceInstanceId(SERVICE_INSTANCE_ID);
+        request.withServiceInstanceId(SERVICE_INSTANCE_ID);
+        request.withOriginatingIdentity(aContext());
+
 
         //Given a populated context
         Context context = new Context();
-        context.contextKeys.put(ProcessorChainServiceInstanceService.CREATE_SERVICE_INSTANCE_REQUEST, creationRequest);
+        context.contextKeys.put(ProcessorChainServiceInstanceService.CREATE_SERVICE_INSTANCE_REQUEST, request);
         context.contextKeys.put(TEMPLATES_REPOSITORY_ALIAS_NAME + GitProcessorContext.workDir.toString(), aGitRepoWorkDir());
         context.contextKeys.put(SECRETS_REPOSITORY_ALIAS_NAME + GitProcessorContext.workDir.toString(), aGitRepoWorkDir());
 
@@ -64,17 +71,105 @@ public class BoshProcessorTest {
         // specifying asynchronous creations
         assertThat(serviceInstanceResponse.isAsync()).isTrue();
 
-        PipelineCompletionTracker.PipelineOperationState pipelineOperationState = new PipelineCompletionTracker.PipelineOperationState(creationRequest, "2017-11-14T17:24:08.007Z");
+        PipelineCompletionTracker.PipelineOperationState pipelineOperationState = new PipelineCompletionTracker.PipelineOperationState(request, "2017-11-14T17:24:08.007Z");
         String expectedJsonPipelineOperationState = tracker.formatAsJson(pipelineOperationState);
 
         //when
         assertThat(serviceInstanceResponse.getOperation()).isEqualTo(expectedJsonPipelineOperationState);
-         // and with a proper commit message
+         // and with a non-null commit message (asserted in a specific test)
         String customTemplateMessage = (String) context.contextKeys.get(TEMPLATES_REPOSITORY_ALIAS_NAME+GitProcessorContext.commitMessage.toString());
-        assertThat(customTemplateMessage).isEqualTo("Cassandra broker: create instance id=" + SERVICE_INSTANCE_ID);
+        assertThat(customTemplateMessage).isNotNull();
         String customSecretsMessage = (String) context.contextKeys.get(SECRETS_REPOSITORY_ALIAS_NAME+GitProcessorContext.commitMessage.toString());
-        assertThat(customSecretsMessage).isEqualTo("Cassandra broker: create instance id=" + SERVICE_INSTANCE_ID);
+        assertThat(customSecretsMessage).isNotNull();
     }
+
+
+    @Test
+    public void provision_commit_msg_includes_requester_details_without_context() {
+        //Given a creation request with both deprecated OSB syntax
+
+        CreateServiceInstanceRequest request = new CreateServiceInstanceRequest("service_definition_id",
+                "plan_id",
+                "org_id1",
+                "space_id1",
+                new org.springframework.cloud.servicebroker.model.Context(
+                        CLOUD_FOUNDRY_PLATFORM,
+                        null
+                ),
+                null
+        );
+        request.withServiceInstanceId(SERVICE_INSTANCE_ID);
+
+        //then commit msg is valid
+        provision_commit_msg_includes_requester_details(request);
+    }
+
+    @Test
+    public void provision_commit_msg_includes_requester_details_with_context() {
+        //Given a creation request with both deprecated OSB syntax and new context syntax
+        Map<String, Object> contextProperties = new HashMap<>();
+        contextProperties.put(OSB_PROFILE_ORGANIZATION_GUID, "org_id1");
+        contextProperties.put(OSB_PROFILE_SPACE_GUID, "space_id1");
+
+        CreateServiceInstanceRequest request = new CreateServiceInstanceRequest("service_definition_id",
+                "plan_id",
+                "org_id1",
+                "space_id1",
+                new org.springframework.cloud.servicebroker.model.Context(
+                        CLOUD_FOUNDRY_PLATFORM,
+                        contextProperties
+                ),
+                null
+        );
+        request.withServiceInstanceId(SERVICE_INSTANCE_ID);
+
+        provision_commit_msg_includes_requester_details(request);
+    }
+
+    protected void provision_commit_msg_includes_requester_details(CreateServiceInstanceRequest request) {
+        Map<String, Object> properties = new HashMap<>();
+        properties.put(OsbConstants.ORIGINATING_USER_KEY, "user_guid1");
+        request.withOriginatingIdentity(new org.springframework.cloud.servicebroker.model.Context(OsbConstants.ORIGINATING_CLOUDFOUNDRY_PLATFORM, properties));
+
+
+        //Given mocked dependencies
+        TemplatesGenerator templatesGenerator = mock(TemplatesGenerator.class);
+        SecretsGenerator secretsGenerator = mock(SecretsGenerator.class);
+        PipelineCompletionTracker tracker = aCompletionTracker();
+
+        BoshProcessor boshProcessor = new BoshProcessor(TEMPLATES_REPOSITORY_ALIAS_NAME, SECRETS_REPOSITORY_ALIAS_NAME, templatesGenerator, secretsGenerator, tracker, "Cassandra");
+
+        //When
+        assertThat(boshProcessor.formatProvisionCommitMsg(request)).isEqualTo("Cassandra broker: create instance id=aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa0" +
+                "\n\nRequested from space_guid=space_id1 org_guid=org_id1 by user_guid=user_guid1");
+    }
+
+    @Test
+    public void unprovision_commit_msg_includes_requester_details() {
+        //Given a delete request
+        DeleteServiceInstanceRequest request = new DeleteServiceInstanceRequest(SERVICE_INSTANCE_ID,
+                "service_id",
+                "plan_id",
+                new ServiceDefinition(),
+                false);
+
+        Map<String, Object> properties = new HashMap<>();
+        properties.put(OsbConstants.ORIGINATING_USER_KEY, "user_guid1");
+        request.withOriginatingIdentity(new org.springframework.cloud.servicebroker.model.Context(OsbConstants.ORIGINATING_CLOUDFOUNDRY_PLATFORM, properties));
+
+
+        //Given mocked dependencies
+        TemplatesGenerator templatesGenerator = mock(TemplatesGenerator.class);
+        SecretsGenerator secretsGenerator = mock(SecretsGenerator.class);
+        PipelineCompletionTracker tracker = aCompletionTracker();
+
+        BoshProcessor boshProcessor = new BoshProcessor(TEMPLATES_REPOSITORY_ALIAS_NAME, SECRETS_REPOSITORY_ALIAS_NAME, templatesGenerator, secretsGenerator, tracker, "Cassandra");
+
+        //When
+        assertThat(boshProcessor.formatUnprovisionCommitMsg(request)).isEqualTo("Cassandra broker: delete instance id=aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa0" +
+                "\n\nRequested by user_guid=user_guid1");
+    }
+
 
     @Test
     public void responds_to_get_last_service_operation_in_progress() {
@@ -83,7 +178,7 @@ public class BoshProcessorTest {
         GetLastServiceOperationRequest operationRequest = new GetLastServiceOperationRequest(SERVICE_INSTANCE_ID,
                 "service_definition_id",
                 "plan_id",
-                CassandraProcessorConstants.OSB_OPERATION_CREATE);
+                DeploymentConstants.OSB_OPERATION_CREATE);
 
         //Given a populated context
         Context context = new Context();
@@ -94,7 +189,7 @@ public class BoshProcessorTest {
         GetLastServiceOperationResponse expectedResponse = new GetLastServiceOperationResponse();
         expectedResponse.withOperationState(OperationState.IN_PROGRESS);
         PipelineCompletionTracker tracker = mock(PipelineCompletionTracker.class);
-        when(tracker.getDeploymentExecStatus(any(Path.class), eq(SERVICE_INSTANCE_ID), eq(CassandraProcessorConstants.OSB_OPERATION_CREATE), any(GetLastServiceOperationRequest.class))).thenReturn(expectedResponse);
+        when(tracker.getDeploymentExecStatus(any(Path.class), eq(SERVICE_INSTANCE_ID), eq(DeploymentConstants.OSB_OPERATION_CREATE), any(GetLastServiceOperationRequest.class))).thenReturn(expectedResponse);
 
 
         //When
@@ -163,7 +258,7 @@ public class BoshProcessorTest {
         GetLastServiceOperationRequest operationRequest = new GetLastServiceOperationRequest(SERVICE_INSTANCE_ID,
                 "service_definition_id",
                 "plan_id",
-                CassandraProcessorConstants.OSB_OPERATION_CREATE);
+                DeploymentConstants.OSB_OPERATION_CREATE);
 
         //Given a populated context
         Context context = new Context();
@@ -175,7 +270,7 @@ public class BoshProcessorTest {
         expectedResponse.withDescription("Creation is succeeded");
         expectedResponse.withOperationState(OperationState.SUCCEEDED);
         PipelineCompletionTracker tracker = mock(PipelineCompletionTracker.class);
-        when(tracker.getDeploymentExecStatus(any(Path.class), eq(SERVICE_INSTANCE_ID), eq(CassandraProcessorConstants.OSB_OPERATION_CREATE), any(GetLastServiceOperationRequest.class))).thenReturn(expectedResponse);
+        when(tracker.getDeploymentExecStatus(any(Path.class), eq(SERVICE_INSTANCE_ID), eq(DeploymentConstants.OSB_OPERATION_CREATE), any(GetLastServiceOperationRequest.class))).thenReturn(expectedResponse);
 
         //When
         BoshProcessor boshProcessor = new BoshProcessor(TEMPLATES_REPOSITORY_ALIAS_NAME, SECRETS_REPOSITORY_ALIAS_NAME, null, null, tracker, "Cassandra");
@@ -194,6 +289,7 @@ public class BoshProcessorTest {
                 "plan_id",
                 new ServiceDefinition(),
                 false);
+        request.withOriginatingIdentity(aContext());
 
         //Given a populated context
         Context context = new Context();
@@ -227,20 +323,28 @@ public class BoshProcessorTest {
 
         assertThat(serviceInstanceResponse.getOperation()).isEqualTo(expectedJsonPipelineOperationState);
 
-        // and with a proper commit message
+        // and with a commit message (asserted in a distinct test)
         String customMessage = (String) context.contextKeys.get(SECRETS_REPOSITORY_ALIAS_NAME + GitProcessorContext.commitMessage.toString());
-        assertThat(customMessage).isEqualTo("Cassandra broker" + ": "+ CassandraProcessorConstants.OSB_OPERATION_DELETE + " instance id=" + SERVICE_INSTANCE_ID);
+        assertThat(customMessage).isNotNull();
     }
 
 
 
     private PipelineCompletionTracker aCompletionTracker() {
         Clock clock = Clock.fixed(Instant.ofEpochMilli(1510680248007L), ZoneId.of("Europe/Paris"));
-        return new PipelineCompletionTracker(clock, 1200L, Mockito.mock(OsbProxy.class));
+        return new PipelineCompletionTracker(clock, 1200L, Mockito.mock(OsbProxy.class), Mockito.mock(SecretsReader.class));
     }
 
     private Path aGitRepoWorkDir() {
         return FileSystems.getDefault().getPath("/a/git_workdir/path");
     }
+
+    private org.springframework.cloud.servicebroker.model.Context aContext() {
+        Map<String, Object> properties = new HashMap<>();
+        properties.put(OsbConstants.ORIGINATING_USER_KEY, "user_guid");
+        properties.put(OsbConstants.ORIGINATING_EMAIL_KEY, "user_email");
+        return new org.springframework.cloud.servicebroker.model.Context(OsbConstants.ORIGINATING_CLOUDFOUNDRY_PLATFORM, properties);
+    }
+
 
 }

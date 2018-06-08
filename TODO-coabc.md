@@ -1,8 +1,14 @@
 
+- gracefully log case when operation state missing from Request? 
+ 
+java.lang.NullPointerException: null
+	at com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.PipelineCompletionTracker.getDeploymentExecStatus(PipelineCompletionTracker.java:55) ~[classes/:na]
+	at com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.BoshProcessor.preGetLastOperation(BoshProcessor.java:74) ~[classes/:na]
+
+       
+
 - rename brokers to more generic names
    - rename jars
-   - search for cassandra specifics: 
-      - CassandraProcessorConstants 
    - search for cloudflare specifics: see  
       - //FIXME: cloudflare specifics to be moved out
       - //FIXME: cloudflare specific default to be changed
@@ -17,99 +23,6 @@
 - bump cloudflare version in paas-template
 - Generalization
    - Unify TF and Bosh service provisionning and service binding interfaces so that they can be mixed
-
-
-- Long term fix for regression following varops template introduction: provisionning always fail with a timeout because it's waiting for the manifest at the wrong path
-
-    PipelineCompletionTracker uses 
-    ```java
-            public Path getTargetManifestFilePath(Path workDir, String serviceInstanceId) {
-                return StructureGeneratorHelper.generatePath(workDir,
-                            CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY,
-                            CassandraProcessorConstants.SERVICE_INSTANCE_PREFIX_DIRECTORY + serviceInstanceId,
-                            CassandraProcessorConstants.SERVICE_INSTANCE_PREFIX_DIRECTORY + serviceInstanceId + CassandraProcessorConstants.YML_SUFFIX);
-            }
-    ```
-        
-    PipelineCompletionTrackerTest uses:
-    
-    ```java
-        private void generateSampleManifest() throws IOException {
-            Path serviceInstanceDir = StructureGeneratorHelper.generatePath(workDir,
-                    CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY,
-                    CassandraProcessorConstants.SERVICE_INSTANCE_PREFIX_DIRECTORY + SERVICE_INSTANCE_ID);
-            serviceInstanceDir = Files.createDirectories(serviceInstanceDir);
-            Path targetManifestFile = StructureGeneratorHelper.generatePath(serviceInstanceDir,
-                    CassandraProcessorConstants.SERVICE_INSTANCE_PREFIX_DIRECTORY + SERVICE_INSTANCE_ID + CassandraProcessorConstants.YML_SUFFIX);
-            Files.createFile(targetManifestFile);
-        }
-      
-    ```
-    
-        SecretsGenerator uses:
-        
-        ```java
-            
-                        //Compute instance directory
-                        String deploymentInstanceDirectory = this.modelDeployment + DeploymentConstants.UNDERSCORE + serviceInstanceId;
-            
-                        //Generate secrets directory
-                        StructureGeneratorHelper.generateDirectory(workDir, this.rootDeployment, deploymentInstanceDirectory, this.secrets);
-    
-        ```
-    
-            where modelDeployment is injected by CassandraBrokerApplication from DeploymentProperties 
-    
-        + CassandraServiceProvisionningTest don't detect this, as it also uses PipelineCompletionTracker
-    
-        ```java
-            public void simulateManifestGeneration(GitProcessor gitProcessor) throws IOException {
-                Context context = new Context();
-                gitProcessor.preCreate(context);
-        
-                Path workDirPath = (Path) context.contextKeys.get(SECRETS_REPOSITORY_ALIAS_NAME + GitProcessorContext.workDir.toString());
-                @SuppressWarnings("unchecked") PipelineCompletionTracker tracker = new PipelineCompletionTracker(Clock.systemUTC(), osbProxyProperties.getMaxExecutionDurationSeconds(), Mockito.mock(OsbProxy.class));
-                Path targetManifestFilePath = tracker.getTargetManifestFilePath(workDirPath, SERVICE_INSTANCE_ID);
-                createDir(targetManifestFilePath.getParent());
-                createDummyFile(targetManifestFilePath);
-        
-                gitProcessor.postCreate(context);
-            }
-        ```
-    
-            
-        Possible fixes:
-        - **workaround** transiently hardcode the manifest path unrelated to the deployment model
-        - use the same code to generate deployment files in secrets than to watch for concourse completion ion deployment dir, and share this code with test.
-            - refactor PipelineCompletionTracker + CassandraServiceProvisionningTest to delegate the ManifestPath computing to SecretsGenerator
-               - extract code from SecretsGenerator:  
-               
-                  /**
-                    * Provide path where concourse should generate the manifest once the deployment is complete
-                    * @param workDir The local checkout of paas-secret git repo
-                    * @param serviceInstanceId the service instance guid
-                    */
-                   public Path getDeploymentInstancePath(Path workDir, String serviceInstanceId) {
-                       String deploymentInstanceDirName = getDeploymentInstanceDirName(serviceInstanceId);
-                       //Compute path
-                       return StructureGeneratorHelper.generatePath(workDir, this.rootDeployment, deploymentInstanceDirName, this.secrets);
-                   }
-               
-                   String getDeploymentInstanceDirName(String serviceInstanceId) {
-                       return this.modelDeployment + DeploymentConstants.UNDERSCORE + serviceInstanceId;
-                   }
-     
-                 Drawbacks: SecretsGenerator contructor would pull lots of unnecessary to PipelineCompletionTracker, making unit tests heavier
-                 Solution:
-                    - Extract interface: SecretsReader, ServiceInstanceDeploymentBuilder ...  
-    
-    
-    
-        Q: why are so many flags exported by DeploymentProperties ? Would all be potentially configured by the COAB operator ?
-        Q: why is StructureGeneratorImpl.generate not abstract and subclassed many times ? 
-     
-
-    
    - Refactor:
         - regroup splitted assertions in a single method for each step: generate, check, remove
 
@@ -268,13 +181,13 @@ Server error, status code: 409, error code: 60016, message: An operation for ser
 --------------------------------
 
 - Refactor to generalize to another deployment (e.g. mysql)
-   - Introduce configuration class and builder in order to hold secrets/templates static information (TODO)
+   - Introduce configuration class and builder in order to hold secrets/templates static information
    - Refactor secrets and templates generator to have little methods
    - Split Junit tests between check and generate in order to improve readability (target little methods instead of global method)
    - Use MessageFormat in StructureGeneratorHelper
    - Use Builder in Junit tests to improve readability
    - Manage “-tpl” files
-   - Improve test coverage StructureGeneratorHelper
+   - Improve test coverage StructureGeneratorHelper (ONGOING)
    - Update integration test to use a builder (e.g. for OSB req/resps) 
    
    

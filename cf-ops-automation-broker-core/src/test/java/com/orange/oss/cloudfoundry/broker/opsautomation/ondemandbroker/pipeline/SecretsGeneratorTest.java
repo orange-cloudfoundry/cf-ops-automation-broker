@@ -1,4 +1,5 @@
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline;
+
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Rule;
@@ -11,7 +12,9 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
 
 //$ tree coab-depls
 //coab-depls
@@ -52,8 +55,8 @@ public class SecretsGeneratorTest {
         this.secretsGenerator = new SecretsGenerator(this.deploymentProperties.getRootDeployment(),
                                     this.deploymentProperties.getModelDeployment(),
                                     this.deploymentProperties.getSecrets(),
-                                    this.deploymentProperties.getMeta(), "c"
-        );
+                                    this.deploymentProperties.getMeta(),
+                                    this.deploymentProperties.getModelDeploymentShortAlias());
     }
 
     @Test
@@ -147,8 +150,7 @@ public class SecretsGeneratorTest {
         //Then
         Path deploymentInstanceDir = StructureGeneratorHelper.generatePath(this.workDir,
                 this.deploymentProperties.getRootDeployment(),
-                this.deploymentProperties.getModelDeploymentShortAlias() + DeploymentConstants.UNDERSCORE + SERVICE_INSTANCE_ID
-        );
+                this.secretsGenerator.computeDeploymentInstance(SERVICE_INSTANCE_ID));
         assertThat("Deployment directory doesn't exist: " + deploymentInstanceDir, Files.exists(deploymentInstanceDir));
     }
 
@@ -166,7 +168,7 @@ public class SecretsGeneratorTest {
         //Then
         Path secretsDir = StructureGeneratorHelper.generatePath(this.workDir,
                 this.deploymentProperties.getRootDeployment(),
-                this.deploymentProperties.getModelDeploymentShortAlias() + DeploymentConstants.UNDERSCORE + SERVICE_INSTANCE_ID,
+                this.secretsGenerator.computeDeploymentInstance(SERVICE_INSTANCE_ID),
                 this.deploymentProperties.getSecrets()
         );
         assertThat("Secrets directory doesn't exist:" + secretsDir, Files.exists(secretsDir));
@@ -191,7 +193,7 @@ public class SecretsGeneratorTest {
             //Then
             Path targetMetaFile = StructureGeneratorHelper.generatePath(this.workDir,
                     this.deploymentProperties.getRootDeployment(),
-                    this.deploymentProperties.getModelDeploymentShortAlias() +  DeploymentConstants.UNDERSCORE + SERVICE_INSTANCE_ID,
+                    this.secretsGenerator.computeDeploymentInstance(SERVICE_INSTANCE_ID),
                     this.deploymentProperties.getSecrets(),
                     this.deploymentProperties.getMeta() + DeploymentConstants.YML_EXTENSION);
             assertThat("Meta file doesn't exist :"+ targetMetaFile, Files.exists(targetMetaFile));
@@ -222,7 +224,7 @@ public class SecretsGeneratorTest {
             //Then
             Path targetSecretsFile = StructureGeneratorHelper.generatePath(this.workDir,
                     this.deploymentProperties.getRootDeployment(),
-                    this.deploymentProperties.getModelDeploymentShortAlias() +  DeploymentConstants.UNDERSCORE + SERVICE_INSTANCE_ID,
+                    this.secretsGenerator.computeDeploymentInstance(SERVICE_INSTANCE_ID),
                     this.deploymentProperties.getSecrets(),
                     this.deploymentProperties.getSecrets() + DeploymentConstants.YML_EXTENSION);
             assertThat("Secrets file doesn't exist:" + targetSecretsFile, Files.exists(targetSecretsFile));
@@ -233,7 +235,7 @@ public class SecretsGeneratorTest {
     }
 
     @Test
-    public void check_that_enable_deployment_file_is_generated_collocated_with_coa_produced_manifest() throws IOException {
+    public void check_that_enable_deployment_file_is_generated() throws IOException {
         //Given
         Path modelDeploymentDir = StructureGeneratorHelper.generatePath(this.workDir,
                 this.deploymentProperties.getRootDeployment(),
@@ -246,24 +248,35 @@ public class SecretsGeneratorTest {
         //Then
         Path targetEnableDeploymentFile = StructureGeneratorHelper.generatePath(this.workDir,
                 this.deploymentProperties.getRootDeployment(),
-                this.deploymentProperties.getModelDeploymentShortAlias() + DeploymentConstants.UNDERSCORE + SERVICE_INSTANCE_ID,
+                this.secretsGenerator.computeDeploymentInstance(SERVICE_INSTANCE_ID),
                 DeploymentConstants.ENABLE_DEPLOYMENT_FILENAME);
         assertThat("Enable deployment file doesn't exist:" + targetEnableDeploymentFile, Files.exists(targetEnableDeploymentFile));
+    }
 
-        //And then is consistent between COAB request generation and COAB polling of COA response.
-        Path simulatedCoaGeneratedManifestFile = StructureGeneratorHelper.generatePath(this.workDir,
-                this.deploymentProperties.getRootDeployment(),
-                this.deploymentProperties.getModelDeploymentShortAlias() + DeploymentConstants.UNDERSCORE + SERVICE_INSTANCE_ID,
-                CassandraProcessorConstants.SERVICE_INSTANCE_PREFIX_DIRECTORY + SERVICE_INSTANCE_ID+ CassandraProcessorConstants.YML_SUFFIX);
+    @Test
+    public void check_that_coa_produced_manifest_is_parametrized()  {
+        //Given a DeploymentProperties for cassandra with "m" prefix (e.g. mongo)
+        secretsGenerator = new SecretsGenerator("coab-depls",
+                "cassandravarsops",
+                "secrets",
+                "meta",
+                "m");
 
-        assertThat("expected consistency between generated secrets and expected COA manifest at:" + simulatedCoaGeneratedManifestFile, PipelineCompletionTracker.getTargetManifestFilePath(this.workDir, SERVICE_INSTANCE_ID).equals(simulatedCoaGeneratedManifestFile));
+
+        //When
+        Path targetManifestFilePath = secretsGenerator.getTargetManifestFilePath(this.workDir, "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa10");
+
+        //Then
+        Path expectedCoaGeneratedManifestFile = this.workDir.resolve("coab-depls/m_aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa10/m_aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa10.yml");
+
+        assertThat("manifest file location", targetManifestFilePath, equalTo(expectedCoaGeneratedManifestFile));
     }
 
     @Test
     public void check_that_enable_deployment_file_is_removed() throws IOException {
 
         //Given
-        this.check_that_enable_deployment_file_is_generated_collocated_with_coa_produced_manifest();
+        this.check_that_enable_deployment_file_is_generated();
 
         //When
         this.secretsGenerator.remove(this.workDir, SERVICE_INSTANCE_ID);
@@ -290,12 +303,11 @@ public class SecretsGeneratorTest {
         //Then
         Path targetMetaFile = StructureGeneratorHelper.generatePath(this.workDir,
                 this.deploymentProperties.getRootDeployment(),
-                this.deploymentProperties.getModelDeploymentShortAlias() +  DeploymentConstants.UNDERSCORE + SERVICE_INSTANCE_ID,
+                this.secretsGenerator.computeDeploymentInstance(SERVICE_INSTANCE_ID),
                 this.deploymentProperties.getSecrets(),
                 this.deploymentProperties.getMeta() + DeploymentConstants.YML_EXTENSION);
         assertThat("Meta file is still existing", Files.notExists(targetMetaFile));
     }
-
 
 
     @Test
@@ -320,6 +332,7 @@ public class SecretsGeneratorTest {
         deploymentProperties.setRootDeployment("coab-depls");
         deploymentProperties.setModelDeployment("cassandravarsops");
         deploymentProperties.setSecrets("secrets");
+        deploymentProperties.setModelDeploymentShortAlias("c");
         deploymentProperties.setMeta("meta");
         return deploymentProperties;
     }

@@ -6,7 +6,6 @@ import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.common.Slf4jNotifier;
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
 import feign.FeignException;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -27,12 +26,12 @@ import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMoc
 import static org.fest.assertions.Assertions.assertThat;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 import static org.springframework.cloud.servicebroker.model.CloudFoundryContext.CLOUD_FOUNDRY_PLATFORM;
-import static org.springframework.http.HttpStatus.ACCEPTED;
-import static org.springframework.http.HttpStatus.CREATED;
-import static org.springframework.http.HttpStatus.OK;
+import static org.springframework.http.HttpStatus.*;
 
 /**
- * Starts the COAB application, and queries it using the OSB client.
+ * Verifies our OSB client properly sends queries and parses responses:
+ * Starts the COAB application, queries it using the OSB client, and asserts default responses
+ * Also works against recorded mocks providing additional coverage of returned responses.
  */
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = RANDOM_PORT)
@@ -67,13 +66,8 @@ public class OsbClientTestApplicationTest {
 
     @Test
     public void feign_client_is_compatible_with_recorded_mocks() throws JsonProcessingException {
-        runAsyncCrudLifeCycle(8089, true, false);
-    }
-
-    @Test
-    @Ignore("Needs fix")
-    public void feign_client_unmarshalls_OSB_responses() throws JsonProcessingException {
-        runAsyncCrudLifeCycle(8089, true, true);
+        runAsyncCrudLifeCycle(8089, true, true //mock have non empty response bodies
+        );
     }
 
     @Test
@@ -139,25 +133,20 @@ public class OsbClientTestApplicationTest {
     }
 
     @Test
-    @Ignore("Needs fix")
+    // Note this is also covered by OsbClientFeignConfigTest
     public void feign_client_unmarshalls_last_operation_responses() throws JsonProcessingException {
         //given
         String url = "https://127.0.0.1:" + 8089;
         String user = "user";
         String password = "secret";
 
-        //when
+        //and a catalog is fetched (as a prereq)
         CatalogServiceClient catalogServiceClient = clientFactory.getClient(url, user, password, CatalogServiceClient.class);
-
-        //then
         Catalog catalog = catalogServiceClient.getCatalog();
-        assertThat(catalog).isNotNull();
         ServiceDefinition serviceDefinition = catalog.getServiceDefinitions().get(0);
-        assertThat(serviceDefinition).isNotNull();
         Plan defaultPlan = serviceDefinition.getPlans().get(0);
-        assertThat(defaultPlan).isNotNull();
 
-        //when
+        //when querying against recorded mock response
         ServiceInstanceServiceClient serviceInstanceServiceClient = clientFactory.getClient(url, user, password, ServiceInstanceServiceClient.class);
 
         //then
@@ -179,6 +168,7 @@ public class OsbClientTestApplicationTest {
         String originatingIdentityHeader = buildOriginatingIdentityHeader("a_user_guid", CLOUD_FOUNDRY_PLATFORM);
         String serviceInstanceGuid = "111";
 
+        //Then response is properly parsed out
         ResponseEntity<CreateServiceInstanceResponse> createResponse = serviceInstanceServiceClient.createServiceInstance(
                 serviceInstanceGuid,
                 false,
@@ -189,7 +179,7 @@ public class OsbClientTestApplicationTest {
         assertThat(createResponse.getStatusCode()).isEqualTo(CREATED);
         assertThat(createResponse.getBody()).isNotNull();
         CreateServiceInstanceResponse createServiceInstanceResponse = createResponse.getBody();
-        assertThat(createServiceInstanceResponse.getOperation()).isNotEmpty();
+        assertThat(createServiceInstanceResponse.getOperation()).isEqualTo("a manually crafted opaque string");
     }
 
     public void runAsyncCrudLifeCycle(int port, boolean useTls, boolean expectNonEmptyResponseBodies) throws JsonProcessingException {

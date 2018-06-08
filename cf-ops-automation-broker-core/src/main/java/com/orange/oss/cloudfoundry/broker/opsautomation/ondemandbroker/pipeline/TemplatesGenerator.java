@@ -1,14 +1,7 @@
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline;
 
-import org.apache.commons.io.IOUtils;
-import java.io.File;
-import java.io.IOException;
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 public class TemplatesGenerator extends StructureGeneratorImpl{
@@ -33,120 +26,144 @@ public class TemplatesGenerator extends StructureGeneratorImpl{
         super.checkPrerequisites(workDir);
 
         //Check specific pre-requisite (template directory)
-        Path templateDir = StructureGeneratorHelper.generatePath(workDir,
-                this.rootDeployment,
-                this.modelDeployment,
-                this.template);
-        if (Files.notExists(templateDir)){
-            throw new DeploymentException(DeploymentConstants.TEMPLATE_EXCEPTION);
-        }
+        this.checkThatTemplateDirectoryExists(workDir);
+
         //Check specific pre-requisite (operators directory)
-        Path operatorsDir = StructureGeneratorHelper.generatePath(workDir,
-                this.rootDeployment,
-                this.modelDeployment,
-                this.operators);
-        if (Files.notExists(operatorsDir)){
-            throw new DeploymentException(DeploymentConstants.OPERATORS_EXCEPTION);
-        }
+        this.checkThatOperatorsDirectoryExists(workDir);
+
         //Check specific pre-requisite (manifest file in model template directory)
-        Path modelManifestFile = StructureGeneratorHelper.generatePath(workDir,
-                this.rootDeployment,
-                this.modelDeployment,
-                this.template,
-                this.modelDeployment + DeploymentConstants.YML_EXTENSION);
-        if (Files.notExists(modelManifestFile)){
-            throw new DeploymentException(DeploymentConstants.MANIFEST_FILE_EXCEPTION);
-        }
+        this.checkThatModelManifestFileExists(workDir);
+
         //Check specific pre-requisite (vars file in model template directory)
-        Path modelVarsFile = StructureGeneratorHelper.generatePath(workDir,
-                this.rootDeployment,
-                this.modelDeployment,
-                this.template,
-                this.modelDeployment + DeploymentConstants.HYPHEN + this.vars + DeploymentConstants.YML_EXTENSION);
-        if (Files.notExists(modelVarsFile)){
-            throw new DeploymentException(DeploymentConstants.VARS_FILE_EXCEPTION);
-        }
+        this.checkThatModelVarsFileExists(workDir);
+
         //Check specific pre-requisite (coab operators file in model operators directory)
-        Path modelOperatorsFile = StructureGeneratorHelper.generatePath(workDir,
-                this.rootDeployment,
-                this.modelDeployment,
-                this.operators,
-                DeploymentConstants.COAB + DeploymentConstants.HYPHEN + this.operators + DeploymentConstants.YML_EXTENSION);
-        if (Files.notExists(modelOperatorsFile)){
-            throw new DeploymentException(DeploymentConstants.COAB_OPERATORS_FILE_EXCEPTION);
-        }
+        this.checkThatModelCoabOperatorsFileExists(workDir);
     }
 
     @Override
     public void generate(Path workDir, String serviceInstanceId) {
 
-        try {
+        //Generate service directory
+        super.generate(workDir, serviceInstanceId);
 
-            //Generate service directory
-            super.generate(workDir, serviceInstanceId);
+        //Generate template directory
+        this.generateTemplateDirectory(workDir, serviceInstanceId);
 
-            //Build deploymentInstanceDirectory
-            String deploymentInstance = this.modelDeploymentShortAlias + DeploymentConstants.UNDERSCORE + serviceInstanceId;
+        //Generate deployment dependencies file
+        this.generateDeploymentDependenciesFile(workDir, serviceInstanceId);
 
-            //Generate template directory
-            Path deploymentTemplateDir = StructureGeneratorHelper.generatePath(workDir,
-                    this.rootDeployment,
-                    this.modelDeploymentShortAlias + DeploymentConstants.UNDERSCORE + serviceInstanceId,
-                    this.template);
-            Files.createDirectory(deploymentTemplateDir);
+        //Generate manifest file as symlink
+        this.generateManifestFileSymLink(workDir, serviceInstanceId);
 
-            //Generate deployment dependencies file
-            Map<String, String> mapDeploymentDependenciesFile = new HashMap<>();
-            mapDeploymentDependenciesFile.put(DeploymentConstants.DEPLOYMENT_NAME_PATTERN, deploymentInstance);
-            String[] targetPathElements = new String[] {this.rootDeployment, deploymentInstance};
-            String sourceFileName = DeploymentConstants.DEPLOYMENT_DEPENDENCIES_FILENAME;
-            StructureGeneratorHelper.generateFile(workDir, targetPathElements, sourceFileName, sourceFileName, mapDeploymentDependenciesFile);
+        //Generate vars file as symlink
+        this.generateVarsFileSymLink(workDir, serviceInstanceId);
 
-            //Generate manifest file as symlink
-            String[] sourcePathElements = new String[] {this.rootDeployment, this.modelDeployment, this.template};
-            targetPathElements = new String[] {this.rootDeployment, deploymentInstance, this.template};
-            sourceFileName = this.modelDeployment + DeploymentConstants.YML_EXTENSION;
-            String targetFileName = deploymentInstance + DeploymentConstants.YML_EXTENSION;
-            StructureGeneratorHelper.generateSymbolicLink(workDir, sourcePathElements, targetPathElements, sourceFileName, targetFileName);
+        //Generate coab operators file as symlink
+        this.generateCoabOperatorsFileSymLink(workDir, serviceInstanceId);
 
-            //Generate vars file as symlink
-            sourceFileName = this.modelDeployment + DeploymentConstants.HYPHEN + this.vars + DeploymentConstants.YML_EXTENSION;
-            targetFileName = deploymentInstance + DeploymentConstants.HYPHEN + this.vars + DeploymentConstants.YML_EXTENSION;
-            StructureGeneratorHelper.generateSymbolicLink(workDir, sourcePathElements, targetPathElements, sourceFileName, targetFileName);
+        //Generate coab vars file
+        this.generateCoabVarsFile(workDir, serviceInstanceId);
 
-            //Generate coab operators file as symlink
-            sourcePathElements = new String[] {this.rootDeployment, this.modelDeployment, this.operators};
-            sourceFileName = DeploymentConstants.COAB + DeploymentConstants.HYPHEN + this.operators + DeploymentConstants.YML_EXTENSION;
-            StructureGeneratorHelper.generateSymbolicLink(workDir, sourcePathElements, targetPathElements, sourceFileName, sourceFileName);
+    }
 
-            //Generate coab vars file
-            Map<String, String> mapCoabVarsFile = new HashMap<>();
-            mapCoabVarsFile.put(DeploymentConstants.DEPLOYMENT_NAME_PATTERN, deploymentInstance);
-            targetPathElements = new String[] {this.rootDeployment, deploymentInstance, this.template};
-            sourceFileName = DeploymentConstants.COAB + DeploymentConstants.HYPHEN + this.vars + DeploymentConstants.YML_EXTENSION;
-            StructureGeneratorHelper.generateFile(workDir, targetPathElements, sourceFileName, sourceFileName, mapCoabVarsFile);
-
-        } catch (IOException e) {
-            e.printStackTrace();
-            throw new BoshProcessorException(CassandraProcessorConstants.GENERATION_EXCEPTION);
+    private void checkThatTemplateDirectoryExists(Path workDir){
+        Path templateDir = StructureGeneratorHelper.generatePath(workDir,
+                this.rootDeployment,
+                this.modelDeployment,
+                this.template);
+        if (StructureGeneratorHelper.isMissingResource(templateDir)){
+            throw new DeploymentException(DeploymentConstants.TEMPLATE_EXCEPTION);
         }
     }
 
-    private void generateFile(String sourceFileName, Path targetFile, Map<String, String> findAndReplace){
-
-        try {
-            //Read source file content
-            List<String> lines;
-            lines = IOUtils.readLines(getClass().getResourceAsStream(File.separator + CassandraProcessorConstants.MODEL_DEPLOYMENT_DIRECTORY + File.separator + sourceFileName), StandardCharsets.UTF_8);
-
-            //Update file content
-            List<String> resultLines = StructureGeneratorHelper.findAndReplace(lines, findAndReplace);
-
-            //Generate target file
-            Files.write(targetFile, resultLines, Charset.forName(StandardCharsets.UTF_8.name()));
-        } catch (IOException e) {
-            e.printStackTrace();
-            throw new BoshProcessorException(CassandraProcessorConstants.GENERATION_EXCEPTION);
+    private void checkThatOperatorsDirectoryExists(Path workDir){
+        Path operatorsDir = StructureGeneratorHelper.generatePath(workDir,
+                this.rootDeployment,
+                this.modelDeployment,
+                this.operators);
+        if (StructureGeneratorHelper.isMissingResource(operatorsDir)){
+            throw new DeploymentException(DeploymentConstants.OPERATORS_EXCEPTION);
         }
     }
+
+    private void checkThatModelManifestFileExists(Path workDir){
+        Path modelManifestFile = StructureGeneratorHelper.generatePath(workDir,
+                this.rootDeployment,
+                this.modelDeployment,
+                this.template,
+                this.modelDeployment + DeploymentConstants.YML_EXTENSION);
+        if (StructureGeneratorHelper.isMissingResource(modelManifestFile)){
+            throw new DeploymentException(DeploymentConstants.MANIFEST_FILE_EXCEPTION);
+        }
+    }
+
+    private void checkThatModelVarsFileExists(Path workDir){
+        Path modelVarsFile = StructureGeneratorHelper.generatePath(workDir,
+                this.rootDeployment,
+                this.modelDeployment,
+                this.template,
+                this.modelDeployment + DeploymentConstants.HYPHEN + this.vars + DeploymentConstants.YML_EXTENSION);
+        if (StructureGeneratorHelper.isMissingResource(modelVarsFile)){
+            throw new DeploymentException(DeploymentConstants.VARS_FILE_EXCEPTION);
+        }
+    }
+
+    private void checkThatModelCoabOperatorsFileExists(Path workDir){
+        Path modelOperatorsFile = StructureGeneratorHelper.generatePath(workDir,
+                this.rootDeployment,
+                this.modelDeployment,
+                this.operators,
+                DeploymentConstants.COAB + DeploymentConstants.HYPHEN + this.operators + DeploymentConstants.YML_EXTENSION);
+        if (StructureGeneratorHelper.isMissingResource(modelOperatorsFile)){
+            throw new DeploymentException(DeploymentConstants.COAB_OPERATORS_FILE_EXCEPTION);
+        }
+    }
+
+    private void generateTemplateDirectory(Path workDir, String serviceInstanceId){
+        StructureGeneratorHelper.generateDirectory(workDir,
+                this.rootDeployment,
+                this.computeDeploymentInstance(serviceInstanceId),
+                this.template);
+    }
+
+    private void generateDeploymentDependenciesFile(Path workDir, String serviceInstanceId){
+        Map<String, String> mapDeploymentDependenciesFile = new HashMap<>();
+        mapDeploymentDependenciesFile.put(DeploymentConstants.DEPLOYMENT_NAME_PATTERN, this.computeDeploymentInstance(serviceInstanceId));
+        String[] targetPathElements = new String[] {this.rootDeployment, this.computeDeploymentInstance(serviceInstanceId)};
+        String sourceFileName = DeploymentConstants.DEPLOYMENT_DEPENDENCIES_FILENAME;
+        StructureGeneratorHelper.generateFile(workDir, targetPathElements, sourceFileName, sourceFileName, mapDeploymentDependenciesFile);
+    }
+
+    private void generateManifestFileSymLink(Path workDir, String serviceInstanceId){
+        String[] sourcePathElements = new String[] {this.rootDeployment, this.modelDeployment, this.template};
+        String[] targetPathElements = new String[] {this.rootDeployment, this.computeDeploymentInstance(serviceInstanceId), this.template};
+        String sourceFileName = this.modelDeployment + DeploymentConstants.YML_EXTENSION;
+        String targetFileName = this.computeDeploymentInstance(serviceInstanceId) + DeploymentConstants.YML_EXTENSION;
+        StructureGeneratorHelper.generateSymbolicLink(workDir, sourcePathElements, targetPathElements, sourceFileName, targetFileName);
+    }
+
+    private void generateVarsFileSymLink(Path workDir, String serviceInstanceId){
+        String[] sourcePathElements = new String[] {this.rootDeployment, this.modelDeployment, this.template};
+        String[] targetPathElements = new String[] {this.rootDeployment, this.computeDeploymentInstance(serviceInstanceId), this.template};
+        String sourceFileName = this.modelDeployment + DeploymentConstants.HYPHEN + this.vars + DeploymentConstants.YML_EXTENSION;
+        String targetFileName = this.computeDeploymentInstance(serviceInstanceId) + DeploymentConstants.HYPHEN + this.vars + DeploymentConstants.YML_EXTENSION;
+        StructureGeneratorHelper.generateSymbolicLink(workDir, sourcePathElements, targetPathElements, sourceFileName, targetFileName);
+    }
+
+    private void generateCoabOperatorsFileSymLink(Path workDir, String serviceInstanceId){
+        String[] sourcePathElements = new String[] {this.rootDeployment, this.modelDeployment, this.operators};
+        String[] targetPathElements = new String[] {this.rootDeployment, this.computeDeploymentInstance(serviceInstanceId), this.template};
+        String sourceFileName = DeploymentConstants.COAB + DeploymentConstants.HYPHEN + this.operators + DeploymentConstants.YML_EXTENSION;
+        StructureGeneratorHelper.generateSymbolicLink(workDir, sourcePathElements, targetPathElements, sourceFileName, sourceFileName);
+    }
+
+    private void generateCoabVarsFile(Path workDir, String serviceInstanceId){
+        Map<String, String> mapCoabVarsFile = new HashMap<>();
+        mapCoabVarsFile.put(DeploymentConstants.DEPLOYMENT_NAME_PATTERN, this.computeDeploymentInstance(serviceInstanceId));
+        String[] targetPathElements = new String[] {this.rootDeployment, this.computeDeploymentInstance(serviceInstanceId), this.template};
+        String sourceFileName = DeploymentConstants.COAB + DeploymentConstants.HYPHEN + this.vars + DeploymentConstants.YML_EXTENSION;
+        StructureGeneratorHelper.generateFile(workDir, targetPathElements, sourceFileName, sourceFileName, mapCoabVarsFile);
+    }
+
 }

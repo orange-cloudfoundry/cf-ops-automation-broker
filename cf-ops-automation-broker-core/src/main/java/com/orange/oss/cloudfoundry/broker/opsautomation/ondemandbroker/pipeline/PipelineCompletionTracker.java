@@ -9,7 +9,6 @@ import org.springframework.cloud.servicebroker.exception.ServiceInstanceDoesNotE
 import org.springframework.cloud.servicebroker.model.*;
 
 import java.lang.reflect.Modifier;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Clock;
 import java.time.Instant;
@@ -22,13 +21,15 @@ public class PipelineCompletionTracker {
 
     private Clock clock;
     private OsbProxy osbProxy;
+    private SecretsReader secretsReader;
     private Gson gson;
     private long maxExecutionDurationSeconds;
 
-    public PipelineCompletionTracker(Clock clock, long maxExecutionDurationSeconds, OsbProxy osbProxy) {
+    public PipelineCompletionTracker(Clock clock, long maxExecutionDurationSeconds, OsbProxy osbProxy, SecretsReader secretsReader) {
         this.clock = clock;
         this.maxExecutionDurationSeconds = maxExecutionDurationSeconds;
         this.osbProxy = osbProxy;
+        this.secretsReader = secretsReader;
         final GsonBuilder gsonBuilder = new GsonBuilder();
         gsonBuilder.registerTypeAdapter(PipelineCompletionTracker.PipelineOperationState.class, new PipelineOperationStateGsonAdapter());
 
@@ -47,7 +48,7 @@ public class PipelineCompletionTracker {
     GetLastServiceOperationResponse getDeploymentExecStatus(Path secretsWorkDir, String serviceInstanceId, String jsonPipelineOperationState, GetLastServiceOperationRequest pollingRequest) {
 
         //Check if target manifest file is present, i.e. if nested broker bosh deployment completed successfully
-        boolean isTargetManifestFilePresent = isBoshDeploymentAvailable(secretsWorkDir, serviceInstanceId);
+        boolean isTargetManifestFilePresent = secretsReader.isBoshDeploymentAvailable(secretsWorkDir, serviceInstanceId);
 
         //Check if timeout is reached
         PipelineOperationState pipelineOperationState = this.parseFromJson(jsonPipelineOperationState);
@@ -60,18 +61,11 @@ public class PipelineCompletionTracker {
         return this.buildResponse(classFullyQualifiedName, isTargetManifestFilePresent, isRequestTimedOut, elapsedTimeSecsSinceStartRequestDate, pollingRequest, serviceBrokerRequest);
     }
 
-    private boolean isBoshDeploymentAvailable(Path secretsWorkDir, String serviceInstanceId) {
-        Path targetManifestFile = getTargetManifestFilePath(secretsWorkDir, serviceInstanceId);
-        boolean exists = Files.exists(targetManifestFile);
-        logger.debug("Manifest at path {} exists: {}", targetManifestFile, exists);
-        return exists;
-    }
-
 
     GetLastServiceOperationResponse buildResponse(String classFullyQualifiedName, boolean isManifestFilePresent, boolean isRequestTimedOut, long displayedElapsedTimeSecs, GetLastServiceOperationRequest pollingRequest, ServiceBrokerRequest storedRequest) {
         GetLastServiceOperationResponse response = new GetLastServiceOperationResponse();
             switch (classFullyQualifiedName) {
-                case CassandraProcessorConstants.OSB_CREATE_REQUEST_CLASS_NAME:
+                case DeploymentConstants.OSB_CREATE_REQUEST_CLASS_NAME:
                     if (isManifestFilePresent) {
                         response.withOperationState(OperationState.SUCCEEDED);
                         response.withDescription("Creation succeeded");
@@ -94,7 +88,7 @@ public class PipelineCompletionTracker {
                     }
                     break;
 
-                case CassandraProcessorConstants.OSB_DELETE_REQUEST_CLASS_NAME:
+                case DeploymentConstants.OSB_DELETE_REQUEST_CLASS_NAME:
                     response.withDeleteOperation(true);
                     if (osbProxy != null) {
                         try {
@@ -109,13 +103,6 @@ public class PipelineCompletionTracker {
                     throw new RuntimeException("Get Deployment Execution status fails (unhandled request class)");
             }
         return response;
-    }
-
-    public static Path getTargetManifestFilePath(Path workDir, String serviceInstanceId) {
-        return StructureGeneratorHelper.generatePath(workDir,
-                    CassandraProcessorConstants.ROOT_DEPLOYMENT_DIRECTORY,
-                    CassandraProcessorConstants.SERVICE_INSTANCE_PREFIX_DIRECTORY + serviceInstanceId,
-                    CassandraProcessorConstants.SERVICE_INSTANCE_PREFIX_DIRECTORY + serviceInstanceId + CassandraProcessorConstants.YML_SUFFIX);
     }
 
     private String getCurrentDate() {
@@ -166,7 +153,7 @@ public class PipelineCompletionTracker {
 
     void checkBindingRequestsPrereqs(Path secretsWorkDir, String serviceInstanceId) {
         //Check if target manifest file is present, i.e. if nested broker bosh deployment completed successfully
-        boolean boshDeploymentAvailable = isBoshDeploymentAvailable(secretsWorkDir, serviceInstanceId);
+        boolean boshDeploymentAvailable = secretsReader.isBoshDeploymentAvailable(secretsWorkDir, serviceInstanceId);
 
         if (!boshDeploymentAvailable) {
             throw new ServiceInstanceDoesNotExistException(serviceInstanceId);

@@ -27,13 +27,13 @@ public class PipelineOperationStateGsonAdapter implements JsonDeserializer<Pipel
         JsonElement jsonElementRequest;
         switch(classFullyQualifiedName)
         {
-            case CassandraProcessorConstants.OSB_CREATE_REQUEST_CLASS_NAME:
+            case DeploymentConstants.OSB_CREATE_REQUEST_CLASS_NAME:
                 jsonElementRequest = jsonSerializationContext.serialize(request, CreateServiceInstanceRequest.class);
-                jsonObject.add(CassandraProcessorConstants.OSB_CREATE_REQUEST_CLASS_NAME, jsonElementRequest);
+                jsonObject.add(DeploymentConstants.OSB_CREATE_REQUEST_CLASS_NAME, jsonElementRequest);
                 break;
-            case CassandraProcessorConstants.OSB_DELETE_REQUEST_CLASS_NAME:
+            case DeploymentConstants.OSB_DELETE_REQUEST_CLASS_NAME:
                 jsonElementRequest = jsonSerializationContext.serialize(request, DeleteServiceInstanceRequest.class);
-                jsonObject.add(CassandraProcessorConstants.OSB_DELETE_REQUEST_CLASS_NAME, jsonElementRequest);
+                jsonObject.add(DeploymentConstants.OSB_DELETE_REQUEST_CLASS_NAME, jsonElementRequest);
                 break;
             default:
                 throw new RuntimeException("PipelineOperationStateGsonAdapter serialize method fails");
@@ -55,10 +55,10 @@ public class PipelineOperationStateGsonAdapter implements JsonDeserializer<Pipel
             String className = entry.getKey();
             switch(className)
             {
-                case CassandraProcessorConstants.OSB_CREATE_REQUEST_CLASS_NAME:
+                case DeploymentConstants.OSB_CREATE_REQUEST_CLASS_NAME:
                 serviceBrokerRequest = jsonDeserializationContext.deserialize(entry.getValue(), CreateServiceInstanceRequest.class);
                 break;
-                case CassandraProcessorConstants.OSB_DELETE_REQUEST_CLASS_NAME:
+                case DeploymentConstants.OSB_DELETE_REQUEST_CLASS_NAME:
                 serviceBrokerRequest = jsonDeserializationContext.deserialize(entry.getValue(), DeleteServiceInstanceRequest.class);
                 break;
                 case "startRequestDate":

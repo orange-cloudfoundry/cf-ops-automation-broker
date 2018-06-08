@@ -203,7 +203,7 @@ public class TemplatesGeneratorTest {
         //Then
         Path serviceInstanceDir = StructureGeneratorHelper.generatePath(this.workDir,
                 this.deploymentProperties.getRootDeployment(),
-                this.deploymentProperties.getModelDeploymentShortAlias() + DeploymentConstants.UNDERSCORE + SERVICE_INSTANCE_ID
+                this.templatesGenerator.computeDeploymentInstance(SERVICE_INSTANCE_ID)
         );
         assertThat("Deployment directory doesn't exist", Files.exists(serviceInstanceDir));
     }
@@ -221,7 +221,7 @@ public class TemplatesGeneratorTest {
         //Then
         Path templateDir = StructureGeneratorHelper.generatePath(this.workDir,
                 this.deploymentProperties.getRootDeployment(),
-                this.deploymentProperties.getModelDeploymentShortAlias() + DeploymentConstants.UNDERSCORE + SERVICE_INSTANCE_ID,
+                this.templatesGenerator.computeDeploymentInstance(SERVICE_INSTANCE_ID),
                 this.deploymentProperties.getTemplate()
         );
         assertThat("Template directory doesn't exist", Files.exists(templateDir));
@@ -240,7 +240,7 @@ public class TemplatesGeneratorTest {
         //Then
         Path deploymentDependenciesFile = StructureGeneratorHelper.generatePath(this.workDir,
                 this.deploymentProperties.getRootDeployment(),
-                this.deploymentProperties.getModelDeploymentShortAlias() + DeploymentConstants.UNDERSCORE + SERVICE_INSTANCE_ID,
+                this.templatesGenerator.computeDeploymentInstance(SERVICE_INSTANCE_ID),
                 DeploymentConstants.DEPLOYMENT_DEPENDENCIES_FILENAME
         );
         assertThat("Deployment dependencies file doesn't exist:" + deploymentDependenciesFile, Files.exists(deploymentDependenciesFile));
@@ -259,7 +259,7 @@ public class TemplatesGeneratorTest {
         //Then
         Path targetManifestFile = StructureGeneratorHelper.generatePath(this.workDir,
                 this.deploymentProperties.getRootDeployment(),
-                this.deploymentProperties.getModelDeploymentShortAlias() + DeploymentConstants.UNDERSCORE + SERVICE_INSTANCE_ID,
+                this.templatesGenerator.computeDeploymentInstance(SERVICE_INSTANCE_ID),
                 this.deploymentProperties.getTemplate(),
                 this.deploymentProperties.getModelDeploymentShortAlias() + DeploymentConstants.UNDERSCORE + SERVICE_INSTANCE_ID + DeploymentConstants.YML_EXTENSION);
         assertThat("Symbolic link towards manifest file doesn't exist:" + targetManifestFile, Files.exists(targetManifestFile));
@@ -289,7 +289,7 @@ public class TemplatesGeneratorTest {
         //Then
         Path targetVarsFile = StructureGeneratorHelper.generatePath(this.workDir,
                 this.deploymentProperties.getRootDeployment(),
-                this.deploymentProperties.getModelDeploymentShortAlias() + DeploymentConstants.UNDERSCORE + SERVICE_INSTANCE_ID,
+                this.templatesGenerator.computeDeploymentInstance(SERVICE_INSTANCE_ID),
                 this.deploymentProperties.getTemplate(),
                 this.deploymentProperties.getModelDeploymentShortAlias() + DeploymentConstants.UNDERSCORE + SERVICE_INSTANCE_ID + DeploymentConstants.HYPHEN + this.deploymentProperties.getVars() + DeploymentConstants.YML_EXTENSION);
         assertThat("Symbolic link towards vars file doesn't exist", Files.exists(targetVarsFile));
@@ -321,7 +321,7 @@ public class TemplatesGeneratorTest {
         //Then
         Path targetOperatorsFile = StructureGeneratorHelper.generatePath(this.workDir,
                 this.deploymentProperties.getRootDeployment(),
-                this.deploymentProperties.getModelDeploymentShortAlias() + DeploymentConstants.UNDERSCORE + SERVICE_INSTANCE_ID,
+                this.templatesGenerator.computeDeploymentInstance(SERVICE_INSTANCE_ID),
                 this.deploymentProperties.getTemplate(),
                 DeploymentConstants.COAB + DeploymentConstants.HYPHEN + this.deploymentProperties.getOperators() + DeploymentConstants.YML_EXTENSION);
         assertThat("Symbolic link towards coab operators file doesn't exist", Files.exists(targetOperatorsFile));
@@ -342,7 +342,7 @@ public class TemplatesGeneratorTest {
         //Then
         Path coabVarsFile = StructureGeneratorHelper.generatePath(this.workDir,
                 this.deploymentProperties.getRootDeployment(),
-                this.deploymentProperties.getModelDeploymentShortAlias() + DeploymentConstants.UNDERSCORE + SERVICE_INSTANCE_ID,
+                this.templatesGenerator.computeDeploymentInstance(SERVICE_INSTANCE_ID),
                 this.deploymentProperties.getTemplate(),
                 DeploymentConstants.COAB + DeploymentConstants.HYPHEN + this.deploymentProperties.getVars() + DeploymentConstants.YML_EXTENSION
         );

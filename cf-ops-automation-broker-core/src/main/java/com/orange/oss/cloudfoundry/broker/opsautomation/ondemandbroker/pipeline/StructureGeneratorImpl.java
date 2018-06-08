@@ -37,8 +37,11 @@ public class StructureGeneratorImpl implements StructureGenerator {
 
     public void generate(Path workDir, String serviceInstanceId) {
             ////Generate service directory
-            String deploymentInstanceDirectory = this.modelDeploymentShortAlias + DeploymentConstants.UNDERSCORE + serviceInstanceId;
-            StructureGeneratorHelper.generateDirectory(workDir, this.rootDeployment, deploymentInstanceDirectory);
+            StructureGeneratorHelper.generateDirectory(workDir, this.rootDeployment, this.computeDeploymentInstance(serviceInstanceId));
+    }
+
+    public String computeDeploymentInstance(String serviceInstanceId){
+        return this.modelDeploymentShortAlias + DeploymentConstants.UNDERSCORE + serviceInstanceId;
     }
 
 }

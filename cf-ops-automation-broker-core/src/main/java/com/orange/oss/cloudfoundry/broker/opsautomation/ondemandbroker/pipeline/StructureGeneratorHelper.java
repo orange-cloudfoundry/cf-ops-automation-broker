@@ -6,15 +6,13 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Created by ijly7474 on 18/12/17.
- */
 public class StructureGeneratorHelper {
 
     public static Path generatePath(Path rootPath, String... pathElements){
@@ -117,4 +115,21 @@ public class StructureGeneratorHelper {
     public static boolean isMissingResource(Path path){
         return Files.notExists(path);
     }
+
+    //https://docs.oracle.com/javase/tutorial/essential/io/fileOps.html#glob
+    public static List<String> listFilesPaths(Path path, String glob){
+        List<String> paths = new ArrayList<String>();
+        try (DirectoryStream<Path> stream =
+                     Files.newDirectoryStream(path, glob)) {
+            for (Path entry: stream) {
+                paths.add(entry.getFileName().toString());
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            throw new DeploymentException(DeploymentConstants.GENERATION_EXCEPTION);
+        }
+        return paths;
+    }
+
+
 }

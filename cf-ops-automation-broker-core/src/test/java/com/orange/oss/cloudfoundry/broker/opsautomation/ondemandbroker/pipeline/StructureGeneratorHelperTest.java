@@ -8,19 +8,14 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
 import static org.junit.Assert.assertEquals;
 
-/**
- * Created by ijly7474 on 18/12/17.
- */
 public class StructureGeneratorHelperTest {
 
 
@@ -29,7 +24,7 @@ public class StructureGeneratorHelperTest {
 
 
     @Test
-    public void check_generated_path(){
+    public void check_generated_path() {
         //Given a root path and path elements
         Path rootPath = this.temporaryFolder.getRoot().toPath();
         String element1 = "element1";
@@ -51,7 +46,7 @@ public class StructureGeneratorHelperTest {
     }
 
     @Test
-    public void check_generate_directory(){
+    public void check_generate_directory() {
         //Given a root path and path elements to create
         Path rootPath = this.temporaryFolder.getRoot().toPath();
         String aDirectory = "directory";
@@ -65,7 +60,7 @@ public class StructureGeneratorHelperTest {
     }
 
     @Test
-    public void check_generate_symbolic_link(){
+    public void check_generate_symbolic_link() {
         //Given a root path and path elements to create
         Path rootPath = this.temporaryFolder.getRoot().toPath();
 
@@ -77,7 +72,7 @@ public class StructureGeneratorHelperTest {
     }
 
     @Test
-    public void check_generate_file(){
+    public void check_generate_file() {
         //Given a root path and path elements to create
         Path rootPath = this.temporaryFolder.getRoot().toPath();
         try {
@@ -87,7 +82,7 @@ public class StructureGeneratorHelperTest {
         }
 
         //When
-        StructureGeneratorHelper.generateFile(rootPath, new String[] {"aPath"},"aTargetFile",DeploymentConstants.ENABLE_DEPLOYMENT_FILENAME,null);
+        StructureGeneratorHelper.generateFile(rootPath, new String[]{"aPath"}, "aTargetFile", DeploymentConstants.ENABLE_DEPLOYMENT_FILENAME, null);
 
         //Then
         Path expectedPath = rootPath.resolve("aPath").resolve("aTargetFile");
@@ -95,7 +90,7 @@ public class StructureGeneratorHelperTest {
     }
 
     @Test
-    public void check_remove_file(){
+    public void check_remove_file() {
         //Given a root path and path elements to create
         Path rootPath = this.temporaryFolder.getRoot().toPath();
         try {
@@ -109,7 +104,7 @@ public class StructureGeneratorHelperTest {
         //When
         Path expectedPath = rootPath.resolve("aPath").resolve("aFile");
         assertThat("File exists", Files.exists(expectedPath));
-        StructureGeneratorHelper.removeFile(rootPath, new String[] {"aPath"},"aFile");
+        StructureGeneratorHelper.removeFile(rootPath, new String[]{"aPath"}, "aFile");
 
         //Then
         assertThat("File still exists", Files.notExists(expectedPath));
@@ -117,7 +112,7 @@ public class StructureGeneratorHelperTest {
 
 
     @Test
-    public void check_find_and_replace(){
+    public void check_find_and_replace() {
         //Given a template with markers
         List<String> lines = new ArrayList<String>();
         lines.add("---");
@@ -140,4 +135,27 @@ public class StructureGeneratorHelperTest {
         assertEquals("  value: cassandra-broker_aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa0.((!/secrets/cloudfoundry_system_domain))", resultLines.get(4));
     }
 
+    @Test
+    public void check_list_files_paths() {
+        //Given a root path and path elements to create
+        Path rootPath = this.temporaryFolder.getRoot().toPath();
+        try {
+            Path path = rootPath.resolve("file-operators.yml");
+            Files.createFile(path);
+            path = rootPath.resolve("file-op.yml");
+            Files.createFile(path);
+            path = rootPath.resolve("file.yml");
+            Files.createFile(path);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        //When
+        List<String> paths = StructureGeneratorHelper.listFilesPaths(rootPath, "*-operators.yml");
+
+        //Then
+        assertThat("file-operators.yml is not present", paths.contains("file-operators.yml"));
+        assertThat("file-op.yml is present", ! paths.contains("file-op.yml"));
+        assertThat("file.yml is present", ! paths.contains("file.yml"));
+    }
 }

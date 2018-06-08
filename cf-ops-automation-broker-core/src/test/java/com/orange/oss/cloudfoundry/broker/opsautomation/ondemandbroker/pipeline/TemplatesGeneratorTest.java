@@ -349,6 +349,35 @@ public class TemplatesGeneratorTest {
         assertThat("Coab vars file doesn't exist", Files.exists(coabVarsFile));
     }
 
+/*
+    @Test
+    public void check_that_symlinks_towards_operators_files_under_templates_directory_are_generated() throws Exception {
+        //Given repository, root deployment,model deployment and several operators files under templates directory
+        Path templatesDir = StructureGeneratorHelper.generatePath(this.workDir,
+                this.deploymentProperties.getRootDeployment(),
+                this.deploymentProperties.getModelDeployment(),
+                this.deploymentProperties.getTemplate());
+        Files.createDirectories(templatesDir);
+        Path firstOperatorFile = StructureGeneratorHelper.generatePath(templatesDir, "1-add-shield-operators.yml");
+        Files.createFile(firstOperatorFile);
+
+        //When
+        StructureGeneratorHelper.generateDirectory(workDir, this.deploymentProperties.getRootDeployment(), this.templatesGenerator.computeDeploymentInstance(SERVICE_INSTANCE_ID), this.deploymentProperties.getTemplate());
+        this.templatesGenerator.generateOperatorsFileSymLinks(workDir, SERVICE_INSTANCE_ID);
+
+        //Then
+        Path expectedFirstOperatorsFile = StructureGeneratorHelper.generatePath(this.workDir,
+                this.deploymentProperties.getRootDeployment(),
+                this.templatesGenerator.computeDeploymentInstance(SERVICE_INSTANCE_ID),
+                this.deploymentProperties.getTemplate(),
+                "1-add-shield-operators.yml");
+        assertThat("Symbolic link towards operators file doesn't exist", Files.exists(expectedFirstOperatorsFile));
+        assertThat("Coab operators file is not a symbolic link", Files.isSymbolicLink(expectedFirstOperatorsFile));
+        assertThat(Files.readSymbolicLink(expectedFirstOperatorsFile).toString(), is(equalTo("../../" + this.deploymentProperties.getModelDeployment() + "/template/1-add-shield-operators.yml")));
+
+    }
+*/
+
     private DeploymentProperties aDeploymentProperties() {
         DeploymentProperties deploymentProperties = new DeploymentProperties();
         deploymentProperties.setRootDeployment("coab-depls");
@@ -372,5 +401,4 @@ public class TemplatesGeneratorTest {
         this.templatesGenerator.checkPrerequisites(workDir);
         this.templatesGenerator.generate(workDir, SERVICE_INSTANCE_ID);
     }
-
 }

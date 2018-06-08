@@ -2,6 +2,7 @@ package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline
 
 import java.nio.file.Path;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class TemplatesGenerator extends StructureGeneratorImpl{
@@ -56,11 +57,11 @@ public class TemplatesGenerator extends StructureGeneratorImpl{
         //Generate manifest file as symlink
         this.generateManifestFileSymLink(workDir, serviceInstanceId);
 
+        //Generate coab vars file as symlink
+        this.generateCoabOperatorsFileSymLink(workDir, serviceInstanceId);
+
         //Generate vars file as symlink
         this.generateVarsFileSymLink(workDir, serviceInstanceId);
-
-        //Generate coab operators file as symlink
-        this.generateCoabOperatorsFileSymLink(workDir, serviceInstanceId);
 
         //Generate coab vars file
         this.generateCoabVarsFile(workDir, serviceInstanceId);
@@ -157,6 +158,18 @@ public class TemplatesGenerator extends StructureGeneratorImpl{
         String sourceFileName = DeploymentConstants.COAB + DeploymentConstants.HYPHEN + this.operators + DeploymentConstants.YML_EXTENSION;
         StructureGeneratorHelper.generateSymbolicLink(workDir, sourcePathElements, targetPathElements, sourceFileName, sourceFileName);
     }
+
+/*
+    public void generateOperatorsFileSymLinks(Path workDir, String serviceInstanceId) {
+        Path path = StructureGeneratorHelper.generatePath(workDir, this.rootDeployment, this.modelDeployment, this.template);
+        List<String> modelOperators = StructureGeneratorHelper.listFilesPaths(path, "*" + DeploymentConstants.COA_OPERATORS_FILE_SUFFIX);
+        String[] sourcePathElements = new String[] {this.rootDeployment, this.modelDeployment, this.template};
+        String[] targetPathElements = new String[] {this.rootDeployment, this.computeDeploymentInstance(serviceInstanceId), this.template};
+        for (String s: modelOperators) {
+            StructureGeneratorHelper.generateSymbolicLink(workDir, sourcePathElements, targetPathElements, s, s);
+        }
+    }
+*/
 
     private void generateCoabVarsFile(Path workDir, String serviceInstanceId){
         Map<String, String> mapCoabVarsFile = new HashMap<>();

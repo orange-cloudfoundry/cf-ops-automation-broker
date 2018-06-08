@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import org.hibernate.validator.constraints.NotEmpty;
 import org.junit.Test;
@@ -61,18 +60,44 @@ public class VarsFilesYmlFormatterTest {
     }
 
     public static class CoabVarsFile {
+        /**
+         * Bosh deployment name to assign in the manifest by operators file
+         */
         @JsonProperty("deployment_name")
         public String deployment_name;
+
+        /**
+         * ID of a service from the catalog for this Service Broker from
+         * OSB https://github.com/openservicebrokerapi/servicebroker/blob/master/spec.md#body-2
+         */
         @JsonProperty("service_id")
         public String service_id;
+        /**
+         *  ID of a plan from the service that has been requested from
+         * OSB https://github.com/openservicebrokerapi/servicebroker/blob/master/spec.md#body-2
+         */
         @JsonProperty("plan_id")
         public String plan_id;
 
+        /**
+         * Platform specific contextual information under which the Service Instance is to be provisioned, from
+         * OSB https://github.com/openservicebrokerapi/servicebroker/blob/master/spec.md#body-2
+         */
         @JsonProperty("context")
         public CloudFoundryOsbContext context = new CloudFoundryOsbContext();
+        @JsonInclude(JsonInclude.Include.NON_NULL) //include even if empty
+
+        /**
+         * Configuration parameters for the Service Instance, from
+         * OSB https://github.com/openservicebrokerapi/servicebroker/blob/master/spec.md#body-2
+         */
         @JsonProperty("parameters")
         public HashMap<String, String> parameters = new HashMap<>();
 
+        /**
+         * For update requests,Information about the Service Instance prior to the updatefrom
+         * OSB https://github.com/openservicebrokerapi/servicebroker/blob/master/spec.md#body-2
+         */
         @JsonInclude(JsonInclude.Include.NON_NULL)
         @JsonProperty("previous_values")
         public PreviousValues previous_values;
@@ -80,21 +105,30 @@ public class VarsFilesYmlFormatterTest {
     }
 
     public static class CloudFoundryOsbContext {
-        public String platform = "cloudfoundry";
+        @JsonProperty("platform")
+        public final String platform = "cloudfoundry";
+        @JsonProperty("user_guid")
         public String user_guid;
+        @JsonProperty("space_guid")
         public String space_guid;
+        @JsonProperty("organization_guid")
         public String organization_guid;
     }
 
     public static class PreviousValues {
+        /**
+         * The ID of the plan prior to the update, from OSB
+         * https://github.com/openservicebrokerapi/servicebroker/blob/master/spec.md#previous-values-object
+         */
         @NotEmpty
-        @JsonSerialize
+        @JsonProperty("plan_id")
         public String plan_id;
     }
 
 
     @Test
     public void create_dto_outputs_expected_vars_files() throws JsonProcessingException {
+        //Given
         CoabVarsFile coabVarsFile = new CoabVarsFile();
         coabVarsFile.deployment_name= "cassandravarsops_aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa0";
         coabVarsFile.service_id= "service_definition_id";
@@ -108,10 +142,11 @@ public class VarsFilesYmlFormatterTest {
         coabVarsFile.parameters.put("slowQuery", "false");
         coabVarsFile.parameters.put("cacheSizeMb", "10");
 
-
+        //when
         String result = formatAsYml(coabVarsFile);
         logger.info("vars.yml serialized yml content:\n{}", result);
 
+        //then
         assertThat(result).isEqualTo(
                 "---\n" +
                         "deployment_name: \"cassandravarsops_aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa0\"\n" +
@@ -129,6 +164,7 @@ public class VarsFilesYmlFormatterTest {
 
     @Test
     public void update_dto_outputs_expected_vars_files() throws JsonProcessingException {
+        //given
         CoabVarsFile coabVarsFile = new CoabVarsFile();
         coabVarsFile.deployment_name= "cassandravarsops_aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa0";
         coabVarsFile.service_id= "service_definition_id";
@@ -144,10 +180,11 @@ public class VarsFilesYmlFormatterTest {
         coabVarsFile.parameters.put("slowQuery", "false");
         coabVarsFile.parameters.put("cacheSizeMb", "10");
 
-
+        //When
         String result = formatAsYml(coabVarsFile);
         logger.info("vars.yml serialized yml content:\n{}", result);
 
+        //then
         assertThat(result).isEqualTo(
                 "---\n" +
                         "deployment_name: \"cassandravarsops_aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa0\"\n" +

@@ -59,7 +59,7 @@ public class VarsFilesYmlFormatterTest {
         return mapper.writeValueAsString(o);
     }
 
-    public static class CoabVarsFile {
+    public static class CoabVarsFileDto {
         /**
          * Bosh deployment name to assign in the manifest by operators file
          */
@@ -84,15 +84,15 @@ public class VarsFilesYmlFormatterTest {
          * OSB https://github.com/openservicebrokerapi/servicebroker/blob/master/spec.md#body-2
          */
         @JsonProperty("context")
-        public CloudFoundryOsbContext context = new CloudFoundryOsbContext();
-        @JsonInclude(JsonInclude.Include.NON_NULL) //include even if empty
+        public final CloudFoundryOsbContext context = new CloudFoundryOsbContext();
 
         /**
          * Configuration parameters for the Service Instance, from
          * OSB https://github.com/openservicebrokerapi/servicebroker/blob/master/spec.md#body-2
          */
         @JsonProperty("parameters")
-        public HashMap<String, String> parameters = new HashMap<>();
+        @JsonInclude(JsonInclude.Include.NON_NULL) //include even if empty
+        public final HashMap<String, String> parameters = new HashMap<>();
 
         /**
          * For update requests,Information about the Service Instance prior to the updatefrom
@@ -102,48 +102,50 @@ public class VarsFilesYmlFormatterTest {
         @JsonProperty("previous_values")
         public PreviousValues previous_values;
 
-    }
+        public static class CloudFoundryOsbContext {
+            @JsonProperty("platform")
+            public String platform = "cloudfoundry";
+            @JsonInclude(JsonInclude.Include.NON_EMPTY)
+            @JsonProperty("user_guid")
+            public String user_guid;
+            @JsonInclude(JsonInclude.Include.NON_EMPTY)
+            @JsonProperty("space_guid")
+            public String space_guid;
+            @JsonInclude(JsonInclude.Include.NON_EMPTY)
+            @JsonProperty("organization_guid")
+            public String organization_guid;
+        }
 
-    public static class CloudFoundryOsbContext {
-        @JsonProperty("platform")
-        public final String platform = "cloudfoundry";
-        @JsonProperty("user_guid")
-        public String user_guid;
-        @JsonProperty("space_guid")
-        public String space_guid;
-        @JsonProperty("organization_guid")
-        public String organization_guid;
-    }
-
-    public static class PreviousValues {
-        /**
-         * The ID of the plan prior to the update, from OSB
-         * https://github.com/openservicebrokerapi/servicebroker/blob/master/spec.md#previous-values-object
-         */
-        @NotEmpty
-        @JsonProperty("plan_id")
-        public String plan_id;
+        public static class PreviousValues {
+            /**
+             * The ID of the plan prior to the update, from OSB
+             * https://github.com/openservicebrokerapi/servicebroker/blob/master/spec.md#previous-values-object
+             */
+            @NotEmpty
+            @JsonProperty("plan_id")
+            public String plan_id;
+        }
     }
 
 
     @Test
     public void create_dto_outputs_expected_vars_files() throws JsonProcessingException {
         //Given
-        CoabVarsFile coabVarsFile = new CoabVarsFile();
-        coabVarsFile.deployment_name= "cassandravarsops_aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa0";
-        coabVarsFile.service_id= "service_definition_id";
-        coabVarsFile.plan_id= "plan_guid";
+        CoabVarsFileDto coabVarsFileDto = new CoabVarsFileDto();
+        coabVarsFileDto.deployment_name= "cassandravarsops_aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa0";
+        coabVarsFileDto.service_id= "service_definition_id";
+        coabVarsFileDto.plan_id= "plan_guid";
 
-        coabVarsFile.context.user_guid="user_guid1";
-        coabVarsFile.context.space_guid="space_guid1";
-        coabVarsFile.context.organization_guid="org_guid1";
+        coabVarsFileDto.context.user_guid="user_guid1";
+        coabVarsFileDto.context.space_guid="space_guid1";
+        coabVarsFileDto.context.organization_guid="org_guid1";
 
 
-        coabVarsFile.parameters.put("slowQuery", "false");
-        coabVarsFile.parameters.put("cacheSizeMb", "10");
+        coabVarsFileDto.parameters.put("slowQuery", "false");
+        coabVarsFileDto.parameters.put("cacheSizeMb", "10");
 
         //when
-        String result = formatAsYml(coabVarsFile);
+        String result = formatAsYml(coabVarsFileDto);
         logger.info("vars.yml serialized yml content:\n{}", result);
 
         //then
@@ -163,25 +165,48 @@ public class VarsFilesYmlFormatterTest {
     }
 
     @Test
+    public void create_dto_outputs_expected_vars_files_without_context_nor_params() throws JsonProcessingException {
+        //Given
+        CoabVarsFileDto coabVarsFileDto = new CoabVarsFileDto();
+        coabVarsFileDto.deployment_name= "cassandravarsops_aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa0";
+        coabVarsFileDto.service_id= "service_definition_id";
+        coabVarsFileDto.plan_id= "plan_guid";
+
+        //when
+        String result = formatAsYml(coabVarsFileDto);
+        logger.info("vars.yml serialized yml content:\n{}", result);
+
+        //then
+        assertThat(result).isEqualTo(
+                "---\n" +
+                        "deployment_name: \"cassandravarsops_aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa0\"\n" +
+                        "service_id: \"service_definition_id\"\n" +
+                        "plan_id: \"plan_guid\"\n" +
+                        "context:\n" +
+                        "  platform: \"cloudfoundry\"\n" +
+                        "parameters: {}\n");
+    }
+
+    @Test
     public void update_dto_outputs_expected_vars_files() throws JsonProcessingException {
         //given
-        CoabVarsFile coabVarsFile = new CoabVarsFile();
-        coabVarsFile.deployment_name= "cassandravarsops_aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa0";
-        coabVarsFile.service_id= "service_definition_id";
-        coabVarsFile.plan_id= "plan_guid";
+        CoabVarsFileDto coabVarsFileDto = new CoabVarsFileDto();
+        coabVarsFileDto.deployment_name= "cassandravarsops_aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa0";
+        coabVarsFileDto.service_id= "service_definition_id";
+        coabVarsFileDto.plan_id= "plan_guid";
 
-        coabVarsFile.context.user_guid="user_guid1";
-        coabVarsFile.context.space_guid="space_guid1";
-        coabVarsFile.context.organization_guid="org_guid1";
+        coabVarsFileDto.context.user_guid="user_guid1";
+        coabVarsFileDto.context.space_guid="space_guid1";
+        coabVarsFileDto.context.organization_guid="org_guid1";
 
-        coabVarsFile.previous_values = new PreviousValues();
-        coabVarsFile.previous_values.plan_id= "previous_plan_guid";
+        coabVarsFileDto.previous_values = new CoabVarsFileDto.PreviousValues();
+        coabVarsFileDto.previous_values.plan_id= "previous_plan_guid";
 
-        coabVarsFile.parameters.put("slowQuery", "false");
-        coabVarsFile.parameters.put("cacheSizeMb", "10");
+        coabVarsFileDto.parameters.put("slowQuery", "false");
+        coabVarsFileDto.parameters.put("cacheSizeMb", "10");
 
         //When
-        String result = formatAsYml(coabVarsFile);
+        String result = formatAsYml(coabVarsFileDto);
         logger.info("vars.yml serialized yml content:\n{}", result);
 
         //then

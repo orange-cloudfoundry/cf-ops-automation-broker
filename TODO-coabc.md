@@ -9,10 +9,10 @@ Support for multiple operators:
    - 2nd step: also mirror the subdirs with nested symlinks to support iaas-specific templates   
   
 Vars files that include OSB input params (org,space,user, as well as arbitrary params)
-- Modify TemplatesGenerator#generate(Path workDir, String serviceInstanceId) to accept DTO or CreateServiceRequest/UpdateServiceInstanceRequest as argument instead of serviceInstanceId
-- Bump jackson to 2.9.2 or later and pull https://github.com/FasterXML/jackson-dataformats-text/tree/master/yaml
-- Define formatting output amongst
-   - Create dedicated DTO to control format
+- DONE: Define formatting output amongst
+   - **Create dedicated DTO to control format**
+      - Test cases for optional data
+      - Test case for type conversions: boolean and numbers
    - Leverage spring-cloud-service-broker model classes CreateServiceInstanceRequest: 
       - con: Initial attempt is suboptimal
          - fails to serialize the context properties. Likely missing the JsonProperty on properties field
@@ -28,7 +28,10 @@ organization_guid: "org_id"
 space_guid: "space_id"
 ```
       - con: fragile to directly use these models as the library is going through upcoming refactoring that would change our code
-   - use untyped structure  
+   - use untyped structure
+- Create DTO builder from OSB classes
+- Modify TemplatesGenerator#generate(Path workDir, String serviceInstanceId) to accept DTO or CreateServiceRequest/UpdateServiceInstanceRequest as argument instead of serviceInstanceId
+- Bump jackson to 2.9.2 or later and pull https://github.com/FasterXML/jackson-dataformats-text/tree/master/yaml
 
 
 

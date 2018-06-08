@@ -11,8 +11,10 @@ Support for multiple operators:
 Vars files that include OSB input params (org,space,user, as well as arbitrary params)
 - DONE: Define formatting output amongst
    - **Create dedicated DTO to control format**
-      - Test cases for optional data
-      - Test case for type conversions: boolean and numbers
+      - DONE: Test cases for optional data
+      - DONE: Test case for type conversions: boolean and numbers. 
+      - Protect against polymorphism injection of classes through yml serialized data: explicitly disable non primitive classes excepted white listed ones. Try with classes i classpath that include jackson annotations, or plain POJOs with fully qualified names
+      - Protect against YML reference file loading and remote code injection
    - Leverage spring-cloud-service-broker model classes CreateServiceInstanceRequest: 
       - con: Initial attempt is suboptimal
          - fails to serialize the context properties. Likely missing the JsonProperty on properties field
@@ -30,7 +32,9 @@ space_guid: "space_id"
       - con: fragile to directly use these models as the library is going through upcoming refactoring that would change our code
    - use untyped structure
 - Create DTO builder from OSB classes
-- Modify TemplatesGenerator#generate(Path workDir, String serviceInstanceId) to accept DTO or CreateServiceRequest/UpdateServiceInstanceRequest as argument instead of serviceInstanceId
+- Modify SecretsGenerator#generate(Path workDir, String serviceInstanceId) to accept DTO as argument instead of serviceInstanceId
+   - Modify SecretsGenerator to use ObjectMapper + clean up previous vars support.
+   - update BoshProcessor to use DTO Builder
 - Bump jackson to 2.9.2 or later and pull https://github.com/FasterXML/jackson-dataformats-text/tree/master/yaml
 
 

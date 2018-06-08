@@ -92,7 +92,7 @@ public class VarsFilesYmlFormatterTest {
          */
         @JsonProperty("parameters")
         @JsonInclude(JsonInclude.Include.NON_NULL) //include even if empty
-        public final HashMap<String, String> parameters = new HashMap<>();
+        public final HashMap<String, Object> parameters = new HashMap<>();
 
         /**
          * For update requests,Information about the Service Instance prior to the updatefrom
@@ -141,8 +141,9 @@ public class VarsFilesYmlFormatterTest {
         coabVarsFileDto.context.organization_guid="org_guid1";
 
 
-        coabVarsFileDto.parameters.put("slowQuery", "false");
-        coabVarsFileDto.parameters.put("cacheSizeMb", "10");
+        coabVarsFileDto.parameters.put("slowQuery", false);
+        coabVarsFileDto.parameters.put("cacheSizeMb", 10);
+        coabVarsFileDto.parameters.put("apiKey", "A STRING with escaped quotes \" and escaped & references");
 
         //when
         String result = formatAsYml(coabVarsFileDto);

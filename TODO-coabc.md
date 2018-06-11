@@ -14,15 +14,17 @@ Vars files that include OSB input params (org,space,user, as well as arbitrary p
       - DONE: Test cases for optional data
       - DONE: Test case for type conversions: boolean and numbers.
       - Restrict to small char set and reject violations with user facing exception
-         - Set up regexp a-z, A-Z,0-9,-,_,.
-         - Modify UserFacingRuntimeException location so it get visible from core: move to core   
-      - Protect against polymorphism injection of classes through yml serialized data: explicitly disable non primitive classes excepted white listed ones. Try with classes i classpath that include jackson annotations, or plain POJOs with fully qualified names
-         - https://github.com/FasterXML/jackson-databind/issues/1599
-            - https://github.com/FasterXML/jackson-1/pull/5/files
-            - https://raw.githubusercontent.com/mbechler/marshalsec/master/marshalsec.pdf
-                
-      - Protect against YML reference file loading and remote code injection
-      - Protect against credhub and spruce injections.
+         - Set up basic regexp a-z, A-Z,0-9,-,_,.
+            - on individual strings within the POJO to get precise feedback, using bean validator 
+            - DONE: on the whole YML output
+         - DONE: Modify UserFacingRuntimeException location so it get visible from core: move to core   
+          - Protect against polymorphism injection of classes through yml serialized data: explicitly disable non primitive classes excepted white listed ones. Try with classes i classpath that include jackson annotations, or plain POJOs with fully qualified names
+             - https://github.com/FasterXML/jackson-databind/issues/1599
+                - https://github.com/FasterXML/jackson-1/pull/5/files
+                - https://raw.githubusercontent.com/mbechler/marshalsec/master/marshalsec.pdf
+                    
+          - Protect against YML reference file loading and remote code injection
+          - Protect against credhub and spruce injections.
       
    - Leverage spring-cloud-service-broker model classes CreateServiceInstanceRequest: 
       - con: Initial attempt is suboptimal

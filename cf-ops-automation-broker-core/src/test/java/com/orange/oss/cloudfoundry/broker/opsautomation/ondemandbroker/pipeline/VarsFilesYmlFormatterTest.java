@@ -1,11 +1,8 @@
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
-import org.hibernate.validator.constraints.NotEmpty;
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.UserFacingRuntimeException;
 import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
@@ -26,9 +23,43 @@ import static org.springframework.cloud.servicebroker.model.CloudFoundryContext.
 
 public class VarsFilesYmlFormatterTest {
 
+    VarsFilesYmlFormatter formatter = new VarsFilesYmlFormatter();
+
     private static Logger logger = LoggerFactory.getLogger(VarsFilesYmlFormatterTest.class.getName());
 
-    ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
+    @Rule
+    public ExpectedException thrown = ExpectedException.none();
+
+    @Test
+    public void rejects_invalid_patterns() {
+        assertStringRejected("((");
+        assertStringRejected("(( a/string ))");
+        assertStringRejected("))");
+
+
+        assertStringAccepted("a string with spaces");
+        assertStringAccepted("10mb");
+        assertStringAccepted("a deployment model cassandravarsops_aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa0");
+        assertStringAccepted("org_guid1");
+        assertStringAccepted("c_5f89138b-ed9a-4596-a042-a6349b6a1f04 ");
+        assertStringAccepted("cacheSizeMb");
+        assertStringAccepted("10");
+
+    }
+
+    protected void assertStringRejected(String yml) {
+        //noinspection EmptyCatchBlock
+        try {
+            formatter.rejectUnsupportedPatterns(yml);
+            fail("expected " + yml + "to be rejected");
+        } catch (UserFacingRuntimeException e) {
+
+        }
+    }
+
+    protected void assertStringAccepted(String yml) {
+        formatter.rejectUnsupportedPatterns(yml);
+    }
 
 
     @Test
@@ -47,7 +78,7 @@ public class VarsFilesYmlFormatterTest {
         varsMap.put("params", params);
 
 
-        String result = formatAsYml(varsMap);
+        String result = formatter.formatAsYml(varsMap);
         logger.info("vars.yml serialized yml content:\n{}", result);
         assertThat(result).isEqualTo(
                 "---\n" +
@@ -61,26 +92,6 @@ public class VarsFilesYmlFormatterTest {
                         "  slowQuery: \"false\"\n");
     }
 
-    @Rule
-    public ExpectedException thrown = ExpectedException.none();
-
-
-    @Test
-    @Ignore("Test is not yet ready")
-    public void rejects_credhub_interpolations() {
-        //then
-        //Then
-        //thrown.expect(UserFacingRuntimeException.class);
-        thrown.expectMessage(DeploymentConstants.ROOT_DEPLOYMENT_EXCEPTION);
-
-
-        //Given
-        CoabVarsFileDto coabVarsFileDto = aTypicalUserRequest();
-
-
-        coabVarsFileDto.parameters.put("slowQuery", "(( a/sensitive/credhub/reference))");
-
-    }
 
     protected CoabVarsFileDto aTypicalUserRequest() {
         CoabVarsFileDto coabVarsFileDto = new CoabVarsFileDto();
@@ -92,78 +103,6 @@ public class VarsFilesYmlFormatterTest {
         coabVarsFileDto.context.space_guid = "space_guid1";
         coabVarsFileDto.context.organization_guid = "org_guid1";
         return coabVarsFileDto;
-    }
-
-    protected String formatAsYml(Object o) throws JsonProcessingException {
-        return mapper.writeValueAsString(o);
-    }
-
-    public static class CoabVarsFileDto {
-        /**
-         * Bosh deployment name to assign in the manifest by operators file
-         */
-        @JsonProperty("deployment_name")
-        public String deployment_name;
-
-        /**
-         * ID of a service from the catalog for this Service Broker from
-         * OSB https://github.com/openservicebrokerapi/servicebroker/blob/master/spec.md#body-2
-         */
-        @JsonProperty("service_id")
-        public String service_id;
-        /**
-         * ID of a plan from the service that has been requested from
-         * OSB https://github.com/openservicebrokerapi/servicebroker/blob/master/spec.md#body-2
-         */
-        @JsonProperty("plan_id")
-        public String plan_id;
-
-        /**
-         * Platform specific contextual information under which the Service Instance is to be provisioned, from
-         * OSB https://github.com/openservicebrokerapi/servicebroker/blob/master/spec.md#body-2
-         */
-        @JsonProperty("context")
-        public final CloudFoundryOsbContext context = new CloudFoundryOsbContext();
-
-        /**
-         * Configuration parameters for the Service Instance, from
-         * OSB https://github.com/openservicebrokerapi/servicebroker/blob/master/spec.md#body-2
-         */
-        @JsonProperty("parameters")
-        @JsonInclude(JsonInclude.Include.NON_NULL) //include even if empty
-        public final HashMap<String, Object> parameters = new HashMap<>();
-
-        /**
-         * For update requests,Information about the Service Instance prior to the updatefrom
-         * OSB https://github.com/openservicebrokerapi/servicebroker/blob/master/spec.md#body-2
-         */
-        @JsonInclude(JsonInclude.Include.NON_NULL)
-        @JsonProperty("previous_values")
-        public PreviousValues previous_values;
-
-        public static class CloudFoundryOsbContext {
-            @JsonProperty("platform")
-            public String platform = "cloudfoundry";
-            @JsonInclude(JsonInclude.Include.NON_EMPTY)
-            @JsonProperty("user_guid")
-            public String user_guid;
-            @JsonInclude(JsonInclude.Include.NON_EMPTY)
-            @JsonProperty("space_guid")
-            public String space_guid;
-            @JsonInclude(JsonInclude.Include.NON_EMPTY)
-            @JsonProperty("organization_guid")
-            public String organization_guid;
-        }
-
-        public static class PreviousValues {
-            /**
-             * The ID of the plan prior to the update, from OSB
-             * https://github.com/openservicebrokerapi/servicebroker/blob/master/spec.md#previous-values-object
-             */
-            @NotEmpty
-            @JsonProperty("plan_id")
-            public String plan_id;
-        }
     }
 
 
@@ -185,7 +124,7 @@ public class VarsFilesYmlFormatterTest {
         coabVarsFileDto.parameters.put("apiKey", "A STRING with escaped quotes \" and escaped & references");
 
         //when
-        String result = formatAsYml(coabVarsFileDto);
+        String result = formatter.formatAsYml(coabVarsFileDto);
         logger.info("vars.yml serialized yml content:\n{}", result);
 
         //then
@@ -210,8 +149,8 @@ public class VarsFilesYmlFormatterTest {
         //        assertThat(reflectionEquals(coabVarsFileDto, deserialized)).isTrue();
     }
 
-    private Object parseFromYml(String result, Class expectedClass) throws IOException {
-        Object deserialized = mapper.readValue(result, expectedClass);
+    protected Object parseFromYml(String result, Class expectedClass) throws IOException {
+        Object deserialized = formatter.getMapper().readValue(result, expectedClass);
         assertThat(deserialized).isNotNull();
         return deserialized;
 
@@ -270,7 +209,7 @@ public class VarsFilesYmlFormatterTest {
         coabVarsFileDto.plan_id = "plan_guid";
 
         //when
-        String result = formatAsYml(coabVarsFileDto);
+        String result = formatter.formatAsYml(coabVarsFileDto);
         logger.info("vars.yml serialized yml content:\n{}", result);
 
         //then
@@ -303,7 +242,7 @@ public class VarsFilesYmlFormatterTest {
         coabVarsFileDto.parameters.put("cacheSizeMb", "10");
 
         //When
-        String result = formatAsYml(coabVarsFileDto);
+        String result = formatter.formatAsYml(coabVarsFileDto);
         logger.info("vars.yml serialized yml content:\n{}", result);
 
         //then
@@ -357,7 +296,7 @@ public class VarsFilesYmlFormatterTest {
     @Test
     public void spring_cloud_broker_dtos_outputs_expected_yml() throws JsonProcessingException {
 
-        String result = formatAsYml(aCreateServiceInstanceRequest());
+        String result = formatter.formatAsYml(aCreateServiceInstanceRequest());
         assertThat(result).isEqualTo("---\n" +
                 "asyncAccepted: false\n" +
                 "parameters: {}\n" +

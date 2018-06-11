@@ -6,22 +6,29 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import org.hibernate.validator.constraints.NotEmpty;
+import org.junit.Ignore;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cloud.servicebroker.model.CreateServiceInstanceRequest;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
 import static com.orange.oss.ondemandbroker.ProcessorChainServiceInstanceService.OSB_PROFILE_ORGANIZATION_GUID;
 import static com.orange.oss.ondemandbroker.ProcessorChainServiceInstanceService.OSB_PROFILE_SPACE_GUID;
 import static org.fest.assertions.Assertions.assertThat;
+import static org.fest.assertions.Fail.fail;
 import static org.springframework.cloud.servicebroker.model.CloudFoundryContext.CLOUD_FOUNDRY_PLATFORM;
 
 public class VarsFilesYmlFormatterTest {
 
-    private static Logger logger= LoggerFactory.getLogger(VarsFilesYmlFormatterTest.class.getName());
+    private static Logger logger = LoggerFactory.getLogger(VarsFilesYmlFormatterTest.class.getName());
+
+    ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
 
 
     @Test
@@ -54,8 +61,40 @@ public class VarsFilesYmlFormatterTest {
                         "  slowQuery: \"false\"\n");
     }
 
+    @Rule
+    public ExpectedException thrown = ExpectedException.none();
+
+
+    @Test
+    @Ignore("Test is not yet ready")
+    public void rejects_credhub_interpolations() {
+        //then
+        //Then
+        //thrown.expect(UserFacingRuntimeException.class);
+        thrown.expectMessage(DeploymentConstants.ROOT_DEPLOYMENT_EXCEPTION);
+
+
+        //Given
+        CoabVarsFileDto coabVarsFileDto = aTypicalUserRequest();
+
+
+        coabVarsFileDto.parameters.put("slowQuery", "(( a/sensitive/credhub/reference))");
+
+    }
+
+    protected CoabVarsFileDto aTypicalUserRequest() {
+        CoabVarsFileDto coabVarsFileDto = new CoabVarsFileDto();
+        coabVarsFileDto.deployment_name = "cassandravarsops_aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa0";
+        coabVarsFileDto.service_id = "service_definition_id";
+        coabVarsFileDto.plan_id = "plan_guid";
+
+        coabVarsFileDto.context.user_guid = "user_guid1";
+        coabVarsFileDto.context.space_guid = "space_guid1";
+        coabVarsFileDto.context.organization_guid = "org_guid1";
+        return coabVarsFileDto;
+    }
+
     protected String formatAsYml(Object o) throws JsonProcessingException {
-        ObjectMapper mapper=new ObjectMapper(new YAMLFactory());
         return mapper.writeValueAsString(o);
     }
 
@@ -73,7 +112,7 @@ public class VarsFilesYmlFormatterTest {
         @JsonProperty("service_id")
         public String service_id;
         /**
-         *  ID of a plan from the service that has been requested from
+         * ID of a plan from the service that has been requested from
          * OSB https://github.com/openservicebrokerapi/servicebroker/blob/master/spec.md#body-2
          */
         @JsonProperty("plan_id")
@@ -129,16 +168,16 @@ public class VarsFilesYmlFormatterTest {
 
 
     @Test
-    public void create_dto_outputs_expected_vars_files() throws JsonProcessingException {
+    public void create_dto_outputs_expected_vars_files() throws IOException {
         //Given
         CoabVarsFileDto coabVarsFileDto = new CoabVarsFileDto();
-        coabVarsFileDto.deployment_name= "cassandravarsops_aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa0";
-        coabVarsFileDto.service_id= "service_definition_id";
-        coabVarsFileDto.plan_id= "plan_guid";
+        coabVarsFileDto.deployment_name = "cassandravarsops_aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa0";
+        coabVarsFileDto.service_id = "service_definition_id";
+        coabVarsFileDto.plan_id = "plan_guid";
 
-        coabVarsFileDto.context.user_guid="user_guid1";
-        coabVarsFileDto.context.space_guid="space_guid1";
-        coabVarsFileDto.context.organization_guid="org_guid1";
+        coabVarsFileDto.context.user_guid = "user_guid1";
+        coabVarsFileDto.context.space_guid = "space_guid1";
+        coabVarsFileDto.context.organization_guid = "org_guid1";
 
 
         coabVarsFileDto.parameters.put("slowQuery", false);
@@ -164,15 +203,71 @@ public class VarsFilesYmlFormatterTest {
                         "  apiKey: \"A STRING with escaped quotes \\\" and escaped & references\"\n" +
                         "  cacheSizeMb: 10\n" +
                         "  slowQuery: false\n");
+
+        //and potentially in the future parse back from yml, e.g. for OSB get endpoints
+        Object deserialized = parseFromYml(result, coabVarsFileDto.getClass());
+        //potentially check that both are identitical (need to debug reflection equals)
+        //        assertThat(reflectionEquals(coabVarsFileDto, deserialized)).isTrue();
+    }
+
+    private Object parseFromYml(String result, Class expectedClass) throws IOException {
+        Object deserialized = mapper.readValue(result, expectedClass);
+        assertThat(deserialized).isNotNull();
+        return deserialized;
+
+    }
+
+    static class VulnerableBean {
+        public int id;
+        public Object obj;
+    }
+
+    /**
+     * Exploration of malicous injection of untrusted code from JSON/YML param injection
+     */
+    @Test
+    @Ignore
+    public void reading_malicious_handcrafted_json_should_reject_unknown_classes() throws IOException {
+
+        //given a malicious yml provided by users are unfiltered plain text arbitrary params of their service instance
+        final String JSON = (
+                "{'id': 124,\n"
+                        + " 'obj':[ 'com.sun.org.apache.xalan.internal.xsltc.trax.TemplatesImpl',\n"
+                        + "  {\n"
+                        + "    'transletBytecodes' : [ 'AAIAZQ==' ],\n"
+                        + "    'transletName' : 'a.b',\n"
+                        + "    'outputProperties' : { }\n"
+                        + "  }\n"
+                        + " ]\n"
+                        + "}").replace('\'', '"');
+
+
+        //when loading them by accident. Usual steps are:
+        // 1.get the expected plain string (e.g nbCacheBytesMB)
+        // 2.assign the string into the CoabVarsFileDto class as String
+        // 3.serialize the string as YML and pass it into COAB vars file.
+        // 4. vars file get interpolated potentially by credhub syntax, bosh, and possibly spruce templating.
+        //
+        // 5. eventually YML get loaded back from COAB into YML:
+        //    - for fetching service instance values
+        //    - for providing update last values
+
+        ObjectMapper vulnerableJsonMapper = new ObjectMapper();
+        //vulnerableJsonMapper.enableDefaultTyping();
+        VulnerableBean vulnerableBean = vulnerableJsonMapper.readValue(JSON, VulnerableBean.class);
+
+        //then
+        //noinspection ThrowableNotThrown
+        fail("Malicious class loaded from untrusted JSon! Details:" + vulnerableBean.obj.toString());
     }
 
     @Test
     public void create_dto_outputs_expected_vars_files_without_context_nor_params() throws JsonProcessingException {
         //Given
         CoabVarsFileDto coabVarsFileDto = new CoabVarsFileDto();
-        coabVarsFileDto.deployment_name= "cassandravarsops_aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa0";
-        coabVarsFileDto.service_id= "service_definition_id";
-        coabVarsFileDto.plan_id= "plan_guid";
+        coabVarsFileDto.deployment_name = "cassandravarsops_aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa0";
+        coabVarsFileDto.service_id = "service_definition_id";
+        coabVarsFileDto.plan_id = "plan_guid";
 
         //when
         String result = formatAsYml(coabVarsFileDto);
@@ -193,16 +288,16 @@ public class VarsFilesYmlFormatterTest {
     public void update_dto_outputs_expected_vars_files() throws JsonProcessingException {
         //given
         CoabVarsFileDto coabVarsFileDto = new CoabVarsFileDto();
-        coabVarsFileDto.deployment_name= "cassandravarsops_aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa0";
-        coabVarsFileDto.service_id= "service_definition_id";
-        coabVarsFileDto.plan_id= "plan_guid";
+        coabVarsFileDto.deployment_name = "cassandravarsops_aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa0";
+        coabVarsFileDto.service_id = "service_definition_id";
+        coabVarsFileDto.plan_id = "plan_guid";
 
-        coabVarsFileDto.context.user_guid="user_guid1";
-        coabVarsFileDto.context.space_guid="space_guid1";
-        coabVarsFileDto.context.organization_guid="org_guid1";
+        coabVarsFileDto.context.user_guid = "user_guid1";
+        coabVarsFileDto.context.space_guid = "space_guid1";
+        coabVarsFileDto.context.organization_guid = "org_guid1";
 
         coabVarsFileDto.previous_values = new CoabVarsFileDto.PreviousValues();
-        coabVarsFileDto.previous_values.plan_id= "previous_plan_guid";
+        coabVarsFileDto.previous_values.plan_id = "previous_plan_guid";
 
         coabVarsFileDto.parameters.put("slowQuery", "false");
         coabVarsFileDto.parameters.put("cacheSizeMb", "10");
@@ -257,7 +352,6 @@ public class VarsFilesYmlFormatterTest {
                 contextProperties
         );
     }
-
 
 
     @Test

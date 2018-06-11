@@ -1,6 +1,6 @@
 package com.orange.oss.ondemandbroker;
 
-import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.UserFacingRuntimeException;
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.UserFacingRuntimeException;
 import org.springframework.cloud.servicebroker.exception.ServiceInstanceDoesNotExistException;
 
 class ProcessorChainServiceHelper {

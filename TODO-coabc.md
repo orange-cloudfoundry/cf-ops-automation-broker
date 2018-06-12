@@ -16,7 +16,8 @@ Vars files that include OSB input params (org,space,user, as well as arbitrary p
       - Restrict to small char set and reject violations with user facing exception
          - Set up basic regexp a-z, A-Z,0-9,-,_,.
             - on individual strings within the POJO to get precise feedback, using bean validator 
-            - DONE: on the whole YML output
+            - DONE: on the whole YML output. 
+                - but this requires accepting YML chars => not a good idea
          - DONE: Modify UserFacingRuntimeException location so it get visible from core: move to core   
           - Protect against polymorphism injection of classes through yml serialized data: explicitly disable non primitive classes excepted white listed ones. Try with classes i classpath that include jackson annotations, or plain POJOs with fully qualified names
              - https://github.com/FasterXML/jackson-databind/issues/1599

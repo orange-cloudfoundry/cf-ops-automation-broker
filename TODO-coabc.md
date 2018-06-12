@@ -62,8 +62,8 @@ space_guid: "space_id"
       - con: fragile to directly use these models as the library is going through upcoming refactoring that would change our code
    - use untyped structure
    
-- Create DTO from OSB classes
-   - **In BoshProcessor**, sharing commit message logic to extract OSB field + test case methods
+- DONE: Create DTO from OSB classes
+   - DONE: **In BoshProcessor**, sharing commit message logic to extract OSB field + test case methods
       - Pass in the modelDeploymentShortAlias  
       - Set the deploymentName to this.modelDeploymentShortAlias + DeploymentConstants.UNDERSCORE + serviceInstanceId
    - In dedicated builder

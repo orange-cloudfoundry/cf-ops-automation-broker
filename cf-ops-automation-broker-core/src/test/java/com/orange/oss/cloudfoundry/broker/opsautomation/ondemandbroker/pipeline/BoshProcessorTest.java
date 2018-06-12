@@ -55,7 +55,7 @@ public class BoshProcessorTest {
         @SuppressWarnings("unchecked")
         PipelineCompletionTracker tracker = aCompletionTracker();
 
-        BoshProcessor boshProcessor = new BoshProcessor(TEMPLATES_REPOSITORY_ALIAS_NAME, SECRETS_REPOSITORY_ALIAS_NAME, templatesGenerator, secretsGenerator, tracker, "Cassandra");
+        BoshProcessor boshProcessor = new BoshProcessor(TEMPLATES_REPOSITORY_ALIAS_NAME, SECRETS_REPOSITORY_ALIAS_NAME, templatesGenerator, secretsGenerator, tracker, "Cassandra", "c_");
 
         //When
         boshProcessor.preCreate(context);
@@ -85,8 +85,13 @@ public class BoshProcessorTest {
 
     @Test
     public void constructs_a_dto_from_a_provisionning_request() {
-        //Given a basic processor
-        BoshProcessor boshProcessor = aBasicBoshProcessor();
+        //Given mocked dependencies
+        TemplatesGenerator templatesGenerator = mock(TemplatesGenerator.class);
+        SecretsGenerator secretsGenerator = mock(SecretsGenerator.class);
+        PipelineCompletionTracker tracker = aCompletionTracker();
+
+        //Given a basic processor with deployment model
+        BoshProcessor boshProcessor = new BoshProcessor(TEMPLATES_REPOSITORY_ALIAS_NAME, SECRETS_REPOSITORY_ALIAS_NAME, templatesGenerator, secretsGenerator, tracker, "Cassandra", "c");
 
 
         //Given a creation request with both deprecated and new OSB syntax
@@ -121,7 +126,7 @@ public class BoshProcessorTest {
         assertThat(coabVarsFileDto.instance_id).isEqualTo("service-instance-id1");
         assertThat(coabVarsFileDto.plan_id).isEqualTo("plan_id1");
         assertThat(coabVarsFileDto.service_id).isEqualTo("service_definition_id1");
-//        assertThat(coabVarsFileDto.deployment_name).isEqualTo("c_" + "service-instance-id1");
+        assertThat(coabVarsFileDto.deployment_name).isEqualTo("c" + "_" + "service-instance-id1");
         assertThat(coabVarsFileDto.context.organization_guid).isEqualTo("org_id1");
         assertThat(coabVarsFileDto.context.space_guid).isEqualTo("space_id1");
         assertThat(coabVarsFileDto.context.user_guid).isEqualTo("user_guid1");
@@ -189,7 +194,7 @@ public class BoshProcessorTest {
         SecretsGenerator secretsGenerator = mock(SecretsGenerator.class);
         PipelineCompletionTracker tracker = aCompletionTracker();
 
-        return new BoshProcessor(TEMPLATES_REPOSITORY_ALIAS_NAME, SECRETS_REPOSITORY_ALIAS_NAME, templatesGenerator, secretsGenerator, tracker, "Cassandra");
+        return new BoshProcessor(TEMPLATES_REPOSITORY_ALIAS_NAME, SECRETS_REPOSITORY_ALIAS_NAME, templatesGenerator, secretsGenerator, tracker, "Cassandra", "c");
     }
 
     @Test
@@ -237,7 +242,7 @@ public class BoshProcessorTest {
 
 
         //When
-        BoshProcessor boshProcessor = new BoshProcessor(TEMPLATES_REPOSITORY_ALIAS_NAME, SECRETS_REPOSITORY_ALIAS_NAME, null, null, tracker, "Cassandra");
+        BoshProcessor boshProcessor = new BoshProcessor(TEMPLATES_REPOSITORY_ALIAS_NAME, SECRETS_REPOSITORY_ALIAS_NAME, null, null, tracker, "Cassandra", "c");
         boshProcessor.preGetLastOperation(context);
 
         //Then mapped response from tracker is returned
@@ -262,7 +267,7 @@ public class BoshProcessorTest {
 
 
         //When
-        BoshProcessor boshProcessor = new BoshProcessor(TEMPLATES_REPOSITORY_ALIAS_NAME, SECRETS_REPOSITORY_ALIAS_NAME, null, null, tracker, "Cassandra");
+        BoshProcessor boshProcessor = new BoshProcessor(TEMPLATES_REPOSITORY_ALIAS_NAME, SECRETS_REPOSITORY_ALIAS_NAME, null, null, tracker, "Cassandra", "c");
         boshProcessor.preBind(context);
 
         //Then
@@ -287,7 +292,7 @@ public class BoshProcessorTest {
         doNothing().when(tracker).delegateUnbindRequest(any(Path.class), any(DeleteServiceInstanceBindingRequest.class));
 
         //When
-        BoshProcessor boshProcessor = new BoshProcessor(TEMPLATES_REPOSITORY_ALIAS_NAME, SECRETS_REPOSITORY_ALIAS_NAME, null, null, tracker, "Cassandra");
+        BoshProcessor boshProcessor = new BoshProcessor(TEMPLATES_REPOSITORY_ALIAS_NAME, SECRETS_REPOSITORY_ALIAS_NAME, null, null, tracker, "Cassandra", "c");
         boshProcessor.preUnBind(context);
 
         //Then
@@ -317,7 +322,7 @@ public class BoshProcessorTest {
         when(tracker.getDeploymentExecStatus(any(Path.class), eq(SERVICE_INSTANCE_ID), eq(DeploymentConstants.OSB_OPERATION_CREATE), any(GetLastServiceOperationRequest.class))).thenReturn(expectedResponse);
 
         //When
-        BoshProcessor boshProcessor = new BoshProcessor(TEMPLATES_REPOSITORY_ALIAS_NAME, SECRETS_REPOSITORY_ALIAS_NAME, null, null, tracker, "Cassandra");
+        BoshProcessor boshProcessor = new BoshProcessor(TEMPLATES_REPOSITORY_ALIAS_NAME, SECRETS_REPOSITORY_ALIAS_NAME, null, null, tracker, "Cassandra", "c");
         boshProcessor.preGetLastOperation(context);
 
         //Then mapped response from tracker is returned
@@ -349,7 +354,7 @@ public class BoshProcessorTest {
 
 
         //When
-        BoshProcessor boshProcessor = new BoshProcessor(TEMPLATES_REPOSITORY_ALIAS_NAME, SECRETS_REPOSITORY_ALIAS_NAME, null, secretsGenerator, tracker, "Cassandra");
+        BoshProcessor boshProcessor = new BoshProcessor(TEMPLATES_REPOSITORY_ALIAS_NAME, SECRETS_REPOSITORY_ALIAS_NAME, null, secretsGenerator, tracker, "Cassandra", "c");
         boshProcessor.preDelete(context);
 
         //Then verify parameters and delegation on calls

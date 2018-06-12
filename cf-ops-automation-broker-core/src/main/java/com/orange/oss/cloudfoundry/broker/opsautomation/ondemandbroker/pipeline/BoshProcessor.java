@@ -18,6 +18,7 @@ public class BoshProcessor extends DefaultBrokerProcessor {
 
 	private static Logger logger = LoggerFactory.getLogger(BoshProcessor.class.getName());
 	private final String brokerDisplayName;
+	private String modelDeploymentShortAlias;
 
 	private String templatesRepositoryAliasName;
 	private String secretsRepositoryAliasName;
@@ -25,13 +26,14 @@ public class BoshProcessor extends DefaultBrokerProcessor {
 	private TemplatesGenerator templatesGenerator;
 	private SecretsGenerator secretsGenerator;
 
-	public BoshProcessor(String templatesRepositoryAliasName, String secretsRepositoryAliasName, TemplatesGenerator templatesGenerator, SecretsGenerator secretsGenerator, PipelineCompletionTracker tracker, String brokerDisplayName) {
+	public BoshProcessor(String templatesRepositoryAliasName, String secretsRepositoryAliasName, TemplatesGenerator templatesGenerator, SecretsGenerator secretsGenerator, PipelineCompletionTracker tracker, String brokerDisplayName, String modelDeploymentShortAlias) {
         this.templatesRepositoryAliasName = templatesRepositoryAliasName;
         this.secretsRepositoryAliasName = secretsRepositoryAliasName;
         this.templatesGenerator = templatesGenerator;
 		this.secretsGenerator = secretsGenerator;
 		this.tracker = tracker;
 		this.brokerDisplayName = brokerDisplayName;
+		this.modelDeploymentShortAlias = modelDeploymentShortAlias;
 	}
 
 	@Override
@@ -149,7 +151,8 @@ public class BoshProcessor extends DefaultBrokerProcessor {
 		if ((context != null) && OsbConstants.ORIGINATING_CLOUDFOUNDRY_PLATFORM.equals(context.getPlatform())) {
 			spaceGuid = (String) context.getProperty(OSB_PROFILE_SPACE_GUID);
 		}
-		spaceGuid = (spaceGuid == null) ? request.getSpaceGuid() : spaceGuid;
+        //noinspection deprecation
+        spaceGuid = (spaceGuid == null) ? request.getSpaceGuid() : spaceGuid;
 		return spaceGuid;
 	}
 
@@ -159,7 +162,8 @@ public class BoshProcessor extends DefaultBrokerProcessor {
 		if ((context != null) && OsbConstants.ORIGINATING_CLOUDFOUNDRY_PLATFORM.equals(context.getPlatform())) {
 			organizationGuid = (String) context.getProperty(OSB_PROFILE_ORGANIZATION_GUID);
 		}
-		organizationGuid = (organizationGuid == null) ? request.getOrganizationGuid() : organizationGuid;
+        //noinspection deprecation
+        organizationGuid = (organizationGuid == null) ? request.getOrganizationGuid() : organizationGuid;
 		return organizationGuid;
 	}
 
@@ -205,7 +209,7 @@ public class BoshProcessor extends DefaultBrokerProcessor {
 		String spaceGuid = extractCfSpaceGuid(request);
 
 		CoabVarsFileDto coabVarsFileDto = new CoabVarsFileDto();
-		coabVarsFileDto.deployment_name = "cassandravarsops_"+ request.getServiceInstanceId();
+		coabVarsFileDto.deployment_name = modelDeploymentShortAlias+ "_" + request.getServiceInstanceId();
 		coabVarsFileDto.instance_id = request.getServiceInstanceId();
 		coabVarsFileDto.service_id = request.getServiceDefinitionId();
 		coabVarsFileDto.plan_id = request.getPlanId();

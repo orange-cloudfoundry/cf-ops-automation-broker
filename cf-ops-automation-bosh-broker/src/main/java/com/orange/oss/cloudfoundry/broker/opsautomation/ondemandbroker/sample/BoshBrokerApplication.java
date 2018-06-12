@@ -87,9 +87,7 @@ public class BoshBrokerApplication {
     }
 
     @Bean
-    public TemplatesGenerator templatesGenerator(
-            DeploymentProperties deploymentProperties
-    ) {
+    public TemplatesGenerator templatesGenerator(DeploymentProperties deploymentProperties) {
         return new TemplatesGenerator(
                 deploymentProperties.getRootDeployment(),
                 deploymentProperties.getModelDeployment(),
@@ -112,7 +110,8 @@ public class BoshBrokerApplication {
                 templatesGenerator,
                 secretsGenerator,
                 pipelineCompletionTracker,
-                deploymentProperties.getBrokerDisplayName());
+                deploymentProperties.getBrokerDisplayName(),
+                deploymentProperties.getModelDeploymentShortAlias());
     }
 
     @Bean

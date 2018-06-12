@@ -25,7 +25,17 @@ public class CoabVarsFileDto {
      */
     @JsonProperty("deployment_name")
     @Pattern(regexp = WHITE_LISTED_PATTERN, message = WHITE_LISTED_MESSAGE)
+    @NotEmpty
     public String deployment_name;
+
+    /**
+     * :instance_id MUST be a globally unique non-empty string. This ID will be used for future requests (bind and deprovision), so the Service Broker will use it to correlate the resource it creates.
+     * OSB https://github.com/openservicebrokerapi/servicebroker/blob/master/spec.md#route-2
+     */
+    @JsonProperty("instance_id")
+    @Pattern(regexp = WHITE_LISTED_PATTERN, message = WHITE_LISTED_MESSAGE)
+    @NotEmpty
+    public String instance_id;
 
     /**
      * ID of a service from the catalog for this Service Broker from
@@ -33,13 +43,16 @@ public class CoabVarsFileDto {
      */
     @JsonProperty("service_id")
     @Pattern(regexp = WHITE_LISTED_PATTERN, message = WHITE_LISTED_MESSAGE)
+    @NotEmpty
     public String service_id;
+
     /**
      * ID of a plan from the service that has been requested from
      * OSB https://github.com/openservicebrokerapi/servicebroker/blob/master/spec.md#body-2
      */
     @JsonProperty("plan_id")
     @Pattern(regexp = WHITE_LISTED_PATTERN, message = WHITE_LISTED_MESSAGE)
+    @NotEmpty
     public String plan_id;
 
     /**

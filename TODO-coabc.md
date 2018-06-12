@@ -13,7 +13,7 @@ Vars files that include OSB input params (org,space,user, as well as arbitrary p
    - **Create dedicated DTO to control format**
       - DONE: Test cases for optional data
       - DONE: Test case for type conversions: boolean and numbers.
-      - Restrict to small char set and reject violations with user facing exception
+      - DONE: Restrict to small char set and reject violations with user facing exception
          - Set up basic regexp a-z, A-Z,0-9,-,_,.
             - on individual strings within the POJO to get precise feedback, using bean validator 
                - using javax bean validation 2.0
@@ -61,7 +61,10 @@ space_guid: "space_id"
 ```
       - con: fragile to directly use these models as the library is going through upcoming refactoring that would change our code
    - use untyped structure
-- Create DTO builder from OSB classes
+   
+- Create DTO from OSB classes
+   - In BoshProcessor, sharing commit message logic to extract OSB field + test case methods
+   - In dedicated builder
 - Modify SecretsGenerator#generate(Path workDir, String serviceInstanceId) to accept DTO as argument instead of serviceInstanceId
    - Modify SecretsGenerator to use ObjectMapper + clean up previous vars support.
    - update BoshProcessor to use DTO Builder

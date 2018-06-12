@@ -68,7 +68,7 @@ public class TemplatesGenerator extends StructureGeneratorImpl{
 
     }
 
-    private void checkThatTemplateDirectoryExists(Path workDir){
+    protected void checkThatTemplateDirectoryExists(Path workDir){
         Path templateDir = StructureGeneratorHelper.generatePath(workDir,
                 this.rootDeployment,
                 this.modelDeployment,
@@ -78,7 +78,7 @@ public class TemplatesGenerator extends StructureGeneratorImpl{
         }
     }
 
-    private void checkThatOperatorsDirectoryExists(Path workDir){
+    protected void checkThatOperatorsDirectoryExists(Path workDir){
         Path operatorsDir = StructureGeneratorHelper.generatePath(workDir,
                 this.rootDeployment,
                 this.modelDeployment,
@@ -88,7 +88,7 @@ public class TemplatesGenerator extends StructureGeneratorImpl{
         }
     }
 
-    private void checkThatModelManifestFileExists(Path workDir){
+    protected void checkThatModelManifestFileExists(Path workDir){
         Path modelManifestFile = StructureGeneratorHelper.generatePath(workDir,
                 this.rootDeployment,
                 this.modelDeployment,
@@ -99,7 +99,7 @@ public class TemplatesGenerator extends StructureGeneratorImpl{
         }
     }
 
-    private void checkThatModelVarsFileExists(Path workDir){
+    protected void checkThatModelVarsFileExists(Path workDir){
         Path modelVarsFile = StructureGeneratorHelper.generatePath(workDir,
                 this.rootDeployment,
                 this.modelDeployment,
@@ -110,7 +110,7 @@ public class TemplatesGenerator extends StructureGeneratorImpl{
         }
     }
 
-    private void checkThatModelCoabOperatorsFileExists(Path workDir){
+    protected void checkThatModelCoabOperatorsFileExists(Path workDir){
         Path modelOperatorsFile = StructureGeneratorHelper.generatePath(workDir,
                 this.rootDeployment,
                 this.modelDeployment,

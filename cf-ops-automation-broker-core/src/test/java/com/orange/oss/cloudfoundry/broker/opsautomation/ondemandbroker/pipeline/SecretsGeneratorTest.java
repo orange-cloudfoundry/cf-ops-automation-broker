@@ -61,80 +61,75 @@ public class SecretsGeneratorTest {
 
     @Test
     public void raise_exception_if_root_deployment_is_missing(){
-            //Then
-            thrown.expect(DeploymentException.class);
-            thrown.expectMessage(DeploymentConstants.ROOT_DEPLOYMENT_EXCEPTION);
-            //Given initialized by setUp method
-            //When
-            this.secretsGenerator.checkPrerequisites(this.workDir);
-    }
+        //Then
+        thrown.expect(DeploymentException.class);
+        thrown.expectMessage(DeploymentConstants.ROOT_DEPLOYMENT_EXCEPTION);
+
+        //Given initialized by setUp method
+
+        //When
+        this.secretsGenerator.checkPrerequisites(this.workDir);
+    }//superclass TU
 
     @Test
     public void raise_exception_if_model_deployment_directory_is_missing(){
-        try {
-            //Then
-            thrown.expect(DeploymentException.class);
-            thrown.expectMessage(DeploymentConstants.MODEL_DEPLOYMENT_EXCEPTION);
-            //Given (a part is initialized by setUp method)
-            Path rootDeploymentDir = StructureGeneratorHelper.generatePath(this.workDir, this.deploymentProperties.getRootDeployment());
-            Files.createDirectory(rootDeploymentDir);
-            //When
-            this.secretsGenerator.checkPrerequisites(this.workDir);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
+        //Then
+        thrown.expect(DeploymentException.class);
+        thrown.expectMessage(DeploymentConstants.MODEL_DEPLOYMENT_EXCEPTION);
+
+        //Given (a part is initialized by setUp method)
+        Structure modelStructure = new Structure.StructureBuilder(this.workDir)
+                .withDirectoryHierarchy(this.deploymentProperties.getRootDeployment())
+                .build();
+
+        //When
+        this.secretsGenerator.checkPrerequisites(this.workDir);
+    }//superclass TU
 
     @Test
     public void raise_exception_if_secrets_directory_is_missing(){
-        try {
-            //Then
-            thrown.expect(DeploymentException.class);
-            thrown.expectMessage(DeploymentConstants.SECRETS_EXCEPTION);
-            //Given (a part is initialized by setUp method)
-            Path modelDeploymentDir = StructureGeneratorHelper.generatePath(this.workDir, this.deploymentProperties.getRootDeployment(), this.deploymentProperties.getModelDeployment());
-            Files.createDirectories(modelDeploymentDir);
-            //When
-            this.secretsGenerator.checkPrerequisites(this.workDir);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        //Then
+        thrown.expect(DeploymentException.class);
+        thrown.expectMessage(DeploymentConstants.SECRETS_EXCEPTION);
+
+        //When
+        this.secretsGenerator.checkThatSecretsDirectoryExists(this.workDir);
     }
 
     @Test
     public void raise_exception_if_model_meta_file_is_missing() {
-        try {
-            //Then
-            thrown.expect(DeploymentException.class);
-            thrown.expectMessage(DeploymentConstants.META_FILE_EXCEPTION);
-            //Given (a part is initialized by setUp method) : root deployment, model and secrets directory
-            Path modelSecretsDir = StructureGeneratorHelper.generatePath(this.workDir, this.deploymentProperties.getRootDeployment(), this.deploymentProperties.getModelDeployment(), this.deploymentProperties.getSecrets());
-            Files.createDirectories(modelSecretsDir);
-            //When
-            this.secretsGenerator.checkPrerequisites(this.workDir);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        //Then
+        thrown.expect(DeploymentException.class);
+        thrown.expectMessage(DeploymentConstants.META_FILE_EXCEPTION);
+
+        //When
+        this.secretsGenerator.checkThatMetaFileExists(this.workDir);
     }
 
     @Test
     public void raise_exception_if_model_secrets_file_is_missing() {
-        try {
-            //Then
-            thrown.expect(DeploymentException.class);
-            thrown.expectMessage(DeploymentConstants.SECRETS_FILE_EXCEPTION);
-            //Given (a part is initialized by setUp method) : root deployment, model, secrets directory and meta file
-            Path modelSecretsDir = StructureGeneratorHelper.generatePath(this.workDir, this.deploymentProperties.getRootDeployment(), this.deploymentProperties.getModelDeployment(), deploymentProperties.getSecrets());
-            Files.createDirectories(modelSecretsDir);
-            Path modelMetaFile = StructureGeneratorHelper.generatePath(modelSecretsDir, this.deploymentProperties.getMeta() + DeploymentConstants.YML_EXTENSION);
-            Files.createFile(modelMetaFile);
-            //When
-            this.secretsGenerator.checkPrerequisites(this.workDir);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        //Then
+        thrown.expect(DeploymentException.class);
+        thrown.expectMessage(DeploymentConstants.SECRETS_FILE_EXCEPTION);
+
+        //When
+        this.secretsGenerator.checkThatSecretsFileExists(this.workDir);
     }
 
+    @Test
+    public void check_that_all_prerequisites_are_satisfied() {
+        //Given a model structure that meets all prerequisites
+        Structure modelStructure = new Structure.StructureBuilder(this.workDir)
+                .withDirectoryHierarchy(this.deploymentProperties.getRootDeployment(), this.deploymentProperties.getModelDeployment(), this.deploymentProperties.getSecrets())
+                .withFile(new String[]{this.deploymentProperties.getRootDeployment(), this.deploymentProperties.getModelDeployment(), this.deploymentProperties.getSecrets()},
+                        this.deploymentProperties.getMeta() + DeploymentConstants.YML_EXTENSION) //meta.yml
+                .withFile(new String[]{this.deploymentProperties.getRootDeployment(), this.deploymentProperties.getModelDeployment(), this.deploymentProperties.getSecrets()},
+                        this.deploymentProperties.getSecrets() + DeploymentConstants.YML_EXTENSION) //secrets.yml
+                .build();
+
+        //When
+        this.secretsGenerator.checkPrerequisites(this.workDir);
+    }
 
     @Test
     public void check_that_deployment_instance_directory_is_generated() throws IOException {

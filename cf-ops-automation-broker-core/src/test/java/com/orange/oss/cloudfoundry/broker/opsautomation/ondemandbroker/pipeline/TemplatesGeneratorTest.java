@@ -70,124 +70,94 @@ public class TemplatesGeneratorTest {
         //Then
         thrown.expect(DeploymentException.class);
         thrown.expectMessage(DeploymentConstants.ROOT_DEPLOYMENT_EXCEPTION);
+
         //Given initialized by setUp method
         //When
         this.templatesGenerator.checkPrerequisites(this.workDir);
-    }
+    }//superclass TU
 
     @Test
     public void raise_exception_if_model_deployment_directory_is_missing() {
-        try {
-            //Then
-            thrown.expect(DeploymentException.class);
-            thrown.expectMessage(DeploymentConstants.MODEL_DEPLOYMENT_EXCEPTION);
-            //Given (a part is initialized by setUp method)
-            Path rootDeploymentDir = StructureGeneratorHelper.generatePath(this.workDir, this.deploymentProperties.getRootDeployment());
-            Files.createDirectory(rootDeploymentDir);
-            //When
-            this.templatesGenerator.checkPrerequisites(this.workDir);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
+        //Then
+        thrown.expect(DeploymentException.class);
+        thrown.expectMessage(DeploymentConstants.MODEL_DEPLOYMENT_EXCEPTION);
+
+        //Given (a part is initialized by setUp method)
+        Structure modelStructure = new Structure.StructureBuilder(this.workDir)
+                .withDirectoryHierarchy(this.deploymentProperties.getRootDeployment())
+                .build();
+
+        //When
+        this.templatesGenerator.checkPrerequisites(this.workDir);
+    }//superclass TU
 
     @Test
     public void raise_exception_if_template_directory_is_missing() {
-        try {
-            //Then
-            thrown.expect(DeploymentException.class);
-            thrown.expectMessage(DeploymentConstants.TEMPLATE_EXCEPTION);
-            //Given (a part is initialized by setUp method)
-            Path modelDeploymentDir = StructureGeneratorHelper.generatePath(this.workDir, this.deploymentProperties.getRootDeployment(), this.deploymentProperties.getModelDeployment());
-            Files.createDirectories(modelDeploymentDir);
-            //When
-            this.templatesGenerator.checkPrerequisites(this.workDir);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        //Then
+        thrown.expect(DeploymentException.class);
+        thrown.expectMessage(DeploymentConstants.TEMPLATE_EXCEPTION);
+
+        //When
+        this.templatesGenerator.checkThatTemplateDirectoryExists(this.workDir);
     }
 
     @Test
     public void raise_exception_if_operators_directory_is_missing() {
-        try {
-            //Then
-            thrown.expect(DeploymentException.class);
-            thrown.expectMessage(DeploymentConstants.OPERATORS_EXCEPTION);
-            //Given (a part is initialized by setUp method)
-            Path modelDeploymentDir = aDeploymentTemplateDir();
-            //When
-            this.templatesGenerator.checkPrerequisites(this.workDir);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        //Then
+        thrown.expect(DeploymentException.class);
+        thrown.expectMessage(DeploymentConstants.OPERATORS_EXCEPTION);
+
+        //When
+        this.templatesGenerator.checkThatOperatorsDirectoryExists(this.workDir);
     }
 
     @Test
     public void raise_exception_if_model_manifest_file_is_missing() {
-        try {
-            //Then
-            thrown.expect(DeploymentException.class);
-            thrown.expectMessage(DeploymentConstants.MANIFEST_FILE_EXCEPTION);
+        //Then
+        thrown.expect(DeploymentException.class);
+        thrown.expectMessage(DeploymentConstants.MANIFEST_FILE_EXCEPTION);
 
-            //Given (a part is initialized by setUp method) : root deployment, model, template directory and operators directory
-            Path modelTemplateDir = aDeploymentTemplateDir();
-            Path modelOperatorsDir = StructureGeneratorHelper.generatePath(this.workDir, this.deploymentProperties.getRootDeployment(), this.deploymentProperties.getModelDeployment(), this.deploymentProperties.getOperators());
-            Files.createDirectories(modelOperatorsDir);
-
-            //When
-            this.templatesGenerator.checkPrerequisites(this.workDir);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        //When
+        this.templatesGenerator.checkThatModelManifestFileExists(this.workDir);
     }
 
     @Test
     public void raise_exception_if_model_vars_file_is_missing() {
-        try {
-            //Then
-            thrown.expect(DeploymentException.class);
-            thrown.expectMessage(DeploymentConstants.VARS_FILE_EXCEPTION);
+        //Then
+        thrown.expect(DeploymentException.class);
+        thrown.expectMessage(DeploymentConstants.VARS_FILE_EXCEPTION);
 
-            //Given repository, root deployment, model, template deployment directory, operators directory and manifest file
-            Path modelTemplateDir = aDeploymentTemplateDir();
-            Path modelOperatorsDir = StructureGeneratorHelper.generatePath(this.workDir, this.deploymentProperties.getRootDeployment(), this.deploymentProperties.getModelDeployment(), this.deploymentProperties.getOperators());
-            Files.createDirectories(modelOperatorsDir);
-            Path modelManifestFile = StructureGeneratorHelper.generatePath(modelTemplateDir, this.deploymentProperties.getModelDeployment() + DeploymentConstants.YML_EXTENSION);
-            Files.createFile(modelManifestFile);
-
-            //When
-            this.templatesGenerator.checkPrerequisites(this.workDir);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        //When
+        this.templatesGenerator.checkThatModelVarsFileExists(this.workDir);
     }
 
     @Test
     public void raise_exception_if_coab_operators_file_is_missing() {
-        try {
-            //Then
-            thrown.expect(DeploymentException.class);
-            thrown.expectMessage(DeploymentConstants.COAB_OPERATORS_FILE_EXCEPTION);
+        //Then
+        thrown.expect(DeploymentException.class);
+        thrown.expectMessage(DeploymentConstants.COAB_OPERATORS_FILE_EXCEPTION);
 
-            //Given repository, root deployment, model, template deployment directory, operators directory, manifest file and model vars file
-            Path modelTemplateDir = aDeploymentTemplateDir();
-            Path modelOperatorsDir = StructureGeneratorHelper.generatePath(this.workDir, this.deploymentProperties.getRootDeployment(), this.deploymentProperties.getModelDeployment(), this.deploymentProperties.getOperators());
-            Files.createDirectories(modelOperatorsDir);
-            Path modelManifestFile = StructureGeneratorHelper.generatePath(modelTemplateDir, this.deploymentProperties.getModelDeployment() + DeploymentConstants.YML_EXTENSION);
-            Files.createFile(modelManifestFile);
-            Path modelVarsFile = StructureGeneratorHelper.generatePath(modelTemplateDir, this.deploymentProperties.getModelDeployment() + DeploymentConstants.HYPHEN + this.deploymentProperties.getVars() + DeploymentConstants.YML_EXTENSION);
-            Files.createFile(modelVarsFile);
-
-            //When
-            this.templatesGenerator.checkPrerequisites(this.workDir);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        //When
+        this.templatesGenerator.checkThatModelCoabOperatorsFileExists(this.workDir);
     }
 
     @Test
     public void check_that_all_prerequisites_are_satisfied() {
 
+        //Given a model structure that meets all prerequisites
+        Structure modelStructure = new Structure.StructureBuilder(this.workDir)
+                .withDirectoryHierarchy(this.deploymentProperties.getRootDeployment(), this.deploymentProperties.getModelDeployment(), this.deploymentProperties.getTemplate())
+                .withFile(new String[]{this.deploymentProperties.getRootDeployment(), this.deploymentProperties.getModelDeployment(), this.deploymentProperties.getTemplate()},
+                        this.deploymentProperties.getModelDeployment() + DeploymentConstants.YML_EXTENSION) //mongodb.yml
+                .withFile(new String[]{this.deploymentProperties.getRootDeployment(), this.deploymentProperties.getModelDeployment(), this.deploymentProperties.getTemplate()},
+                        this.deploymentProperties.getModelDeployment() + DeploymentConstants.HYPHEN + this.deploymentProperties.getVars() + DeploymentConstants.YML_EXTENSION) //coab-vars.yml
+                .withDirectoryHierarchy(this.deploymentProperties.getRootDeployment(), this.deploymentProperties.getModelDeployment(), this.deploymentProperties.getOperators())
+                .withFile(new String[]{this.deploymentProperties.getRootDeployment(), this.deploymentProperties.getModelDeployment(), this.deploymentProperties.getOperators()},
+                        DeploymentConstants.COAB + DeploymentConstants.HYPHEN + this.deploymentProperties.getOperators() + DeploymentConstants.YML_EXTENSION) //coab-operators.yml
+                .build();
+
+        //When
+        this.templatesGenerator.checkPrerequisites(this.workDir);
     }
 
     @Test

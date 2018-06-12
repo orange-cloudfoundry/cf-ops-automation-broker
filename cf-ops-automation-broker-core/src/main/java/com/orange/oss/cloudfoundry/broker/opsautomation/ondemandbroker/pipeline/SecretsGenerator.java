@@ -87,7 +87,7 @@ public class SecretsGenerator extends StructureGeneratorImpl implements SecretsR
 
     }
 
-    private void checkThatSecretsDirectoryExists(Path workDir){
+    protected void checkThatSecretsDirectoryExists(Path workDir){
         Path secretsDir = StructureGeneratorHelper.generatePath(workDir,
                 this.rootDeployment,
                 this.modelDeployment,
@@ -97,7 +97,7 @@ public class SecretsGenerator extends StructureGeneratorImpl implements SecretsR
         }
     }
 
-    private void checkThatMetaFileExists(Path workDir){
+    protected void checkThatMetaFileExists(Path workDir){
         Path metaFile = StructureGeneratorHelper.generatePath(workDir,
                 this.rootDeployment,
                 this.modelDeployment,
@@ -108,7 +108,7 @@ public class SecretsGenerator extends StructureGeneratorImpl implements SecretsR
         }
     }
 
-    private void checkThatSecretsFileExists(Path workDir){
+    protected void checkThatSecretsFileExists(Path workDir){
         Path secretsFile = StructureGeneratorHelper.generatePath(workDir,
                 this.rootDeployment,
                 this.modelDeployment,

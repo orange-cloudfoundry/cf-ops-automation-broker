@@ -16,6 +16,24 @@ Vars files that include OSB input params (org,space,user, as well as arbitrary p
       - Restrict to small char set and reject violations with user facing exception
          - Set up basic regexp a-z, A-Z,0-9,-,_,.
             - on individual strings within the POJO to get precise feedback, using bean validator 
+               - using javax bean validation 2.0
+                  - http://beanvalidation.org/2.0/spec/2.0.0.final/diff/diff-to-1.1/#whatsnew-20
+                  - http://hibernate.org/validator/documentation/getting-started/
+                  - currently spring-boot-web-starter 1.5.9-RELEASE pulls hibernate-validator-5-3-6-final which pull bean validation 1.1
+                     - try bumping hibernate validator while staying with spring boot 1.5.9 
+                        - seems a risky upgrade w.r.t. lists see https://github.com/spring-projects/spring-boot/issues/9784
+                        - would be better upgrade to spring 2.0.0M5 or later
+               - **using javax bean validation 1.1** + implement additional validation manually
+                  
+               - using spring validator
+                  - test using spring aoc
+                      - create a configuration class
+                      - modify test to use spring4 runner
+                      - inject validator in test
+                  - test using springboot
+                  - test using plain junit test
+                  => no real additional value, stick to javax.validation
+                  
             - DONE: on the whole YML output. 
                 - but this requires accepting YML chars => not a good idea
          - DONE: Modify UserFacingRuntimeException location so it get visible from core: move to core   

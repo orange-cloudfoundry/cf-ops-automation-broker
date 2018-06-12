@@ -31,10 +31,13 @@ public class VarsFilesYmlFormatterTest {
     public ExpectedException thrown = ExpectedException.none();
 
     @Test
-    public void rejects_invalid_patterns() {
-        assertStringRejected("((");
-        assertStringRejected("(( a/string ))");
-        assertStringRejected("))");
+    public void rejects_invalid_patterns() throws JsonProcessingException {
+        assertParamValueRejected("(("); //credhub interpolation
+        assertParamValueRejected("(( a/string ))");
+        assertParamValueRejected("a/path"); //don't yet need paths, add it when requested
+        assertParamValueRejected("))");
+        assertParamValueRejected("?"); //other unknown chars
+        assertParamValueRejected("&"); //YML references
 
 
         assertStringAccepted("a string with spaces");
@@ -46,50 +49,57 @@ public class VarsFilesYmlFormatterTest {
         assertStringAccepted("10");
 
     }
+    @Test
+    public void rejects_invalid_patterns_with_precise_message() throws JsonProcessingException {
+        CoabVarsFileDto coabVarsFileDto = aTypicalUserRequest();
+        coabVarsFileDto.deployment_name = "((";
+        coabVarsFileDto.context.organization_guid = "((";
+        coabVarsFileDto.context.platform = "((";
+        coabVarsFileDto.context.space_guid = "((";
+        coabVarsFileDto.context.user_guid = "((";
+        coabVarsFileDto.plan_id = "((";
+        coabVarsFileDto.service_id = "((";
+        coabVarsFileDto.previous_values = new CoabVarsFileDto.PreviousValues();
+        coabVarsFileDto.previous_values.plan_id = "((";
+        coabVarsFileDto.parameters.put("aparam", "((");
+        coabVarsFileDto.parameters.put("param-with-chars-((", "valid-value");
+        coabVarsFileDto.parameters.put("a-param-with-unexpected-value", new ArrayList<>());
+        try {
+            formatter.formatAsYml(coabVarsFileDto);
+            fail("expected " + "((" + "to be rejected");
+        } catch (UserFacingRuntimeException e) {
+            String patternMessage = CoabVarsFileDto.WHITE_LISTED_MESSAGE;
+            assertThat(e.getMessage()).contains("deployment_name " + patternMessage + " whereas it has content:((");
+            assertThat(e.getMessage()).contains("context.platform " + patternMessage + " whereas it has content:((");
+            assertThat(e.getMessage()).contains("context.organization_guid " + patternMessage + " whereas it has content:((");
+            assertThat(e.getMessage()).contains("context.space_guid " + patternMessage + " whereas it has content:((");
+            assertThat(e.getMessage()).contains("context.user_guid " + patternMessage + " whereas it has content:((");
+            assertThat(e.getMessage()).contains("plan_id " + patternMessage + " whereas it has content:((");
+            assertThat(e.getMessage()).contains("service_id " + patternMessage + " whereas it has content:((");
+            assertThat(e.getMessage()).contains("previous_values.plan_id " + patternMessage + " whereas it has content:((");
+            assertThat(e.getMessage()).contains("parameter aparam " + patternMessage + " whereas it has content:((");
+            assertThat(e.getMessage()).contains("parameter name param-with-chars-(( " + patternMessage);
+            assertThat(e.getMessage()).contains("a-param-with-unexpected-value of unsupported type: java.util.ArrayList");
+        }
+    }
 
-    protected void assertStringRejected(String yml) {
+    protected void assertParamValueRejected(String paramValue) throws JsonProcessingException {
+        CoabVarsFileDto coabVarsFileDto = aTypicalUserRequest();
+        coabVarsFileDto.deployment_name = paramValue;
+        coabVarsFileDto.parameters.put("aparam", paramValue);
         //noinspection EmptyCatchBlock
         try {
-            formatter.rejectUnsupportedPatterns(yml);
-            fail("expected " + yml + "to be rejected");
+            formatter.formatAsYml(coabVarsFileDto);
+            fail("expected " + paramValue + "to be rejected");
         } catch (UserFacingRuntimeException e) {
 
         }
     }
 
-    protected void assertStringAccepted(String yml) {
-        formatter.rejectUnsupportedPatterns(yml);
-    }
-
-
-    @Test
-    public void collections_outputs_expected_vars_files() throws JsonProcessingException {
-        HashMap<String, Object> varsMap = new HashMap<>();
-        varsMap.put("deployment_name", "cassandravarsops_aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa0");
-        HashMap<String, Object> cloudfoundry = new HashMap<>();
-        cloudfoundry.put("user_guid", "user_guid1");
-        cloudfoundry.put("space_guid", "space_guid1");
-        cloudfoundry.put("org_guid", "org_guid1");
-        varsMap.put("cloudfoundry", cloudfoundry);
-
-        HashMap<String, Object> params = new HashMap<>();
-        params.put("slowQuery", "false");
-        params.put("cacheSizeMb", "10");
-        varsMap.put("params", params);
-
-
-        String result = formatter.formatAsYml(varsMap);
-        logger.info("vars.yml serialized yml content:\n{}", result);
-        assertThat(result).isEqualTo(
-                "---\n" +
-                        "deployment_name: \"cassandravarsops_aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa0\"\n" +
-                        "cloudfoundry:\n" +
-                        "  org_guid: \"org_guid1\"\n" +
-                        "  user_guid: \"user_guid1\"\n" +
-                        "  space_guid: \"space_guid1\"\n" +
-                        "params:\n" +
-                        "  cacheSizeMb: \"10\"\n" +
-                        "  slowQuery: \"false\"\n");
+    protected void assertParamValueAccepted(String paramValue) throws JsonProcessingException {
+        CoabVarsFileDto coabVarsFileDto = aTypicalUserRequest();
+        coabVarsFileDto.parameters.put("aparam", paramValue);
+        formatter.formatAsYml(coabVarsFileDto);
     }
 
 
@@ -121,7 +131,7 @@ public class VarsFilesYmlFormatterTest {
 
         coabVarsFileDto.parameters.put("slowQuery", false);
         coabVarsFileDto.parameters.put("cacheSizeMb", 10);
-        coabVarsFileDto.parameters.put("apiKey", "A STRING with escaped quotes \" and escaped & references");
+        coabVarsFileDto.parameters.put("apiKey", "A safe STRING");
 
         //when
         String result = formatter.formatAsYml(coabVarsFileDto);
@@ -139,12 +149,12 @@ public class VarsFilesYmlFormatterTest {
                         "  space_guid: \"space_guid1\"\n" +
                         "  organization_guid: \"org_guid1\"\n" +
                         "parameters:\n" +
-                        "  apiKey: \"A STRING with escaped quotes \\\" and escaped & references\"\n" +
+                        "  apiKey: \"A safe STRING\"\n" +
                         "  cacheSizeMb: 10\n" +
                         "  slowQuery: false\n");
 
         //and potentially in the future parse back from yml, e.g. for OSB get endpoints
-        Object deserialized = parseFromYml(result, coabVarsFileDto.getClass());
+        @SuppressWarnings("unused") Object deserialized = parseFromYml(result, coabVarsFileDto.getClass());
         //potentially check that both are identitical (need to debug reflection equals)
         //        assertThat(reflectionEquals(coabVarsFileDto, deserialized)).isTrue();
     }
@@ -293,20 +303,5 @@ public class VarsFilesYmlFormatterTest {
     }
 
 
-    @Test
-    public void spring_cloud_broker_dtos_outputs_expected_yml() throws JsonProcessingException {
-
-        String result = formatter.formatAsYml(aCreateServiceInstanceRequest());
-        assertThat(result).isEqualTo("---\n" +
-                "asyncAccepted: false\n" +
-                "parameters: {}\n" +
-                "context: !<Context>\n" +
-                "  platform: \"cloudfoundry\"\n" +
-                "service_id: \"cassandra-ondemand-service\"\n" +
-                "plan_id: \"cassandra-ondemand-plan\"\n" +
-                "organization_guid: \"org_id\"\n" +
-                "space_guid: \"space_id\"\n" +
-                "");
-    }
 
 }

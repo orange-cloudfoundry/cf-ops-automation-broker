@@ -4,7 +4,10 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.hibernate.validator.constraints.NotEmpty;
 
+import javax.validation.Valid;
+import javax.validation.constraints.Pattern;
 import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Formats vars files with user inputs to COA deployment models
@@ -12,9 +15,16 @@ import java.util.HashMap;
 public class CoabVarsFileDto {
 
     /**
+     * \d 	A digit: [0-9]
+     * \w 	A word character: [a-zA-Z_0-9]
+     */
+    public static final String WHITE_LISTED_PATTERN = "[\\w\\d _.-]*";
+    public static final String WHITE_LISTED_MESSAGE = "must only contain a-Z, 0-9, space, _, dot and - chars";
+    /**
      * Bosh deployment name to assign in the manifest by operators file
      */
     @JsonProperty("deployment_name")
+    @Pattern(regexp = WHITE_LISTED_PATTERN, message = WHITE_LISTED_MESSAGE)
     public String deployment_name;
 
     /**
@@ -22,12 +32,14 @@ public class CoabVarsFileDto {
      * OSB https://github.com/openservicebrokerapi/servicebroker/blob/master/spec.md#body-2
      */
     @JsonProperty("service_id")
+    @Pattern(regexp = WHITE_LISTED_PATTERN, message = WHITE_LISTED_MESSAGE)
     public String service_id;
     /**
      * ID of a plan from the service that has been requested from
      * OSB https://github.com/openservicebrokerapi/servicebroker/blob/master/spec.md#body-2
      */
     @JsonProperty("plan_id")
+    @Pattern(regexp = WHITE_LISTED_PATTERN, message = WHITE_LISTED_MESSAGE)
     public String plan_id;
 
     /**
@@ -35,6 +47,7 @@ public class CoabVarsFileDto {
      * OSB https://github.com/openservicebrokerapi/servicebroker/blob/master/spec.md#body-2
      */
     @JsonProperty("context")
+    @Valid
     public final CloudFoundryOsbContext context = new CloudFoundryOsbContext();
 
     /**
@@ -43,7 +56,7 @@ public class CoabVarsFileDto {
      */
     @JsonProperty("parameters")
     @JsonInclude(JsonInclude.Include.NON_NULL) //include even if empty
-    public final HashMap<String, Object> parameters = new HashMap<>();
+    public final Map<String, Object> parameters = new HashMap<>();
 
     /**
      * For update requests,Information about the Service Instance prior to the updatefrom
@@ -51,19 +64,24 @@ public class CoabVarsFileDto {
      */
     @JsonInclude(JsonInclude.Include.NON_NULL)
     @JsonProperty("previous_values")
+    @Valid
     public PreviousValues previous_values;
 
     public static class CloudFoundryOsbContext {
         @JsonProperty("platform")
+        @Pattern(regexp = WHITE_LISTED_PATTERN, message = WHITE_LISTED_MESSAGE)
         public String platform = "cloudfoundry";
         @JsonInclude(JsonInclude.Include.NON_EMPTY)
         @JsonProperty("user_guid")
+        @Pattern(regexp = WHITE_LISTED_PATTERN, message = WHITE_LISTED_MESSAGE)
         public String user_guid;
         @JsonInclude(JsonInclude.Include.NON_EMPTY)
         @JsonProperty("space_guid")
+        @Pattern(regexp = WHITE_LISTED_PATTERN, message = WHITE_LISTED_MESSAGE)
         public String space_guid;
         @JsonInclude(JsonInclude.Include.NON_EMPTY)
         @JsonProperty("organization_guid")
+        @Pattern(regexp = WHITE_LISTED_PATTERN, message = WHITE_LISTED_MESSAGE)
         public String organization_guid;
     }
 
@@ -74,6 +92,7 @@ public class CoabVarsFileDto {
          */
         @NotEmpty
         @JsonProperty("plan_id")
+        @Pattern(regexp = WHITE_LISTED_PATTERN, message = WHITE_LISTED_MESSAGE)
         public String plan_id;
     }
 }

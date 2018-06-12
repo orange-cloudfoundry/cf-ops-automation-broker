@@ -108,6 +108,7 @@ public class VarsFilesYmlFormatterTest {
     protected CoabVarsFileDto aTypicalUserRequest() {
         CoabVarsFileDto coabVarsFileDto = new CoabVarsFileDto();
         coabVarsFileDto.deployment_name = "cassandravarsops_aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa0";
+        coabVarsFileDto.instance_id = "service_instance_id";
         coabVarsFileDto.service_id = "service_definition_id";
         coabVarsFileDto.plan_id = "plan_guid";
 
@@ -164,6 +165,7 @@ public class VarsFilesYmlFormatterTest {
     }
 
     protected Object parseFromYml(String result, Class expectedClass) throws IOException {
+        //noinspection unchecked
         Object deserialized = formatter.getMapper().readValue(result, expectedClass);
         assertThat(deserialized).isNotNull();
         return deserialized;
@@ -219,6 +221,7 @@ public class VarsFilesYmlFormatterTest {
         //Given
         CoabVarsFileDto coabVarsFileDto = new CoabVarsFileDto();
         coabVarsFileDto.deployment_name = "cassandravarsops_aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa0";
+        coabVarsFileDto.instance_id = "service_instance_id";
         coabVarsFileDto.service_id = "service_definition_id";
         coabVarsFileDto.plan_id = "plan_guid";
 
@@ -230,6 +233,7 @@ public class VarsFilesYmlFormatterTest {
         assertThat(result).isEqualTo(
                 "---\n" +
                         "deployment_name: \"cassandravarsops_aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa0\"\n" +
+                        "instance_id: \"service_instance_id\"\n" +
                         "service_id: \"service_definition_id\"\n" +
                         "plan_id: \"plan_guid\"\n" +
                         "context:\n" +
@@ -242,6 +246,7 @@ public class VarsFilesYmlFormatterTest {
         //given
         CoabVarsFileDto coabVarsFileDto = new CoabVarsFileDto();
         coabVarsFileDto.deployment_name = "cassandravarsops_aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa0";
+        coabVarsFileDto.instance_id = "service_instance_id";
         coabVarsFileDto.service_id = "service_definition_id";
         coabVarsFileDto.plan_id = "plan_guid";
 
@@ -263,6 +268,7 @@ public class VarsFilesYmlFormatterTest {
         assertThat(result).isEqualTo(
                 "---\n" +
                         "deployment_name: \"cassandravarsops_aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa0\"\n" +
+                        "instance_id: \"service_instance_id\"\n" +
                         "service_id: \"service_definition_id\"\n" +
                         "plan_id: \"plan_guid\"\n" +
                         "context:\n" +

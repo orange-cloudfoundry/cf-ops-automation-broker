@@ -63,7 +63,9 @@ space_guid: "space_id"
    - use untyped structure
    
 - Create DTO from OSB classes
-   - In BoshProcessor, sharing commit message logic to extract OSB field + test case methods
+   - **In BoshProcessor**, sharing commit message logic to extract OSB field + test case methods
+      - Pass in the modelDeploymentShortAlias  
+      - Set the deploymentName to this.modelDeploymentShortAlias + DeploymentConstants.UNDERSCORE + serviceInstanceId
    - In dedicated builder
 - Modify SecretsGenerator#generate(Path workDir, String serviceInstanceId) to accept DTO as argument instead of serviceInstanceId
    - Modify SecretsGenerator to use ObjectMapper + clean up previous vars support.

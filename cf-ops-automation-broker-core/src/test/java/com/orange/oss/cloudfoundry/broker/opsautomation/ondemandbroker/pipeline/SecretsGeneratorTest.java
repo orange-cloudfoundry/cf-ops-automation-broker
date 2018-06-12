@@ -31,27 +31,13 @@ import static org.hamcrest.Matchers.equalTo;
 //|       |-- meta.yml -> ../../cassandravarsops/secrets/meta.yml
 //|       `-- secrets.yml -> ../../cassandravarsops/secrets/secrets.yml
 //|[..]
-public class SecretsGeneratorTest {
-
-    private static final String REPOSITORY_DIRECTORY = "paas-secrets";
-    private static final String SERVICE_INSTANCE_ID = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa10";
-    private DeploymentProperties deploymentProperties;
-    private File file;
-    private Path workDir;
+public class SecretsGeneratorTest extends StructureGeneratorImplTest{
 
     private SecretsGenerator secretsGenerator;
 
-    @Rule
-    public ExpectedException thrown = ExpectedException.none();
-
-    @Rule
-    public TemporaryFolder temporaryFolder = new TemporaryFolder();
-
     @Before
     public void setUp() throws IOException {
-        this.deploymentProperties = aDeploymentProperties();
-        this.file = temporaryFolder.newFolder(REPOSITORY_DIRECTORY);
-        this.workDir = file.toPath();
+        super.setUp();
         this.secretsGenerator = new SecretsGenerator(this.deploymentProperties.getRootDeployment(),
                                     this.deploymentProperties.getModelDeployment(),
                                     this.deploymentProperties.getSecrets(),
@@ -129,24 +115,6 @@ public class SecretsGeneratorTest {
 
         //When
         this.secretsGenerator.checkPrerequisites(this.workDir);
-    }
-
-    @Test
-    public void check_that_deployment_instance_directory_is_generated() throws IOException {
-        //Given
-        Path modelDeploymentDir = StructureGeneratorHelper.generatePath(this.workDir,
-                this.deploymentProperties.getRootDeployment(),
-                this.deploymentProperties.getModelDeployment());
-        Files.createDirectories(modelDeploymentDir);
-
-        //When
-        this.secretsGenerator.generate(this.workDir, SERVICE_INSTANCE_ID);
-
-        //Then
-        Path deploymentInstanceDir = StructureGeneratorHelper.generatePath(this.workDir,
-                this.deploymentProperties.getRootDeployment(),
-                this.secretsGenerator.computeDeploymentInstance(SERVICE_INSTANCE_ID));
-        assertThat("Deployment directory doesn't exist: " + deploymentInstanceDir, Files.exists(deploymentInstanceDir));
     }
 
     @Test

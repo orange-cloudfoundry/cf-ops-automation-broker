@@ -36,27 +36,11 @@ import static org.hamcrest.Matchers.equalTo;
 //│       ├── coab-operators.yml -> ../../cassandravarsops/operators/coab-operators.yml
 //│       └── coab-vars.yml
 //13 directories, 28 files
-public class TemplatesGeneratorTest {
-
-    private static final String REPOSITORY_DIRECTORY = "paas-templates";
-    private static final String SERVICE_INSTANCE_ID = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa10";
-    private DeploymentProperties deploymentProperties;
-    private File file;
-    private Path workDir;
-
-    private TemplatesGenerator templatesGenerator;
-
-    @Rule
-    public ExpectedException thrown = ExpectedException.none();
-
-    @Rule
-    public TemporaryFolder temporaryFolder = new TemporaryFolder();
+public class TemplatesGeneratorTest extends StructureGeneratorImplTest{
 
     @Before
     public void setUp() throws IOException {
-        this.deploymentProperties = aDeploymentProperties();
-        this.file = temporaryFolder.newFolder(REPOSITORY_DIRECTORY);
-        this.workDir = file.toPath();
+        super.setUp();
         this.templatesGenerator = new TemplatesGenerator(this.deploymentProperties.getRootDeployment(),
                 this.deploymentProperties.getModelDeployment(),
                 this.deploymentProperties.getTemplate(),
@@ -64,6 +48,8 @@ public class TemplatesGeneratorTest {
                 this.deploymentProperties.getOperators(), "c"
         );
     }
+
+    private TemplatesGenerator templatesGenerator;
 
     @Test
     public void raise_exception_if_root_deployment_directory_is_missing() {
@@ -158,24 +144,6 @@ public class TemplatesGeneratorTest {
 
         //When
         this.templatesGenerator.checkPrerequisites(this.workDir);
-    }
-
-    @Test
-    public void check_that_deployment_directory_is_generated() throws IOException {
-        //Given
-        Path rootDeploymentDir = StructureGeneratorHelper.generatePath(this.workDir,
-                this.deploymentProperties.getRootDeployment());
-        Files.createDirectories(rootDeploymentDir);
-
-        //When
-        this.templatesGenerator.generate(this.workDir, SERVICE_INSTANCE_ID);
-
-        //Then
-        Path serviceInstanceDir = StructureGeneratorHelper.generatePath(this.workDir,
-                this.deploymentProperties.getRootDeployment(),
-                this.templatesGenerator.computeDeploymentInstance(SERVICE_INSTANCE_ID)
-        );
-        assertThat("Deployment directory doesn't exist", Files.exists(serviceInstanceDir));
     }
 
     @Test
@@ -379,10 +347,6 @@ public class TemplatesGeneratorTest {
         assertThat(Files.readSymbolicLink(expectedFirstOperatorsFile).toString(), is(equalTo("../../" + this.deploymentProperties.getModelDeployment() + "/template/1-add-shield-operators.yml")));
 
     }
-
-
-
-
 
     private DeploymentProperties aDeploymentProperties() {
         DeploymentProperties deploymentProperties = new DeploymentProperties();

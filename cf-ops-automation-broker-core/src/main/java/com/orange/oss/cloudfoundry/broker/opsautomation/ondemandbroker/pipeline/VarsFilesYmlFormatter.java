@@ -9,15 +9,17 @@ import java.util.regex.Pattern;
 
 public class VarsFilesYmlFormatter {
 
-    private final Pattern whiteListedPattern = Pattern.compile("[a-zA-Z\\d_\\- ]*");
+    /**
+     * \w 	A word character: [a-zA-Z_0-9]
+     * \d 	A digit: [0-9]
+     */
+    private final Pattern whiteListedPattern = Pattern.compile("[\\w\\d _-]*");
 
     private final ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
 
     protected String formatAsYml(Object o) throws JsonProcessingException {
 
-        String yml = getMapper().writeValueAsString(o);
-        rejectUnsupportedPatterns(yml);
-        return yml;
+        return getMapper().writeValueAsString(o);
     }
 
     protected void rejectUnsupportedPatterns(String yml) {

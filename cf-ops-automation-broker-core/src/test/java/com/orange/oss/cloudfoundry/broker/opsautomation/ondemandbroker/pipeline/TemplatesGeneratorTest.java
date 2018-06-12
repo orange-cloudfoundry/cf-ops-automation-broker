@@ -349,20 +349,21 @@ public class TemplatesGeneratorTest {
         assertThat("Coab vars file doesn't exist", Files.exists(coabVarsFile));
     }
 
-/*
     @Test
-    public void check_that_symlinks_towards_operators_files_under_templates_directory_are_generated() throws Exception {
-        //Given repository, root deployment,model deployment and several operators files under templates directory
-        Path templatesDir = StructureGeneratorHelper.generatePath(this.workDir,
-                this.deploymentProperties.getRootDeployment(),
-                this.deploymentProperties.getModelDeployment(),
-                this.deploymentProperties.getTemplate());
-        Files.createDirectories(templatesDir);
-        Path firstOperatorFile = StructureGeneratorHelper.generatePath(templatesDir, "1-add-shield-operators.yml");
-        Files.createFile(firstOperatorFile);
+    public void check_that_symlinks_towards_operators_files_under_templates_directory_are_generated_bis() throws Exception {
+
+        //Given model and deployment structure
+        Structure modelStructure = new Structure.StructureBuilder(this.workDir)
+                .withFile(new String[]{this.deploymentProperties.getRootDeployment(),
+                                this.deploymentProperties.getModelDeployment(),
+                                this.deploymentProperties.getTemplate()},
+                        "1-add-shield-operators.yml").build();
+        Structure deploymentStructure = new Structure.StructureBuilder(this.workDir)
+                .withDirectoryHierarchy(this.deploymentProperties.getRootDeployment(),
+                                this.templatesGenerator.computeDeploymentInstance(SERVICE_INSTANCE_ID),
+                                this.deploymentProperties.getTemplate()).build();
 
         //When
-        StructureGeneratorHelper.generateDirectory(workDir, this.deploymentProperties.getRootDeployment(), this.templatesGenerator.computeDeploymentInstance(SERVICE_INSTANCE_ID), this.deploymentProperties.getTemplate());
         this.templatesGenerator.generateOperatorsFileSymLinks(workDir, SERVICE_INSTANCE_ID);
 
         //Then
@@ -376,7 +377,42 @@ public class TemplatesGeneratorTest {
         assertThat(Files.readSymbolicLink(expectedFirstOperatorsFile).toString(), is(equalTo("../../" + this.deploymentProperties.getModelDeployment() + "/template/1-add-shield-operators.yml")));
 
     }
-*/
+
+    @Test
+    public void check_that_symlinks_towards_operators_files_under_templates_directory_are_generated() throws Exception {
+        //Given repository, root deployment, model deployment and several operators files under templates directory
+        Path modelTemplatesDir = StructureGeneratorHelper.generatePath(this.workDir,
+                this.deploymentProperties.getRootDeployment(),
+                this.deploymentProperties.getModelDeployment(),
+                this.deploymentProperties.getTemplate());
+        Files.createDirectories(modelTemplatesDir);
+        Path firstOperatorFile = StructureGeneratorHelper.generatePath(modelTemplatesDir, "1-add-shield-operators.yml");
+        Files.createFile(firstOperatorFile);
+        //Given deployment directory
+        Path deploymentTemplateDir = StructureGeneratorHelper.generatePath(this.workDir,
+                this.deploymentProperties.getRootDeployment(),
+                this.templatesGenerator.computeDeploymentInstance(SERVICE_INSTANCE_ID),
+                this.deploymentProperties.getTemplate());
+        Files.createDirectories(deploymentTemplateDir);
+
+        //When
+        this.templatesGenerator.generateOperatorsFileSymLinks(workDir, SERVICE_INSTANCE_ID);
+
+        //Then
+        Path expectedFirstOperatorsFile = StructureGeneratorHelper.generatePath(this.workDir,
+                this.deploymentProperties.getRootDeployment(),
+                this.templatesGenerator.computeDeploymentInstance(SERVICE_INSTANCE_ID),
+                this.deploymentProperties.getTemplate(),
+                "1-add-shield-operators.yml");
+        assertThat("Symbolic link towards operators file doesn't exist", Files.exists(expectedFirstOperatorsFile));
+        assertThat("Coab operators file is not a symbolic link", Files.isSymbolicLink(expectedFirstOperatorsFile));
+        assertThat(Files.readSymbolicLink(expectedFirstOperatorsFile).toString(), is(equalTo("../../" + this.deploymentProperties.getModelDeployment() + "/template/1-add-shield-operators.yml")));
+
+    }
+
+
+
+
 
     private DeploymentProperties aDeploymentProperties() {
         DeploymentProperties deploymentProperties = new DeploymentProperties();

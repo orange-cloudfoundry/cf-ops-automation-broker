@@ -57,7 +57,7 @@ public class TemplatesGenerator extends StructureGeneratorImpl{
         //Generate manifest file as symlink
         this.generateManifestFileSymLink(workDir, serviceInstanceId);
 
-        //Generate coab vars file as symlink
+        //Generate coab specific ops file as symlink
         this.generateCoabOperatorsFileSymLink(workDir, serviceInstanceId);
 
         //Generate vars file as symlink
@@ -159,7 +159,6 @@ public class TemplatesGenerator extends StructureGeneratorImpl{
         StructureGeneratorHelper.generateSymbolicLink(workDir, sourcePathElements, targetPathElements, sourceFileName, sourceFileName);
     }
 
-/*
     public void generateOperatorsFileSymLinks(Path workDir, String serviceInstanceId) {
         Path path = StructureGeneratorHelper.generatePath(workDir, this.rootDeployment, this.modelDeployment, this.template);
         List<String> modelOperators = StructureGeneratorHelper.listFilesPaths(path, "*" + DeploymentConstants.COA_OPERATORS_FILE_SUFFIX);
@@ -169,7 +168,6 @@ public class TemplatesGenerator extends StructureGeneratorImpl{
             StructureGeneratorHelper.generateSymbolicLink(workDir, sourcePathElements, targetPathElements, s, s);
         }
     }
-*/
 
     private void generateCoabVarsFile(Path workDir, String serviceInstanceId){
         Map<String, String> mapCoabVarsFile = new HashMap<>();

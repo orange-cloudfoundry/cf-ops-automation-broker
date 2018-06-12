@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.cloud.servicebroker.model.CreateServiceInstanceRequest;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -40,13 +41,14 @@ public class VarsFilesYmlFormatterTest {
         assertParamValueRejected("&"); //YML references
 
 
-        assertStringAccepted("a string with spaces");
-        assertStringAccepted("10mb");
-        assertStringAccepted("a deployment model cassandravarsops_aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa0");
-        assertStringAccepted("org_guid1");
-        assertStringAccepted("c_5f89138b-ed9a-4596-a042-a6349b6a1f04 ");
-        assertStringAccepted("cacheSizeMb");
-        assertStringAccepted("10");
+        assertParamValueAccepted("a string with spaces");
+        assertParamValueAccepted("10mb");
+        assertParamValueAccepted("a deployment model cassandravarsops_aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa0");
+        assertParamValueAccepted("org_guid1");
+        assertParamValueAccepted("c_5f89138b-ed9a-4596-a042-a6349b6a1f04 ");
+        assertParamValueAccepted("cacheSizeMb");
+        assertParamValueAccepted("10");
+        assertParamValueAccepted("10.3");
 
     }
     @Test
@@ -121,6 +123,7 @@ public class VarsFilesYmlFormatterTest {
         //Given
         CoabVarsFileDto coabVarsFileDto = new CoabVarsFileDto();
         coabVarsFileDto.deployment_name = "cassandravarsops_aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa0";
+        coabVarsFileDto.instance_id = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa0";
         coabVarsFileDto.service_id = "service_definition_id";
         coabVarsFileDto.plan_id = "plan_guid";
 
@@ -141,6 +144,7 @@ public class VarsFilesYmlFormatterTest {
         assertThat(result).isEqualTo(
                 "---\n" +
                         "deployment_name: \"cassandravarsops_aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa0\"\n" +
+                        "instance_id: \"aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa0\"\n" +
                         "service_id: \"service_definition_id\"\n" +
                         "plan_id: \"plan_guid\"\n" +
                         "context:\n" +

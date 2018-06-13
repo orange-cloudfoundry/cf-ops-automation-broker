@@ -100,17 +100,13 @@ public class SecretsGeneratorTest extends StructureGeneratorImplTest{
 
     @Test
     public void check_that_all_prerequisites_are_satisfied() {
-        //Given a model structure that meets all prerequisites
-        Structure modelStructure = new Structure.StructureBuilder(this.workDir)
-                .withDirectoryHierarchy(this.deploymentProperties.getRootDeployment(), this.deploymentProperties.getModelDeployment(), this.deploymentProperties.getSecrets())
-                .withFile(new String[]{this.deploymentProperties.getRootDeployment(), this.deploymentProperties.getModelDeployment(), this.deploymentProperties.getSecrets()},
-                        this.deploymentProperties.getMeta() + DeploymentConstants.YML_EXTENSION) //meta.yml
-                .withFile(new String[]{this.deploymentProperties.getRootDeployment(), this.deploymentProperties.getModelDeployment(), this.deploymentProperties.getSecrets()},
-                        this.deploymentProperties.getSecrets() + DeploymentConstants.YML_EXTENSION) //secrets.yml
-                .build();
+        //Given
+        this.aModelStructure();
 
         //When
         this.secretsGenerator.checkPrerequisites(this.workDir);
+
+        //Then => No exception raised
     }
 
     @Test
@@ -135,14 +131,13 @@ public class SecretsGeneratorTest extends StructureGeneratorImplTest{
     @Test
     public void check_that_meta_file_is_generated() {
         //Given
-        Structure modelStructure = new Structure.StructureBuilder(this.workDir)
-                .withFile(new String[]{this.deploymentProperties.getRootDeployment(), this.deploymentProperties.getModelDeployment(), this.deploymentProperties.getSecrets()},
-                        this.deploymentProperties.getMeta() + DeploymentConstants.YML_EXTENSION) //meta.yml
+        this.aModelStructure();
+        Structure deploymentStructure = new Structure.StructureBuilder(this.workDir)
+                .withDirectoryHierarchy(this.deploymentProperties.getRootDeployment(), this.secretsGenerator.computeDeploymentName(SERVICE_INSTANCE_ID), this.deploymentProperties.getSecrets())
                 .build();
 
         //When
-        this.secretsGenerator.generate(this.workDir, SERVICE_INSTANCE_ID);
-        //this.secretsGenerator.generateMetaFile(workDir, SERVICE_INSTANCE_ID);
+        this.secretsGenerator.generateMetaFile(workDir, SERVICE_INSTANCE_ID);
 
         //Then
         Path targetMetaFile = StructureGeneratorHelper.generatePath(this.workDir,
@@ -156,43 +151,34 @@ public class SecretsGeneratorTest extends StructureGeneratorImplTest{
 
     @Test
     public void check_that_secrets_file_is_generated() {
-        try {
+        //Given
+        this.aModelStructure();
+        Structure deploymentStructure = new Structure.StructureBuilder(this.workDir)
+                .withDirectoryHierarchy(this.deploymentProperties.getRootDeployment(), this.secretsGenerator.computeDeploymentName(SERVICE_INSTANCE_ID), this.deploymentProperties.getSecrets())
+                .build();
 
-            //Given
-            Path secretsDir = StructureGeneratorHelper.generatePath(this.workDir,
-                    this.deploymentProperties.getRootDeployment(),
-                    this.deploymentProperties.getModelDeployment(),
-                    this.deploymentProperties.getSecrets());
-            secretsDir = Files.createDirectories(secretsDir);
-            Path sourceSecretsFile = StructureGeneratorHelper.generatePath(secretsDir, this.deploymentProperties.getSecrets() + DeploymentConstants.YML_EXTENSION);
-            Files.createFile(sourceSecretsFile);
+        //When
+        this.secretsGenerator.generateSecretsFile(this.workDir, SERVICE_INSTANCE_ID);
 
-            //When
-            this.secretsGenerator.generate(this.workDir, SERVICE_INSTANCE_ID);
-
-            //Then
-            Path targetSecretsFile = StructureGeneratorHelper.generatePath(this.workDir,
-                    this.deploymentProperties.getRootDeployment(),
-                    this.secretsGenerator.computeDeploymentName(SERVICE_INSTANCE_ID),
-                    this.deploymentProperties.getSecrets(),
-                    this.deploymentProperties.getSecrets() + DeploymentConstants.YML_EXTENSION);
-            assertThat("Secrets file doesn't exist:" + targetSecretsFile, Files.exists(targetSecretsFile));
-            assertThat("Secrets file is not a symbolic link", Files.isSymbolicLink(targetSecretsFile));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        //Then
+        Path targetSecretsFile = StructureGeneratorHelper.generatePath(this.workDir,
+                this.deploymentProperties.getRootDeployment(),
+                this.secretsGenerator.computeDeploymentName(SERVICE_INSTANCE_ID),
+                this.deploymentProperties.getSecrets(),
+                this.deploymentProperties.getSecrets() + DeploymentConstants.YML_EXTENSION);
+        assertThat("Secrets file doesn't exist:" + targetSecretsFile, Files.exists(targetSecretsFile));
+        assertThat("Secrets file is not a symbolic link", Files.isSymbolicLink(targetSecretsFile));
     }
 
     @Test
-    public void check_that_enable_deployment_file_is_generated() throws IOException {
+    public void check_that_enable_deployment_file_is_generated() {
         //Given
-        Path modelDeploymentDir = StructureGeneratorHelper.generatePath(this.workDir,
-                this.deploymentProperties.getRootDeployment(),
-                this.deploymentProperties.getModelDeployment());
-        Files.createDirectories(modelDeploymentDir);
+        Structure deploymentStructure = new Structure.StructureBuilder(this.workDir)
+                .withDirectoryHierarchy(this.deploymentProperties.getRootDeployment(), this.secretsGenerator.computeDeploymentName(SERVICE_INSTANCE_ID))
+                .build();
 
         //When
-        this.secretsGenerator.generate(this.workDir, SERVICE_INSTANCE_ID);
+        this.secretsGenerator.generateEnableDeploymentFile(this.workDir, SERVICE_INSTANCE_ID);
 
         //Then
         Path targetEnableDeploymentFile = StructureGeneratorHelper.generatePath(this.workDir,
@@ -221,33 +207,16 @@ public class SecretsGeneratorTest extends StructureGeneratorImplTest{
         assertThat("manifest file location", targetManifestFilePath, equalTo(expectedCoaGeneratedManifestFile));
     }
 
-    @Test
-    public void check_that_enable_deployment_file_is_removed() throws IOException {
-
-        //Given
-        this.check_that_enable_deployment_file_is_generated();
-
-        //When
-        this.secretsGenerator.remove(this.workDir, SERVICE_INSTANCE_ID);
-
-        //Then
-        Path targetEnableDeploymentFile = StructureGeneratorHelper.generatePath(this.workDir,
-                this.deploymentProperties.getRootDeployment(),
-                this.deploymentProperties.getModelDeployment() +  DeploymentConstants.UNDERSCORE + SERVICE_INSTANCE_ID,
-                DeploymentConstants.ENABLE_DEPLOYMENT_FILENAME);
-        assertThat("Enable deployment file is still existing", Files.notExists(targetEnableDeploymentFile));
-
-    }
 
 
     @Test
     public void check_that_meta_file_is_removed() {
 
         //Given
-        this.check_that_meta_file_is_generated();
+        this.aDeploymentStructure();
 
         //When
-        this.secretsGenerator.remove(this.workDir, SERVICE_INSTANCE_ID);
+        this.secretsGenerator.removeMetaFile(this.workDir, SERVICE_INSTANCE_ID);
 
         //Then
         Path targetMetaFile = StructureGeneratorHelper.generatePath(this.workDir,
@@ -258,14 +227,13 @@ public class SecretsGeneratorTest extends StructureGeneratorImplTest{
         assertThat("Meta file is still existing", Files.notExists(targetMetaFile));
     }
 
-
     @Test
     public void check_that_secrets_file_is_removed() {
         //Given
-        this.check_that_secrets_file_is_generated();
+        this.aDeploymentStructure();
 
         //When
-        this.secretsGenerator.remove(this.workDir, SERVICE_INSTANCE_ID);
+        this.secretsGenerator.removeSecretsFile(this.workDir, SERVICE_INSTANCE_ID);
 
         //Then
         Path targetSecretsFile = StructureGeneratorHelper.generatePath(this.workDir,
@@ -275,6 +243,45 @@ public class SecretsGeneratorTest extends StructureGeneratorImplTest{
                 this.deploymentProperties.getSecrets() + DeploymentConstants.YML_EXTENSION);
         assertThat("Secrets file is still existing", Files.notExists(targetSecretsFile));
     }
+
+    @Test
+    public void check_that_enable_deployment_file_is_removed() throws IOException {
+
+        //Given
+        this.aDeploymentStructure();
+
+        //When
+        this.secretsGenerator.removeEnableDeploymentFile(this.workDir, SERVICE_INSTANCE_ID);
+
+        //Then
+        Path targetEnableDeploymentFile = StructureGeneratorHelper.generatePath(this.workDir,
+                this.deploymentProperties.getRootDeployment(),
+                this.deploymentProperties.getModelDeployment() +  DeploymentConstants.UNDERSCORE + SERVICE_INSTANCE_ID,
+                DeploymentConstants.ENABLE_DEPLOYMENT_FILENAME);
+        assertThat("Enable deployment file is still existing", Files.notExists(targetEnableDeploymentFile));
+
+    }
+
+    private void aModelStructure(){
+        Structure modelStructure = new Structure.StructureBuilder(this.workDir)
+                .withFile(new String[]{this.deploymentProperties.getRootDeployment(), this.deploymentProperties.getModelDeployment(), this.deploymentProperties.getSecrets()},
+                        this.deploymentProperties.getMeta() + DeploymentConstants.YML_EXTENSION) //meta.yml
+                .withFile(new String[]{this.deploymentProperties.getRootDeployment(), this.deploymentProperties.getModelDeployment(), this.deploymentProperties.getSecrets()},
+                        this.deploymentProperties.getSecrets() + DeploymentConstants.YML_EXTENSION) //secrets.yml
+                .build();
+    }
+
+    private void aDeploymentStructure(){
+        Structure deploymentStructure = new Structure.StructureBuilder(this.workDir)
+                .withFile(new String[]{this.deploymentProperties.getRootDeployment(), this.secretsGenerator.computeDeploymentName(SERVICE_INSTANCE_ID), this.deploymentProperties.getSecrets()},
+                        this.deploymentProperties.getMeta() + DeploymentConstants.YML_EXTENSION) //meta.yml
+                .withFile(new String[]{this.deploymentProperties.getRootDeployment(), this.secretsGenerator.computeDeploymentName(SERVICE_INSTANCE_ID), this.deploymentProperties.getSecrets()},
+                        this.deploymentProperties.getSecrets() + DeploymentConstants.YML_EXTENSION) //secrets.yml
+                .withFile(new String[]{this.deploymentProperties.getRootDeployment(), this.secretsGenerator.computeDeploymentName(SERVICE_INSTANCE_ID)},
+                        DeploymentConstants.ENABLE_DEPLOYMENT_FILENAME) //enable-deployment.yml
+                .build();
+    }
+
 
     @Test
     @Ignore

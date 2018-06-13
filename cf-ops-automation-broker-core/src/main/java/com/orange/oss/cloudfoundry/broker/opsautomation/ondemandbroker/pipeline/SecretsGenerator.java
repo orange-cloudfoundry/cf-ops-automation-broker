@@ -76,13 +76,13 @@ public class SecretsGenerator extends StructureGeneratorImpl implements SecretsR
     public void remove(Path workDir, String serviceInstanceId) {
 
         //Remove meta file
-        this.removeMetaFile(workDir, this.computeDeploymentName(serviceInstanceId));
+        this.removeMetaFile(workDir, serviceInstanceId);
 
         //Remove secrets file
-        this.removeSecretsFile(workDir, this.computeDeploymentName(serviceInstanceId));
+        this.removeSecretsFile(workDir, serviceInstanceId);
 
         //Remove enable deployment file
-        this.removeEnableDeploymentFile(workDir, this.computeDeploymentName(serviceInstanceId));
+        this.removeEnableDeploymentFile(workDir, serviceInstanceId);
 
     }
 
@@ -145,20 +145,20 @@ public class SecretsGenerator extends StructureGeneratorImpl implements SecretsR
         StructureGeneratorHelper.generateFile(workDir,  targetPathElements, fileName, fileName, null);
     }
 
-    protected void removeMetaFile(Path workDir, String deploymentInstanceDirectory) {
-        String[] pathElements = new String[] {this.rootDeployment, deploymentInstanceDirectory, this.secrets};
+    protected void removeMetaFile(Path workDir, String serviceInstanceId) {
+        String[] pathElements = new String[] {this.rootDeployment, this.computeDeploymentName(serviceInstanceId), this.secrets};
         String fileName = this.meta + DeploymentConstants.YML_EXTENSION;
         StructureGeneratorHelper.removeFile(workDir, pathElements, fileName);
     }
 
-    protected void removeSecretsFile(Path workDir, String deploymentInstanceDirectory) {
-        String[] pathElements = new String[] {this.rootDeployment, deploymentInstanceDirectory, this.secrets};
+    protected void removeSecretsFile(Path workDir, String serviceInstanceId) {
+        String[] pathElements = new String[] {this.rootDeployment, this.computeDeploymentName(serviceInstanceId), this.secrets};
         String fileName = this.secrets + DeploymentConstants.YML_EXTENSION;
         StructureGeneratorHelper.removeFile(workDir, pathElements, fileName);
     }
 
-    protected void removeEnableDeploymentFile(Path workDir, String deploymentInstanceDirectory) {
-        String[] pathElements = new String[] {this.rootDeployment, deploymentInstanceDirectory};
+    protected void removeEnableDeploymentFile(Path workDir, String serviceInstanceId) {
+        String[] pathElements = new String[] {this.rootDeployment, this.computeDeploymentName(serviceInstanceId)};
         String fileName = DeploymentConstants.ENABLE_DEPLOYMENT_FILENAME;
         StructureGeneratorHelper.removeFile(workDir, pathElements, fileName);
     }

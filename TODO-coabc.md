@@ -6,7 +6,8 @@ Support for multiple operators:
    - it is fine to have a deployment without any operators file
 - add systematic symlink of any template/ file 
    - 1st step: ignoring subdirs, regardless of their name if their present as file in this directory,
-   - 2nd step: also mirror the subdirs with nested symlinks to support iaas-specific templates   
+   - 2nd step: also mirror the subdirs with nested symlinks to support iaas-specific templates
+- update README.md to document COAB bosh support and cross reference COA bosh support   
   
 Vars files that include OSB input params (org,space,user, as well as arbitrary params)
 - DONE: Define formatting output amongst
@@ -70,6 +71,7 @@ space_guid: "space_id"
 - Modify SecretsGenerator#generate(Path workDir, String serviceInstanceId) to accept DTO as argument instead of serviceInstanceId
    - Modify SecretsGenerator to use ObjectMapper + clean up previous vars support.
    - update BoshProcessor to use DTO Builder
+- update README.md
 - Bump jackson to 2.9.2 or later and pull https://github.com/FasterXML/jackson-dataformats-text/tree/master/yaml
 
 

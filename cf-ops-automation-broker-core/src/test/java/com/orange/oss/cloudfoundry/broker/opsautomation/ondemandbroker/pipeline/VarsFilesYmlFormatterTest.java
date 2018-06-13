@@ -257,8 +257,9 @@ public class VarsFilesYmlFormatterTest {
         coabVarsFileDto.previous_values = new CoabVarsFileDto.PreviousValues();
         coabVarsFileDto.previous_values.plan_id = "previous_plan_guid";
 
-        coabVarsFileDto.parameters.put("slowQuery", "false");
-        coabVarsFileDto.parameters.put("cacheSizeMb", "10");
+        coabVarsFileDto.parameters.put("slowQuery", false);
+        coabVarsFileDto.parameters.put("cacheSizeMb", 10);
+        coabVarsFileDto.parameters.put("cacheRatio", 0.8642);
 
         //When
         String result = formatter.formatAsYml(coabVarsFileDto);
@@ -277,8 +278,9 @@ public class VarsFilesYmlFormatterTest {
                         "  space_guid: \"space_guid1\"\n" +
                         "  organization_guid: \"org_guid1\"\n" +
                         "parameters:\n" +
-                        "  cacheSizeMb: \"10\"\n" +
-                        "  slowQuery: \"false\"\n" +
+                        "  cacheRatio: 0.8642\n" +
+                        "  cacheSizeMb: 10\n" +
+                        "  slowQuery: false\n" +
                         "previous_values:\n" +
                         "  plan_id: \"previous_plan_guid\"\n");
     }

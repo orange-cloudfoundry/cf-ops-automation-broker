@@ -74,7 +74,7 @@ public class StructureGeneratorImplTest {
         //Given initialized by setUp method
 
         //When
-        String deploymentInstance = this.structureGeneratorImpl.computeDeploymentInstance(SERVICE_INSTANCE_ID);
+        String deploymentInstance = this.structureGeneratorImpl.computeDeploymentName(SERVICE_INSTANCE_ID);
 
         //Then
         String expectedDeploymentInstance = this.deploymentProperties.getModelDeploymentShortAlias() + DeploymentConstants.UNDERSCORE + SERVICE_INSTANCE_ID;
@@ -95,7 +95,7 @@ public class StructureGeneratorImplTest {
         //Then
         Path deploymentInstanceDir = StructureGeneratorHelper.generatePath(this.workDir,
                 this.deploymentProperties.getRootDeployment(),
-                this.structureGeneratorImpl.computeDeploymentInstance(SERVICE_INSTANCE_ID));
+                this.structureGeneratorImpl.computeDeploymentName(SERVICE_INSTANCE_ID));
         assertThat("Deployment directory doesn't exist: " + deploymentInstanceDir, Files.exists(deploymentInstanceDir));
     }
 
@@ -106,6 +106,8 @@ public class StructureGeneratorImplTest {
         deploymentProperties.setTemplate("template");
         deploymentProperties.setVars("vars");
         deploymentProperties.setOperators("operators");
+        deploymentProperties.setMeta("meta");
+        deploymentProperties.setSecrets("secrets");
         return deploymentProperties;
     }
 

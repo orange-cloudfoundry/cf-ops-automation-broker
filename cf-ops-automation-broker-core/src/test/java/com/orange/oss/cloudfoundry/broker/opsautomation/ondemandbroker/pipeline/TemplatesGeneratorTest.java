@@ -2,12 +2,8 @@ package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline
 
 import org.junit.Before;
 import org.junit.Ignore;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
-import org.junit.rules.TemporaryFolder;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -159,7 +155,7 @@ public class TemplatesGeneratorTest extends StructureGeneratorImplTest{
         //Then
         Path templateDir = StructureGeneratorHelper.generatePath(this.workDir,
                 this.deploymentProperties.getRootDeployment(),
-                this.templatesGenerator.computeDeploymentInstance(SERVICE_INSTANCE_ID),
+                this.templatesGenerator.computeDeploymentName(SERVICE_INSTANCE_ID),
                 this.deploymentProperties.getTemplate()
         );
         assertThat("Template directory doesn't exist", Files.exists(templateDir));
@@ -178,7 +174,7 @@ public class TemplatesGeneratorTest extends StructureGeneratorImplTest{
         //Then
         Path deploymentDependenciesFile = StructureGeneratorHelper.generatePath(this.workDir,
                 this.deploymentProperties.getRootDeployment(),
-                this.templatesGenerator.computeDeploymentInstance(SERVICE_INSTANCE_ID),
+                this.templatesGenerator.computeDeploymentName(SERVICE_INSTANCE_ID),
                 DeploymentConstants.DEPLOYMENT_DEPENDENCIES_FILENAME
         );
         assertThat("Deployment dependencies file doesn't exist:" + deploymentDependenciesFile, Files.exists(deploymentDependenciesFile));
@@ -197,7 +193,7 @@ public class TemplatesGeneratorTest extends StructureGeneratorImplTest{
         //Then
         Path targetManifestFile = StructureGeneratorHelper.generatePath(this.workDir,
                 this.deploymentProperties.getRootDeployment(),
-                this.templatesGenerator.computeDeploymentInstance(SERVICE_INSTANCE_ID),
+                this.templatesGenerator.computeDeploymentName(SERVICE_INSTANCE_ID),
                 this.deploymentProperties.getTemplate(),
                 this.deploymentProperties.getModelDeploymentShortAlias() + DeploymentConstants.UNDERSCORE + SERVICE_INSTANCE_ID + DeploymentConstants.YML_EXTENSION);
         assertThat("Symbolic link towards manifest file doesn't exist:" + targetManifestFile, Files.exists(targetManifestFile));
@@ -227,7 +223,7 @@ public class TemplatesGeneratorTest extends StructureGeneratorImplTest{
         //Then
         Path targetVarsFile = StructureGeneratorHelper.generatePath(this.workDir,
                 this.deploymentProperties.getRootDeployment(),
-                this.templatesGenerator.computeDeploymentInstance(SERVICE_INSTANCE_ID),
+                this.templatesGenerator.computeDeploymentName(SERVICE_INSTANCE_ID),
                 this.deploymentProperties.getTemplate(),
                 this.deploymentProperties.getModelDeploymentShortAlias() + DeploymentConstants.UNDERSCORE + SERVICE_INSTANCE_ID + DeploymentConstants.HYPHEN + this.deploymentProperties.getVars() + DeploymentConstants.YML_EXTENSION);
         assertThat("Symbolic link towards vars file doesn't exist", Files.exists(targetVarsFile));
@@ -259,7 +255,7 @@ public class TemplatesGeneratorTest extends StructureGeneratorImplTest{
         //Then
         Path targetOperatorsFile = StructureGeneratorHelper.generatePath(this.workDir,
                 this.deploymentProperties.getRootDeployment(),
-                this.templatesGenerator.computeDeploymentInstance(SERVICE_INSTANCE_ID),
+                this.templatesGenerator.computeDeploymentName(SERVICE_INSTANCE_ID),
                 this.deploymentProperties.getTemplate(),
                 DeploymentConstants.COAB + DeploymentConstants.HYPHEN + this.deploymentProperties.getOperators() + DeploymentConstants.YML_EXTENSION);
         assertThat("Symbolic link towards coab operators file doesn't exist", Files.exists(targetOperatorsFile));
@@ -280,7 +276,7 @@ public class TemplatesGeneratorTest extends StructureGeneratorImplTest{
         //Then
         Path coabVarsFile = StructureGeneratorHelper.generatePath(this.workDir,
                 this.deploymentProperties.getRootDeployment(),
-                this.templatesGenerator.computeDeploymentInstance(SERVICE_INSTANCE_ID),
+                this.templatesGenerator.computeDeploymentName(SERVICE_INSTANCE_ID),
                 this.deploymentProperties.getTemplate(),
                 DeploymentConstants.COAB + DeploymentConstants.HYPHEN + this.deploymentProperties.getVars() + DeploymentConstants.YML_EXTENSION
         );
@@ -298,7 +294,7 @@ public class TemplatesGeneratorTest extends StructureGeneratorImplTest{
                         "1-add-shield-operators.yml").build();
         Structure deploymentStructure = new Structure.StructureBuilder(this.workDir)
                 .withDirectoryHierarchy(this.deploymentProperties.getRootDeployment(),
-                                this.templatesGenerator.computeDeploymentInstance(SERVICE_INSTANCE_ID),
+                                this.templatesGenerator.computeDeploymentName(SERVICE_INSTANCE_ID),
                                 this.deploymentProperties.getTemplate()).build();
 
         //When
@@ -307,55 +303,13 @@ public class TemplatesGeneratorTest extends StructureGeneratorImplTest{
         //Then
         Path expectedFirstOperatorsFile = StructureGeneratorHelper.generatePath(this.workDir,
                 this.deploymentProperties.getRootDeployment(),
-                this.templatesGenerator.computeDeploymentInstance(SERVICE_INSTANCE_ID),
+                this.templatesGenerator.computeDeploymentName(SERVICE_INSTANCE_ID),
                 this.deploymentProperties.getTemplate(),
                 "1-add-shield-operators.yml");
         assertThat("Symbolic link towards operators file doesn't exist", Files.exists(expectedFirstOperatorsFile));
         assertThat("Coab operators file is not a symbolic link", Files.isSymbolicLink(expectedFirstOperatorsFile));
         assertThat(Files.readSymbolicLink(expectedFirstOperatorsFile).toString(), is(equalTo("../../" + this.deploymentProperties.getModelDeployment() + "/template/1-add-shield-operators.yml")));
 
-    }
-
-    @Test
-    public void check_that_symlinks_towards_operators_files_under_templates_directory_are_generated() throws Exception {
-        //Given repository, root deployment, model deployment and several operators files under templates directory
-        Path modelTemplatesDir = StructureGeneratorHelper.generatePath(this.workDir,
-                this.deploymentProperties.getRootDeployment(),
-                this.deploymentProperties.getModelDeployment(),
-                this.deploymentProperties.getTemplate());
-        Files.createDirectories(modelTemplatesDir);
-        Path firstOperatorFile = StructureGeneratorHelper.generatePath(modelTemplatesDir, "1-add-shield-operators.yml");
-        Files.createFile(firstOperatorFile);
-        //Given deployment directory
-        Path deploymentTemplateDir = StructureGeneratorHelper.generatePath(this.workDir,
-                this.deploymentProperties.getRootDeployment(),
-                this.templatesGenerator.computeDeploymentInstance(SERVICE_INSTANCE_ID),
-                this.deploymentProperties.getTemplate());
-        Files.createDirectories(deploymentTemplateDir);
-
-        //When
-        this.templatesGenerator.generateOperatorsFileSymLinks(workDir, SERVICE_INSTANCE_ID);
-
-        //Then
-        Path expectedFirstOperatorsFile = StructureGeneratorHelper.generatePath(this.workDir,
-                this.deploymentProperties.getRootDeployment(),
-                this.templatesGenerator.computeDeploymentInstance(SERVICE_INSTANCE_ID),
-                this.deploymentProperties.getTemplate(),
-                "1-add-shield-operators.yml");
-        assertThat("Symbolic link towards operators file doesn't exist", Files.exists(expectedFirstOperatorsFile));
-        assertThat("Coab operators file is not a symbolic link", Files.isSymbolicLink(expectedFirstOperatorsFile));
-        assertThat(Files.readSymbolicLink(expectedFirstOperatorsFile).toString(), is(equalTo("../../" + this.deploymentProperties.getModelDeployment() + "/template/1-add-shield-operators.yml")));
-
-    }
-
-    private DeploymentProperties aDeploymentProperties() {
-        DeploymentProperties deploymentProperties = new DeploymentProperties();
-        deploymentProperties.setRootDeployment("coab-depls");
-        deploymentProperties.setModelDeployment("cassandravarsops");
-        deploymentProperties.setTemplate("template");
-        deploymentProperties.setVars("vars");
-        deploymentProperties.setOperators("operators");
-        return deploymentProperties;
     }
 
     @Test

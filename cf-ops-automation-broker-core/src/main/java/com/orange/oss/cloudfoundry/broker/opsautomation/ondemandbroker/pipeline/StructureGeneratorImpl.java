@@ -1,6 +1,5 @@
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline;
 
-import java.nio.file.Files;
 import java.nio.file.Path;
 
 public class StructureGeneratorImpl implements StructureGenerator {
@@ -41,10 +40,10 @@ public class StructureGeneratorImpl implements StructureGenerator {
 
     public void generate(Path workDir, String serviceInstanceId) {
             ////Generate service directory
-            StructureGeneratorHelper.generateDirectory(workDir, this.rootDeployment, this.computeDeploymentInstance(serviceInstanceId));
+            StructureGeneratorHelper.generateDirectory(workDir, this.rootDeployment, this.computeDeploymentName(serviceInstanceId));
     }
 
-    public String computeDeploymentInstance(String serviceInstanceId){
+    public String computeDeploymentName(String serviceInstanceId){
         return this.modelDeploymentShortAlias + DeploymentConstants.UNDERSCORE + serviceInstanceId;
     }
 

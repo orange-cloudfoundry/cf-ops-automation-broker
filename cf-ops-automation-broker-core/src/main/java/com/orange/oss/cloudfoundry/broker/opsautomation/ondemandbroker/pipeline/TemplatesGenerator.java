@@ -30,7 +30,7 @@ public class TemplatesGenerator extends StructureGeneratorImpl{
         this.checkThatTemplateDirectoryExists(workDir);
 
         //Check specific pre-requisite (operators directory)
-        this.checkThatOperatorsDirectoryExists(workDir);
+        //this.checkThatOperatorsDirectoryExists(workDir); => useless
 
         //Check specific pre-requisite (manifest file in model template directory)
         this.checkThatModelManifestFileExists(workDir);
@@ -59,6 +59,9 @@ public class TemplatesGenerator extends StructureGeneratorImpl{
 
         //Generate coab specific ops file as symlink
         this.generateCoabOperatorsFileSymLink(workDir, serviceInstanceId);
+
+        //Generate all ops files as symlink
+        this.generateOperatorsFileSymLinks(workDir, serviceInstanceId);
 
         //Generate vars file as symlink
         this.generateVarsFileSymLink(workDir, serviceInstanceId);

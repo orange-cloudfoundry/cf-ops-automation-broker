@@ -127,16 +127,7 @@ public class TemplatesGeneratorTest extends StructureGeneratorImplTest{
     public void check_that_all_prerequisites_are_satisfied() {
 
         //Given a model structure that meets all prerequisites
-        Structure modelStructure = new Structure.StructureBuilder(this.workDir)
-                .withDirectoryHierarchy(this.deploymentProperties.getRootDeployment(), this.deploymentProperties.getModelDeployment(), this.deploymentProperties.getTemplate())
-                .withFile(new String[]{this.deploymentProperties.getRootDeployment(), this.deploymentProperties.getModelDeployment(), this.deploymentProperties.getTemplate()},
-                        this.deploymentProperties.getModelDeployment() + DeploymentConstants.YML_EXTENSION) //mongodb.yml
-                .withFile(new String[]{this.deploymentProperties.getRootDeployment(), this.deploymentProperties.getModelDeployment(), this.deploymentProperties.getTemplate()},
-                        this.deploymentProperties.getModelDeployment() + DeploymentConstants.HYPHEN + this.deploymentProperties.getVars() + DeploymentConstants.YML_EXTENSION) //coab-vars.yml
-                .withDirectoryHierarchy(this.deploymentProperties.getRootDeployment(), this.deploymentProperties.getModelDeployment(), this.deploymentProperties.getOperators())
-                .withFile(new String[]{this.deploymentProperties.getRootDeployment(), this.deploymentProperties.getModelDeployment(), this.deploymentProperties.getOperators()},
-                        DeploymentConstants.COAB + DeploymentConstants.HYPHEN + this.deploymentProperties.getOperators() + DeploymentConstants.YML_EXTENSION) //coab-operators.yml
-                .build();
+        this.aModelStructure();
 
         //When
         this.templatesGenerator.checkPrerequisites(this.workDir);
@@ -145,12 +136,13 @@ public class TemplatesGeneratorTest extends StructureGeneratorImplTest{
     @Test
     public void check_that_template_directory_is_generated() throws IOException {
         //Given
-        Path rootDeploymentDir = StructureGeneratorHelper.generatePath(this.workDir,
-                this.deploymentProperties.getRootDeployment());
-        Files.createDirectories(rootDeploymentDir);
+        Structure deploymentStructure = new Structure.StructureBuilder(this.workDir)
+                .withDirectoryHierarchy(this.deploymentProperties.getRootDeployment(), this.templatesGenerator.computeDeploymentName(SERVICE_INSTANCE_ID))
+                .build();
+
 
         //When
-        this.templatesGenerator.generate(this.workDir, SERVICE_INSTANCE_ID);
+        this.templatesGenerator.generateTemplateDirectory(this.workDir, SERVICE_INSTANCE_ID);
 
         //Then
         Path templateDir = StructureGeneratorHelper.generatePath(this.workDir,
@@ -162,14 +154,14 @@ public class TemplatesGeneratorTest extends StructureGeneratorImplTest{
     }
 
     @Test
-    public void check_that_deployment_dependencies_file_is_generated() throws IOException {
+    public void check_that_deployment_dependencies_file_is_generated() {
         //Given
-        Path rootDeploymentDir = StructureGeneratorHelper.generatePath(this.workDir,
-                this.deploymentProperties.getRootDeployment());
-        Files.createDirectories(rootDeploymentDir);
+        Structure deploymentStructure = new Structure.StructureBuilder(this.workDir)
+                .withDirectoryHierarchy(this.deploymentProperties.getRootDeployment(),  this.templatesGenerator.computeDeploymentName(SERVICE_INSTANCE_ID))
+                .build();
 
         //When
-        this.templatesGenerator.generate(this.workDir, SERVICE_INSTANCE_ID);
+        this.templatesGenerator.generateDeploymentDependenciesFile(this.workDir, SERVICE_INSTANCE_ID);
 
         //Then
         Path deploymentDependenciesFile = StructureGeneratorHelper.generatePath(this.workDir,
@@ -181,14 +173,18 @@ public class TemplatesGeneratorTest extends StructureGeneratorImplTest{
     }
 
     @Test
-    public void check_that_symlink_towards_manifest_file_is_generated() throws IOException {
+    public void check_that_symlink_towards_manifest_file_is_generated() throws Exception {
         //Given repository, root deployment,model deployment and template directory with model manifest file
-        Path templateDir = aDeploymentTemplateDir();
-        Path sourceManifestFile = StructureGeneratorHelper.generatePath(templateDir, this.deploymentProperties.getModelDeployment() + DeploymentConstants.YML_EXTENSION);
-        Files.createFile(sourceManifestFile);
+        Structure modelStructure = new Structure.StructureBuilder(this.workDir)
+                .withFile(new String[]{this.deploymentProperties.getRootDeployment(), this.deploymentProperties.getModelDeployment(), this.deploymentProperties.getTemplate()},
+                        this.deploymentProperties.getModelDeployment() + DeploymentConstants.YML_EXTENSION)
+                .build();
+        Structure deploymentStructure = new Structure.StructureBuilder(this.workDir)
+                .withDirectoryHierarchy(this.deploymentProperties.getRootDeployment(),  this.templatesGenerator.computeDeploymentName(SERVICE_INSTANCE_ID), this.deploymentProperties.getTemplate())
+                .build();
 
         //When
-        this.templatesGenerator.generate(this.workDir, SERVICE_INSTANCE_ID);
+        this.templatesGenerator.generateManifestFileSymLink(this.workDir, SERVICE_INSTANCE_ID);
 
         //Then
         Path targetManifestFile = StructureGeneratorHelper.generatePath(this.workDir,
@@ -198,27 +194,22 @@ public class TemplatesGeneratorTest extends StructureGeneratorImplTest{
                 this.deploymentProperties.getModelDeploymentShortAlias() + DeploymentConstants.UNDERSCORE + SERVICE_INSTANCE_ID + DeploymentConstants.YML_EXTENSION);
         assertThat("Symbolic link towards manifest file doesn't exist:" + targetManifestFile, Files.exists(targetManifestFile));
         assertThat("Manifest file is not a symbolic link", Files.isSymbolicLink(targetManifestFile));
-    }
-
-    private Path aDeploymentTemplateDir() throws IOException {
-        Path templateDir = StructureGeneratorHelper.generatePath(this.workDir,
-                this.deploymentProperties.getRootDeployment(),
-                this.deploymentProperties.getModelDeployment(),
-                this.deploymentProperties.getTemplate());
-        Files.createDirectories(templateDir);
-        return templateDir;
+        //assertThat(Files.readSymbolicLink(targetManifestFile.toString(), is(equalTo("../../" + this.deploymentProperties.getModelDeployment() + "/operators/coab-operators.yml")));
     }
 
     @Test
-    public void check_that_symlink_towards_vars_file_is_generated() throws IOException {
+    public void check_that_symlink_towards_vars_file_is_generated() throws Exception {
         //Given repository, root deployment,model deployment and template directory with model vars file
-        Path templateDir = getTemplateDir();
-        Files.createDirectories(templateDir);
-        Path sourceVarsFile = StructureGeneratorHelper.generatePath(templateDir, this.deploymentProperties.getModelDeployment() + DeploymentConstants.HYPHEN + this.deploymentProperties.getVars() + DeploymentConstants.YML_EXTENSION);
-        Files.createFile(sourceVarsFile);
+        Structure modelStructure = new Structure.StructureBuilder(this.workDir)
+                .withFile(new String[]{this.deploymentProperties.getRootDeployment(), this.deploymentProperties.getModelDeployment(), this.deploymentProperties.getTemplate()},
+                        this.deploymentProperties.getModelDeployment() + DeploymentConstants.HYPHEN + this.deploymentProperties.getVars() + DeploymentConstants.YML_EXTENSION)
+                .build();
+        Structure deploymentStructure = new Structure.StructureBuilder(this.workDir)
+                .withDirectoryHierarchy(this.deploymentProperties.getRootDeployment(),  this.templatesGenerator.computeDeploymentName(SERVICE_INSTANCE_ID), this.deploymentProperties.getTemplate())
+                .build();
 
         //When
-        this.templatesGenerator.generate(this.workDir, SERVICE_INSTANCE_ID);
+        this.templatesGenerator.generateVarsFileSymLink(this.workDir, SERVICE_INSTANCE_ID);
 
         //Then
         Path targetVarsFile = StructureGeneratorHelper.generatePath(this.workDir,
@@ -228,29 +219,22 @@ public class TemplatesGeneratorTest extends StructureGeneratorImplTest{
                 this.deploymentProperties.getModelDeploymentShortAlias() + DeploymentConstants.UNDERSCORE + SERVICE_INSTANCE_ID + DeploymentConstants.HYPHEN + this.deploymentProperties.getVars() + DeploymentConstants.YML_EXTENSION);
         assertThat("Symbolic link towards vars file doesn't exist", Files.exists(targetVarsFile));
         assertThat("Vars file is not a symbolic link", Files.isSymbolicLink(targetVarsFile));
-//            assertThat(Files.readSymbolicLink(targetOperatorsFile).toString(), is(equalTo("../../" + this.deploymentProperties.getModelDeployment() + "/operators/coab-operators.yml")));
-    }
-
-    private Path getTemplateDir() {
-        return StructureGeneratorHelper.generatePath(this.workDir,
-                this.deploymentProperties.getRootDeployment(),
-                this.deploymentProperties.getModelDeployment(),
-                this.deploymentProperties.getTemplate());
+        //assertThat(Files.readSymbolicLink(targetVarsFile).toString(), is(equalTo("../../" + this.deploymentProperties.getModelDeployment() + "/operators/coab-operators.yml")));
     }
 
     @Test
     public void check_that_symlink_towards_coab_operators_file_is_generated() throws Exception {
         //Given repository, root deployment,model deployment and operators directory with coab-operators file
-        Path operatorsDir = StructureGeneratorHelper.generatePath(this.workDir,
-                this.deploymentProperties.getRootDeployment(),
-                this.deploymentProperties.getModelDeployment(),
-                this.deploymentProperties.getOperators());
-        Files.createDirectories(operatorsDir);
-        Path sourceOperatorsFile = StructureGeneratorHelper.generatePath(operatorsDir, DeploymentConstants.COAB + DeploymentConstants.HYPHEN + this.deploymentProperties.getOperators() + DeploymentConstants.YML_EXTENSION);
-        Files.createFile(sourceOperatorsFile);
+        Structure modelStructure = new Structure.StructureBuilder(this.workDir)
+                .withFile(new String[]{this.deploymentProperties.getRootDeployment(), this.deploymentProperties.getModelDeployment(), this.deploymentProperties.getOperators()},
+                        DeploymentConstants.COAB + DeploymentConstants.HYPHEN + this.deploymentProperties.getOperators() + DeploymentConstants.YML_EXTENSION)
+                .build();
+        Structure deploymentStructure = new Structure.StructureBuilder(this.workDir)
+                .withDirectoryHierarchy(this.deploymentProperties.getRootDeployment(),  this.templatesGenerator.computeDeploymentName(SERVICE_INSTANCE_ID), this.deploymentProperties.getTemplate())
+                .build();
 
         //When
-        this.templatesGenerator.generate(this.workDir, SERVICE_INSTANCE_ID);
+        this.templatesGenerator.generateCoabOperatorsFileSymLink(this.workDir, SERVICE_INSTANCE_ID);
 
         //Then
         Path targetOperatorsFile = StructureGeneratorHelper.generatePath(this.workDir,
@@ -264,14 +248,14 @@ public class TemplatesGeneratorTest extends StructureGeneratorImplTest{
     }
 
     @Test
-    public void check_that_coab_vars_file_is_generated() throws IOException {
+    public void check_that_coab_vars_file_is_generated() throws Exception {
         //Given
-        Path rootDeploymentDir = StructureGeneratorHelper.generatePath(this.workDir,
-                this.deploymentProperties.getRootDeployment());
-        Files.createDirectories(rootDeploymentDir);
+        Structure deploymentStructure = new Structure.StructureBuilder(this.workDir)
+                .withDirectoryHierarchy(this.deploymentProperties.getRootDeployment(),  this.templatesGenerator.computeDeploymentName(SERVICE_INSTANCE_ID), this.deploymentProperties.getTemplate())
+                .build();
 
         //When
-        this.templatesGenerator.generate(this.workDir, SERVICE_INSTANCE_ID);
+        this.templatesGenerator.generateCoabVarsFile(this.workDir, SERVICE_INSTANCE_ID);
 
         //Then
         Path coabVarsFile = StructureGeneratorHelper.generatePath(this.workDir,
@@ -284,7 +268,7 @@ public class TemplatesGeneratorTest extends StructureGeneratorImplTest{
     }
 
     @Test
-    public void check_that_symlinks_towards_operators_files_under_templates_directory_are_generated_bis() throws Exception {
+    public void check_that_symlinks_towards_operators_files_under_templates_directory_are_generated() throws Exception {
 
         //Given model and deployment structure
         Structure modelStructure = new Structure.StructureBuilder(this.workDir)
@@ -311,6 +295,20 @@ public class TemplatesGeneratorTest extends StructureGeneratorImplTest{
         assertThat(Files.readSymbolicLink(expectedFirstOperatorsFile).toString(), is(equalTo("../../" + this.deploymentProperties.getModelDeployment() + "/template/1-add-shield-operators.yml")));
 
     }
+
+    private void aModelStructure(){
+        Structure modelStructure = new Structure.StructureBuilder(this.workDir)
+                .withDirectoryHierarchy(this.deploymentProperties.getRootDeployment(), this.deploymentProperties.getModelDeployment(), this.deploymentProperties.getTemplate())
+                .withFile(new String[]{this.deploymentProperties.getRootDeployment(), this.deploymentProperties.getModelDeployment(), this.deploymentProperties.getTemplate()},
+                        this.deploymentProperties.getModelDeployment() + DeploymentConstants.YML_EXTENSION) //mongodb.yml
+                .withFile(new String[]{this.deploymentProperties.getRootDeployment(), this.deploymentProperties.getModelDeployment(), this.deploymentProperties.getTemplate()},
+                        this.deploymentProperties.getModelDeployment() + DeploymentConstants.HYPHEN + this.deploymentProperties.getVars() + DeploymentConstants.YML_EXTENSION) //coab-vars.yml
+                .withDirectoryHierarchy(this.deploymentProperties.getRootDeployment(), this.deploymentProperties.getModelDeployment(), this.deploymentProperties.getOperators())
+                .withFile(new String[]{this.deploymentProperties.getRootDeployment(), this.deploymentProperties.getModelDeployment(), this.deploymentProperties.getOperators()},
+                        DeploymentConstants.COAB + DeploymentConstants.HYPHEN + this.deploymentProperties.getOperators() + DeploymentConstants.YML_EXTENSION) //coab-operators.yml
+                .build();
+    }
+
 
     @Test
     @Ignore

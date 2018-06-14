@@ -167,9 +167,43 @@ public class TemplatesGeneratorTest extends StructureGeneratorImplTest{
                 this.deploymentProperties.getRootDeployment(),
                 this.templatesGenerator.computeDeploymentName(SERVICE_INSTANCE_ID),
                 this.deploymentProperties.getTemplate(),
-                this.deploymentProperties.getModelDeploymentShortAlias() + DeploymentConstants.UNDERSCORE + SERVICE_INSTANCE_ID + DeploymentConstants.YML_EXTENSION);
+                this.templatesGenerator.computeDeploymentName(SERVICE_INSTANCE_ID) + DeploymentConstants.YML_EXTENSION);
         assertThat("Symbolic link towards manifest file doesn't exist:" + targetManifestFile, Files.exists(targetManifestFile));
         assertThat("Manifest file is not a symbolic link", Files.isSymbolicLink(targetManifestFile));
+        //assertThat(Files.readSymbolicLink(targetManifestFile.toString(), is(equalTo("../../" + this.deploymentProperties.getModelDeployment() + "/operators/coab-operators.yml")));
+    }
+
+    @Test
+    public void check_that_symlink_towards_manifest_file_are_generated() throws Exception {
+        //Given repository, root deployment,model deployment and template directory with model manifest file
+        Structure modelStructure = new Structure.StructureBuilder(this.workDir)
+                .withFile(new String[]{this.deploymentProperties.getRootDeployment(), this.deploymentProperties.getModelDeployment(), this.deploymentProperties.getTemplate()},
+                        this.deploymentProperties.getModelDeployment() + DeploymentConstants.YML_EXTENSION)
+                .withFile(new String[]{this.deploymentProperties.getRootDeployment(), this.deploymentProperties.getModelDeployment(), this.deploymentProperties.getTemplate()},
+                        this.deploymentProperties.getModelDeployment() + DeploymentConstants.COA_TEMPLATE_FILE_SUFFIX)
+                .build();
+        Structure deploymentStructure = new Structure.StructureBuilder(this.workDir)
+                .withDirectoryHierarchy(this.deploymentProperties.getRootDeployment(),  this.templatesGenerator.computeDeploymentName(SERVICE_INSTANCE_ID), this.deploymentProperties.getTemplate())
+                .build();
+
+        //When
+        this.templatesGenerator.generateManifestFileSymLinkNew(this.workDir, SERVICE_INSTANCE_ID);
+
+        //Then
+        Path targetManifestFile = StructureGeneratorHelper.generatePath(this.workDir,
+                this.deploymentProperties.getRootDeployment(),
+                this.templatesGenerator.computeDeploymentName(SERVICE_INSTANCE_ID),
+                this.deploymentProperties.getTemplate(),
+                this.templatesGenerator.computeDeploymentName(SERVICE_INSTANCE_ID) + DeploymentConstants.YML_EXTENSION);
+        assertThat("Symbolic link towards manifest file doesn't exist:" + targetManifestFile, Files.exists(targetManifestFile));
+        assertThat("Manifest file is not a symbolic link", Files.isSymbolicLink(targetManifestFile));
+        Path targetManifestTplFile = StructureGeneratorHelper.generatePath(this.workDir,
+                this.deploymentProperties.getRootDeployment(),
+                this.templatesGenerator.computeDeploymentName(SERVICE_INSTANCE_ID),
+                this.deploymentProperties.getTemplate(),
+                this.templatesGenerator.computeDeploymentName(SERVICE_INSTANCE_ID) + DeploymentConstants.COA_TEMPLATE_FILE_SUFFIX);
+        assertThat("Symbolic link towards manifest template file doesn't exist:" + targetManifestTplFile, Files.exists(targetManifestTplFile));
+        assertThat("Manifest file is not a symbolic link", Files.isSymbolicLink(targetManifestTplFile));
         //assertThat(Files.readSymbolicLink(targetManifestFile.toString(), is(equalTo("../../" + this.deploymentProperties.getModelDeployment() + "/operators/coab-operators.yml")));
     }
 
@@ -192,9 +226,43 @@ public class TemplatesGeneratorTest extends StructureGeneratorImplTest{
                 this.deploymentProperties.getRootDeployment(),
                 this.templatesGenerator.computeDeploymentName(SERVICE_INSTANCE_ID),
                 this.deploymentProperties.getTemplate(),
-                this.deploymentProperties.getModelDeploymentShortAlias() + DeploymentConstants.UNDERSCORE + SERVICE_INSTANCE_ID + DeploymentConstants.HYPHEN + this.deploymentProperties.getVars() + DeploymentConstants.YML_EXTENSION);
+                this.templatesGenerator.computeDeploymentName(SERVICE_INSTANCE_ID) + DeploymentConstants.HYPHEN + this.deploymentProperties.getVars() + DeploymentConstants.YML_EXTENSION);
         assertThat("Symbolic link towards vars file doesn't exist", Files.exists(targetVarsFile));
         assertThat("Vars file is not a symbolic link", Files.isSymbolicLink(targetVarsFile));
+        //assertThat(Files.readSymbolicLink(targetVarsFile).toString(), is(equalTo("../../" + this.deploymentProperties.getModelDeployment() + "/operators/coab-operators.yml")));
+    }
+
+    @Test
+    public void check_that_symlink_towards_vars_file_are_generated() throws Exception {
+        //Given repository, root deployment,model deployment and template directory with model vars file
+        Structure modelStructure = new Structure.StructureBuilder(this.workDir)
+                .withFile(new String[]{this.deploymentProperties.getRootDeployment(), this.deploymentProperties.getModelDeployment(), this.deploymentProperties.getTemplate()},
+                        this.deploymentProperties.getModelDeployment() + DeploymentConstants.COA_VARS_FILE + DeploymentConstants.YML_EXTENSION)
+                .withFile(new String[]{this.deploymentProperties.getRootDeployment(), this.deploymentProperties.getModelDeployment(), this.deploymentProperties.getTemplate()},
+                        this.deploymentProperties.getModelDeployment() + DeploymentConstants.COA_VARS_FILE + DeploymentConstants.COA_TEMPLATE_FILE_SUFFIX)
+                .build();
+        Structure deploymentStructure = new Structure.StructureBuilder(this.workDir)
+                .withDirectoryHierarchy(this.deploymentProperties.getRootDeployment(),  this.templatesGenerator.computeDeploymentName(SERVICE_INSTANCE_ID), this.deploymentProperties.getTemplate())
+                .build();
+
+        //When
+        this.templatesGenerator.generateVarsFileSymLinkNew(this.workDir, SERVICE_INSTANCE_ID);
+
+        //Then
+        Path targetVarsFile = StructureGeneratorHelper.generatePath(this.workDir,
+                this.deploymentProperties.getRootDeployment(),
+                this.templatesGenerator.computeDeploymentName(SERVICE_INSTANCE_ID),
+                this.deploymentProperties.getTemplate(),
+                this.templatesGenerator.computeDeploymentName(SERVICE_INSTANCE_ID) + DeploymentConstants.COA_VARS_FILE + DeploymentConstants.YML_EXTENSION);
+        assertThat("Symbolic link towards vars file doesn't exist", Files.exists(targetVarsFile));
+        assertThat("Vars file is not a symbolic link", Files.isSymbolicLink(targetVarsFile));
+        Path targetVarsTplFile = StructureGeneratorHelper.generatePath(this.workDir,
+                this.deploymentProperties.getRootDeployment(),
+                this.templatesGenerator.computeDeploymentName(SERVICE_INSTANCE_ID),
+                this.deploymentProperties.getTemplate(),
+                this.templatesGenerator.computeDeploymentName(SERVICE_INSTANCE_ID) + DeploymentConstants.COA_VARS_FILE + DeploymentConstants.COA_TEMPLATE_FILE_SUFFIX);
+        assertThat("Symbolic link towards vars file doesn't exist", Files.exists(targetVarsTplFile));
+        assertThat("Vars file is not a symbolic link", Files.isSymbolicLink(targetVarsTplFile));
         //assertThat(Files.readSymbolicLink(targetVarsFile).toString(), is(equalTo("../../" + this.deploymentProperties.getModelDeployment() + "/operators/coab-operators.yml")));
     }
 

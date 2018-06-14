@@ -126,7 +126,7 @@ public class StructureGeneratorHelper {
             }
         } catch (IOException e) {
             e.printStackTrace();
-            throw new DeploymentException(DeploymentConstants.GENERATION_EXCEPTION);
+            throw new DeploymentException(DeploymentConstants.SEARCH_EXCEPTION);
         }
         return paths;
     }

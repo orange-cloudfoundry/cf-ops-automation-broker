@@ -36,7 +36,7 @@ public class TemplatesGenerator extends StructureGeneratorImpl{
         this.checkThatModelManifestFileExists(workDir);
 
         //Check specific pre-requisite (vars file in model template directory)
-        this.checkThatModelVarsFileExists(workDir);
+        //this.checkThatModelVarsFileExists(workDir); => useless
 
         //Check specific pre-requisite (coab operators file in model operators directory)
         this.checkThatModelCoabOperatorsFileExists(workDir);
@@ -97,7 +97,12 @@ public class TemplatesGenerator extends StructureGeneratorImpl{
                 this.modelDeployment,
                 this.template,
                 this.modelDeployment + DeploymentConstants.YML_EXTENSION);
-        if (StructureGeneratorHelper.isMissingResource(modelManifestFile)){
+        Path modelManifestTplFile = StructureGeneratorHelper.generatePath(workDir,
+                this.rootDeployment,
+                this.modelDeployment,
+                this.template,
+                this.modelDeployment + DeploymentConstants.COA_TEMPLATE_FILE_SUFFIX);
+        if (StructureGeneratorHelper.isMissingResource(modelManifestFile) && StructureGeneratorHelper.isMissingResource(modelManifestTplFile)){
             throw new DeploymentException(DeploymentConstants.MANIFEST_FILE_EXCEPTION);
         }
     }
@@ -107,19 +112,31 @@ public class TemplatesGenerator extends StructureGeneratorImpl{
                 this.rootDeployment,
                 this.modelDeployment,
                 this.template,
-                this.modelDeployment + DeploymentConstants.HYPHEN + this.vars + DeploymentConstants.YML_EXTENSION);
-        if (StructureGeneratorHelper.isMissingResource(modelVarsFile)){
+                this.modelDeployment + DeploymentConstants.COA_VARS_FILE + DeploymentConstants.YML_EXTENSION);
+        Path modelVarsTplFile = StructureGeneratorHelper.generatePath(workDir,
+                this.rootDeployment,
+                this.modelDeployment,
+                this.template,
+                this.modelDeployment + DeploymentConstants.COA_VARS_FILE + DeploymentConstants.COA_TEMPLATE_FILE_SUFFIX);
+        if (StructureGeneratorHelper.isMissingResource(modelVarsFile) && StructureGeneratorHelper.isMissingResource(modelVarsTplFile)){
             throw new DeploymentException(DeploymentConstants.VARS_FILE_EXCEPTION);
         }
     }
 
     protected void checkThatModelCoabOperatorsFileExists(Path workDir){
-        Path modelOperatorsFile = StructureGeneratorHelper.generatePath(workDir,
+        //Temporary situation
+        Path modelOperatorsFileinSpecificPath = StructureGeneratorHelper.generatePath(workDir,
                 this.rootDeployment,
                 this.modelDeployment,
                 this.operators,
-                DeploymentConstants.COAB + DeploymentConstants.HYPHEN + this.operators + DeploymentConstants.YML_EXTENSION);
-        if (StructureGeneratorHelper.isMissingResource(modelOperatorsFile)){
+                DeploymentConstants.COAB + DeploymentConstants.COA_OPERATORS_FILE_SUFFIX);
+        //Target situation
+        Path modelOperatorsFile = StructureGeneratorHelper.generatePath(workDir,
+                this.rootDeployment,
+                this.modelDeployment,
+                this.template,
+                DeploymentConstants.COAB + DeploymentConstants.COA_OPERATORS_FILE_SUFFIX);
+        if (StructureGeneratorHelper.isMissingResource(modelOperatorsFileinSpecificPath) && StructureGeneratorHelper.isMissingResource(modelOperatorsFile)){
             throw new DeploymentException(DeploymentConstants.COAB_OPERATORS_FILE_EXCEPTION);
         }
     }
@@ -179,5 +196,28 @@ public class TemplatesGenerator extends StructureGeneratorImpl{
         String sourceFileName = DeploymentConstants.COAB + DeploymentConstants.HYPHEN + this.vars + DeploymentConstants.YML_EXTENSION;
         StructureGeneratorHelper.generateFile(workDir, targetPathElements, sourceFileName, sourceFileName, mapCoabVarsFile);
     }
+
+    protected List<String> searchForManifestFiles(Path workDir){
+        Path path = StructureGeneratorHelper.generatePath(workDir, this.rootDeployment, this.modelDeployment, this.template);
+        String glob = "{" + this.modelDeployment + DeploymentConstants.YML_EXTENSION + "," + this.modelDeployment + DeploymentConstants.COA_TEMPLATE_FILE_SUFFIX + "}"; // "{model.yml,model-tpl.yml}"
+        List<String> manifestFileList = StructureGeneratorHelper.listFilesPaths(path, glob);
+        return manifestFileList;
+    }
+
+    protected List<String> searchForVarsFiles(Path workDir){
+        Path path = StructureGeneratorHelper.generatePath(workDir, this.rootDeployment, this.modelDeployment, this.template);
+        String glob = "{" + this.modelDeployment + DeploymentConstants.COA_VARS_FILE + DeploymentConstants.YML_EXTENSION + "," + this.modelDeployment + DeploymentConstants.COA_VARS_FILE + DeploymentConstants.COA_TEMPLATE_FILE_SUFFIX + "}"; // "{model-vars.yml,model-vars-tpl.yml}"
+        List<String> varsFileList = StructureGeneratorHelper.listFilesPaths(path, glob);
+        return varsFileList;
+    }
+
+    protected List<String> searchForOperatorsFiles(Path workDir){ //Search across sub directory
+        Path path = StructureGeneratorHelper.generatePath(workDir, this.rootDeployment, this.modelDeployment, this.template);
+        String glob = "*" + DeploymentConstants.COA_OPERATORS_FILE_SUFFIX; // "*-operators.yml"
+        List<String> operatorsFileList = StructureGeneratorHelper.listFilesPaths(path, glob);
+        return operatorsFileList;
+    }
+
+
 
 }

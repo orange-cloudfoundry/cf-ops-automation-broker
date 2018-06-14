@@ -136,7 +136,55 @@ public class StructureGeneratorHelperTest {
     }
 
     @Test
-    public void check_list_files_paths() {
+    public void check_list_files_paths_manifest() {
+        //Given a root path and path elements to create
+        Path rootPath = this.temporaryFolder.getRoot().toPath();
+        try {
+            Path path = rootPath.resolve("model-vars.yml");
+            Files.createFile(path);
+            path = rootPath.resolve("model-tpl.yml");
+            Files.createFile(path);
+            path = rootPath.resolve("model.yml");
+            Files.createFile(path);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        //When
+        List<String> paths = StructureGeneratorHelper.listFilesPaths(rootPath, "{model.yml,model-tpl.yml}");
+
+        //Then
+        assertThat("model.yml is not present", paths.contains("model.yml"));
+        assertThat("model-tpl.yml is not present", paths.contains("model-tpl.yml"));
+        assertThat("model-vars.yml is present", ! paths.contains("model-vars.yml"));
+    }
+
+    @Test
+    public void check_list_files_paths_vars() {
+        //Given a root path and path elements to create
+        Path rootPath = this.temporaryFolder.getRoot().toPath();
+        try {
+            Path path = rootPath.resolve("model-vars.yml");
+            Files.createFile(path);
+            path = rootPath.resolve("model-vars-tpl.yml");
+            Files.createFile(path);
+            path = rootPath.resolve("model.yml");
+            Files.createFile(path);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        //When
+        List<String> paths = StructureGeneratorHelper.listFilesPaths(rootPath, "{model-vars.yml,model-vars-tpl.yml}");
+
+        //Then
+        assertThat("model-vars.yml is not present", paths.contains("model-vars.yml"));
+        assertThat("model-vars-tpl.yml is not present", paths.contains("model-vars-tpl.yml"));
+        assertThat("model.yml is present", ! paths.contains("model.yml"));
+    }
+
+    @Test
+    public void check_list_files_paths_operators() {
         //Given a root path and path elements to create
         Path rootPath = this.temporaryFolder.getRoot().toPath();
         try {
@@ -158,4 +206,5 @@ public class StructureGeneratorHelperTest {
         assertThat("file-op.yml is present", ! paths.contains("file-op.yml"));
         assertThat("file.yml is present", ! paths.contains("file.yml"));
     }
+
 }

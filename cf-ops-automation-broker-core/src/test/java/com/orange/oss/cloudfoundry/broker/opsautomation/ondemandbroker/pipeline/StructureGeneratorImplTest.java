@@ -102,7 +102,7 @@ public class StructureGeneratorImplTest {
     private DeploymentProperties aDeploymentProperties() {
         DeploymentProperties deploymentProperties = new DeploymentProperties();
         deploymentProperties.setRootDeployment("coab-depls");
-        deploymentProperties.setModelDeployment("cassandravarsops");
+        deploymentProperties.setModelDeployment("mongodb");
         deploymentProperties.setTemplate("template");
         deploymentProperties.setVars("vars");
         deploymentProperties.setOperators("operators");

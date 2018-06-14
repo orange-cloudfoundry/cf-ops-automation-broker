@@ -10,12 +10,15 @@ public class DeploymentConstants {
      * <blockquote>By convention, all files in template dir matching *-operators.yml are used by bosh-deployment as ops-files inputs.</blockquote>
      */
     public static final String COA_OPERATORS_FILE_SUFFIX= HYPHEN + "operators" + YML_EXTENSION;
+    public static final String COA_TEMPLATE_FILE_SUFFIX= HYPHEN + "tpl" + YML_EXTENSION;
+    public static final String COA_VARS_FILE= HYPHEN + "vars";
     public static final String DEPLOYMENT_DEPENDENCIES_FILENAME = "deployment-dependencies.yml";
     public static final String ENABLE_DEPLOYMENT_FILENAME = "enable-deployment.yml";
     public static final String DEPLOYMENT = "bosh";
     public static final String DEPLOYMENT_NAME_PATTERN = "@deployment_name@";
     public static final String GENERATION_EXCEPTION = "Generation fails";
     public static final String REMOVAL_EXCEPTION = "Removal fails";
+    public static final String SEARCH_EXCEPTION = "Search fails";
     public static final String ROOT_DEPLOYMENT_EXCEPTION = "Root deployment directory doesn't exist";
     public static final String MODEL_DEPLOYMENT_EXCEPTION = "Model deployment directory doesn't exist";
     public static final String TEMPLATE_EXCEPTION = "Template directory doesn't exist";

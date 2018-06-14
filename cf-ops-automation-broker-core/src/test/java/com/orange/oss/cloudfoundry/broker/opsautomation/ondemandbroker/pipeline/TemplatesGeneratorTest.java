@@ -8,6 +8,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -46,32 +48,6 @@ public class TemplatesGeneratorTest extends StructureGeneratorImplTest{
     }
 
     private TemplatesGenerator templatesGenerator;
-
-    @Test
-    public void raise_exception_if_root_deployment_directory_is_missing() {
-        //Then
-        thrown.expect(DeploymentException.class);
-        thrown.expectMessage(DeploymentConstants.ROOT_DEPLOYMENT_EXCEPTION);
-
-        //Given initialized by setUp method
-        //When
-        this.templatesGenerator.checkPrerequisites(this.workDir);
-    }//superclass TU
-
-    @Test
-    public void raise_exception_if_model_deployment_directory_is_missing() {
-        //Then
-        thrown.expect(DeploymentException.class);
-        thrown.expectMessage(DeploymentConstants.MODEL_DEPLOYMENT_EXCEPTION);
-
-        //Given (a part is initialized by setUp method)
-        Structure modelStructure = new Structure.StructureBuilder(this.workDir)
-                .withDirectoryHierarchy(this.deploymentProperties.getRootDeployment())
-                .build();
-
-        //When
-        this.templatesGenerator.checkPrerequisites(this.workDir);
-    }//superclass TU
 
     @Test
     public void raise_exception_if_template_directory_is_missing() {
@@ -296,18 +272,71 @@ public class TemplatesGeneratorTest extends StructureGeneratorImplTest{
 
     }
 
+    @Test
+    public void check_that_only_manifest_files_are_found() {
+        //Given model structure with files
+        this.aModelStructure();
+
+        //When
+        List<String> manifestList= this.templatesGenerator.searchForManifestFiles(this.workDir);
+
+        //Then
+        assertThat("model.yml is not present", manifestList.contains(this.deploymentProperties.getModelDeployment() + DeploymentConstants.YML_EXTENSION));
+        assertThat("model-tpl.yml is not present", manifestList.contains(this.deploymentProperties.getModelDeployment() + DeploymentConstants.COA_TEMPLATE_FILE_SUFFIX));
+
+    }
+
+    @Test
+    public void check_that_only_vars_files_are_found() {
+        //Given
+        this.aModelStructure();
+
+        //When
+        List<String> varsList= this.templatesGenerator.searchForVarsFiles(this.workDir);
+
+        //Then
+        assertThat("model-vars.yml is not present", varsList.contains(this.deploymentProperties.getModelDeployment() + DeploymentConstants.COA_VARS_FILE + DeploymentConstants.YML_EXTENSION));
+        assertThat("model-vars-tpl.yml is not present", varsList.contains(this.deploymentProperties.getModelDeployment() + DeploymentConstants.COA_VARS_FILE + DeploymentConstants.COA_TEMPLATE_FILE_SUFFIX));
+
+    }
+
+    @Test
+    public void check_that_only_operators_files_are_found() {
+        //Given
+        this.aModelStructure();
+
+        //When
+        List<String> operatorsList= this.templatesGenerator.searchForOperatorsFiles(this.workDir);
+
+        //Then
+        assertThat("coab-operators.yml is not present", operatorsList.contains(DeploymentConstants.COAB + DeploymentConstants.COA_OPERATORS_FILE_SUFFIX));
+
+    }
+
+
+
+
+
     private void aModelStructure(){
         Structure modelStructure = new Structure.StructureBuilder(this.workDir)
                 .withDirectoryHierarchy(this.deploymentProperties.getRootDeployment(), this.deploymentProperties.getModelDeployment(), this.deploymentProperties.getTemplate())
                 .withFile(new String[]{this.deploymentProperties.getRootDeployment(), this.deploymentProperties.getModelDeployment(), this.deploymentProperties.getTemplate()},
-                        this.deploymentProperties.getModelDeployment() + DeploymentConstants.YML_EXTENSION) //mongodb.yml
+                        this.deploymentProperties.getModelDeployment() + DeploymentConstants.YML_EXTENSION) //model.yml
                 .withFile(new String[]{this.deploymentProperties.getRootDeployment(), this.deploymentProperties.getModelDeployment(), this.deploymentProperties.getTemplate()},
-                        this.deploymentProperties.getModelDeployment() + DeploymentConstants.HYPHEN + this.deploymentProperties.getVars() + DeploymentConstants.YML_EXTENSION) //coab-vars.yml
+                        this.deploymentProperties.getModelDeployment() + DeploymentConstants.COA_TEMPLATE_FILE_SUFFIX) //moodel-tpl.yml
+                .withFile(new String[]{this.deploymentProperties.getRootDeployment(), this.deploymentProperties.getModelDeployment(), this.deploymentProperties.getTemplate()},
+                        this.deploymentProperties.getModelDeployment() + DeploymentConstants.COA_VARS_FILE + DeploymentConstants.YML_EXTENSION) //model-vars.yml
+                .withFile(new String[]{this.deploymentProperties.getRootDeployment(), this.deploymentProperties.getModelDeployment(), this.deploymentProperties.getTemplate()},
+                        this.deploymentProperties.getModelDeployment() + DeploymentConstants.COA_VARS_FILE + DeploymentConstants.COA_TEMPLATE_FILE_SUFFIX) //model-vars-tpl.yml
                 .withDirectoryHierarchy(this.deploymentProperties.getRootDeployment(), this.deploymentProperties.getModelDeployment(), this.deploymentProperties.getOperators())
                 .withFile(new String[]{this.deploymentProperties.getRootDeployment(), this.deploymentProperties.getModelDeployment(), this.deploymentProperties.getOperators()},
-                        DeploymentConstants.COAB + DeploymentConstants.HYPHEN + this.deploymentProperties.getOperators() + DeploymentConstants.YML_EXTENSION) //coab-operators.yml
+                       DeploymentConstants.COAB + DeploymentConstants.COA_OPERATORS_FILE_SUFFIX) //coab-operators.yml in subdir operators
+                .withFile(new String[]{this.deploymentProperties.getRootDeployment(), this.deploymentProperties.getModelDeployment(), this.deploymentProperties.getTemplate()},
+                       DeploymentConstants.COAB + DeploymentConstants.COA_OPERATORS_FILE_SUFFIX) //coab-operators.yml
                 .build();
     }
+
+
 
 
     @Test
@@ -319,7 +348,7 @@ public class TemplatesGeneratorTest extends StructureGeneratorImplTest{
     @Test
     @Ignore
     public void populatePaasTemplates() {
-        Path workDir = Paths.get("/home/ijly7474/GIT/coab/paas-templates");
+        Path workDir = Paths.get("/home/losapio/GIT/Coab/paas-templates/");
         this.templatesGenerator.checkPrerequisites(workDir);
         this.templatesGenerator.generate(workDir, SERVICE_INSTANCE_ID);
     }

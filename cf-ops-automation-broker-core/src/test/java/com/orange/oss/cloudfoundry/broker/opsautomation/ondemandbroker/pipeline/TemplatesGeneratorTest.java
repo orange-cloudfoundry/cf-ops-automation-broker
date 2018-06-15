@@ -341,6 +341,39 @@ public class TemplatesGeneratorTest extends StructureGeneratorImplTest{
     }
 
     @Test
+    public void check_that_all_symlinks_templates_directory_are_generated() throws Exception {
+
+        //Given model and deployment structure
+        aModelStructure();
+        Structure deploymentStructure = new Structure.StructureBuilder(this.workDir)
+                .withDirectoryHierarchy(this.deploymentProperties.getRootDeployment(),
+                        this.templatesGenerator.computeDeploymentName(SERVICE_INSTANCE_ID),
+                        this.deploymentProperties.getTemplate()).build();
+
+
+        //When
+        this.templatesGenerator.generateAllSymLinks(workDir, SERVICE_INSTANCE_ID);
+        //Then
+        Path expectedFirstOperatorsFile = StructureGeneratorHelper.generatePath(this.workDir,
+                this.deploymentProperties.getRootDeployment(),
+                this.templatesGenerator.computeDeploymentName(SERVICE_INSTANCE_ID),
+                this.deploymentProperties.getTemplate(),
+                "coab-operators.yml");
+        assertThat("Symbolic link towards operators file doesn't exist", Files.exists(expectedFirstOperatorsFile));
+        assertThat("Coab operators file is not a symbolic link", Files.isSymbolicLink(expectedFirstOperatorsFile));
+        assertThat(Files.readSymbolicLink(expectedFirstOperatorsFile).toString(), is(equalTo("../../" + this.deploymentProperties.getModelDeployment() + "/template/coab-operators.yml")));
+
+    }
+
+
+
+
+
+
+
+
+
+    @Test
     public void check_that_only_manifest_files_are_found() {
         //Given model structure with files
         this.aModelStructure();
@@ -391,7 +424,7 @@ public class TemplatesGeneratorTest extends StructureGeneratorImplTest{
                 .withFile(new String[]{this.deploymentProperties.getRootDeployment(), this.deploymentProperties.getModelDeployment(), this.deploymentProperties.getTemplate()},
                         this.deploymentProperties.getModelDeployment() + DeploymentConstants.YML_EXTENSION) //model.yml
                 .withFile(new String[]{this.deploymentProperties.getRootDeployment(), this.deploymentProperties.getModelDeployment(), this.deploymentProperties.getTemplate()},
-                        this.deploymentProperties.getModelDeployment() + DeploymentConstants.COA_TEMPLATE_FILE_SUFFIX) //moodel-tpl.yml
+                        this.deploymentProperties.getModelDeployment() + DeploymentConstants.COA_TEMPLATE_FILE_SUFFIX) //model-tpl.yml
                 .withFile(new String[]{this.deploymentProperties.getRootDeployment(), this.deploymentProperties.getModelDeployment(), this.deploymentProperties.getTemplate()},
                         this.deploymentProperties.getModelDeployment() + DeploymentConstants.COA_VARS_FILE + DeploymentConstants.YML_EXTENSION) //model-vars.yml
                 .withFile(new String[]{this.deploymentProperties.getRootDeployment(), this.deploymentProperties.getModelDeployment(), this.deploymentProperties.getTemplate()},

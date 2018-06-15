@@ -156,6 +156,18 @@ public class TemplatesGenerator extends StructureGeneratorImpl{
         StructureGeneratorHelper.generateFile(workDir, targetPathElements, sourceFileName, sourceFileName, mapDeploymentDependenciesFile);
     }
 
+
+    protected void generateAllSymLinks(Path workDir, String serviceInstanceId){
+        List<String> filesList = this.searchForAllFiles(workDir);
+        String[] sourcePathElements = new String[] {this.rootDeployment, this.modelDeployment, this.template};
+        String[] targetPathElements = new String[] {this.rootDeployment, this.computeDeploymentName(serviceInstanceId), this.template};
+        for (String file: filesList) {
+            String targetFileName = file.replaceFirst(this.modelDeployment, this.computeDeploymentName(serviceInstanceId));
+            StructureGeneratorHelper.generateSymbolicLink(workDir, sourcePathElements, targetPathElements, file, targetFileName);
+        }
+    }
+
+
     protected void generateManifestFileSymLink(Path workDir, String serviceInstanceId){
         String[] sourcePathElements = new String[] {this.rootDeployment, this.modelDeployment, this.template};
         String[] targetPathElements = new String[] {this.rootDeployment, this.computeDeploymentName(serviceInstanceId), this.template};
@@ -216,6 +228,12 @@ public class TemplatesGenerator extends StructureGeneratorImpl{
         String[] targetPathElements = new String[] {this.rootDeployment, this.computeDeploymentName(serviceInstanceId), this.template};
         String sourceFileName = DeploymentConstants.COAB + DeploymentConstants.HYPHEN + this.vars + DeploymentConstants.YML_EXTENSION;
         StructureGeneratorHelper.generateFile(workDir, targetPathElements, sourceFileName, sourceFileName, mapCoabVarsFile);
+    }
+
+    protected List<String> searchForAllFiles(Path workDir){
+        Path path = StructureGeneratorHelper.generatePath(workDir, this.rootDeployment, this.modelDeployment, this.template);
+        List<String> filesList = StructureGeneratorHelper.listFilesPaths(path, "*");
+        return filesList;
     }
 
     protected List<String> searchForManifestFiles(Path workDir){

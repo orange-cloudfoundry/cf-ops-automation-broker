@@ -1,12 +1,17 @@
-Support for multiple operators:
+Full COA conventions support:
 - [DONE]set COA rules as constants (in DeploymentConstants?) instead of configuration flags:
    - https://github.com/orange-cloudfoundry/cf-ops-automation#ops-files
     > By convention, all files in template dir matching *-operators.yml are used by bosh-deployment as ops-files inputs.
 - [DONE]remove prereq to have a file `operators/coab-operators.yml` present but still preserve symlinking it
    - it is fine to have a deployment without any operators file
 - add systematic symlink of any template/ file 
-   - [DONE]1st step: ignoring subdirs, regardless of their name if their present as file in this directory,
+   - [ONGOING]1st step: ignoring subdirs, regardless of their name if their present as file in this directory,
    - 2nd step: also mirror the subdirs with nested symlinks to support iaas-specific templates
+- add systematic symlink of any secrets/ file 
+   - regardless of their name if their present as file in this directory,
+- review deployment-dependencies.yml generation
+
+
 - update README.md to document COAB bosh support and cross reference COA bosh support   
   
 Vars files that include OSB input params (org,space,user, as well as arbitrary params)

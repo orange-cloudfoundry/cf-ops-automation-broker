@@ -12,80 +12,6 @@ Full COA conventions support:
 - review deployment-dependencies.yml generation
 
 
-- update README.md to document COAB bosh support and cross reference COA bosh support   
-  
-Vars files that include OSB input params (org,space,user, as well as arbitrary params)
-- DONE: Define formatting output amongst
-   - **Create dedicated DTO to control format**
-      - DONE: Test cases for optional data
-      - DONE: Test case for type conversions: boolean and numbers.
-      - DONE: Restrict to small char set and reject violations with user facing exception
-         - Set up basic regexp a-z, A-Z,0-9,-,_,.
-            - on individual strings within the POJO to get precise feedback, using bean validator 
-               - using javax bean validation 2.0
-                  - http://beanvalidation.org/2.0/spec/2.0.0.final/diff/diff-to-1.1/#whatsnew-20
-                  - http://hibernate.org/validator/documentation/getting-started/
-                  - currently spring-boot-web-starter 1.5.9-RELEASE pulls hibernate-validator-5-3-6-final which pull bean validation 1.1
-                     - try bumping hibernate validator while staying with spring boot 1.5.9 
-                        - seems a risky upgrade w.r.t. lists see https://github.com/spring-projects/spring-boot/issues/9784
-                        - would be better upgrade to spring 2.0.0M5 or later
-               - **using javax bean validation 1.1** + implement additional validation manually
-                  
-               - using spring validator
-                  - test using spring aoc
-                      - create a configuration class
-                      - modify test to use spring4 runner
-                      - inject validator in test
-                  - test using springboot
-                  - test using plain junit test
-                  => no real additional value, stick to javax.validation
-                  
-            - DONE: on the whole YML output. 
-                - but this requires accepting YML chars => not a good idea
-         - DONE: Modify UserFacingRuntimeException location so it get visible from core: move to core   
-          - Protect against polymorphism injection of classes through yml serialized data: explicitly disable non primitive classes excepted white listed ones. Try with classes i classpath that include jackson annotations, or plain POJOs with fully qualified names
-             - https://github.com/FasterXML/jackson-databind/issues/1599
-                - https://github.com/FasterXML/jackson-1/pull/5/files
-                - https://raw.githubusercontent.com/mbechler/marshalsec/master/marshalsec.pdf
-                    
-          - Protect against YML reference file loading and remote code injection
-          - Protect against credhub and spruce injections.
-      
-   - Leverage spring-cloud-service-broker model classes CreateServiceInstanceRequest: 
-      - con: Initial attempt is suboptimal
-         - fails to serialize the context properties. Likely missing the JsonProperty on properties field
-         - include some non relevant properties in the context of bosh operators: asyncAccepted
-```
-asyncAccepted: false
-parameters: {}
-context: !<Context>
-  platform: "cloudfoundry"
-service_id: "cassandra-ondemand-service"
-plan_id: "cassandra-ondemand-plan"
-organization_guid: "org_id"
-space_guid: "space_id"
-```
-      - con: fragile to directly use these models as the library is going through upcoming refactoring that would change our code
-   - use untyped structure
-   
-- DONE: Create DTO from OSB classes
-   - DONE: **In BoshProcessor**, sharing commit message logic to extract OSB field + test case methods
-      - Pass in the modelDeploymentShortAlias  
-      - Set the deploymentName to this.modelDeploymentShortAlias + DeploymentConstants.UNDERSCORE + serviceInstanceId
-   - In dedicated builder
-- DONE: Modify SecretsGenerator#generate(Path workDir, String serviceInstanceId) to accept DTO as argument instead of serviceInstanceId
-   - Modify SecretsGenerator to use ObjectMapper + clean up previous vars support.
-      - Update test to provide a CoabVarsFileDto 
-         - Q: modify DTO to provide getter/setters to avoid spreading anemic POJO in our code ?
-            - previous value becomes a setter
-            - set parameters becomes a setter
-         - A: 
-            - not a priority for now, wait more feedback on reading the DTO from YML (for get endpoints)
-            - for now factor out into  
-   - update BoshProcessor to use DTO Builder
-- DONE: update README.md
-
-
 
 - Bump jackson to 2.9.2 or later and pull https://github.com/FasterXML/jackson-dataformats-text/tree/master/yaml
 
@@ -98,19 +24,6 @@ java.lang.NullPointerException: null
 	at com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.BoshProcessor.preGetLastOperation(BoshProcessor.java:74) ~[classes/:na]
 
        
-
-- rename brokers to more generic names
-   - rename jars
-   - search for cloudflare specifics: see  
-      - //FIXME: cloudflare specifics to be moved out
-      - //FIXME: cloudflare specific default to be changed
-      - config: route-suffix 
-      - arbitrary param: route
-         - + unicity of this param
-   
-   - make a new release
-      - register in bintray new project
-   - update jars in paas-template
 
 - bump cloudflare version in paas-template
 - Generalization
@@ -141,12 +54,6 @@ java.lang.NullPointerException: null
 
 
 
-- Continue generalization of vars/ops
-   - replace deployment_name with service-instance-guid
-   - add service plan name
-   - add space_guid,org_guid, originating_user
-
-
 - Refine tarball automatic deployment to filter on the current cassandra PR branch name to avoid deploying old version
    - investigate an additional "branch" filter accepted on the artifact endpoint: https://circleci.com/api/v1.1/project/github/orange-cloudfoundry/cf-ops-automation-broker/latest/artifacts?filter=successful 
 
@@ -165,14 +72,8 @@ java.lang.NullPointerException: null
   
 
 
-- harden smoke tests:
-   - to ease CF/concourse correlation: rename service instance with the the service instance guid
-   - refactor to use more readeable syntax: trap, seq, functions, see 
-      - https://github.com/cloudfoundry/capi-release/blob/develop/src/capi_utils/monit_utils.sh
-      - https://github.com/cloudfoundry/cf-deployment-concourse-tasks/blob/master/bosh-delete-deployment/task
-      
-
 - Bump to springboot 2.0
+    - Use javax bean validation 2.0 in VarsFilesYmlFormatter for validating maps  
 - Bump to spring cloud service broker 2.0
 - Upgrade to mockito 2
 - Upgrade to junit5 to benefit from nested junit classes as well as descrptive names https://junit.org/junit5/docs/5.0.1/user-guide/
@@ -181,10 +82,6 @@ java.lang.NullPointerException: null
    - https://github.com/mockito/mockito/issues/1348
 
 
-
-- complete refactoring of  CassandraServiceProvisionningTest to use OSB client instead of raw rest assured:CassandraServiceProvisionningTest rest-assured based client which is not compliant w.r.t. "X-Broker-API-Originating-Identity" mandatory header.
-               
-                                   
 - future bind request mapping improvements
    - factor out plan mapping into a method and then a bean 
    - support route binding responses                 

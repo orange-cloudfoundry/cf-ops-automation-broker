@@ -43,10 +43,10 @@ public class TemplatesGenerator extends StructureGeneratorImpl{
     }
 
     @Override
-    public void generate(Path workDir, String serviceInstanceId) {
+    public void generate(Path workDir, String serviceInstanceId, CoabVarsFileDto coabVarsFileDto) {
 
         //Generate service directory
-        super.generate(workDir, serviceInstanceId);
+        super.generate(workDir, serviceInstanceId, coabVarsFileDto);
 
         //Generate template directory
         this.generateTemplateDirectory(workDir, serviceInstanceId);
@@ -177,7 +177,6 @@ public class TemplatesGenerator extends StructureGeneratorImpl{
 
     protected List<String> searchForAllFiles(Path workDir){
         Path path = StructureGeneratorHelper.generatePath(workDir, this.rootDeployment, this.modelDeployment, this.template);
-        List<String> filesList = StructureGeneratorHelper.listFilesPaths(path, "*");
-        return filesList;
+        return StructureGeneratorHelper.listFilesPaths(path, "*");
     }
 }

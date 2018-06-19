@@ -38,7 +38,7 @@ public class StructureGeneratorImpl implements StructureGenerator {
         }
     }
 
-    public void generate(Path workDir, String serviceInstanceId) {
+    public void generate(Path workDir, String serviceInstanceId, CoabVarsFileDto coabVarsFileDto) {
             ////Generate service directory
             StructureGeneratorHelper.generateDirectory(workDir, this.rootDeployment, this.computeDeploymentName(serviceInstanceId));
     }

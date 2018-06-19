@@ -35,10 +35,10 @@ public class SecretsGenerator extends StructureGeneratorImpl implements SecretsR
     }
 
     @Override
-    public void generate(Path workDir, String serviceInstanceId) {
+    public void generate(Path workDir, String serviceInstanceId, CoabVarsFileDto coabVarsFileDto) {
 
         //Generate service directory
-        super.generate(workDir, serviceInstanceId);
+        super.generate(workDir, serviceInstanceId, coabVarsFileDto);
 
         //Generate secrets directory
         this.generateSecretsDirectory(workDir, serviceInstanceId);
@@ -68,7 +68,7 @@ public class SecretsGenerator extends StructureGeneratorImpl implements SecretsR
     @Override
     public boolean isBoshDeploymentAvailable(Path secretsWorkDir, String serviceInstanceId) {
         Path targetManifestFile = getTargetManifestFilePath(secretsWorkDir, serviceInstanceId);
-        boolean exists = StructureGeneratorHelper.isMissingResource(targetManifestFile) ? false : true;
+        boolean exists = !StructureGeneratorHelper.isMissingResource(targetManifestFile);
         logger.debug("Manifest at path {} exists: {}", targetManifestFile, exists);
         return exists;
     }

@@ -47,13 +47,15 @@ public class BoshProcessor extends DefaultBrokerProcessor {
 		String serviceInstanceId = creationRequest.getServiceInstanceId();
 		logger.debug("service instance id is " + serviceInstanceId);
 
-		//Check pre-requisites and generate paas-template structure
+        CoabVarsFileDto coabVarsFileDto = wrapOsbIntoVarsDto(creationRequest);
+
+        //Check pre-requisites and generate paas-template structure
 		this.templatesGenerator.checkPrerequisites(templatesWorkDir);
-		this.templatesGenerator.generate(templatesWorkDir, serviceInstanceId);
+		this.templatesGenerator.generate(templatesWorkDir, serviceInstanceId, coabVarsFileDto);
 
 		//Check pre-requisites and generate paas-secrets structure
 		this.secretsGenerator.checkPrerequisites(secretsWorkDir);
-		this.secretsGenerator.generate(secretsWorkDir, serviceInstanceId);
+		this.secretsGenerator.generate(secretsWorkDir, serviceInstanceId, null);
 
 		//Create response and put it into context
 		CreateServiceInstanceResponse creationResponse = new CreateServiceInstanceResponse();

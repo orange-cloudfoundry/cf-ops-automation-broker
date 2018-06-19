@@ -62,9 +62,9 @@ public class BoshProcessorTest {
 
         //Then verify parameters and delegation on calls
         verify(templatesGenerator).checkPrerequisites(aGitRepoWorkDir());
-        verify(templatesGenerator).generate(aGitRepoWorkDir(), SERVICE_INSTANCE_ID);
+        verify(templatesGenerator).generate(eq(aGitRepoWorkDir()), eq(SERVICE_INSTANCE_ID), any(CoabVarsFileDto.class));
         verify(secretsGenerator).checkPrerequisites(aGitRepoWorkDir());
-        verify(secretsGenerator).generate(aGitRepoWorkDir(), SERVICE_INSTANCE_ID);
+        verify(secretsGenerator).generate(aGitRepoWorkDir(), SERVICE_INSTANCE_ID, null);
 
         //Then verify populated context
         CreateServiceInstanceResponse serviceInstanceResponse = (CreateServiceInstanceResponse) context.contextKeys.get(ProcessorChainServiceInstanceService.CREATE_SERVICE_INSTANCE_RESPONSE);

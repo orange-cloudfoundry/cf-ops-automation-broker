@@ -9,8 +9,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.List;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -113,7 +111,7 @@ public class TemplatesGeneratorTest extends StructureGeneratorImplTest{
     }
 
     @Test
-    public void check_that_template_directory_is_generated() throws IOException {
+    public void check_that_template_directory_is_generated() {
         //Given
         Structure deploymentStructure = new Structure.StructureBuilder(this.workDir)
                 .withDirectoryHierarchy(this.deploymentProperties.getRootDeployment(), this.templatesGenerator.computeDeploymentName(SERVICE_INSTANCE_ID))
@@ -153,7 +151,7 @@ public class TemplatesGeneratorTest extends StructureGeneratorImplTest{
 
 
     @Test
-    public void check_that_coab_vars_file_is_generated() throws Exception {
+    public void check_that_coab_vars_file_is_generated() {
         //Given
         Structure deploymentStructure = new Structure.StructureBuilder(this.workDir)
                 .withDirectoryHierarchy(this.deploymentProperties.getRootDeployment(),  this.templatesGenerator.computeDeploymentName(SERVICE_INSTANCE_ID), this.deploymentProperties.getTemplate())
@@ -316,6 +314,6 @@ public class TemplatesGeneratorTest extends StructureGeneratorImplTest{
     public void populatePaasTemplates() {
         Path workDir = Paths.get("/home/losapio/GIT/Coab/paas-templates/");
         this.templatesGenerator.checkPrerequisites(workDir);
-        this.templatesGenerator.generate(workDir, SERVICE_INSTANCE_ID);
+        this.templatesGenerator.generate(workDir, SERVICE_INSTANCE_ID, null);
     }
 }

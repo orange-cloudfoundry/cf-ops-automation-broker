@@ -245,7 +245,7 @@ public class SecretsGeneratorTest extends StructureGeneratorImplTest{
     }
 
     @Test
-    public void check_that_enable_deployment_file_is_removed() throws IOException {
+    public void check_that_enable_deployment_file_is_removed() {
 
         //Given
         this.aDeploymentStructure();
@@ -294,7 +294,7 @@ public class SecretsGeneratorTest extends StructureGeneratorImplTest{
     public void populatePaasSecrets() {
         Path workDir = Paths.get("/home/ijly7474/GIT/coab/preprod-secrets");
         this.secretsGenerator.checkPrerequisites(workDir);
-        this.secretsGenerator.generate(workDir, SERVICE_INSTANCE_ID);
+        this.secretsGenerator.generate(workDir, SERVICE_INSTANCE_ID, null);
     }
 
 }

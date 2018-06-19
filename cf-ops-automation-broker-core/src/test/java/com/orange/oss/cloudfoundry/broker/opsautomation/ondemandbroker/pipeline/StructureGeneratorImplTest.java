@@ -90,7 +90,7 @@ public class StructureGeneratorImplTest {
                 .build();
 
         //When
-        this.structureGeneratorImpl.generate(this.workDir, SERVICE_INSTANCE_ID);
+        this.structureGeneratorImpl.generate(this.workDir, SERVICE_INSTANCE_ID, null);
 
         //Then
         Path deploymentInstanceDir = StructureGeneratorHelper.generatePath(this.workDir,

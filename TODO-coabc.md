@@ -73,7 +73,7 @@ space_guid: "space_id"
       - Pass in the modelDeploymentShortAlias  
       - Set the deploymentName to this.modelDeploymentShortAlias + DeploymentConstants.UNDERSCORE + serviceInstanceId
    - In dedicated builder
-- Modify SecretsGenerator#generate(Path workDir, String serviceInstanceId) to accept DTO as argument instead of serviceInstanceId
+- DONE: Modify SecretsGenerator#generate(Path workDir, String serviceInstanceId) to accept DTO as argument instead of serviceInstanceId
    - Modify SecretsGenerator to use ObjectMapper + clean up previous vars support.
       - Update test to provide a CoabVarsFileDto 
          - Q: modify DTO to provide getter/setters to avoid spreading anemic POJO in our code ?
@@ -83,7 +83,10 @@ space_guid: "space_id"
             - not a priority for now, wait more feedback on reading the DTO from YML (for get endpoints)
             - for now factor out into  
    - update BoshProcessor to use DTO Builder
-- update README.md
+- DONE: update README.md
+
+
+
 - Bump jackson to 2.9.2 or later and pull https://github.com/FasterXML/jackson-dataformats-text/tree/master/yaml
 
 

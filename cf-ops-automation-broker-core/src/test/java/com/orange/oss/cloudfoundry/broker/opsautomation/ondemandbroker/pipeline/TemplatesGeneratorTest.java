@@ -6,13 +6,13 @@ import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.*;
 
 // $ tree coab-depls/
 //coab-depls/
@@ -44,8 +44,9 @@ public class TemplatesGeneratorTest extends StructureGeneratorImplTest{
                 this.deploymentProperties.getModelDeployment(),
                 this.deploymentProperties.getTemplate(),
                 this.deploymentProperties.getVars(),
-                this.deploymentProperties.getOperators(), "c"
-        );
+                this.deploymentProperties.getOperators(),
+                "c",
+                new VarsFilesYmlFormatter());
     }
 
     private TemplatesGenerator templatesGenerator;
@@ -151,14 +152,15 @@ public class TemplatesGeneratorTest extends StructureGeneratorImplTest{
 
 
     @Test
-    public void check_that_coab_vars_file_is_generated() {
+    public void check_that_coab_vars_file_is_generated() throws IOException {
         //Given
         Structure deploymentStructure = new Structure.StructureBuilder(this.workDir)
                 .withDirectoryHierarchy(this.deploymentProperties.getRootDeployment(),  this.templatesGenerator.computeDeploymentName(SERVICE_INSTANCE_ID), this.deploymentProperties.getTemplate())
                 .build();
+        CoabVarsFileDto coabVarsFileDto = aTypicalUserProvisionningRequest();
 
         //When
-        this.templatesGenerator.generateCoabVarsFile(this.workDir, SERVICE_INSTANCE_ID);
+        this.templatesGenerator.generateCoabVarsFile(this.workDir, SERVICE_INSTANCE_ID, coabVarsFileDto);
 
         //Then
         Path coabVarsFile = StructureGeneratorHelper.generatePath(this.workDir,
@@ -167,7 +169,8 @@ public class TemplatesGeneratorTest extends StructureGeneratorImplTest{
                 this.deploymentProperties.getTemplate(),
                 DeploymentConstants.COAB + DeploymentConstants.HYPHEN + this.deploymentProperties.getVars() + DeploymentConstants.YML_EXTENSION
         );
-        assertThat("Coab vars file doesn't exist", Files.exists(coabVarsFile));
+        assertThat("Coab vars file should exist", Files.exists(coabVarsFile));
+        assertThat("Coab vars file should contain deployment name", new String(Files.readAllBytes(coabVarsFile), StandardCharsets.UTF_8), containsString(coabVarsFileDto.deployment_name));
     }
 
     @Test
@@ -316,4 +319,18 @@ public class TemplatesGeneratorTest extends StructureGeneratorImplTest{
         this.templatesGenerator.checkPrerequisites(workDir);
         this.templatesGenerator.generate(workDir, SERVICE_INSTANCE_ID, null);
     }
+
+    protected CoabVarsFileDto aTypicalUserProvisionningRequest() {
+        CoabVarsFileDto coabVarsFileDto = new CoabVarsFileDto();
+        coabVarsFileDto.deployment_name = "cassandravarsops_aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa0";
+        coabVarsFileDto.instance_id = "service_instance_id";
+        coabVarsFileDto.service_id = "service_definition_id";
+        coabVarsFileDto.plan_id = "plan_guid";
+
+        coabVarsFileDto.context.user_guid = "user_guid1";
+        coabVarsFileDto.context.space_guid = "space_guid1";
+        coabVarsFileDto.context.organization_guid = "org_guid1";
+        return coabVarsFileDto;
+    }
+
 }

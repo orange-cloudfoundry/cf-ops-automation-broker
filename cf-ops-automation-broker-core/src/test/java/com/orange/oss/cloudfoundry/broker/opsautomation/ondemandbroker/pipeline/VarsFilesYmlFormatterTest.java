@@ -53,7 +53,7 @@ public class VarsFilesYmlFormatterTest {
     }
     @Test
     public void rejects_invalid_patterns_with_precise_message() throws JsonProcessingException {
-        CoabVarsFileDto coabVarsFileDto = aTypicalUserRequest();
+        CoabVarsFileDto coabVarsFileDto = aTypicalUserProvisionningRequest();
         coabVarsFileDto.deployment_name = "((";
         coabVarsFileDto.context.organization_guid = "((";
         coabVarsFileDto.context.platform = "((";
@@ -86,7 +86,7 @@ public class VarsFilesYmlFormatterTest {
     }
 
     protected void assertParamValueRejected(String paramValue) throws JsonProcessingException {
-        CoabVarsFileDto coabVarsFileDto = aTypicalUserRequest();
+        CoabVarsFileDto coabVarsFileDto = aTypicalUserProvisionningRequest();
         coabVarsFileDto.deployment_name = paramValue;
         coabVarsFileDto.parameters.put("aparam", paramValue);
         //noinspection EmptyCatchBlock
@@ -99,13 +99,13 @@ public class VarsFilesYmlFormatterTest {
     }
 
     protected void assertParamValueAccepted(String paramValue) throws JsonProcessingException {
-        CoabVarsFileDto coabVarsFileDto = aTypicalUserRequest();
+        CoabVarsFileDto coabVarsFileDto = aTypicalUserProvisionningRequest();
         coabVarsFileDto.parameters.put("aparam", paramValue);
         formatter.formatAsYml(coabVarsFileDto);
     }
 
 
-    protected CoabVarsFileDto aTypicalUserRequest() {
+    protected CoabVarsFileDto aTypicalUserProvisionningRequest() {
         CoabVarsFileDto coabVarsFileDto = new CoabVarsFileDto();
         coabVarsFileDto.deployment_name = "cassandravarsops_aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa0";
         coabVarsFileDto.instance_id = "service_instance_id";

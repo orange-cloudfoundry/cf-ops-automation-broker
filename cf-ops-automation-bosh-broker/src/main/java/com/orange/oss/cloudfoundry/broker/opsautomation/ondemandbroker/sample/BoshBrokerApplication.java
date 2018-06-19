@@ -70,7 +70,7 @@ public class BoshBrokerApplication {
                 clock,
                 osbProxyProperties.getMaxExecutionDurationSeconds(),
                 createServiceInstanceResponseOsbProxy,
-                (SecretsReader) secretsGenerator
+                secretsGenerator
         );
     }
 
@@ -94,7 +94,8 @@ public class BoshBrokerApplication {
                 deploymentProperties.getTemplate(),
                 deploymentProperties.getVars(),
                 deploymentProperties.getOperators(),
-                deploymentProperties.getModelDeploymentShortAlias()
+                deploymentProperties.getModelDeploymentShortAlias(),
+                new VarsFilesYmlFormatter() //externalize if needed
         );
     }
 

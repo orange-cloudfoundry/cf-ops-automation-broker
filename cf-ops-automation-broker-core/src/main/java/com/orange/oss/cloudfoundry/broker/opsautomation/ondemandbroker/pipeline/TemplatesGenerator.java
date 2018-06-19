@@ -1,5 +1,11 @@
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.List;
@@ -7,18 +13,19 @@ import java.util.Map;
 
 public class TemplatesGenerator extends StructureGeneratorImpl{
 
+    private static Logger logger = LoggerFactory.getLogger(TemplatesGenerator.class.getName());
+
     private String template;
     private String vars;
     private String operators;
+    private VarsFilesYmlFormatter formatter;
 
-    public TemplatesGenerator(){
-    }
-
-    public TemplatesGenerator(String rootDeployment, String modelDeployment, String template, String vars, String operators, String modelDeploymentShortAlias){
+    public TemplatesGenerator(String rootDeployment, String modelDeployment, String template, String vars, String operators, String modelDeploymentShortAlias, VarsFilesYmlFormatter formatter){
         super(rootDeployment,modelDeployment, modelDeploymentShortAlias);
         this.template = template;
         this.vars = vars;
         this.operators = operators;
+        this.formatter = formatter;
     }
 
     @Override
@@ -55,7 +62,7 @@ public class TemplatesGenerator extends StructureGeneratorImpl{
         this.generateDeploymentDependenciesFile(workDir, serviceInstanceId);
 
         //Generate coab vars file
-        this.generateCoabVarsFile(workDir, serviceInstanceId);
+        this.generateCoabVarsFile(workDir, serviceInstanceId, coabVarsFileDto);
 
         //Generate coab specific ops file as symlink (old deployment model for backward compatibility)
         this.generateCoabOperatorsFileSymLink(workDir, serviceInstanceId);
@@ -150,12 +157,25 @@ public class TemplatesGenerator extends StructureGeneratorImpl{
         StructureGeneratorHelper.generateFile(workDir, targetPathElements, sourceFileName, sourceFileName, mapDeploymentDependenciesFile);
     }
 
-    protected void generateCoabVarsFile(Path workDir, String serviceInstanceId){
-        Map<String, String> mapCoabVarsFile = new HashMap<>();
-        mapCoabVarsFile.put(DeploymentConstants.DEPLOYMENT_NAME_PATTERN, this.computeDeploymentName(serviceInstanceId));
+    protected void generateCoabVarsFile(Path workDir, String serviceInstanceId, CoabVarsFileDto coabVarsFileDto){
         String[] targetPathElements = new String[] {this.rootDeployment, this.computeDeploymentName(serviceInstanceId), this.template};
         String sourceFileName = DeploymentConstants.COAB + DeploymentConstants.HYPHEN + this.vars + DeploymentConstants.YML_EXTENSION;
-        StructureGeneratorHelper.generateFile(workDir, targetPathElements, sourceFileName, sourceFileName, mapCoabVarsFile);
+
+        //Compute target path
+        Path targetDir = StructureGeneratorHelper.generatePath(workDir, targetPathElements);
+        Path targetFile = StructureGeneratorHelper.generatePath(targetDir, sourceFileName);
+
+        try {
+            //Format as yml
+            String varsFileYmlContent = formatter.formatAsYml(coabVarsFileDto);
+
+            //write target file
+            Files.write(targetFile, varsFileYmlContent.getBytes(StandardCharsets.UTF_8));
+        } catch (IOException e) {
+            String msg = "Unable to generate vars file in " + targetFile + " caught: " + e;
+            logger.error(msg, e);
+            throw new DeploymentException(msg);
+        }
     }
 
     protected void generateCoabOperatorsFileSymLink(Path workDir, String serviceInstanceId){

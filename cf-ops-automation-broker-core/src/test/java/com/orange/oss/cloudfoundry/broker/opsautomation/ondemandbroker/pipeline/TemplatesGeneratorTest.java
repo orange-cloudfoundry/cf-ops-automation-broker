@@ -271,7 +271,7 @@ public class TemplatesGeneratorTest extends StructureGeneratorImplTest{
                 this.deploymentProperties.getRootDeployment(),
                 this.templatesGenerator.computeDeploymentName(SERVICE_INSTANCE_ID),
                 this.deploymentProperties.getTemplate(),
-                this.templatesGenerator.computeDeploymentName(SERVICE_INSTANCE_ID) + DeploymentConstants.COA_VARS_FILE + DeploymentConstants.YML_EXTENSION);
+                this.deploymentProperties.getModelDeployment() + DeploymentConstants.COA_VARS_FILE + DeploymentConstants.YML_EXTENSION);
         assertThat("Symbolic link towards vars file doesn't exist", Files.exists(expectedVarsFile));
         assertThat("Vars file is not a symbolic link", Files.isSymbolicLink(expectedVarsFile));
         assertThat(Files.readSymbolicLink(expectedVarsFile).toString(), is(equalTo(SYM_LINK +
@@ -283,7 +283,7 @@ public class TemplatesGeneratorTest extends StructureGeneratorImplTest{
                 this.deploymentProperties.getRootDeployment(),
                 this.templatesGenerator.computeDeploymentName(SERVICE_INSTANCE_ID),
                 this.deploymentProperties.getTemplate(),
-                this.templatesGenerator.computeDeploymentName(SERVICE_INSTANCE_ID) + DeploymentConstants.COA_VARS_FILE + DeploymentConstants.COA_TEMPLATE_FILE_SUFFIX);
+                this.deploymentProperties.getModelDeployment() + DeploymentConstants.COA_VARS_FILE + DeploymentConstants.COA_TEMPLATE_FILE_SUFFIX);
         assertThat("Symbolic link towards vars file doesn't exist", Files.exists(expectedVarsTplFile));
         assertThat("Vars file is not a symbolic link", Files.isSymbolicLink(expectedVarsTplFile));
         assertThat(Files.readSymbolicLink(expectedVarsTplFile).toString(), is(equalTo(SYM_LINK +
@@ -291,6 +291,8 @@ public class TemplatesGeneratorTest extends StructureGeneratorImplTest{
                 File.separator + this.deploymentProperties.getTemplate() + File.separator +
                 this.deploymentProperties.getModelDeployment() + DeploymentConstants.COA_VARS_FILE + DeploymentConstants.COA_TEMPLATE_FILE_SUFFIX)));
     }
+
+
 
     private void assertOperatorsFile() throws Exception{
         Path expectedOperatorsFile = StructureGeneratorHelper.generatePath(this.workDir,

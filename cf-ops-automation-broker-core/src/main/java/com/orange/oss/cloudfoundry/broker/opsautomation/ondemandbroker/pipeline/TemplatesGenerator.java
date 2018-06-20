@@ -190,7 +190,7 @@ public class TemplatesGenerator extends StructureGeneratorImpl{
         String[] sourcePathElements = new String[] {this.rootDeployment, this.modelDeployment, this.template};
         String[] targetPathElements = new String[] {this.rootDeployment, this.computeDeploymentName(serviceInstanceId), this.template};
         for (String file: filesList) {
-            String targetFileName = file.replaceFirst(this.modelDeployment, this.computeDeploymentName(serviceInstanceId));
+            String targetFileName = isManifest(file) ? file.replaceFirst(this.modelDeployment, this.computeDeploymentName(serviceInstanceId)) : file;
             StructureGeneratorHelper.generateSymbolicLink(workDir, sourcePathElements, targetPathElements, file, targetFileName);
         }
     }
@@ -199,4 +199,13 @@ public class TemplatesGenerator extends StructureGeneratorImpl{
         Path path = StructureGeneratorHelper.generatePath(workDir, this.rootDeployment, this.modelDeployment, this.template);
         return StructureGeneratorHelper.listFilesPaths(path, "*");
     }
+
+    protected boolean isManifest(String fileName){
+        if (fileName.contentEquals(this.modelDeployment+DeploymentConstants.YML_EXTENSION) ||
+                fileName.contentEquals(this.modelDeployment+DeploymentConstants.COA_TEMPLATE_FILE_SUFFIX))
+            return true;
+        else
+            return false;
+    }
+
 }

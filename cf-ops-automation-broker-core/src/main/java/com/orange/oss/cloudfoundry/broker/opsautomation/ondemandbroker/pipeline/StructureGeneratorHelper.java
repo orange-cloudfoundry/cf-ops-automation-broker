@@ -6,9 +6,8 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.DirectoryStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.nio.file.*;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -117,7 +116,7 @@ public class StructureGeneratorHelper {
     }
 
     //https://docs.oracle.com/javase/tutorial/essential/io/fileOps.html#glob
-    public static List<String> listFilesPaths(Path path, String glob){
+    public static List<String> listFilesPaths_old(Path path, String glob){
         List<String> paths = new ArrayList<String>();
         try (DirectoryStream<Path> stream =
                      Files.newDirectoryStream(path, glob)) {
@@ -131,5 +130,35 @@ public class StructureGeneratorHelper {
         return paths;
     }
 
+    public static List<String> listFilesPaths(Path path, String glob)  {
+        List<String> paths = new ArrayList<String>();
+
+        final PathMatcher pathMatcher = FileSystems.getDefault().getPathMatcher(
+                glob);
+
+        try{
+            Files.walkFileTree(path, new SimpleFileVisitor<Path>() {
+
+                @Override
+                public FileVisitResult visitFile(Path path,
+                                                 BasicFileAttributes attrs) {
+                    if (pathMatcher.matches(path)) {
+                        paths.add(path.getFileName().toString());
+                    }
+                    return FileVisitResult.CONTINUE;
+                }
+
+                @Override
+                public FileVisitResult visitFileFailed(Path file, IOException exc) {
+                    return FileVisitResult.CONTINUE;
+                }
+            });
+
+        }catch (IOException e) {
+            e.printStackTrace();
+            throw new DeploymentException(DeploymentConstants.SEARCH_EXCEPTION);
+        }
+        return paths;
+    }
 
 }

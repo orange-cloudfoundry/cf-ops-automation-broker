@@ -197,7 +197,8 @@ public class TemplatesGenerator extends StructureGeneratorImpl{
 
     protected List<String> searchForAllFiles(Path workDir){
         Path path = StructureGeneratorHelper.generatePath(workDir, this.rootDeployment, this.modelDeployment, this.template);
-        return StructureGeneratorHelper.listFilesPaths(path, "*");
+        //return StructureGeneratorHelper.listFilesPaths(path, "*");
+        return StructureGeneratorHelper.listFilesPaths(path, "glob:**/*");
     }
 
     protected boolean isManifest(String fileName){

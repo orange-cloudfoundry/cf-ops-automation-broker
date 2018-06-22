@@ -6,8 +6,8 @@ import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.nio.file.*;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -151,7 +151,7 @@ public class StructureGeneratorHelperTest {
         }
 
         //When
-        List<String> paths = StructureGeneratorHelper.listFilesPaths(rootPath, "{model.yml,model-tpl.yml}");
+        List<String> paths = StructureGeneratorHelper.listFilesPaths(rootPath, "glob:{**/model.yml,**/model-tpl.yml}");
 
         //Then
         assertThat("model.yml is not present", paths.contains("model.yml"));
@@ -175,7 +175,7 @@ public class StructureGeneratorHelperTest {
         }
 
         //When
-        List<String> paths = StructureGeneratorHelper.listFilesPaths(rootPath, "{model-vars.yml,model-vars-tpl.yml}");
+        List<String> paths = StructureGeneratorHelper.listFilesPaths(rootPath, "glob:{**/model-vars.yml,**/model-vars-tpl.yml}");
 
         //Then
         assertThat("model-vars.yml is not present", paths.contains("model-vars.yml"));
@@ -199,7 +199,7 @@ public class StructureGeneratorHelperTest {
         }
 
         //When
-        List<String> paths = StructureGeneratorHelper.listFilesPaths(rootPath, "*-operators.yml");
+        List<String> paths = StructureGeneratorHelper.listFilesPaths(rootPath, "glob:{**/*-operators.yml}");
 
         //Then
         assertThat("file-operators.yml is not present", paths.contains("file-operators.yml"));
@@ -207,4 +207,24 @@ public class StructureGeneratorHelperTest {
         assertThat("file.yml is present", ! paths.contains("file.yml"));
     }
 
+    @Test
+    public void check_list_files_paths_operators_subdirs() throws IOException{
+        Path rootPath = this.temporaryFolder.getRoot().toPath();
+        //Given a root path and path elements to create
+        Path pathDirectory = rootPath.resolve("openstack");
+        Files.createDirectory(pathDirectory);
+        pathDirectory = rootPath.resolve("openstack-hws");
+        Files.createDirectory(pathDirectory);
+        Path pathFile = rootPath.resolve("openstack").resolve("o-operators.yml");
+        Files.createFile(pathFile);
+        pathFile = rootPath.resolve("openstack-hws").resolve("ohws-operators.yml");
+        Files.createFile(pathFile);
+
+        //When
+        List<String> pathList = StructureGeneratorHelper.listFilesPaths(rootPath, "glob:{**/*.yml}");
+
+        //Then
+        assertThat("o-operators.yml is not present", pathList.contains("o-operators.yml"));
+        assertThat("ohws-operators.yml is present",  pathList.contains("ohws-operators.yml"));
+    }
 }

@@ -2,10 +2,14 @@ package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline
 
 import org.junit.Before;
 import org.junit.Ignore;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -316,10 +320,28 @@ public class TemplatesGeneratorTest extends StructureGeneratorImplTest{
 
     @Test
     @Ignore
-    public void populatePaasTemplates() {
-        Path workDir = Paths.get("/home/losapio/GIT/Coab/paas-templates/");
+    public void populatePaasTemplates() throws URISyntaxException {
+        //Given a template repository in /tmp
+        String paasTemplatePath = temporaryFolder.getRoot().getAbsolutePath();
+
+        //Search from classpath the test repository using a file marker  /SampleModelTestGenerator/
+        URL resource = this.getClass().getResource("/sample-deployment-model");
+        Path referenceDataModel = Paths.get(resource.toURI());
+
+        //Recursive copy reference template
+            //Files.walkFileTree(Path start, Set<FileVisitOption> options, int maxDepth, FileVisitor<? super Path> visitor) throws IOException
+                //Files.copy(source, target, options)
+
+        //Given and a user request
+        CoabVarsFileDto coabVarsFileDto = aTypicalUserProvisionningRequest();
+
+        //When
         this.templatesGenerator.checkPrerequisites(workDir);
-        this.templatesGenerator.generate(workDir, SERVICE_INSTANCE_ID, null);
+        this.templatesGenerator.generate(workDir, SERVICE_INSTANCE_ID, coabVarsFileDto);
+
+        //then the service instance looks like the expected reference model
+
+
     }
 
     protected CoabVarsFileDto aTypicalUserProvisionningRequest() {

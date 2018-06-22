@@ -9,9 +9,47 @@ Full COA conventions support:
    - 2nd step: also mirror the subdirs with nested symlinks to support iaas-specific templates
 - add systematic symlink of any secrets/ file 
    - regardless of their name if their present as file in this directory,
-- review deployment-dependencies.yml generation
+- review deployment-dependencies.yml generation. See https://github.com/orange-cloudfoundry/cf-ops-automation/issues/150 
 
+Refine TemplatesGeneratorTest.populatePaasTemplates to make bdd style integration test:
+* given a reference model in the src/test/resources such as 
+```
+coab-depls/mongodb
+|-- deployment-dependencies.yml
+`-- template
+    |-- coab-operators.yml
+    |-- add-prometheus-operators.yml
+    |-- add-shield-operators.yml
+    |-- mongodb-vars.yml
+    `-- mongodb.yml
+```
+* and a user request 
+* when generating the service instance
+* then the service instance looks like
 
+```
+$tree coab-depls/m_f49911f7-b69a-4aba-afdf-23fd11014278
+
+coab-depls/m_f49911f7-b69a-4aba-afdf-23fd11014278
+|-- deployment-dependencies.yml -> ../../template/mongodb/deployment-dependencies.yml
+`-- template
+    |-- coab-operators.yml -> ../../mongodb/operators/coab-operators.yml
+    |-- mongodb-vars.yml -> ../../mongodb/template/mongodb-vars.yml
+    |-- m_f49911f7-b69a-4aba-afdf-23fd11014278.yml -> ../../mongodb/template/mongodb.yml
+    `-- coab-vars.yml
+    
+```
+
+Q: how to recursively copy files & preserving symlinks ?
+
+Q: how to assert expected dir ?
+* using string representation of the directory
+   * execute tree command
+   * find a java-based tree impl
+* commit the expected output in the reference dataset & compare
+   * find java compare directory tree 
+      * including symlinks
+      * including coab-vars content 
 
 - Bump jackson to 2.9.2 or later and pull https://github.com/FasterXML/jackson-dataformats-text/tree/master/yaml
 

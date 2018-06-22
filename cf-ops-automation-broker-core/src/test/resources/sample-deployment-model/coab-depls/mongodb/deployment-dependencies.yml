@@ -1,0 +1,17 @@
+---
+deployment:
+  mongodb:
+    stemcells:
+      bosh-openstack-kvm-ubuntu-trusty-go_agent:
+#        base_location:
+#        repository:
+    releases:
+      route-registrar-boshrelease:
+        base_location: https://bosh.io/d/github.com/
+        repository: cloudfoundry-community/route-registrar-boshrelease
+      prometheus-boshrelease:
+        base_location: https://bosh.io/d/github.com/
+        repository: cloudfoundry-community/prometheus-boshrelease
+
+    errands:
+#      broker-smoke-tests:

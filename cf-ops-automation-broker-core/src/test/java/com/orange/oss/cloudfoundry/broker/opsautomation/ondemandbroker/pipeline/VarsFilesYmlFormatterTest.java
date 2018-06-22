@@ -291,7 +291,7 @@ public class VarsFilesYmlFormatterTest {
     private static final String SERVICE_BINDING_INSTANCE_ID = "222";
 
 
-    private CreateServiceInstanceRequest aCreateServiceInstanceRequest() {
+    public static CreateServiceInstanceRequest aCreateServiceInstanceRequest() {
 
         CreateServiceInstanceRequest request = new CreateServiceInstanceRequest(SERVICE_DEFINITION_ID,
                 SERVICE_PLAN_ID,
@@ -304,7 +304,7 @@ public class VarsFilesYmlFormatterTest {
         return request;
     }
 
-    private org.springframework.cloud.servicebroker.model.Context aCfOsbContext() {
+    public static org.springframework.cloud.servicebroker.model.Context aCfOsbContext() {
         Map<String, Object> contextProperties = new HashMap<>();
         contextProperties.put(OSB_PROFILE_ORGANIZATION_GUID, "org_id");
         contextProperties.put(OSB_PROFILE_SPACE_GUID, "space_id");

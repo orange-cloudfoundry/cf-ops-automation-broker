@@ -5,19 +5,22 @@ import com.google.gson.GsonBuilder;
 import org.apache.commons.io.IOUtils;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.*;
+import java.util.EnumSet;
+import java.util.List;
 
 import static java.nio.file.FileVisitOption.FOLLOW_LINKS;
 import static java.util.Arrays.asList;
 import static org.fest.assertions.Assertions.assertThat;
-import static org.fest.assertions.Fail.fail;
+import static org.hamcrest.CoreMatchers.containsString;
 
 /**
  *
@@ -62,6 +65,25 @@ public class FileTerraformRepositoryTest {
             }
         };
         Files.walkFileTree(tempDirectory, EnumSet.of(FOLLOW_LINKS), 1, cleaner);
+    }
+
+    @Rule
+    public ExpectedException thrown = ExpectedException.none();
+
+    @Test
+    public void constructor_rejects_null_dir() {
+        thrown.expect(IllegalArgumentException.class);
+        thrown.expectMessage(containsString("null"));
+
+        new FileTerraformRepository(null, "a prefix");
+    }
+
+    @Test
+    public void constructor_rejects_missing_dir() {
+        thrown.expect(IllegalArgumentException.class);
+        thrown.expectMessage(containsString("does not exist"));
+        
+        new FileTerraformRepository(Paths.get("/nosuchpath"), "a prefix");
     }
 
     @Test

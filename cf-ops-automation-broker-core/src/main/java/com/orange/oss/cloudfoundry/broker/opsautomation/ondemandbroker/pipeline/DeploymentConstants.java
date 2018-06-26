@@ -3,6 +3,7 @@ package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline
 public class DeploymentConstants {
     public static final String COAB = "coab";
     public static final String UNDERSCORE = "_";
+    public static final String SLASH = "/";
     public static final String HYPHEN = "-";
     public static final String YML_EXTENSION = ".yml";
     /**
@@ -15,6 +16,7 @@ public class DeploymentConstants {
     public static final String DEPLOYMENT_DEPENDENCIES_FILENAME = "deployment-dependencies.yml";
     public static final String ENABLE_DEPLOYMENT_FILENAME = "enable-deployment.yml";
     public static final String DEPLOYMENT = "bosh";
+    public static final String TEMPLATE = "template";
     public static final String DEPLOYMENT_NAME_PATTERN = "@deployment_name@";
     public static final String GENERATION_EXCEPTION = "Generation fails";
     public static final String REMOVAL_EXCEPTION = "Removal fails";

@@ -14,22 +14,24 @@ import java.util.Map;
 
 public class StructureGeneratorHelper {
 
-    public static Path generatePath(Path rootPath, String... pathElements){
+    public static Path generatePath(Path rootPath, String... pathElements) {
         Path generatedPath = rootPath;
-        if (pathElements != null){
-            for ( String s : pathElements )
+        if (pathElements != null) {
+            for (String s : pathElements)
                 generatedPath = generatedPath.resolve(s);
         }
         return generatedPath;
     }
 
     public static void generateDirectory(Path rootPath, String... pathElements) {
-        try{
+        try {
             //Compute path
             Path directory = generatePath(rootPath, pathElements);
 
             //Create directory
-            Files.createDirectory(directory);
+            if (isMissingResource(directory)) {
+                Files.createDirectory(directory);
+            }
         } catch (IOException e) {
             e.printStackTrace();
             throw new DeploymentException(DeploymentConstants.GENERATION_EXCEPTION);
@@ -37,7 +39,7 @@ public class StructureGeneratorHelper {
     }
 
     public static void generateSymbolicLink(Path rootPath, String[] sourcePathElements, String[] targetPathElements, String sourceFileName, String targetFileName) {
-        try{
+        try {
             //Compute relative path on directories with relativize method otherwise doesn't work
             Path sourceDir = StructureGeneratorHelper.generatePath(rootPath, sourcePathElements);
             Path targetDir = StructureGeneratorHelper.generatePath(rootPath, targetPathElements);
@@ -57,7 +59,7 @@ public class StructureGeneratorHelper {
 
 
     public static void generateFile(Path rootPath, String[] targetPathElements, String targetFileName, String sourceFileName, Map<String, String> findAndReplace) {
-        try{
+        try {
             //Compute target path
             Path targetDir = StructureGeneratorHelper.generatePath(rootPath, targetPathElements);
             Path targetFile = StructureGeneratorHelper.generatePath(targetDir, targetFileName);
@@ -82,7 +84,7 @@ public class StructureGeneratorHelper {
     }
 
     public static void removeFile(Path rootPath, String[] pathElements, String fileName) {
-        try{
+        try {
             //Compute path
             Path dir = StructureGeneratorHelper.generatePath(rootPath, pathElements);
             Path file = StructureGeneratorHelper.generatePath(dir, fileName);
@@ -96,13 +98,13 @@ public class StructureGeneratorHelper {
         }
     }
 
-    public static List<String> findAndReplace(List<String> lines, Map<String, String> map){
+    public static List<String> findAndReplace(List<String> lines, Map<String, String> map) {
         List<String> resultLines = new ArrayList<String>();
-        for (String s : lines){
+        for (String s : lines) {
             String resultLine = null;
             for (Map.Entry mapentry : map.entrySet()) {
-                resultLine = s.replaceFirst((String)mapentry.getKey(), (String)mapentry.getValue());
-                if (!s.equals(resultLine)){
+                resultLine = s.replaceFirst((String) mapentry.getKey(), (String) mapentry.getValue());
+                if (!s.equals(resultLine)) {
                     break;
                 }
             }
@@ -111,16 +113,16 @@ public class StructureGeneratorHelper {
         return resultLines;
     }
 
-    public static boolean isMissingResource(Path path){
+    public static boolean isMissingResource(Path path) {
         return Files.notExists(path);
     }
 
     //https://docs.oracle.com/javase/tutorial/essential/io/fileOps.html#glob
-    public static List<String> listFilesPaths_old(Path path, String glob){
+    public static List<String> listFilesPaths_old(Path path, String glob) {
         List<String> paths = new ArrayList<String>();
         try (DirectoryStream<Path> stream =
                      Files.newDirectoryStream(path, glob)) {
-            for (Path entry: stream) {
+            for (Path entry : stream) {
                 paths.add(entry.getFileName().toString());
             }
         } catch (IOException e) {
@@ -130,20 +132,24 @@ public class StructureGeneratorHelper {
         return paths;
     }
 
-    public static List<String> listFilesPaths(Path path, String glob)  {
+    public static List<String> listFilesPaths(Path path, String glob) {
         List<String> paths = new ArrayList<String>();
 
         final PathMatcher pathMatcher = FileSystems.getDefault().getPathMatcher(
                 glob);
 
-        try{
+        try {
             Files.walkFileTree(path, new SimpleFileVisitor<Path>() {
 
                 @Override
                 public FileVisitResult visitFile(Path path,
                                                  BasicFileAttributes attrs) {
                     if (pathMatcher.matches(path)) {
-                        paths.add(path.getFileName().toString());
+                        if (path.getParent().getFileName().toString().matches(DeploymentConstants.TEMPLATE)) {
+                            paths.add(path.getFileName().toString());
+                        } else {
+                            paths.add(path.getParent().getFileName().toString() + DeploymentConstants.SLASH + path.getFileName().toString());
+                        }
                     }
                     return FileVisitResult.CONTINUE;
                 }
@@ -154,11 +160,27 @@ public class StructureGeneratorHelper {
                 }
             });
 
-        }catch (IOException e) {
+        } catch (IOException e) {
             e.printStackTrace();
             throw new DeploymentException(DeploymentConstants.SEARCH_EXCEPTION);
         }
         return paths;
     }
+
+    public static String getDirectory(String path) {
+        String[] parts = path.split(DeploymentConstants.SLASH);
+        return parts[0];
+    }
+
+    public static String getFile(String path) {
+        String[] parts = path.split(DeploymentConstants.SLASH);
+        return parts[1];
+    }
+
+    public static boolean isPath(String path) {
+        return path.contains(DeploymentConstants.SLASH)?true:false;
+    }
+
+
 
 }

@@ -222,6 +222,7 @@ public class TemplatesGeneratorTest extends StructureGeneratorImplTest{
         this.assertManifestFile();
         this.assertVarsFile();
         this.assertOperatorsFile();
+        this.assertIassTypeFile();
     }
 
     private void aModelStructure(){
@@ -240,6 +241,13 @@ public class TemplatesGeneratorTest extends StructureGeneratorImplTest{
                        DeploymentConstants.COAB + DeploymentConstants.COA_OPERATORS_FILE_SUFFIX) //coab-operators.yml in subdir operators
                 .withFile(new String[]{this.deploymentProperties.getRootDeployment(), this.deploymentProperties.getModelDeployment(), this.deploymentProperties.getTemplate()},
                        DeploymentConstants.COAB + DeploymentConstants.COA_OPERATORS_FILE_SUFFIX) //coab-operators.yml
+                .withDirectoryHierarchy(this.deploymentProperties.getRootDeployment(), this.deploymentProperties.getModelDeployment(), this.deploymentProperties.getTemplate(), "openstack-hws")
+                .withFile(new String[]{this.deploymentProperties.getRootDeployment(), this.deploymentProperties.getModelDeployment(), this.deploymentProperties.getTemplate(), "openstack-hws"},
+                        "network-operators.yml") //network-operators.yml in subdir openstack-hws
+                .withFile(new String[]{this.deploymentProperties.getRootDeployment(), this.deploymentProperties.getModelDeployment(), this.deploymentProperties.getTemplate(), "openstack-hws"},
+                        "network-vars.yml") //network-vars.yml
+                .withFile(new String[]{this.deploymentProperties.getRootDeployment(), this.deploymentProperties.getModelDeployment(), this.deploymentProperties.getTemplate(), "openstack-hws"},
+                        "network-vars-tpl.yml") //network-vars-tpl.yml
                 .build();
     }
 
@@ -296,8 +304,6 @@ public class TemplatesGeneratorTest extends StructureGeneratorImplTest{
                 this.deploymentProperties.getModelDeployment() + DeploymentConstants.COA_VARS_FILE + DeploymentConstants.COA_TEMPLATE_FILE_SUFFIX)));
     }
 
-
-
     private void assertOperatorsFile() throws Exception{
         Path expectedOperatorsFile = StructureGeneratorHelper.generatePath(this.workDir,
                 this.deploymentProperties.getRootDeployment(),
@@ -305,12 +311,58 @@ public class TemplatesGeneratorTest extends StructureGeneratorImplTest{
                 this.deploymentProperties.getTemplate(),
                 DeploymentConstants.COAB + DeploymentConstants.COA_OPERATORS_FILE_SUFFIX);
         assertThat("Symbolic link towards operators file doesn't exist", Files.exists(expectedOperatorsFile));
-        assertThat("Coab operators file is not a symbolic link", Files.isSymbolicLink(expectedOperatorsFile));
+        assertThat("Operators file is not a symbolic link", Files.isSymbolicLink(expectedOperatorsFile));
         assertThat(Files.readSymbolicLink(expectedOperatorsFile).toString(), is(equalTo(SYM_LINK +
                 this.deploymentProperties.getModelDeployment() +
                 File.separator + this.deploymentProperties.getTemplate() + File.separator +
                 DeploymentConstants.COAB + DeploymentConstants.COA_OPERATORS_FILE_SUFFIX)));
     }
+
+    private void assertIassTypeFile() throws Exception{
+        Path expectedIassTypeOperatorsFile = StructureGeneratorHelper.generatePath(this.workDir,
+                this.deploymentProperties.getRootDeployment(),
+                this.templatesGenerator.computeDeploymentName(SERVICE_INSTANCE_ID),
+                this.deploymentProperties.getTemplate(),
+                "openstack-hws",
+                "network-operators.yml");
+        assertThat("Symbolic link towards iaas type operators file doesn't exist", Files.exists(expectedIassTypeOperatorsFile));
+        assertThat("Iaas type operators file is not a symbolic link", Files.isSymbolicLink(expectedIassTypeOperatorsFile));
+        assertThat(Files.readSymbolicLink(expectedIassTypeOperatorsFile).toString(), is(equalTo("../../../" +
+                this.deploymentProperties.getModelDeployment() +
+                File.separator + this.deploymentProperties.getTemplate() + File.separator +
+                "openstack-hws" + File.separator +
+                "network-operators.yml")));
+
+        Path expectedIassTypeVarsFile = StructureGeneratorHelper.generatePath(this.workDir,
+                this.deploymentProperties.getRootDeployment(),
+                this.templatesGenerator.computeDeploymentName(SERVICE_INSTANCE_ID),
+                this.deploymentProperties.getTemplate(),
+                "openstack-hws",
+                "network-vars.yml");
+        assertThat("Symbolic link towards iaas type vars file doesn't exist", Files.exists(expectedIassTypeVarsFile));
+        assertThat("Iaas type vars file is not a symbolic link", Files.isSymbolicLink(expectedIassTypeVarsFile));
+        assertThat(Files.readSymbolicLink(expectedIassTypeVarsFile).toString(), is(equalTo("../../../" +
+                this.deploymentProperties.getModelDeployment() +
+                File.separator + this.deploymentProperties.getTemplate() + File.separator +
+                "openstack-hws" + File.separator +
+                "network-vars.yml")));
+
+        Path expectedIassTypeVarsTplFile = StructureGeneratorHelper.generatePath(this.workDir,
+                this.deploymentProperties.getRootDeployment(),
+                this.templatesGenerator.computeDeploymentName(SERVICE_INSTANCE_ID),
+                this.deploymentProperties.getTemplate(),
+                "openstack-hws",
+                "network-vars-tpl.yml");
+        assertThat("Symbolic link towards iaas type vars file doesn't exist", Files.exists(expectedIassTypeVarsTplFile));
+        assertThat("Iaas type vars file is not a symbolic link", Files.isSymbolicLink(expectedIassTypeVarsTplFile));
+        assertThat(Files.readSymbolicLink(expectedIassTypeVarsTplFile).toString(), is(equalTo("../../../" +
+                this.deploymentProperties.getModelDeployment() +
+                File.separator + this.deploymentProperties.getTemplate() + File.separator +
+                "openstack-hws" + File.separator +
+                "network-vars-tpl.yml")));
+    }
+
+
 
     @Test
     @Ignore

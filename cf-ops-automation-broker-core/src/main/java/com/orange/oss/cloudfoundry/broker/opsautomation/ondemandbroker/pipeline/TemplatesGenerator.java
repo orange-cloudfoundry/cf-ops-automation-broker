@@ -186,18 +186,29 @@ public class TemplatesGenerator extends StructureGeneratorImpl{
     }
 
     protected void generateAllSymLinks(Path workDir, String serviceInstanceId){
-        List<String> filesList = this.searchForAllFiles(workDir);
-        String[] sourcePathElements = new String[] {this.rootDeployment, this.modelDeployment, this.template};
-        String[] targetPathElements = new String[] {this.rootDeployment, this.computeDeploymentName(serviceInstanceId), this.template};
-        for (String file: filesList) {
-            String targetFileName = isManifest(file) ? file.replaceFirst(this.modelDeployment, this.computeDeploymentName(serviceInstanceId)) : file;
-            StructureGeneratorHelper.generateSymbolicLink(workDir, sourcePathElements, targetPathElements, file, targetFileName);
+        List<String> pathList = this.searchForAllFiles(workDir);
+        for (String path: pathList) {
+            if (StructureGeneratorHelper.isPath(path)) { //IAAS_TYPE
+                StructureGeneratorHelper.generateDirectory(workDir,
+                                this.rootDeployment,
+                                                this.computeDeploymentName(serviceInstanceId),
+                                                this.template,
+                                                StructureGeneratorHelper.getDirectory(path)
+                        );
+                String[] sourcePathElements = new String[] {this.rootDeployment, this.modelDeployment, this.template, StructureGeneratorHelper.getDirectory(path)};
+                String[] targetPathElements = new String[] {this.rootDeployment, this.computeDeploymentName(serviceInstanceId), this.template, StructureGeneratorHelper.getDirectory(path)};
+                StructureGeneratorHelper.generateSymbolicLink(workDir, sourcePathElements, targetPathElements, StructureGeneratorHelper.getFile(path), StructureGeneratorHelper.getFile(path));
+            } else {
+                String[] sourcePathElements = new String[] {this.rootDeployment, this.modelDeployment, this.template};
+                String[] targetPathElements = new String[] {this.rootDeployment, this.computeDeploymentName(serviceInstanceId), this.template};
+                String targetFileName = isManifest(path) ? path.replaceFirst(this.modelDeployment, this.computeDeploymentName(serviceInstanceId)) : path;
+                StructureGeneratorHelper.generateSymbolicLink(workDir, sourcePathElements, targetPathElements, path, targetFileName);
+            }
         }
     }
 
     protected List<String> searchForAllFiles(Path workDir){
         Path path = StructureGeneratorHelper.generatePath(workDir, this.rootDeployment, this.modelDeployment, this.template);
-        //return StructureGeneratorHelper.listFilesPaths(path, "*");
         return StructureGeneratorHelper.listFilesPaths(path, "glob:**/*");
     }
 

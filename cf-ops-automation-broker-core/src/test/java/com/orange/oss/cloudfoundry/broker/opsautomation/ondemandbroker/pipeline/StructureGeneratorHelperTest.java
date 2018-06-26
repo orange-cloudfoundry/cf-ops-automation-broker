@@ -140,11 +140,13 @@ public class StructureGeneratorHelperTest {
         //Given a root path and path elements to create
         Path rootPath = this.temporaryFolder.getRoot().toPath();
         try {
-            Path path = rootPath.resolve("model-vars.yml");
+            Path directoryPath = rootPath.resolve(DeploymentConstants.TEMPLATE);
+            Files.createDirectory(directoryPath);
+            Path path = directoryPath.resolve("model-vars.yml");
             Files.createFile(path);
-            path = rootPath.resolve("model-tpl.yml");
+            path = directoryPath.resolve("model-tpl.yml");
             Files.createFile(path);
-            path = rootPath.resolve("model.yml");
+            path = directoryPath.resolve("model.yml");
             Files.createFile(path);
         } catch (IOException e) {
             e.printStackTrace();
@@ -164,11 +166,13 @@ public class StructureGeneratorHelperTest {
         //Given a root path and path elements to create
         Path rootPath = this.temporaryFolder.getRoot().toPath();
         try {
-            Path path = rootPath.resolve("model-vars.yml");
+            Path directoryPath = rootPath.resolve(DeploymentConstants.TEMPLATE);
+            Files.createDirectory(directoryPath);
+            Path path = directoryPath.resolve("model-vars.yml");
             Files.createFile(path);
-            path = rootPath.resolve("model-vars-tpl.yml");
+            path = directoryPath.resolve("model-vars-tpl.yml");
             Files.createFile(path);
-            path = rootPath.resolve("model.yml");
+            path = directoryPath.resolve("model.yml");
             Files.createFile(path);
         } catch (IOException e) {
             e.printStackTrace();
@@ -184,19 +188,17 @@ public class StructureGeneratorHelperTest {
     }
 
     @Test
-    public void check_list_files_paths_operators() {
+    public void check_list_files_paths_operators() throws IOException{
         //Given a root path and path elements to create
         Path rootPath = this.temporaryFolder.getRoot().toPath();
-        try {
-            Path path = rootPath.resolve("file-operators.yml");
-            Files.createFile(path);
-            path = rootPath.resolve("file-op.yml");
-            Files.createFile(path);
-            path = rootPath.resolve("file.yml");
-            Files.createFile(path);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        Path directoryPath = rootPath.resolve(DeploymentConstants.TEMPLATE);
+        Files.createDirectory(directoryPath);
+        Path path = directoryPath.resolve("file-operators.yml");
+        Files.createFile(path);
+        path = directoryPath.resolve("file-op.yml");
+        Files.createFile(path);
+        path = directoryPath.resolve("file.yml");
+        Files.createFile(path);
 
         //When
         List<String> paths = StructureGeneratorHelper.listFilesPaths(rootPath, "glob:{**/*-operators.yml}");
@@ -207,24 +209,4 @@ public class StructureGeneratorHelperTest {
         assertThat("file.yml is present", ! paths.contains("file.yml"));
     }
 
-    @Test
-    public void check_list_files_paths_operators_subdirs() throws IOException{
-        Path rootPath = this.temporaryFolder.getRoot().toPath();
-        //Given a root path and path elements to create
-        Path pathDirectory = rootPath.resolve("openstack");
-        Files.createDirectory(pathDirectory);
-        pathDirectory = rootPath.resolve("openstack-hws");
-        Files.createDirectory(pathDirectory);
-        Path pathFile = rootPath.resolve("openstack").resolve("o-operators.yml");
-        Files.createFile(pathFile);
-        pathFile = rootPath.resolve("openstack-hws").resolve("ohws-operators.yml");
-        Files.createFile(pathFile);
-
-        //When
-        List<String> pathList = StructureGeneratorHelper.listFilesPaths(rootPath, "glob:{**/*.yml}");
-
-        //Then
-        assertThat("o-operators.yml is not present", pathList.contains("o-operators.yml"));
-        assertThat("ohws-operators.yml is present",  pathList.contains("ohws-operators.yml"));
-    }
 }

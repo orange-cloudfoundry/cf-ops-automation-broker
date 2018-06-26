@@ -45,6 +45,10 @@ public class CopyTest {
             Copy.TreeCopier tc = new Copy.TreeCopier(referenceDataModel, target, false, true);
             Files.walkFileTree(referenceDataModel, opts, Integer.MAX_VALUE, tc);
 
+            //print result
+            new Tree().print(target.toString());
+
+
 
         } catch (URISyntaxException e) {
             e.printStackTrace();

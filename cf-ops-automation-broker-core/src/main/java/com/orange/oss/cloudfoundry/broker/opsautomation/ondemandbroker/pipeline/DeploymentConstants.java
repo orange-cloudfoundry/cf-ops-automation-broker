@@ -3,7 +3,6 @@ package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline
 public class DeploymentConstants {
     public static final String COAB = "coab";
     public static final String UNDERSCORE = "_";
-    public static final String SLASH = "/";
     public static final String HYPHEN = "-";
     public static final String YML_EXTENSION = ".yml";
     /**

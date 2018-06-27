@@ -145,11 +145,7 @@ public class StructureGeneratorHelper {
                 public FileVisitResult visitFile(Path path,
                                                  BasicFileAttributes attrs) {
                     if (pathMatcher.matches(path)) {
-                        if (path.getParent().getFileName().toString().matches(DeploymentConstants.TEMPLATE)) {
-                            paths.add(path.getFileName().toString());
-                        } else {
-                            paths.add(path.getParent().getFileName().toString() + DeploymentConstants.SLASH + path.getFileName().toString());
-                        }
+                        paths.add(path.getParent().getFileName().toString() + File.separator + path.getFileName().toString());
                     }
                     return FileVisitResult.CONTINUE;
                 }
@@ -168,19 +164,13 @@ public class StructureGeneratorHelper {
     }
 
     public static String getDirectory(String path) {
-        String[] parts = path.split(DeploymentConstants.SLASH);
+        String[] parts = path.split(File.separator);
         return parts[0];
     }
 
     public static String getFile(String path) {
-        String[] parts = path.split(DeploymentConstants.SLASH);
+        String[] parts = path.split(File.separator);
         return parts[1];
     }
-
-    public static boolean isPath(String path) {
-        return path.contains(DeploymentConstants.SLASH)?true:false;
-    }
-
-
 
 }

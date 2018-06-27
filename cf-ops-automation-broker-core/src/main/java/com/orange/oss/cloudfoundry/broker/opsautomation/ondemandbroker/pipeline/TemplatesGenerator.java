@@ -188,7 +188,7 @@ public class TemplatesGenerator extends StructureGeneratorImpl{
     protected void generateAllSymLinks(Path workDir, String serviceInstanceId){
         List<String> pathList = this.searchForAllFiles(workDir);
         for (String path: pathList) {
-            if (StructureGeneratorHelper.isPath(path)) { //IAAS_TYPE
+            if (this.isIaasType(path)){
                 StructureGeneratorHelper.generateDirectory(workDir,
                                 this.rootDeployment,
                                                 this.computeDeploymentName(serviceInstanceId),
@@ -201,8 +201,8 @@ public class TemplatesGenerator extends StructureGeneratorImpl{
             } else {
                 String[] sourcePathElements = new String[] {this.rootDeployment, this.modelDeployment, this.template};
                 String[] targetPathElements = new String[] {this.rootDeployment, this.computeDeploymentName(serviceInstanceId), this.template};
-                String targetFileName = isManifest(path) ? path.replaceFirst(this.modelDeployment, this.computeDeploymentName(serviceInstanceId)) : path;
-                StructureGeneratorHelper.generateSymbolicLink(workDir, sourcePathElements, targetPathElements, path, targetFileName);
+                String targetFileName = isManifest(StructureGeneratorHelper.getFile(path)) ? StructureGeneratorHelper.getFile(path).replaceFirst(this.modelDeployment, this.computeDeploymentName(serviceInstanceId)) : StructureGeneratorHelper.getFile(path);
+                StructureGeneratorHelper.generateSymbolicLink(workDir, sourcePathElements, targetPathElements, StructureGeneratorHelper.getFile(path), targetFileName);
             }
         }
     }
@@ -218,6 +218,10 @@ public class TemplatesGenerator extends StructureGeneratorImpl{
             return true;
         else
             return false;
+    }
+
+    protected boolean isIaasType(String path){
+        return StructureGeneratorHelper.getDirectory(path).contentEquals(DeploymentConstants.TEMPLATE)?false:true;
     }
 
 }

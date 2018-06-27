@@ -156,9 +156,9 @@ public class StructureGeneratorHelperTest {
         List<String> paths = StructureGeneratorHelper.listFilesPaths(rootPath, "glob:{**/model.yml,**/model-tpl.yml}");
 
         //Then
-        assertThat("model.yml is not present", paths.contains("model.yml"));
-        assertThat("model-tpl.yml is not present", paths.contains("model-tpl.yml"));
-        assertThat("model-vars.yml is present", ! paths.contains("model-vars.yml"));
+        assertThat("model.yml is not present", paths.contains(DeploymentConstants.TEMPLATE + File.separator + "model.yml"));
+        assertThat("model-tpl.yml is not present", paths.contains(DeploymentConstants.TEMPLATE + File.separator + "model-tpl.yml"));
+        assertThat("model-vars.yml is present", ! paths.contains(DeploymentConstants.TEMPLATE + File.separator + "model-vars.yml"));
     }
 
     @Test
@@ -182,9 +182,9 @@ public class StructureGeneratorHelperTest {
         List<String> paths = StructureGeneratorHelper.listFilesPaths(rootPath, "glob:{**/model-vars.yml,**/model-vars-tpl.yml}");
 
         //Then
-        assertThat("model-vars.yml is not present", paths.contains("model-vars.yml"));
-        assertThat("model-vars-tpl.yml is not present", paths.contains("model-vars-tpl.yml"));
-        assertThat("model.yml is present", ! paths.contains("model.yml"));
+        assertThat("model-vars.yml is not present", paths.contains(DeploymentConstants.TEMPLATE + File.separator + "model-vars.yml"));
+        assertThat("model-vars-tpl.yml is not present", paths.contains(DeploymentConstants.TEMPLATE + File.separator + "model-vars-tpl.yml"));
+        assertThat("model.yml is present", ! paths.contains(DeploymentConstants.TEMPLATE + File.separator + "model.yml"));
     }
 
     @Test
@@ -204,9 +204,27 @@ public class StructureGeneratorHelperTest {
         List<String> paths = StructureGeneratorHelper.listFilesPaths(rootPath, "glob:{**/*-operators.yml}");
 
         //Then
-        assertThat("file-operators.yml is not present", paths.contains("file-operators.yml"));
-        assertThat("file-op.yml is present", ! paths.contains("file-op.yml"));
-        assertThat("file.yml is present", ! paths.contains("file.yml"));
+        assertThat("file-operators.yml is not present", paths.contains(DeploymentConstants.TEMPLATE + File.separator + "file-operators.yml"));
+        assertThat("file-op.yml is present", ! paths.contains(DeploymentConstants.TEMPLATE + File.separator + "file-op.yml"));
+        assertThat("file.yml is present", ! paths.contains(DeploymentConstants.TEMPLATE + File.separator + "file.yml"));
+    }
+
+    @Test
+    public void check_get_directory() throws IOException{
+        //Given
+
+        //When
+
+        //Then
+    }
+
+    @Test
+    public void check_get_file() throws IOException{
+        //Given
+
+        //When
+
+        //Then
     }
 
 }

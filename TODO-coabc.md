@@ -1,17 +1,13 @@
-Full COA conventions support:
+#30 Full COA conventions support:
 - [DONE]set COA rules as constants (in DeploymentConstants?) instead of configuration flags:
    - https://github.com/orange-cloudfoundry/cf-ops-automation#ops-files
     > By convention, all files in template dir matching *-operators.yml are used by bosh-deployment as ops-files inputs.
 - [DONE]remove prereq to have a file `operators/coab-operators.yml` present but still preserve symlinking it
    - it is fine to have a deployment without any operators file
 - add systematic symlink of any template/ file 
-   - [ONGOING]1st step: ignoring subdirs, regardless of their name if their present as file in this directory,
-   - 2nd step: also mirror the subdirs with nested symlinks to support iaas-specific templates
-- add systematic symlink of any secrets/ file 
-   - regardless of their name if their present as file in this directory,
-- review deployment-dependencies.yml generation. See https://github.com/orange-cloudfoundry/cf-ops-automation/issues/150 
-
-Refine TemplatesGeneratorTest.populatePaasTemplates to make bdd style integration test:
+   - [DONE]1st step: ignoring subdirs, regardless of their name if their present as file in this directory,
+   - [DONE]2nd step: also mirror the subdirs with nested symlinks to support iaas-specific templates
+- [ONGOING]refine TemplatesGeneratorTest.populatePaasTemplates to make bdd style integration test:
 * given a reference model in the src/test/resources such as 
 ```
 coab-depls/mongodb
@@ -50,6 +46,13 @@ Q: how to assert expected dir ?
    * find java compare directory tree 
       * including symlinks
       * including coab-vars content 
+
+- add systematic symlink of any secrets/ file 
+   - regardless of their name if their present as file in this directory,
+- review deployment-dependencies.yml generation. See https://github.com/orange-cloudfoundry/cf-ops-automation/issues/150 
+
+
+
 
 - Bump jackson to 2.9.2 or later and pull https://github.com/FasterXML/jackson-dataformats-text/tree/master/yaml
 

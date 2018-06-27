@@ -73,13 +73,13 @@ public class Copy {
     /**
      * A {@code FileVisitor} that copies a file-tree ("cp -r")
      */
-    static class TreeCopier implements FileVisitor<Path> {
+    public static class TreeCopier implements FileVisitor<Path> {
         private final Path source;
         private final Path target;
         private final boolean prompt;
         private final boolean preserve;
 
-        TreeCopier(Path source, Path target, boolean prompt, boolean preserve) {
+        public TreeCopier(Path source, Path target, boolean prompt, boolean preserve) {
             this.source = source;
             this.target = target;
             this.prompt = prompt;

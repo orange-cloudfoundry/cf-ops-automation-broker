@@ -16,7 +16,8 @@ public class Tree {
     }
 
     public void print(String directory) {
-        System.out.println(directory);
+        //System.out.println(directory);
+        System.out.println(".");
         try {
             walk(new File(directory), "");
         } catch (IOException e) {

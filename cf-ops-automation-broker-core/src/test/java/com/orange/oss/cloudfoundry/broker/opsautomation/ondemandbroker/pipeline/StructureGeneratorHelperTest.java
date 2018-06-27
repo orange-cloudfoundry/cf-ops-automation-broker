@@ -1,5 +1,6 @@
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline;
 
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -7,7 +8,6 @@ import org.junit.rules.TemporaryFolder;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.*;
-import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -15,6 +15,9 @@ import java.util.Map;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertEquals;
+import static org.hamcrest.Matchers.*;
+
+
 
 public class StructureGeneratorHelperTest {
 
@@ -60,15 +63,34 @@ public class StructureGeneratorHelperTest {
     }
 
     @Test
-    public void check_generate_symbolic_link() {
+    public void check_generate_symbolic_link_to_a_real_file() throws IOException{
         //Given a root path and path elements to create
         Path rootPath = this.temporaryFolder.getRoot().toPath();
+        Path filePath = rootPath.resolve("aRealFile.txt");
+        Files.createFile(filePath);
 
         //When
+        StructureGeneratorHelper.generateSymbolicLink(rootPath, null, null, "aRealFile.txt", "linkToARealFile.txt");
 
         //Then
+        Path expectedSymbolicLink = rootPath.resolve("linkToARealFile.txt");
+        assertThat("Symbolic link doesn't exist", Files.exists(expectedSymbolicLink));
+        assertThat("File is not a symbolic link", Files.isSymbolicLink(expectedSymbolicLink));
+        assertThat(Files.readSymbolicLink(expectedSymbolicLink).toString(), is(equalTo("aRealFile.txt")));
+    }
 
+    @Test@Ignore
+    public void check_generate_symbolic_link_to_a_fake_file() throws IOException{
+        //Given a root path and path elements to create
+        Path rootPath = this.temporaryFolder.getRoot().toPath();
+        Path filePath = rootPath.resolve("aFakeFile.txt");
 
+        //When
+        StructureGeneratorHelper.generateSymbolicLink(rootPath, null, null, "aFakeFile.txt", "linkToAFakeFile.txt");
+
+        //Then
+        Path expectedSymbolicLink = rootPath.resolve("linkToAFakeFile.txt");
+        assertThat("Symbolic link exist", Files.notExists(expectedSymbolicLink, LinkOption.NOFOLLOW_LINKS));
     }
 
     @Test

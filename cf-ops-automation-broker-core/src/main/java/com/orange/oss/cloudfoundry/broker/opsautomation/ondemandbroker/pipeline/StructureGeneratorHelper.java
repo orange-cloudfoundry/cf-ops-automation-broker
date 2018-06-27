@@ -50,7 +50,9 @@ public class StructureGeneratorHelper {
             Path targetFile = StructureGeneratorHelper.generatePath(targetDir, targetFileName);
 
             //Create symbolic link
-            Files.createSymbolicLink(targetFile, relativeSourceFile);
+            //if (!isMissingResource(relativeSourceFile)){
+                Files.createSymbolicLink(targetFile, relativeSourceFile);
+            //}
         } catch (IOException e) {
             e.printStackTrace();
             throw new DeploymentException(DeploymentConstants.GENERATION_EXCEPTION);
@@ -114,7 +116,7 @@ public class StructureGeneratorHelper {
     }
 
     public static boolean isMissingResource(Path path) {
-        return Files.notExists(path);
+        return Files.notExists(path);//By default follow links
     }
 
     //https://docs.oracle.com/javase/tutorial/essential/io/fileOps.html#glob

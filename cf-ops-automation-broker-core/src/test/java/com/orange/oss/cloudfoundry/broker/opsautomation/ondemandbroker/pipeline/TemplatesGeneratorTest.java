@@ -1,5 +1,7 @@
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline;
 
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.tools.Copy;
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.tools.Tree;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -9,9 +11,11 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.FileVisitOption;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.EnumSet;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
@@ -370,27 +374,29 @@ public class TemplatesGeneratorTest extends StructureGeneratorImplTest{
 
     @Test
     @Ignore
-    public void populatePaasTemplates() throws URISyntaxException {
+    public void populatePaasTemplates() throws URISyntaxException, IOException {
         //Given a template repository in /tmp
-        String paasTemplatePath = temporaryFolder.getRoot().getAbsolutePath();
+        //String paasTemplatePath = temporaryFolder.getRoot().getAbsolutePath();
+        Path paasTemplatePath = temporaryFolder.getRoot().toPath();
 
         //Search from classpath the test repository using a file marker  /SampleModelTestGenerator/
         URL resource = this.getClass().getResource("/sample-deployment-model");
         Path referenceDataModel = Paths.get(resource.toURI());
 
-        //Recursive copy reference template
-            //Files.walkFileTree(Path start, Set<FileVisitOption> options, int maxDepth, FileVisitor<? super Path> visitor) throws IOException
-                //Files.copy(source, target, options)
+        //Copy reference data model
+        EnumSet<FileVisitOption> opts = EnumSet.of(FileVisitOption.FOLLOW_LINKS);
+        Copy.TreeCopier tc = new Copy.TreeCopier(referenceDataModel, paasTemplatePath, false, true);
+        Files.walkFileTree(referenceDataModel, opts, Integer.MAX_VALUE, tc);
 
         //Given and a user request
         CoabVarsFileDto coabVarsFileDto = aTypicalUserProvisionningRequest();
 
         //When
-        this.templatesGenerator.checkPrerequisites(workDir);
-        this.templatesGenerator.generate(workDir, SERVICE_INSTANCE_ID, coabVarsFileDto);
+        this.templatesGenerator.checkPrerequisites(paasTemplatePath);
+        this.templatesGenerator.generate(paasTemplatePath, SERVICE_INSTANCE_ID, coabVarsFileDto);
 
         //then the service instance looks like the expected reference model
-
+        (new Tree()).print("/home/losapio/GIT/Coab/paas-templates/coab-depls/mongodb");
 
     }
 

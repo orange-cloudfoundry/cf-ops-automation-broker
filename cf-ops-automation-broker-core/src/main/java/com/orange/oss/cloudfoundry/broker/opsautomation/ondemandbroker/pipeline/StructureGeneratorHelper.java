@@ -40,19 +40,20 @@ public class StructureGeneratorHelper {
 
     public static void generateSymbolicLink(Path rootPath, String[] sourcePathElements, String[] targetPathElements, String sourceFileName, String targetFileName) {
         try {
-            //Compute relative path on directories with relativize method otherwise doesn't work
+            //Compute relative path on directories with relativize method otherwise doesn't work (/!\)
             Path sourceDir = StructureGeneratorHelper.generatePath(rootPath, sourcePathElements);
             Path targetDir = StructureGeneratorHelper.generatePath(rootPath, targetPathElements);
             Path targetToSource = targetDir.relativize(sourceDir);
 
             //Generate file paths
             Path relativeSourceFile = StructureGeneratorHelper.generatePath(targetToSource, sourceFileName);
+            Path absoluteSourceFile = StructureGeneratorHelper.generatePath(sourceDir, sourceFileName);
             Path targetFile = StructureGeneratorHelper.generatePath(targetDir, targetFileName);
 
             //Create symbolic link
-            //if (!isMissingResource(relativeSourceFile)){
+            if (!isMissingResource(absoluteSourceFile)){ //Test on absolute path is mandatory (/!\)
                 Files.createSymbolicLink(targetFile, relativeSourceFile);
-            //}
+            }
         } catch (IOException e) {
             e.printStackTrace();
             throw new DeploymentException(DeploymentConstants.GENERATION_EXCEPTION);

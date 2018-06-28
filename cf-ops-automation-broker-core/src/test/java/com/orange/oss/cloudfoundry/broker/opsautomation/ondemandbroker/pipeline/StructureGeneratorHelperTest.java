@@ -79,7 +79,7 @@ public class StructureGeneratorHelperTest {
         assertThat(Files.readSymbolicLink(expectedSymbolicLink).toString(), is(equalTo("aRealFile.txt")));
     }
 
-    @Test@Ignore
+    @Test
     public void check_generate_symbolic_link_to_a_fake_file() throws IOException{
         //Given a root path and path elements to create
         Path rootPath = this.temporaryFolder.getRoot().toPath();

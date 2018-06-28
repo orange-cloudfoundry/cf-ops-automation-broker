@@ -2,6 +2,7 @@ package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline
 
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.tools.Copy;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.tools.Tree;
+import org.apache.commons.io.IOUtils;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -15,10 +16,13 @@ import java.nio.file.FileVisitOption;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.text.MessageFormat;
 import java.util.EnumSet;
+import java.util.List;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
+import static org.junit.Assert.assertEquals;
 
 // $ tree coab-depls/
 //coab-depls/
@@ -364,8 +368,6 @@ public class TemplatesGeneratorTest extends StructureGeneratorImplTest{
                 "network-vars-tpl.yml")));
     }
 
-
-
     @Test
     @Ignore
     public void check_if_files_content_are_correct() {
@@ -376,7 +378,6 @@ public class TemplatesGeneratorTest extends StructureGeneratorImplTest{
     @Ignore
     public void populatePaasTemplates() throws URISyntaxException, IOException {
         //Given a template repository in /tmp
-        //String paasTemplatePath = temporaryFolder.getRoot().getAbsolutePath();
         Path paasTemplatePath = temporaryFolder.getRoot().toPath();
 
         //Search from classpath the test repository using a file marker  /SampleModelTestGenerator/
@@ -395,10 +396,29 @@ public class TemplatesGeneratorTest extends StructureGeneratorImplTest{
         this.templatesGenerator.checkPrerequisites(paasTemplatePath);
         this.templatesGenerator.generate(paasTemplatePath, SERVICE_INSTANCE_ID, coabVarsFileDto);
 
-        //then the service instance looks like the expected reference model
-        (new Tree()).print("/home/losapio/GIT/Coab/paas-templates/coab-depls/mongodb");
-
+        //Then
+        //assertThat(generatedStructure(), is(equalTo(expectedStructure())));
+        assertEquals(expectedStructure(), generatedStructure());
     }
+
+    private String expectedStructure() throws URISyntaxException, IOException{
+        URL resource = this.getClass().getResource("/sample-deployment-model/expected-tree.txt");
+        List<String> expectedTree = Files.readAllLines(Paths.get(resource.toURI()));
+        StringBuffer sb = new StringBuffer();
+        for (String s:expectedTree){
+            sb.append(s+System.getProperty("line.separator"));
+        }
+        return MessageFormat.format(sb.toString(), this.templatesGenerator.computeDeploymentName(SERVICE_INSTANCE_ID));
+    }
+
+    private String generatedStructure() throws URISyntaxException, IOException{
+        Path paasTemplatePath = temporaryFolder.getRoot().toPath();
+        Path modelPath = StructureGeneratorHelper.generatePath(paasTemplatePath, this.deploymentProperties.getRootDeployment(), this.templatesGenerator.modelDeployment);
+        Path deploymentPath = StructureGeneratorHelper.generatePath(paasTemplatePath, this.deploymentProperties.getRootDeployment(), this.templatesGenerator.computeDeploymentName(SERVICE_INSTANCE_ID));
+        return (new Tree().print(modelPath) + new Tree().print(deploymentPath));
+    }
+
+
 
     protected CoabVarsFileDto aTypicalUserProvisionningRequest() {
         CoabVarsFileDto coabVarsFileDto = new CoabVarsFileDto();

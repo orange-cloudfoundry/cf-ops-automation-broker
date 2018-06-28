@@ -7,6 +7,6 @@ public class TreeTest {
 
     @Test@Ignore
     public void test() {
-        (new Tree()).print("/home/losapio/GIT/Coab/paas-templates/coab-depls/mongodb");
+        //(new Tree()).print("/home/losapio/GIT/Coab/paas-templates/coab-depls/mongodb");
     }
 }

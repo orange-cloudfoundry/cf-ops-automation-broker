@@ -46,7 +46,7 @@ public class CopyTest {
             Files.walkFileTree(referenceDataModel, opts, Integer.MAX_VALUE, tc);
 
             //print result
-            new Tree().print(target.toString());
+            new Tree().print(target);
 
 
 

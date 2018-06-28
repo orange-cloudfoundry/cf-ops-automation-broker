@@ -9,21 +9,24 @@ import java.util.Arrays;
 public class Tree {
     private int dirCount;
     private int fileCount;
+    private StringBuffer result;
 
     public Tree() {
         this.dirCount = 0;
         this.fileCount = 0;
+        this.result = new StringBuffer();
     }
 
-    public void print(String directory) {
-        //System.out.println(directory);
-        System.out.println(".");
+    public String print(Path path) {
+        //System.out.println(path.getFileName());
+        this.result.append(path.getFileName() + System.getProperty("line.separator"));
         try {
-            walk(new File(directory), "");
+            walk(new File(path.toString()), "");
         } catch (IOException e) {
             e.printStackTrace();
         }
-        System.out.println("\n" + this.dirCount + " directories, " + this.fileCount + " files");
+        //System.out.println("\n" + this.dirCount + " directories, " + this.fileCount + " files");
+        return this.result.toString();
     }
 
     private void register(File file) {
@@ -47,6 +50,13 @@ public class Tree {
         return !canon.getCanonicalFile().equals(canon.getAbsoluteFile());
     }
 
+    private static Path computeRelativePath(File file) throws IOException{
+        Path filePath = Paths.get(file.getCanonicalFile().getParent());
+        Path linkPath = Paths.get(file.getParent());
+        Path relativePath = linkPath.relativize(filePath);
+        return relativePath.resolve(file.getCanonicalFile().getName());
+    }
+
     private void walk(File folder, String prefix) throws IOException{
         File file;
         File[] fileList = folder.listFiles();
@@ -61,22 +71,23 @@ public class Tree {
 
             if (index == fileList.length - 1) {
                 if (isSymlink(file)){
-                    Path filePath = Paths.get(file.getCanonicalPath());
-                    Path linkPath = Paths.get(file.toPath().toString());
-                    System.out.println(prefix + "└── " + linkPath.relativize(filePath));
+                    //System.out.println(prefix + "└── " + computeRelativePath(file));
+                    this.result.append(prefix + "└── " + computeRelativePath(file) + System.getProperty("line.separator"));
+
                 }else{
-                    System.out.println(prefix + "└── " + file.getName());
+                    //System.out.println(prefix + "└── " + file.getName());
+                    this.result.append(prefix + "└── " + file.getName() + System.getProperty("line.separator"));
                 }
                 if (file.isDirectory()) {
                     walk(file, prefix + "    ");
                 }
             } else {
                 if (isSymlink(file)){
-                    Path filePath = Paths.get(file.getCanonicalPath());
-                    Path linkPath = Paths.get(file.toPath().toString());
-                    System.out.println(prefix + "└── " + linkPath.relativize(filePath));
+                    //System.out.println(prefix + "└── " + computeRelativePath(file));
+                    this.result.append(prefix + "└── " + computeRelativePath(file) + System.getProperty("line.separator"));
                 }else{
-                    System.out.println(prefix + "└── " + file.getName());
+                    //System.out.println(prefix + "└── " + file.getName());
+                    this.result.append(prefix + "└── " + file.getName() + System.getProperty("line.separator"));
                 }
                 if (file.isDirectory()) {
                     walk(file, prefix + "│   ");

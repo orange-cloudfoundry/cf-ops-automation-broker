@@ -1,0 +1,17 @@
+mongodb
+└── deployment-dependencies.yml
+└── template
+    └── add-prometheus-operators.yml
+    └── add-shield-operators.yml
+    └── coab-operators.yml
+    └── mongodb-vars.yml
+    └── mongodb.yml
+{0}
+└── deployment-dependencies.yml
+└── template
+    └── ../../mongodb/template/add-prometheus-operators.yml
+    └── ../../mongodb/template/add-shield-operators.yml
+    └── ../../mongodb/template/mongodb.yml
+    └── ../../mongodb/template/coab-operators.yml
+    └── coab-vars.yml
+    └── ../../mongodb/template/mongodb-vars.yml

@@ -143,9 +143,28 @@ Following the release:
 - clean up your local workspace using `mvn release:clean`
 
 In case of issues, try:
-* `mvn release:rollback` 
+* `mvn release:rollback` (which creates a new commit reverting changes)
     * possibly revert the commits in git (`git reset --hard commitid`), 
 * clean up the git tag `git tag -d vXX && git push --delete origin vXX`, 
+* possibly clean up bintray releases uploaded while github release failed
 * `mvn release:clean`
 * fix the root cause and retry.
+   * possibly resume circle ci workflow from failed step (from the workflow page)
  
+### Releasing a bug fix version
+
+Say you have a bug in production against version 0.25.0 and need to create a bug fix version 0.25.1 without waiting for the next major(0.27.0), i.e. you need to create a 0.25.1 version out of 0.25.0
+
+```sh
+git checkout 0.25.0
+git checkout -b 0.25.x
+mvn release:update-versions --batch-mode -DdevelopmentVersion=0.25.1-SNAPSHOT 
+git commit -am "prepare for poms 0.25.1-SNAPSHOT"
+#add your fix or cherry pick it
+#commit & push
+mvn release:prepare --batch-mode -Dtag=0.25.1 -DreleaseVersion=0.25.1 -DdevelopmentVersion=0.25.2-SNAPSHOT
+```
+
+Then follow the same steps as for a normal release, picking up circle-ci remaining release part.
+
+

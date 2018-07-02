@@ -33,8 +33,7 @@ public class StructureGeneratorHelper {
                 Files.createDirectory(directory);
             }
         } catch (IOException e) {
-            e.printStackTrace();
-            throw new DeploymentException(DeploymentConstants.GENERATION_EXCEPTION);
+            throw new DeploymentException(DeploymentConstants.GENERATION_EXCEPTION, e);
         }
     }
 
@@ -55,8 +54,7 @@ public class StructureGeneratorHelper {
                 Files.createSymbolicLink(targetFile, relativeSourceFile);
             }
         } catch (IOException e) {
-            e.printStackTrace();
-            throw new DeploymentException(DeploymentConstants.GENERATION_EXCEPTION);
+            throw new DeploymentException(DeploymentConstants.GENERATION_EXCEPTION, e);
         }
     }
 
@@ -68,8 +66,7 @@ public class StructureGeneratorHelper {
             Path targetFile = StructureGeneratorHelper.generatePath(targetDir, targetFileName);
 
             //Read source file content
-            List<String> lines = null;
-            lines = IOUtils.readLines(StructureGeneratorHelper.class.getResourceAsStream(File.separator + DeploymentConstants.DEPLOYMENT + File.separator + sourceFileName), StandardCharsets.UTF_8);
+            List<String> lines = IOUtils.readLines(StructureGeneratorHelper.class.getResourceAsStream(File.separator + DeploymentConstants.DEPLOYMENT + File.separator + sourceFileName), StandardCharsets.UTF_8);
 
             //Use map to update file content
             List<String> resultLines;
@@ -81,8 +78,7 @@ public class StructureGeneratorHelper {
             //Generate target file
             Files.write(targetFile, resultLines, Charset.forName(StandardCharsets.UTF_8.name()));
         } catch (IOException e) {
-            e.printStackTrace();
-            throw new DeploymentException(DeploymentConstants.GENERATION_EXCEPTION);
+            throw new DeploymentException(DeploymentConstants.GENERATION_EXCEPTION, e);
         }
     }
 
@@ -96,13 +92,12 @@ public class StructureGeneratorHelper {
             Files.deleteIfExists(file);
 
         } catch (IOException e) {
-            e.printStackTrace();
-            throw new DeploymentException(DeploymentConstants.REMOVAL_EXCEPTION);
+            throw new DeploymentException(DeploymentConstants.REMOVAL_EXCEPTION, e);
         }
     }
 
     public static List<String> findAndReplace(List<String> lines, Map<String, String> map) {
-        List<String> resultLines = new ArrayList<String>();
+        List<String> resultLines = new ArrayList<>();
         for (String s : lines) {
             String resultLine = null;
             for (Map.Entry mapentry : map.entrySet()) {
@@ -122,21 +117,20 @@ public class StructureGeneratorHelper {
 
     //https://docs.oracle.com/javase/tutorial/essential/io/fileOps.html#glob
     public static List<String> listFilesPaths_old(Path path, String glob) {
-        List<String> paths = new ArrayList<String>();
+        List<String> paths = new ArrayList<>();
         try (DirectoryStream<Path> stream =
                      Files.newDirectoryStream(path, glob)) {
             for (Path entry : stream) {
                 paths.add(entry.getFileName().toString());
             }
         } catch (IOException e) {
-            e.printStackTrace();
-            throw new DeploymentException(DeploymentConstants.SEARCH_EXCEPTION);
+            throw new DeploymentException(DeploymentConstants.SEARCH_EXCEPTION, e);
         }
         return paths;
     }
 
     public static List<String> listFilesPaths(Path path, String glob) {
-        List<String> paths = new ArrayList<String>();
+        List<String> paths = new ArrayList<>();
 
         final PathMatcher pathMatcher = FileSystems.getDefault().getPathMatcher(
                 glob);
@@ -160,8 +154,7 @@ public class StructureGeneratorHelper {
             });
 
         } catch (IOException e) {
-            e.printStackTrace();
-            throw new DeploymentException(DeploymentConstants.SEARCH_EXCEPTION);
+            throw new DeploymentException(DeploymentConstants.SEARCH_EXCEPTION, e);
         }
         return paths;
     }

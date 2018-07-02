@@ -33,8 +33,9 @@ coab-depls/m_f49911f7-b69a-4aba-afdf-23fd11014278
     |-- mongodb-vars.yml -> ../../mongodb/template/mongodb-vars.yml
     |-- m_f49911f7-b69a-4aba-afdf-23fd11014278.yml -> ../../mongodb/template/mongodb.yml
     `-- coab-vars.yml
-    
 ```
+- Update BoshServiceProvisionningTest#initPaasTemplate() to use file copy as well instead of crafting individual files explicitly
+
 
 Q: how to recursively copy files & preserving symlinks ?
 

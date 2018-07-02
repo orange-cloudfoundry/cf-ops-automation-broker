@@ -72,7 +72,7 @@ public class Tree {
             if (index == fileList.length - 1) {
                 if (isSymlink(file)){
                     //System.out.println(prefix + "└── " + computeRelativePath(file));
-                    this.result.append(prefix + "└── " + computeRelativePath(file) + System.getProperty("line.separator"));
+                    this.result.append(prefix + "└── " + file.getName()+ " -> " + computeRelativePath(file) + System.getProperty("line.separator"));
 
                 }else{
                     //System.out.println(prefix + "└── " + file.getName());
@@ -84,7 +84,7 @@ public class Tree {
             } else {
                 if (isSymlink(file)){
                     //System.out.println(prefix + "└── " + computeRelativePath(file));
-                    this.result.append(prefix + "└── " + computeRelativePath(file) + System.getProperty("line.separator"));
+                    this.result.append(prefix + "└── " + file.getName()+ " -> " + computeRelativePath(file) + System.getProperty("line.separator"));
                 }else{
                     //System.out.println(prefix + "└── " + file.getName());
                     this.result.append(prefix + "└── " + file.getName() + System.getProperty("line.separator"));

@@ -375,7 +375,6 @@ public class TemplatesGeneratorTest extends StructureGeneratorImplTest{
     }
 
     @Test
-    @Ignore
     public void populatePaasTemplates() throws URISyntaxException, IOException {
         //Given a template repository in /tmp
         Path paasTemplatePath = temporaryFolder.getRoot().toPath();

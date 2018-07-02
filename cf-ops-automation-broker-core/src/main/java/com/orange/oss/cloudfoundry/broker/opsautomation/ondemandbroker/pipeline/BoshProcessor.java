@@ -178,10 +178,12 @@ public class BoshProcessor extends DefaultBrokerProcessor {
 
     private String extractUserKeyFromOsbContext(org.springframework.cloud.servicebroker.model.Context context) {
         String userKey = null;
-        String platform = context.getPlatform();
-        if (OsbConstants.ORIGINATING_CLOUDFOUNDRY_PLATFORM.equals(platform)) {
-            userKey = (String) context.getProperty(OsbConstants.ORIGINATING_USER_KEY);
-        }
+        if (context != null) {
+			String platform = context.getPlatform();
+			if (OsbConstants.ORIGINATING_CLOUDFOUNDRY_PLATFORM.equals(platform)) {
+				userKey = (String) context.getProperty(OsbConstants.ORIGINATING_USER_KEY);
+			}
+		}
         return userKey;
     }
 

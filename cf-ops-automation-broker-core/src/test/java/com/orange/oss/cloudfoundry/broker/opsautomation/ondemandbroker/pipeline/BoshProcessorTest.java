@@ -135,7 +135,7 @@ public class BoshProcessorTest {
 
 
     @Test
-    public void provision_commit_msg_includes_requester_details_without_context() {
+    public void provision_commit_msg_includes_requester_details_with_empty_context() {
         //Given a creation request with both deprecated OSB syntax
 
         CreateServiceInstanceRequest request = new CreateServiceInstanceRequest("service_definition_id",
@@ -152,6 +152,25 @@ public class BoshProcessorTest {
 
         //then commit msg is valid
         provision_commit_msg_includes_requester_details(request);
+    }
+
+    @Test
+    public void provision_commit_msg_includes_requester_details_without_context() {
+        //Given a creation request with both deprecated OSB syntax
+
+        CreateServiceInstanceRequest request = new CreateServiceInstanceRequest("service_definition_id",
+                "plan_id",
+                "org_id1",
+                "space_id1",
+                null,
+                null
+        );
+        request.withServiceInstanceId(SERVICE_INSTANCE_ID);
+
+        //then commit msg is valid
+        BoshProcessor boshProcessor = aBasicBoshProcessor();
+        assertThat(boshProcessor.formatProvisionCommitMsg(request)).isEqualTo("Cassandra broker: create instance id=aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa0" +
+                "\n\nRequested from space_guid=space_id1 org_guid=org_id1 by user_guid=null");
     }
 
     @Test

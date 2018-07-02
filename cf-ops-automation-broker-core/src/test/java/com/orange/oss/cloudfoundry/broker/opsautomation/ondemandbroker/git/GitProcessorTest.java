@@ -48,7 +48,7 @@ public class GitProcessorTest {
     }
 
     @After
-    public void cleanUpClone() throws IOException {
+    public void cleanUpClone() {
         if (processor != null) {
             processor.deleteWorkingDir(ctx);
         }
@@ -115,7 +115,7 @@ public class GitProcessorTest {
 
 
     @Test
-    public void supports_createBranchIfMissing_key() throws IOException, GitAPIException {
+    public void supports_createBranchIfMissing_key() throws IOException {
         //given a clone of an empty repo on the "master" branch
         //and adding files, and and asking to commit
         Context context = new Context();
@@ -197,7 +197,7 @@ public class GitProcessorTest {
     }
 
     @Test
-    public void supports_checkOutRemoteBranch_key_when_branch_exists() throws IOException, GitAPIException {
+    public void supports_checkOutRemoteBranch_key_when_branch_exists() throws IOException {
         //given an existing branch in the repo
         givenAnExistingRepoOnSpecifiedBranch("develop");
 
@@ -219,8 +219,27 @@ public class GitProcessorTest {
         assertThat(secondClone.resolve("another-file-in-develop-branch.txt").toFile()).exists();
     }
 
+    @Test
+    public void supports_checkOutRemoteBranch_key_when_branch_exists_as_default_branch() throws IOException {
+        //given the existing master default branch in the repo
+
+        //given a clone of master branch
+        this.ctx = new Context();
+        this.ctx.contextKeys.put(GitProcessorContext.checkOutRemoteBranch.toString(), "master");
+        processor.cloneRepo(this.ctx);
+
+        //and adding files
+        //and asking to commit and push
+        addAFile(this.ctx, "some  content in branch master", "a-file-in-master-branch.txt", "");
+        processor.commitPushRepo(this.ctx, false);
+
+        Path secondClone = cloneRepoFromBranch("master");
+        //Then new file should be persisted in the "master" branch
+        assertThat(secondClone.resolve("a-file-in-master-branch.txt").toFile()).exists();
+    }
+
     @Test(expected = IllegalArgumentException.class)
-    public void supports_checkOutRemoteBranch_key_when_branch_is_missing() throws IOException, GitAPIException {
+    public void supports_checkOutRemoteBranch_key_when_branch_is_missing() {
         //given an empty repo
 
         //When asking to clone develop branch
@@ -233,7 +252,7 @@ public class GitProcessorTest {
     }
 
     @Test
-    public void supports_checkOutRemoteBranch_and_createBranchIfMissing_keys_together() throws IOException, GitAPIException {
+    public void supports_checkOutRemoteBranch_and_createBranchIfMissing_keys_together() throws IOException {
         //given two independent branches available in a remote
         givenAnExistingRepoOnSpecifiedBranch("develop");
         givenAnExistingRepoOnSpecifiedBranch("service-instance-guid2");
@@ -261,7 +280,7 @@ public class GitProcessorTest {
     }
 
     @Test
-    public void supports_default_user_name_and_emails_config() throws GitAPIException, IOException {
+    public void supports_default_user_name_and_emails_config() throws IOException {
         //given no user config specified (null values)
         processor = new GitProcessor("gituser", "gitsecret", GIT_URL, null, null, null);
         processor.cloneRepo(ctx);
@@ -277,7 +296,7 @@ public class GitProcessorTest {
 
 
     @Test
-    public void adds_and_deletes_files() throws GitAPIException, IOException {
+    public void adds_and_deletes_files() throws IOException {
         addAndDeleteFilesForRepoAlias(this.processor, this.ctx, "");
     }
 
@@ -522,7 +541,7 @@ public class GitProcessorTest {
 
 
     @Test
-    public void fails_if_pull_rebase_fails_during_push() throws GitAPIException, IOException {
+    public void fails_if_pull_rebase_fails_during_push() throws IOException {
         //given a clone of an empty repo
         Context ctx1 = new Context();
         GitProcessor processor1 = new GitProcessor("gituser", "gitsecret", GIT_URL, "committerName", "committer@address.org", null);
@@ -566,7 +585,7 @@ public class GitProcessorTest {
         assertThat(processor.getImplicitRemoteBranchToDisplay(context)).isEqualTo(expectedBranchDisplayed);
     }
 
-    private void givenAnExistingRepoOnSpecifiedBranch(String branch) throws IOException, GitAPIException {
+    private void givenAnExistingRepoOnSpecifiedBranch(String branch) throws IOException {
         //given a clone of an empty repo on the master branch
         GitProcessor processor = new GitProcessor("gituser", "gitsecret", GIT_URL, "committerName", "committer@address.org", null);
 

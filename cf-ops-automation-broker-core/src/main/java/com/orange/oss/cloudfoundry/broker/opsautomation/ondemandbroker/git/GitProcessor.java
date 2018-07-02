@@ -131,7 +131,7 @@ public class GitProcessor extends DefaultBrokerProcessor {
                     .setDirectory(workDir.toFile())
                     .setTimeout(timeoutSeconds)
                     .setURI(this.gitUrl)
-                    .setCloneAllBranches(true); //explicitly set ad default is not clearly documented
+                    .setCloneAllBranches(true); //explicitly set as default is not clearly documented
 
             Git git = clone.call();
             this.setGit(git, ctx);
@@ -249,6 +249,13 @@ public class GitProcessor extends DefaultBrokerProcessor {
                 .findFirst();
     }
 
+    Optional<Ref> lookUpLocalBranch(Git git, String branchName) throws GitAPIException {
+        List<Ref> branches = git.branchList().setListMode(ListBranchCommand.ListMode.ALL).call();
+        return branches.stream()
+                .filter(ref -> ref.getName().equals("refs/heads/" + branchName))
+                .findFirst();
+    }
+
 
     String getImplicitRemoteBranchToDisplay(Context ctx) {
         String branch = getContextValue(ctx, GitProcessorContext.createBranchIfMissing);
@@ -264,8 +271,10 @@ public class GitProcessor extends DefaultBrokerProcessor {
     private void checkoutRemoteBranchIfNeeded(Git git, Context ctx) throws GitAPIException {
         String branch = getContextValue(ctx, GitProcessorContext.checkOutRemoteBranch);
         if (branch != null) {
+            //Default branch is already present, would fail if asked to create one
+            boolean shouldCreateLocalBranch = ! lookUpLocalBranch(git, branch).isPresent();
             git.checkout()
-                    .setCreateBranch(true).setName(branch) //create local branch
+                    .setCreateBranch(shouldCreateLocalBranch).setName(branch) //create local branch
                     .setUpstreamMode(CreateBranchCommand.SetupUpstreamMode.SET_UPSTREAM)
                     .setStartPoint("origin/" + branch) //from remote branch
                     .call();

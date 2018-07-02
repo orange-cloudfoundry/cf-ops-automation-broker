@@ -247,6 +247,8 @@ public class TemplatesGeneratorTest extends StructureGeneratorImplTest{
                        DeploymentConstants.COAB + DeploymentConstants.COA_OPERATORS_FILE_SUFFIX) //coab-operators.yml in subdir operators
                 .withFile(new String[]{this.deploymentProperties.getRootDeployment(), this.deploymentProperties.getModelDeployment(), this.deploymentProperties.getTemplate()},
                        DeploymentConstants.COAB + DeploymentConstants.COA_OPERATORS_FILE_SUFFIX) //coab-operators.yml
+                .withFile(new String[]{this.deploymentProperties.getRootDeployment(), this.deploymentProperties.getModelDeployment(), this.deploymentProperties.getTemplate()},
+                        DeploymentConstants.COAB + DeploymentConstants.COA_VARS_FILE + DeploymentConstants.YML_EXTENSION) //coab-vars.yml
                 .withDirectoryHierarchy(this.deploymentProperties.getRootDeployment(), this.deploymentProperties.getModelDeployment(), this.deploymentProperties.getTemplate(), "openstack-hws")
                 .withFile(new String[]{this.deploymentProperties.getRootDeployment(), this.deploymentProperties.getModelDeployment(), this.deploymentProperties.getTemplate(), "openstack-hws"},
                         "network-operators.yml") //network-operators.yml in subdir openstack-hws
@@ -418,7 +420,6 @@ public class TemplatesGeneratorTest extends StructureGeneratorImplTest{
     }
 
 
-
     protected CoabVarsFileDto aTypicalUserProvisionningRequest() {
         CoabVarsFileDto coabVarsFileDto = new CoabVarsFileDto();
         coabVarsFileDto.deployment_name = "cassandravarsops_aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa0";
@@ -430,6 +431,17 @@ public class TemplatesGeneratorTest extends StructureGeneratorImplTest{
         coabVarsFileDto.context.space_guid = "space_guid1";
         coabVarsFileDto.context.organization_guid = "org_guid1";
         return coabVarsFileDto;
+    }
+
+    @Test
+    @Ignore
+    public void populateRealPaasTemplates() {
+        Path workDir = Paths.get("/home/losapio/GIT/Coab/paas-templates");
+        //Given and a user request
+        CoabVarsFileDto coabVarsFileDto = aTypicalUserProvisionningRequest();
+
+        this.templatesGenerator.checkPrerequisites(workDir);
+        this.templatesGenerator.generate(workDir, SERVICE_INSTANCE_ID, coabVarsFileDto);
     }
 
 }

@@ -50,7 +50,7 @@ public class StructureGeneratorHelper {
             Path targetFile = StructureGeneratorHelper.generatePath(targetDir, targetFileName);
 
             //Create symbolic link
-            if (!isMissingResource(absoluteSourceFile)){ //Test on absolute path is mandatory (/!\)
+            if (!isMissingResource(absoluteSourceFile) && isMissingResource(targetFile)){ //Test on absolute path is mandatory (/!\)
                 Files.createSymbolicLink(targetFile, relativeSourceFile);
             }
         } catch (IOException e) {

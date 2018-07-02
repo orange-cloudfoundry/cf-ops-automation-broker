@@ -94,6 +94,24 @@ public class StructureGeneratorHelperTest {
     }
 
     @Test
+    public void check_generate_symbolic_link_with_existing_target_file_do_not_fail() throws IOException{
+        //Given a root path and path elements to create
+        Path rootPath = this.temporaryFolder.getRoot().toPath();
+        Path filePath = rootPath.resolve("aRealFile.txt");
+        Files.createFile(filePath);
+        Path existingFilePath = rootPath.resolve("linkToAFakeFile.txt");
+        Files.createFile(existingFilePath);
+
+        //When
+        StructureGeneratorHelper.generateSymbolicLink(rootPath, null, null, "aRealFile.txt", "linkToAFakeFile.txt");
+
+        //Then (no exception java.nio.file.FileAlreadyExistsException)
+    }
+
+
+
+
+    @Test
     public void check_generate_file() {
         //Given a root path and path elements to create
         Path rootPath = this.temporaryFolder.getRoot().toPath();

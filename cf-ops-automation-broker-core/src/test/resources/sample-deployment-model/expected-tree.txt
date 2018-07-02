@@ -4,6 +4,7 @@ mongodb
     └── add-prometheus-operators.yml
     └── add-shield-operators.yml
     └── coab-operators.yml
+    └── coab-vars.yml
     └── mongodb-vars.yml
     └── mongodb.yml
 {0}

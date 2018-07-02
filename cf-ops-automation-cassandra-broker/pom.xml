@@ -12,7 +12,7 @@
 
     <groupId>com.orange.oss.cloudfoundry.broker.opsautomation</groupId>
     <artifactId>cf-ops-automation-cassandra-broker</artifactId>
-    <version>0.25.1-SNAPSHOT</version>
+    <version>0.25.1</version>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -34,12 +34,12 @@
         <dependency>
             <groupId>com.orange.oss.cloudfoundry.broker.opsautomation</groupId>
             <artifactId>cf-ops-automation-broker-core</artifactId>
-            <version>0.25.1-SNAPSHOT</version>
+            <version>0.25.1</version>
         </dependency>
         <dependency>
             <groupId>com.orange.oss.cloudfoundry.broker.opsautomation</groupId>
             <artifactId>spring-boot-starter-servicebroker-catalog</artifactId>
-            <version>0.25.1-SNAPSHOT</version>
+            <version>0.25.1</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -119,6 +119,6 @@
     </build>
 
   <scm>
-    <tag>0.25.0</tag>
+    <tag>0.25.1</tag>
   </scm>
 </project>

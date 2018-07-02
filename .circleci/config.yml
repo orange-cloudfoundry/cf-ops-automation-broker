@@ -69,7 +69,7 @@ jobs:
   release_to_github:
     working_directory: ~/cf-ops-automation-broker
     docker:
-      - image: circleci/golang:1.8.1
+      - image: circleci/openjdk:8-jdk
     steps:
       - attach_workspace:
           at: ~/cf-ops-automation-broker

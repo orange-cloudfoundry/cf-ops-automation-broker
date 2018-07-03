@@ -34,6 +34,8 @@ coab-depls/m_f49911f7-b69a-4aba-afdf-23fd11014278
     |-- m_f49911f7-b69a-4aba-afdf-23fd11014278.yml -> ../../mongodb/template/mongodb.yml
     `-- coab-vars.yml
 ```
+- update TemplatesGeneratorTest.aModelStructure() to use the src/test/resources/sample-deployment-model/coab-depls/mongodb or a distinct dedicated deployment model
+    + consider removing assertXX() methods redundant with populatePaasTemplates() 
 - Update BoshServiceProvisionningTest#initPaasTemplate() to use file copy as well instead of crafting individual files explicitly
 
 

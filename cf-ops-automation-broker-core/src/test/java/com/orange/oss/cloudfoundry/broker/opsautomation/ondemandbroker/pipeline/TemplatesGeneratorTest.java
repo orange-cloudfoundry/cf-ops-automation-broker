@@ -2,7 +2,6 @@ package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline
 
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.tools.Copy;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.tools.Tree;
-import org.apache.commons.io.IOUtils;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -390,35 +389,62 @@ public class TemplatesGeneratorTest extends StructureGeneratorImplTest{
         Copy.TreeCopier tc = new Copy.TreeCopier(referenceDataModel, paasTemplatePath, false, true);
         Files.walkFileTree(referenceDataModel, opts, Integer.MAX_VALUE, tc);
 
+        checkDeployment("coab-depls", "mongodb", "m");
+        checkDeployment("coab-depls", "cassandravarsops", "c");
+
+    }
+
+
+
+    private void checkDeployment(String rootDeployment, String modelDeployment, String modelDeploymentShortAlias) throws URISyntaxException, IOException{
+
+        //Given a path
+        Path paasTemplatePath = temporaryFolder.getRoot().toPath();
+
         //Given and a user request
         CoabVarsFileDto coabVarsFileDto = aTypicalUserProvisionningRequest();
 
-        //When
-        this.templatesGenerator.checkPrerequisites(paasTemplatePath);
-        this.templatesGenerator.generate(paasTemplatePath, SERVICE_INSTANCE_ID, coabVarsFileDto);
+        //Given a template generator
+        TemplatesGenerator templatesGenerator = new TemplatesGenerator(rootDeployment,
+                modelDeployment,
+                "template",
+                "vars",
+                "operators",
+                modelDeploymentShortAlias,
+                new VarsFilesYmlFormatter());
 
-        //Then
-        //assertThat(generatedStructure(), is(equalTo(expectedStructure())));
-        assertEquals(expectedStructure(), generatedStructure());
+        //When
+        templatesGenerator.checkPrerequisites(paasTemplatePath);
+        templatesGenerator.generate(paasTemplatePath, SERVICE_INSTANCE_ID, coabVarsFileDto);
+
+       //Then
+        // assertThat(generatedStructure(), is(equalTo(expectedStructure())));
+       System.out.println("Checking : " + modelDeployment);
+        assertEquals(expectedStructure(rootDeployment, "expected-" + modelDeployment + "-tree.txt", templatesGenerator.computeDeploymentName(SERVICE_INSTANCE_ID)),
+               generatedStructure(rootDeployment, modelDeployment, templatesGenerator.computeDeploymentName(SERVICE_INSTANCE_ID)));
     }
 
-    private String expectedStructure() throws URISyntaxException, IOException{
-        URL resource = this.getClass().getResource("/sample-deployment-model/expected-tree.txt");
+
+
+
+
+
+    private String expectedStructure(String rootDeployment, String expectedTreeFile, String deploymentName) throws URISyntaxException, IOException{
+        URL resource = this.getClass().getResource("/sample-deployment-model" + File.separator + rootDeployment + File.separator + expectedTreeFile);
         List<String> expectedTree = Files.readAllLines(Paths.get(resource.toURI()));
         StringBuffer sb = new StringBuffer();
         for (String s:expectedTree){
             sb.append(s+System.getProperty("line.separator"));
         }
-        return MessageFormat.format(sb.toString(), this.templatesGenerator.computeDeploymentName(SERVICE_INSTANCE_ID));
+        return MessageFormat.format(sb.toString(), deploymentName);
     }
 
-    private String generatedStructure() throws URISyntaxException, IOException{
+    private String generatedStructure(String rootDeployment, String modelDeployment, String deploymentName) throws URISyntaxException, IOException{
         Path paasTemplatePath = temporaryFolder.getRoot().toPath();
-        Path modelPath = StructureGeneratorHelper.generatePath(paasTemplatePath, this.deploymentProperties.getRootDeployment(), this.templatesGenerator.modelDeployment);
-        Path deploymentPath = StructureGeneratorHelper.generatePath(paasTemplatePath, this.deploymentProperties.getRootDeployment(), this.templatesGenerator.computeDeploymentName(SERVICE_INSTANCE_ID));
+        Path modelPath = StructureGeneratorHelper.generatePath(paasTemplatePath, rootDeployment, modelDeployment);
+        Path deploymentPath = StructureGeneratorHelper.generatePath(paasTemplatePath, rootDeployment, deploymentName);
         return (new Tree().print(modelPath) + new Tree().print(deploymentPath));
     }
-
 
     protected CoabVarsFileDto aTypicalUserProvisionningRequest() {
         CoabVarsFileDto coabVarsFileDto = new CoabVarsFileDto();

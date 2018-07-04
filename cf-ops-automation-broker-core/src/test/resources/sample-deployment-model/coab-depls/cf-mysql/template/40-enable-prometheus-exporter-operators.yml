@@ -1,0 +1,41 @@
+---
+# add prometheus release to deployment manifest
+- type: replace
+  path: /releases/name=prometheus?
+  value:
+    name: prometheus
+    version: latest
+
+# add mysqld exporter properties
+- type: replace
+  path: /instance_groups/name=mysql/jobs/name=mysqld_exporter?
+  value:
+    name: mysqld_exporter
+    release: prometheus
+    properties:
+      mysqld_exporter:
+        mysql:
+          address: localhost
+          username: roadmin
+          password: ((cf_mysql_mysql_roadmin_password))
+        collect:
+          binlog_size: true
+          engine_innodb_status: true
+          global_status: true
+          global_variables: true
+          slave_status: false
+          info_schema:
+            processlist: true
+            tables: true
+# if perfomance_schema enable (default disbale)
+#          perf_schema:
+#            eventsstatements: true
+#            eventswaits: true
+#            file_events: true
+#            file_instances: true
+#            indexiowaits: true
+#            tablelocks: true
+
+
+
+

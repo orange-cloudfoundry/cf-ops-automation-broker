@@ -90,12 +90,15 @@ public class Copy {
         public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
             // before visiting entries in a directory we copy the directory
             // (okay if directory already exists).
+            // no copy if tag #nc#
             CopyOption[] options = (preserve) ?
                     new CopyOption[] { COPY_ATTRIBUTES } : new CopyOption[0];
 
             Path newdir = target.resolve(source.relativize(dir));
             try {
-                Files.copy(dir, newdir, options);
+                if (!dir.getFileName().toString().contains("#nc#")) {
+                    Files.copy(dir, newdir, options);
+                }
             } catch (FileAlreadyExistsException x) {
                 // ignore
             } catch (IOException x) {
@@ -107,8 +110,11 @@ public class Copy {
 
         @Override
         public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
-            copyFile(file, target.resolve(source.relativize(file)),
-                    prompt, preserve);
+            // no copy if tag #nc#
+            if (!file.getFileName().toString().contains("#nc#")){
+                copyFile(file, target.resolve(source.relativize(file)),
+                        prompt, preserve);
+            }
             return CONTINUE;
         }
 

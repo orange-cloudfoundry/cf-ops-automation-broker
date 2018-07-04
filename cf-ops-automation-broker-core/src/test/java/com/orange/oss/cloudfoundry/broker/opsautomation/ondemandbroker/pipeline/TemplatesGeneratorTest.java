@@ -389,9 +389,9 @@ public class TemplatesGeneratorTest extends StructureGeneratorImplTest{
         Copy.TreeCopier tc = new Copy.TreeCopier(referenceDataModel, paasTemplatePath, false, true);
         Files.walkFileTree(referenceDataModel, opts, Integer.MAX_VALUE, tc);
 
-        checkDeployment("coab-depls", "mongodb", "m");
-        checkDeployment("coab-depls", "cassandravarsops", "c");
-
+//        checkDeployment("coab-depls", "mongodb", "m");
+//        checkDeployment("coab-depls", "cassandravarsops", "c");
+        checkDeployment("coab-depls", "cf-mysql", "y");
     }
 
 

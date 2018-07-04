@@ -1,0 +1,190 @@
+#shield backups v6
+
+#add shield release
+- type: replace
+  path: /releases/name=shield?
+  value:
+    name: shield
+    version: latest
+
+#adding shield-agent to mysql vms
+- type: replace
+  path: /instance_groups/name=mysql/jobs/name=shield-agent?/release
+  value: shield
+
+#add shield server uri
+- type: replace
+  path: /instance_groups/name=mysql/jobs/name=shield-agent/properties?/shield/agent
+  value:
+    autoprovision: http://192.168.99.25 #shield server, avoid cyclic dep on go router with (( concat "https://shield-webui." secrets.cloudfoundry.ops_domain ))
+
+#add provisioning key
+- type: replace
+  path: /instance_groups/name=mysql/jobs/name=shield-agent/properties/shield/provisioning_key?
+  value:  ((shield_autoprovision_key))
+
+- type: replace
+  path: /instance_groups/name=mysql/jobs/name=shield-agent/properties/shield/retention-policies?
+  value:
+    Short-term: 20d
+    Long-term: 180d
+
+- type: replace
+  path: /instance_groups/name=mysql/jobs/name=shield-agent/properties/shield/schedules?
+  value:
+    DevSched: daily 4am
+    daily: daily 2am
+    weekly: sundays 9am
+    monthly: 2st sunday at 0am
+
+#add targets information
+- type: replace
+  path: /instance_groups/name=mysql/jobs/name=shield-agent/properties/shield/targets?/p-myql-full-backup_target?
+  value:
+    plugin: mysql
+    config:
+      mysql_host: 127.0.0.1
+      mysql_port: "3306"
+      mysql_user: root
+      mysql_password: ((cf_mysql_mysql_admin_password))
+      mysql_options: "--flush-logs --add-drop-database --single-transaction  --opt"
+      mysql_bindir: "/var/vcap/packages/mariadb/bin"      
+
+- type: replace
+  path: /instance_groups/name=mysql/jobs/name=shield-agent/properties/shield/targets/api_designer_target?
+  value:
+    plugin: mysql
+    config:
+      mysql_host: 127.0.0.1
+      mysql_user: root
+      mysql_password: ((cf_mysql_mysql_admin_password))
+      mysql_database: "cf_fe6feb90_002e_418d_bbac_a7a093d05ad0"
+      mysql_bindir: "/var/vcap/packages/mariadb/bin"
+      mysql_port: "3306"
+
+- type: replace
+  path: /instance_groups/name=mysql/jobs/name=shield-agent/properties/shield/targets/etherpad_target?
+  value:
+    plugin: mysql
+    config:
+      mysql_host: 127.0.0.1
+      mysql_user: root
+      mysql_password: ((cf_mysql_mysql_admin_password))
+      mysql_database: "cf_10819b4d_89aa_4a91_8e08_2c78e5cffdeb"
+      mysql_bindir: "/var/vcap/packages/mariadb/bin"
+      mysql_port: "3306"
+
+#add stores information
+- type: replace
+  path: /instance_groups/name=mysql/jobs/name=shield-agent/properties/shield/stores?/api_designer_s3_obos?
+  value:
+    plugin: scality
+    config:
+      scality_host: storage.orange.com
+      access_key_id: ((s3-access-key))
+      secret_access_key: ((s3-secret-key))
+      bucket: "((s3-bucket))-api-designer"   # replace with your bucket name
+      skip_ssl_validation: true
+      signature_version: "2" #  change it to 4 if you want to use a an amazon storage
+
+- type: replace
+  path: /instance_groups/name=mysql/jobs/name=shield-agent/properties/shield/stores/etherpad_s3_obos?
+  value:
+    plugin: scality
+    config:
+      scality_host: storage.orange.com
+      access_key_id: ((s3-access-key))
+      secret_access_key: ((s3-secret-key))
+      bucket: "((s3-bucket))-etherpad"   # replace with your bucket name
+      skip_ssl_validation: true
+      signature_version: "2" #  change it to 4 if you want to use a an amazon storage
+
+
+- type: replace
+  path: /instance_groups/name=mysql/jobs/name=shield-agent/properties/shield/stores/mysql_full_backup_s3_obos?
+  value:
+    plugin: scality
+    config:
+      scality_host: storage.orange.com
+      access_key_id: ((s3-access-key))
+      secret_access_key: ((s3-secret-key))
+      bucket: "((s3-bucket))-full-backup"   # replace with your bucket name
+      skip_ssl_validation: true
+      signature_version: "2" #  change it to 4 if you want to use a an amazon storage
+
+
+
+#add jobs configurations
+- type: replace
+  path: /instance_groups/name=mysql/jobs/name=shield-agent/properties/shield/jobs?/api_designer_job?
+  value:
+    retention: Short-term
+    schedule: daily
+    store: api_designer_s3_obos
+    target: api_designer_target
+
+- type: replace
+  path: /instance_groups/name=mysql/jobs/name=shield-agent/properties/shield/jobs/etherpad_job?
+  value:
+    retention: Short-term
+    schedule: daily
+    store: etherpad_s3_obos
+    target: etherpad_target
+
+- type: replace
+  path: /instance_groups/name=mysql/jobs/name=shield-agent/properties/shield/jobs/mysql_full_backup?
+  value:
+    retention: Short-term
+    schedule: daily
+    store: mysql_full_backup_s3_obos
+    target: p-myql-full-backup_target
+
+
+#version: 7.0.3
+#- type: replace
+#  path: /releases/name=shield?
+#  value:
+#    name: shield
+#    version: 7.0.3
+#
+#- type: replace
+#  path: /instance_groups/name=mysql/jobs/name=shield-agent?
+#  value:
+#    name: shield-agent
+#    release: shield
+#    consumes:
+#      shield-daemon: {deployment: shield, from: shield-daemon}
+#    properties:
+#      autoprovision: true
+#      targets:
+#        mysql1:
+#          name: msqldump-(deployment)-(index)
+#          plugin: mysql
+#          config:
+#            mysql_host: 127.0.0.1
+#            mysql_port: "3306"
+#            mysql_user: root
+#            mysql_password: ((cf_mysql_mysql_admin_password))
+#            mysql_options: "--flush-logs --add-drop-database --single-transaction  --opt"
+#            mysql_bindir: "/var/vcap/packages/mariadb/bin"
+#        mysql2:
+#          name: xtrabackup-(deployment)-(index)
+#          plugin: xtrabackup
+#          config:
+#            mysql_user: root
+#            mysql_password: ((cf_mysql_mysql_admin_password))
+#            mysql_datadir: "/var/vcap/store/mysql"
+#            mysql_xtrabackup: "/var/vcap/packages/xtrabackup/bin/xtrabackup"
+#      jobs:
+#        full-mysql:
+#          name: msqldump-(deployment)-(index)
+#          retention: MySQL
+#          schedule: default
+#          store: mysql_backup
+#          target: msqldump-(deployment)-(index)
+#        full-xtrabackup:
+#          name : xtrabackup-(deployment)-(index)
+#          retention: MySQL
+#          schedule: default
+#          store: mysql_backup
+#          target: xtrabackup-(deployment)-(index)

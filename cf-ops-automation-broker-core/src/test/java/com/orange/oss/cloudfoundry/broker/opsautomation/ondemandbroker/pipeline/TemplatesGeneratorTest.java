@@ -389,9 +389,11 @@ public class TemplatesGeneratorTest extends StructureGeneratorImplTest{
         Copy.TreeCopier tc = new Copy.TreeCopier(referenceDataModel, paasTemplatePath, false, true);
         Files.walkFileTree(referenceDataModel, opts, Integer.MAX_VALUE, tc);
 
-//        checkDeployment("coab-depls", "mongodb", "m");
-//        checkDeployment("coab-depls", "cassandravarsops", "c");
+        //Check all models
+        checkDeployment("coab-depls", "mongodb", "m");
+        checkDeployment("coab-depls", "cassandravarsops", "c");
         checkDeployment("coab-depls", "cf-mysql", "y");
+
     }
 
 
@@ -419,9 +421,10 @@ public class TemplatesGeneratorTest extends StructureGeneratorImplTest{
 
        //Then
         // assertThat(generatedStructure(), is(equalTo(expectedStructure())));
-       System.out.println("Checking : " + modelDeployment);
+       System.out.print("Checking : " + modelDeployment);
         assertEquals(expectedStructure(rootDeployment, "expected-" + modelDeployment + "-tree.txt", templatesGenerator.computeDeploymentName(SERVICE_INSTANCE_ID)),
                generatedStructure(rootDeployment, modelDeployment, templatesGenerator.computeDeploymentName(SERVICE_INSTANCE_ID)));
+        System.out.println("=> Success");
     }
 
 

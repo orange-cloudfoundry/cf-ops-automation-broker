@@ -12,6 +12,7 @@ cf-mysql
     └── cf-mysql-vars-tpl.yml
     └── cf-mysql.yml
     └── coab-operators.yml
+    └── coab-vars.yml
 y_aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa10
 └── deployment-dependencies.yml
 └── template

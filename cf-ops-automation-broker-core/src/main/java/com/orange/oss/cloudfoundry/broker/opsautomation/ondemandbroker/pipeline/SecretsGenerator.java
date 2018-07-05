@@ -92,7 +92,7 @@ public class SecretsGenerator extends StructureGeneratorImpl implements SecretsR
                 this.modelDeployment,
                 this.secrets);
         if (StructureGeneratorHelper.isMissingResource(secretsDir)){
-            throw new DeploymentException(DeploymentConstants.SECRETS_EXCEPTION);
+            throw new DeploymentException(DeploymentConstants.SECRETS_EXCEPTION + secretsDir);
         }
     }
 

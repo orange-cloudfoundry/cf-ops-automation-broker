@@ -37,6 +37,24 @@ coab-depls/m_f49911f7-b69a-4aba-afdf-23fd11014278
 - update TemplatesGeneratorTest.aModelStructure() to use the src/test/resources/sample-deployment-model/coab-depls/mongodb or a distinct dedicated deployment model
     + consider removing assertXX() methods redundant with populatePaasTemplates() 
 - Update BoshServiceProvisionningTest#initPaasTemplate() to use file copy as well instead of crafting individual files explicitly
+- convert parasite configurable properties into constants in DeploymentProperties
+    private String secrets = "secrets"; //Secrets directory (i.e secrets)
+    private String meta = "meta"; //Meta directory (i.e meta)
+    private String template = "template"; //Template directory (i.e template)
+    private String vars = "vars"; //Vars suffix (i.e vars)
+    private String operators = "operators"; //Operators suffix (i.e operators)
+
+- remove extra checks that should be valided by getting the deployment model green. Only validate configuration errors in the broker matching relevant DeploymentProperties  
+    public static final String ROOT_DEPLOYMENT_EXCEPTION = "Root deployment directory doesn't exist at: ";
+    public static final String MODEL_DEPLOYMENT_EXCEPTION = "Model deployment directory doesn't exist at: ";
+    public static final String TEMPLATE_EXCEPTION = "Template directory doesn't exist at: ";
+    public static final String OPERATORS_EXCEPTION = "Operators directory doesn't exist at: ";
+    public static final String MANIFEST_FILE_EXCEPTION = "Model manifest file doesn't exist";
+    public static final String VARS_FILE_EXCEPTION = "Model vars file doesn't exist";
+    public static final String COAB_OPERATORS_FILE_EXCEPTION = "Coab operators file doesn't exist";
+    public static final String SECRETS_EXCEPTION = "Secrets directory doesn't exist at: ";
+    public static final String META_FILE_EXCEPTION = "Model meta file doesn't exist";
+    public static final String SECRETS_FILE_EXCEPTION = "Model secrets file doesn't exist";
 
 
 Q: how to recursively copy files & preserving symlinks ?

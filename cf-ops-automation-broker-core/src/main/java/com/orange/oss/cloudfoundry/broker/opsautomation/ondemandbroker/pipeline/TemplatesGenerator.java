@@ -78,7 +78,7 @@ public class TemplatesGenerator extends StructureGeneratorImpl{
                 this.modelDeployment,
                 this.template);
         if (StructureGeneratorHelper.isMissingResource(templateDir)){
-            throw new DeploymentException(DeploymentConstants.TEMPLATE_EXCEPTION);
+            throw new DeploymentException(DeploymentConstants.TEMPLATE_EXCEPTION + templateDir);
         }
     }
 
@@ -88,7 +88,7 @@ public class TemplatesGenerator extends StructureGeneratorImpl{
                 this.modelDeployment,
                 this.operators);
         if (StructureGeneratorHelper.isMissingResource(operatorsDir)){
-            throw new DeploymentException(DeploymentConstants.OPERATORS_EXCEPTION);
+            throw new DeploymentException(DeploymentConstants.OPERATORS_EXCEPTION + operatorsDir);
         }
     }
 
@@ -213,15 +213,12 @@ public class TemplatesGenerator extends StructureGeneratorImpl{
     }
 
     protected boolean isManifest(String fileName){
-        if (fileName.contentEquals(this.modelDeployment+DeploymentConstants.YML_EXTENSION) ||
-                fileName.contentEquals(this.modelDeployment+DeploymentConstants.COA_TEMPLATE_FILE_SUFFIX))
-            return true;
-        else
-            return false;
+        return fileName.contentEquals(this.modelDeployment + DeploymentConstants.YML_EXTENSION) ||
+                fileName.contentEquals(this.modelDeployment + DeploymentConstants.COA_TEMPLATE_FILE_SUFFIX);
     }
 
     protected boolean isIaasType(String path){
-        return StructureGeneratorHelper.getDirectory(path).contentEquals(DeploymentConstants.TEMPLATE)?false:true;
+        return ! StructureGeneratorHelper.getDirectory(path).contentEquals(DeploymentConstants.TEMPLATE);
     }
 
 }

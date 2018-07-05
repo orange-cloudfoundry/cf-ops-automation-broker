@@ -11,6 +11,7 @@ import java.nio.file.Paths;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.startsWith;
 
 //$ tree coab-depls
 //coab-depls
@@ -45,7 +46,7 @@ public class SecretsGeneratorTest extends StructureGeneratorImplTest{
     public void raise_exception_if_root_deployment_is_missing(){
         //Then
         thrown.expect(DeploymentException.class);
-        thrown.expectMessage(DeploymentConstants.ROOT_DEPLOYMENT_EXCEPTION);
+        thrown.expectMessage(startsWith(DeploymentConstants.ROOT_DEPLOYMENT_EXCEPTION));
 
         //Given initialized by setUp method
 
@@ -57,7 +58,7 @@ public class SecretsGeneratorTest extends StructureGeneratorImplTest{
     public void raise_exception_if_model_deployment_directory_is_missing(){
         //Then
         thrown.expect(DeploymentException.class);
-        thrown.expectMessage(DeploymentConstants.MODEL_DEPLOYMENT_EXCEPTION);
+        thrown.expectMessage(startsWith(DeploymentConstants.MODEL_DEPLOYMENT_EXCEPTION));
 
         //Given (a part is initialized by setUp method)
         Structure modelStructure = new Structure.StructureBuilder(this.workDir)
@@ -72,7 +73,7 @@ public class SecretsGeneratorTest extends StructureGeneratorImplTest{
     public void raise_exception_if_secrets_directory_is_missing(){
         //Then
         thrown.expect(DeploymentException.class);
-        thrown.expectMessage(DeploymentConstants.SECRETS_EXCEPTION);
+        thrown.expectMessage(startsWith(DeploymentConstants.SECRETS_EXCEPTION));
 
         //When
         this.secretsGenerator.checkThatSecretsDirectoryExists(this.workDir);

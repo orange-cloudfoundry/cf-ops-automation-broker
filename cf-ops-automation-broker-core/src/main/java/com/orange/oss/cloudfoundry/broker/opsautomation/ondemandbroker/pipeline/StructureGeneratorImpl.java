@@ -27,14 +27,14 @@ public class StructureGeneratorImpl implements StructureGenerator {
     protected void checkThatRootDeploymentExists(Path workDir){
         Path rootDeploymentDir = StructureGeneratorHelper.generatePath(workDir, this.rootDeployment);
         if (StructureGeneratorHelper.isMissingResource(rootDeploymentDir)){
-            throw new DeploymentException(DeploymentConstants.ROOT_DEPLOYMENT_EXCEPTION);
+            throw new DeploymentException(DeploymentConstants.ROOT_DEPLOYMENT_EXCEPTION + rootDeploymentDir);
         }
     }
 
     protected void checkThatModelDeploymentExists(Path workDir){
         Path modelDeploymentDir = StructureGeneratorHelper.generatePath(workDir, this.rootDeployment, this.modelDeployment);
         if (StructureGeneratorHelper.isMissingResource(modelDeploymentDir)){
-            throw new DeploymentException(DeploymentConstants.MODEL_DEPLOYMENT_EXCEPTION);
+            throw new DeploymentException(DeploymentConstants.MODEL_DEPLOYMENT_EXCEPTION + modelDeploymentDir);
         }
     }
 

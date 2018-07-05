@@ -64,7 +64,7 @@ public class TemplatesGeneratorTest extends StructureGeneratorImplTest{
     public void raise_exception_if_template_directory_is_missing() {
         //Then
         thrown.expect(DeploymentException.class);
-        thrown.expectMessage(DeploymentConstants.TEMPLATE_EXCEPTION);
+        thrown.expectMessage(startsWith(DeploymentConstants.TEMPLATE_EXCEPTION));
 
         //When
         this.templatesGenerator.checkThatTemplateDirectoryExists(this.workDir);
@@ -74,7 +74,7 @@ public class TemplatesGeneratorTest extends StructureGeneratorImplTest{
     public void raise_exception_if_operators_directory_is_missing() {
         //Then
         thrown.expect(DeploymentException.class);
-        thrown.expectMessage(DeploymentConstants.OPERATORS_EXCEPTION);
+        thrown.expectMessage(startsWith(DeploymentConstants.OPERATORS_EXCEPTION));
 
         //When
         this.templatesGenerator.checkThatOperatorsDirectoryExists(this.workDir);
@@ -435,14 +435,14 @@ public class TemplatesGeneratorTest extends StructureGeneratorImplTest{
     private String expectedStructure(String rootDeployment, String expectedTreeFile, String deploymentName) throws URISyntaxException, IOException{
         URL resource = this.getClass().getResource("/sample-deployment-model" + File.separator + rootDeployment + File.separator + expectedTreeFile);
         List<String> expectedTree = Files.readAllLines(Paths.get(resource.toURI()));
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         for (String s:expectedTree){
-            sb.append(s+System.getProperty("line.separator"));
+            sb.append(s).append(System.getProperty("line.separator"));
         }
         return MessageFormat.format(sb.toString(), deploymentName);
     }
 
-    private String generatedStructure(String rootDeployment, String modelDeployment, String deploymentName) throws URISyntaxException, IOException{
+    private String generatedStructure(String rootDeployment, String modelDeployment, String deploymentName) {
         Path paasTemplatePath = temporaryFolder.getRoot().toPath();
         Path modelPath = StructureGeneratorHelper.generatePath(paasTemplatePath, rootDeployment, modelDeployment);
         Path deploymentPath = StructureGeneratorHelper.generatePath(paasTemplatePath, rootDeployment, deploymentName);

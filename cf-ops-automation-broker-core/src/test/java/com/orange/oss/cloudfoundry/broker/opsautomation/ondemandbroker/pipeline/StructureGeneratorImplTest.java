@@ -12,6 +12,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.startsWith;
 import static org.junit.Assert.assertEquals;
 
 public class StructureGeneratorImplTest {
@@ -42,7 +43,7 @@ public class StructureGeneratorImplTest {
     public void raise_exception_if_root_deployment_is_missing(){
         //Then
         thrown.expect(DeploymentException.class);
-        thrown.expectMessage(DeploymentConstants.ROOT_DEPLOYMENT_EXCEPTION);
+        thrown.expectMessage(startsWith(DeploymentConstants.ROOT_DEPLOYMENT_EXCEPTION));
 
         //When
         this.structureGeneratorImpl.checkThatRootDeploymentExists(this.workDir);
@@ -52,7 +53,7 @@ public class StructureGeneratorImplTest {
     public void raise_exception_if_model_deployment_is_missing(){
         //Then
         thrown.expect(DeploymentException.class);
-        thrown.expectMessage(DeploymentConstants.MODEL_DEPLOYMENT_EXCEPTION);
+        thrown.expectMessage(startsWith(DeploymentConstants.MODEL_DEPLOYMENT_EXCEPTION));
 
         //When
         this.structureGeneratorImpl.checkThatModelDeploymentExists(this.workDir);

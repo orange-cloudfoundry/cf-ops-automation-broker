@@ -55,6 +55,20 @@ coab-depls/m_f49911f7-b69a-4aba-afdf-23fd11014278
     public static final String SECRETS_EXCEPTION = "Secrets directory doesn't exist at: ";
     public static final String META_FILE_EXCEPTION = "Model meta file doesn't exist";
     public static final String SECRETS_FILE_EXCEPTION = "Model secrets file doesn't exist";
+    
+- reconsider whether checks are necessary prior to delete service instances, as this may prevent cleaning up invalid/deprecated/N-1 models (i.e. a service instance branch with missing models)
+ 
+   2018-07-05T23:50:27.54+0200 [APP/PROC/WEB/0] OUT 2018-07-05 21:50:27.547  INFO 8 --- [nio-8080-exec-3] o.o.ProcessorChainServiceInstanceService : Unable to delete service with request DeleteServiceInstanceRequest(super=AsyncServiceInstanceRequest(super=ServiceBrokerRequest(cfInstanceId=null, apiInfoLocation=api.redacted-domain.org/v2/info, originatingIdentity=Context(platform=cloudfoundry, properties={user_id=0d02117b-aa21-43e2-b35e-8ad6f8223519})), asyncAccepted=true), serviceInstanceId=ac4895ca-8021-4f6c-96a0-cd3915c9fa0f, serviceDefinitionId=mongodb-ondemand-service, planId=mongodb-ondemand-plan), caught com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.DeploymentException: Model deployment directory doesn't exist at: /home/vcap/tmp/broker-4671928892822661429/coab-depls/mongodb
+   2018-07-05T23:50:27.54+0200 [APP/PROC/WEB/0] OUT com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.DeploymentException: Model deployment directory doesn't exist at: /home/vcap/tmp/broker-4671928892822661429/coab-depls/mongodb
+   2018-07-05T23:50:27.54+0200 [APP/PROC/WEB/0] OUT 	at com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.StructureGeneratorImpl.checkThatModelDeploymentExists(StructureGeneratorImpl.java:37) ~[cf-ops-automation-broker-core-0.27.0-SNAPSHOT.jar!/:0.27.0-SNAPSHOT]
+   2018-07-05T23:50:27.54+0200 [APP/PROC/WEB/0] OUT 	at com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.StructureGeneratorImpl.checkPrerequisites(StructureGeneratorImpl.java:24) ~[cf-ops-automation-broker-core-0.27.0-SNAPSHOT.jar!/:0.27.0-SNAPSHOT]
+   2018-07-05T23:50:27.54+0200 [APP/PROC/WEB/0] OUT 	at com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.SecretsGenerator.checkPrerequisites(SecretsGenerator.java:25) ~[cf-ops-automation-broker-core-0.27.0-SNAPSHOT.jar!/:0.27.0-SNAPSHOT]
+   2018-07-05T23:50:27.54+0200 [APP/PROC/WEB/0] OUT 	at com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.BoshProcessor.preDelete(BoshProcessor.java:123) ~[cf-ops-automation-broker-core-0.27.0-SNAPSHOT.jar!/:0.27.0-SNAPSHOT]
+   2018-07-05T23:50:27.54+0200 [APP/PROC/WEB/0] OUT 	at com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.ProcessorChain.delete(ProcessorChain.java:123) ~[cf-ops-automation-broker-framework-0.27.0-SNAPSHOT.jar!/:0.27.0-SNAPSHOT]
+   2018-07-05T23:50:27.54+0200 [APP/PROC/WEB/0] OUT 	at com.orange.oss.ondemandbroker.ProcessorChainServiceInstanceService.deleteServiceInstance(ProcessorChainServiceInstanceService.java:91) ~[cf-ops-automation-broker-core-0.27.0-SNAPSHOT.jar!/:0.27.0-SNAPSHOT]
+   2018-07-05T23:50:27.54+0200 [APP/PROC/WEB/0] OUT 	at org.springframework.cloud.servicebroker.controller.ServiceInstanceController.deleteServiceInstance(ServiceInstanceController.java:146) [spring-cloud-cloudfoundry-service-broker-1.0.2.RELEASE.jar!/:na]
+ 
+ 
 
 
 Q: how to recursively copy files & preserving symlinks ?

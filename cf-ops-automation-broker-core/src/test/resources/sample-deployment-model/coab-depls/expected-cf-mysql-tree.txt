@@ -1,8 +1,8 @@
 cf-mysql
 └── deployment-dependencies.yml
 └── template
-    └── 01-add-broker-operators.yml
-    └── 02-no-arbitrator-operators.yml
+    └── 01-add-broker-operators.yml -> fake.txt
+    └── 02-no-arbitrator-operators.yml -> fake.txt
     └── 20-rename-deployment-operators.yml
     └── 32-context-patch-broker-operators.yml
     └── 40-enable-prometheus-exporter-operators.yml
@@ -10,14 +10,14 @@ cf-mysql
     └── 50-spec-cf-mysql-fixed-operators.yml
     └── cf-mysql-deployment
     └── cf-mysql-vars-tpl.yml
-    └── cf-mysql.yml
+    └── cf-mysql.yml -> fake.txt
     └── coab-operators.yml
     └── coab-vars.yml
 y_aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa10
 └── deployment-dependencies.yml
 └── template
     └── 01-add-broker-operators.yml -> ../../cf-mysql/template/01-add-broker-operators.yml
-    └── 02-no-arbitrator-operators.yml -> ../../cf-mysql/template/01-no-arbitrator-operators.yml
+    └── 02-no-arbitrator-operators.yml -> ../../cf-mysql/template/02-no-arbitrator-operators.yml
     └── 20-rename-deployment-operators.yml -> ../../cf-mysql/template/20-rename-deployment-operators.yml
     └── 32-context-patch-broker-operators.yml -> ../../cf-mysql/template/32-context-patch-broker-operators.yml
     └── 40-enable-prometheus-exporter-operators.yml -> ../../cf-mysql/template/40-enable-prometheus-exporter-operators.yml

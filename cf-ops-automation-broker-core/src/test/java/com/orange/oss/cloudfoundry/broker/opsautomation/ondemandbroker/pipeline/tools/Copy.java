@@ -90,7 +90,7 @@ public class Copy {
             }
         }
         //Create symbolic link
-        Path fakeFile = target.resolve("fake.txt");
+        Path fakeFile = Paths.get("fake.txt");
         try {
             Files.createSymbolicLink(targetFile, fakeFile);
         } catch (IOException e) {

@@ -370,8 +370,7 @@ public class TemplatesGeneratorTest extends StructureGeneratorImplTest{
     }
 
     @Test
-    @Ignore
-    public void populatePaasTemplates() throws URISyntaxException, IOException {
+    public void check_generation_against_sample_deployment_model() throws URISyntaxException, IOException {
         //Given a template repository in /tmp
         Path paasTemplatePath = temporaryFolder.getRoot().toPath();
 
@@ -385,8 +384,8 @@ public class TemplatesGeneratorTest extends StructureGeneratorImplTest{
         Files.walkFileTree(referenceDataModel, opts, Integer.MAX_VALUE, tc);
 
         //Check all models
-        //checkDeployment("coab-depls", "mongodb", "m");
-        //checkDeployment("coab-depls", "cassandravarsops", "c");
+        checkDeployment("coab-depls", "mongodb", "m");
+        checkDeployment("coab-depls", "cassandravarsops", "c");
         checkDeployment("coab-depls", "cf-mysql", "y");
 
     }

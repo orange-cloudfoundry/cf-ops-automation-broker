@@ -2,6 +2,7 @@ package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
@@ -37,26 +38,6 @@ public class Tree {
         }
     }
 
-    private static boolean isSymlink(File file) throws IOException {
-        if (file == null)
-            throw new NullPointerException("File must not be null");
-        File canon;
-        if (file.getParent() == null) {
-            canon = file;
-        } else {
-            File canonDir = file.getParentFile().getCanonicalFile();
-            canon = new File(canonDir, file.getName());
-        }
-        return !canon.getCanonicalFile().equals(canon.getAbsoluteFile());
-    }
-
-    private static Path computeRelativePath(File file) throws IOException{
-        Path filePath = Paths.get(file.getCanonicalFile().getParent());
-        Path linkPath = Paths.get(file.getParent());
-        Path relativePath = linkPath.relativize(filePath);
-        return relativePath.resolve(file.getCanonicalFile().getName());
-    }
-
     private void walk(File folder, String prefix) throws IOException{
         File file;
         File[] fileList = folder.listFiles();
@@ -70,23 +51,19 @@ public class Tree {
             register(file);
 
             if (index == fileList.length - 1) {
-                if (isSymlink(file)){
-                    //System.out.println(prefix + "└── " + computeRelativePath(file));
-                    this.result.append(prefix + "└── " + file.getName()+ " -> " + computeRelativePath(file) + System.getProperty("line.separator"));
+                if (Files.isSymbolicLink(file.toPath())){
+                    this.result.append(prefix + "└── " + file.getName()+ " -> " + Files.readSymbolicLink(file.toPath()) + System.getProperty("line.separator"));
 
                 }else{
-                    //System.out.println(prefix + "└── " + file.getName());
                     this.result.append(prefix + "└── " + file.getName() + System.getProperty("line.separator"));
                 }
                 if (file.isDirectory()) {
                     walk(file, prefix + "    ");
                 }
             } else {
-                if (isSymlink(file)){
-                    //System.out.println(prefix + "└── " + computeRelativePath(file));
-                    this.result.append(prefix + "└── " + file.getName()+ " -> " + computeRelativePath(file) + System.getProperty("line.separator"));
+                if (Files.isSymbolicLink(file.toPath())){
+                    this.result.append(prefix + "└── " + file.getName()+ " -> " + Files.readSymbolicLink(file.toPath()) + System.getProperty("line.separator"));
                 }else{
-                    //System.out.println(prefix + "└── " + file.getName());
                     this.result.append(prefix + "└── " + file.getName() + System.getProperty("line.separator"));
                 }
                 if (file.isDirectory()) {

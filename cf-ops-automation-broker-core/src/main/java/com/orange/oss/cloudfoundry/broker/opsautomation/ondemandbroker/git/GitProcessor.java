@@ -278,7 +278,7 @@ public class GitProcessor extends DefaultBrokerProcessor {
                     .setUpstreamMode(CreateBranchCommand.SetupUpstreamMode.SET_UPSTREAM)
                     .setStartPoint("origin/" + branch) //from remote branch
                     .call();
-            logger.info(prefixLog("checked out branch {}"), branch);
+            logger.info(prefixLog("checked out remote branch {}"), branch);
         }
 
     }

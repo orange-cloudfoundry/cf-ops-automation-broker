@@ -42,7 +42,7 @@ public class CopyTest {
 
 
             //recursive
-            Copy.TreeCopier tc = new Copy.TreeCopier(referenceDataModel, target, false, true);
+            Copy.TreeCopier tc = new Copy.TreeCopier(referenceDataModel, target, "coab-depls", false, true);
             Files.walkFileTree(referenceDataModel, opts, Integer.MAX_VALUE, tc);
 
             //print result

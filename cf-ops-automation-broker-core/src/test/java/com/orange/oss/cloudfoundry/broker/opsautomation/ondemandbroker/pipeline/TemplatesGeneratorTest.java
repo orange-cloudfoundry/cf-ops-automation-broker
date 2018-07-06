@@ -371,11 +371,6 @@ public class TemplatesGeneratorTest extends StructureGeneratorImplTest{
 
     @Test
     @Ignore
-    public void check_if_files_content_are_correct() {
-        //TODO
-    }
-
-    @Test
     public void populatePaasTemplates() throws URISyntaxException, IOException {
         //Given a template repository in /tmp
         Path paasTemplatePath = temporaryFolder.getRoot().toPath();
@@ -386,17 +381,15 @@ public class TemplatesGeneratorTest extends StructureGeneratorImplTest{
 
         //Copy reference data model
         EnumSet<FileVisitOption> opts = EnumSet.of(FileVisitOption.FOLLOW_LINKS);
-        Copy.TreeCopier tc = new Copy.TreeCopier(referenceDataModel, paasTemplatePath, false, true);
+        Copy.TreeCopier tc = new Copy.TreeCopier(referenceDataModel, paasTemplatePath, "coab-depls", false, true);
         Files.walkFileTree(referenceDataModel, opts, Integer.MAX_VALUE, tc);
 
         //Check all models
-        checkDeployment("coab-depls", "mongodb", "m");
-        checkDeployment("coab-depls", "cassandravarsops", "c");
+        //checkDeployment("coab-depls", "mongodb", "m");
+        //checkDeployment("coab-depls", "cassandravarsops", "c");
         checkDeployment("coab-depls", "cf-mysql", "y");
 
     }
-
-
 
     private void checkDeployment(String rootDeployment, String modelDeployment, String modelDeploymentShortAlias) throws URISyntaxException, IOException{
 
@@ -426,11 +419,6 @@ public class TemplatesGeneratorTest extends StructureGeneratorImplTest{
                generatedStructure(rootDeployment, modelDeployment, templatesGenerator.computeDeploymentName(SERVICE_INSTANCE_ID)));
         System.out.println("=> Success");
     }
-
-
-
-
-
 
     private String expectedStructure(String rootDeployment, String expectedTreeFile, String deploymentName) throws URISyntaxException, IOException{
         URL resource = this.getClass().getResource("/sample-deployment-model" + File.separator + rootDeployment + File.separator + expectedTreeFile);
@@ -465,12 +453,26 @@ public class TemplatesGeneratorTest extends StructureGeneratorImplTest{
     @Test
     @Ignore
     public void populateRealPaasTemplates() {
+
+        //Given a path
         Path workDir = Paths.get("/home/losapio/GIT/Coab/paas-templates");
+
         //Given and a user request
         CoabVarsFileDto coabVarsFileDto = aTypicalUserProvisionningRequest();
 
-        this.templatesGenerator.checkPrerequisites(workDir);
-        this.templatesGenerator.generate(workDir, SERVICE_INSTANCE_ID, coabVarsFileDto);
+        //Given a template generator
+        TemplatesGenerator templatesGenerator = new TemplatesGenerator("coab-depls",
+                "cf-mysql",
+                "template",
+                "vars",
+                "operators",
+                "y",
+                new VarsFilesYmlFormatter());
+
+        //When
+        templatesGenerator.checkPrerequisites(workDir);
+        templatesGenerator.generate(workDir, SERVICE_INSTANCE_ID, coabVarsFileDto);
+
     }
 
 }

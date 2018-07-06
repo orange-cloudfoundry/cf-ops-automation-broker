@@ -31,6 +31,7 @@ package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+import java.io.File;
 import java.nio.file.*;
 import static java.nio.file.StandardCopyOption.*;
 import java.nio.file.attribute.*;
@@ -70,18 +71,50 @@ public class Copy {
         }
     }
 
+    static void createSymbolicLink(Path file, Path target, String root) {
+
+        //Guess path...
+        String[] parts = file.toString().split(File.separator);
+        boolean resolve = false;
+        Path targetFile = target;
+        for (int i = 0; i<parts.length; i++){
+            if (root.contentEquals(parts[i])){
+                resolve = true;
+            }
+            if (file.getFileName().toString().contentEquals(parts[i])){
+                resolve = false;
+                targetFile = targetFile.resolve(file.getFileName().toString().replaceFirst("#sl#", ""));
+            }
+            if (resolve == true){
+                targetFile = targetFile.resolve(parts[i]);
+            }
+        }
+        //Create symbolic link
+        Path fakeFile = target.resolve("fake.txt");
+        try {
+            Files.createSymbolicLink(targetFile, fakeFile);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+
     /**
      * A {@code FileVisitor} that copies a file-tree ("cp -r")
      */
     public static class TreeCopier implements FileVisitor<Path> {
         private final Path source;
         private final Path target;
+        private final String root;
+
+
         private final boolean prompt;
         private final boolean preserve;
 
-        public TreeCopier(Path source, Path target, boolean prompt, boolean preserve) {
+        public TreeCopier(Path source, Path target, String root, boolean prompt, boolean preserve) {
             this.source = source;
             this.target = target;
+            this.root = root;
             this.prompt = prompt;
             this.preserve = preserve;
         }
@@ -111,7 +144,9 @@ public class Copy {
         @Override
         public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
             // no copy if tag #nc#
-            if (!file.getFileName().toString().contains("#nc#")){
+            if (file.getFileName().toString().contains("#sl#")){
+                createSymbolicLink(file, target, root);
+            }else if (!file.getFileName().toString().contains("#nc#")){
                 copyFile(file, target.resolve(source.relativize(file)),
                         prompt, preserve);
             }
@@ -144,69 +179,4 @@ public class Copy {
         }
     }
 
-    static void usage() {
-        System.err.println("java Copy [-ip] source... target");
-        System.err.println("java Copy -r [-ip] source-dir... target");
-        System.exit(-1);
-    }
-
-    public static void main(String[] args) throws IOException {
-        boolean recursive = false;
-        boolean prompt = false;
-        boolean preserve = false;
-
-        // process options
-        int argi = 0;
-        while (argi < args.length) {
-            String arg = args[argi];
-            if (!arg.startsWith("-"))
-                break;
-            if (arg.length() < 2)
-                usage();
-            for (int i=1; i<arg.length(); i++) {
-                char c = arg.charAt(i);
-                switch (c) {
-                    case 'r' : recursive = true; break;
-                    case 'i' : prompt = true; break;
-                    case 'p' : preserve = true; break;
-                    default : usage();
-                }
-            }
-            argi++;
-        }
-
-        // remaining arguments are the source files(s) and the target location
-        int remaining = args.length - argi;
-        if (remaining < 2)
-            usage();
-        Path[] source = new Path[remaining-1];
-        int i=0;
-        while (remaining > 1) {
-            source[i++] = Paths.get(args[argi++]);
-            remaining--;
-        }
-        Path target = Paths.get(args[argi]);
-
-        // check if target is a directory
-        boolean isDir = Files.isDirectory(target);
-
-        // copy each source file/directory to target
-        for (i=0; i<source.length; i++) {
-            Path dest = (isDir) ? target.resolve(source[i].getFileName()) : target;
-
-            if (recursive) {
-                // follow links when copying files
-                EnumSet<FileVisitOption> opts = EnumSet.of(FileVisitOption.FOLLOW_LINKS);
-                TreeCopier tc = new TreeCopier(source[i], dest, prompt, preserve);
-                Files.walkFileTree(source[i], opts, Integer.MAX_VALUE, tc);
-            } else {
-                // not recursive so source must not be a directory
-                if (Files.isDirectory(source[i])) {
-                    System.err.format("%s: is a directory%n", source[i]);
-                    continue;
-                }
-                copyFile(source[i], dest, prompt, preserve);
-            }
-        }
-    }
 }

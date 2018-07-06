@@ -112,7 +112,7 @@ public class StructureGeneratorHelper {
     }
 
     public static boolean isMissingResource(Path path) {
-        return Files.notExists(path);//By default follow links
+        return Files.notExists(path, LinkOption.NOFOLLOW_LINKS);
     }
 
     //https://docs.oracle.com/javase/tutorial/essential/io/fileOps.html#glob

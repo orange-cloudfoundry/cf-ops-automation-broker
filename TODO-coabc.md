@@ -7,8 +7,8 @@
 - add systematic symlink of any template/ file 
    - [DONE]1st step: ignoring subdirs, regardless of their name if their present as file in this directory,
    - [DONE]2nd step: also mirror the subdirs with nested symlinks to support iaas-specific templates
-- [ONGOING]refine TemplatesGeneratorTest.populatePaasTemplates to make bdd style integration test:
-* given a reference model in the src/test/resources such as 
+- [DONE]refine TemplatesGeneratorTest.populatePaasTemplates to make bdd style integration test:
+* [DONE]given a reference model in the src/test/resources such as 
 ```
 coab-depls/mongodb
 |-- deployment-dependencies.yml
@@ -34,10 +34,10 @@ coab-depls/m_f49911f7-b69a-4aba-afdf-23fd11014278
     |-- m_f49911f7-b69a-4aba-afdf-23fd11014278.yml -> ../../mongodb/template/mongodb.yml
     `-- coab-vars.yml
 ```
-- update TemplatesGeneratorTest.aModelStructure() to use the src/test/resources/sample-deployment-model/coab-depls/mongodb or a distinct dedicated deployment model
+[ONGOING]- update TemplatesGeneratorTest.aModelStructure() to use the src/test/resources/sample-deployment-model/coab-depls/mongodb or a distinct dedicated deployment model
     + consider removing assertXX() methods redundant with populatePaasTemplates() 
-- Update BoshServiceProvisionningTest#initPaasTemplate() to use file copy as well instead of crafting individual files explicitly
-- convert parasite configurable properties into constants in DeploymentProperties
+[ONGOING]- Update BoshServiceProvisionningTest#initPaasTemplate() to use file copy as well instead of crafting individual files explicitly
+[ONGOING]- convert parasite configurable properties into constants in DeploymentProperties
     private String secrets = "secrets"; //Secrets directory (i.e secrets)
     private String meta = "meta"; //Meta directory (i.e meta)
     private String template = "template"; //Template directory (i.e template)
@@ -68,7 +68,7 @@ coab-depls/m_f49911f7-b69a-4aba-afdf-23fd11014278
    2018-07-05T23:50:27.54+0200 [APP/PROC/WEB/0] OUT 	at com.orange.oss.ondemandbroker.ProcessorChainServiceInstanceService.deleteServiceInstance(ProcessorChainServiceInstanceService.java:91) ~[cf-ops-automation-broker-core-0.27.0-SNAPSHOT.jar!/:0.27.0-SNAPSHOT]
    2018-07-05T23:50:27.54+0200 [APP/PROC/WEB/0] OUT 	at org.springframework.cloud.servicebroker.controller.ServiceInstanceController.deleteServiceInstance(ServiceInstanceController.java:146) [spring-cloud-cloudfoundry-service-broker-1.0.2.RELEASE.jar!/:na]
  
-- debug failed mongodb
+- [DONE]debug failed mongodb => The directory structure was missing in configuration respository
 
   2018-07-05T23:50:29.67+0200 [APP/PROC/WEB/0] OUT 2018-07-05 21:50:29.672  INFO 8 --- [nio-8080-exec-7] c.o.o.c.b.o.o.git.GitProcessor           : [paas-secrets.] cloning repo from https://elpaaso-gitlab.redacted-domain.org/skc-ops-int/int-secrets.git
    2018-07-05T23:50:35.19+0200 [APP/PROC/WEB/0] OUT 2018-07-05 21:50:35.197  INFO 8 --- [nio-8080-exec-7] c.o.o.c.b.o.o.git.GitProcessor           : [paas-secrets.] git repo is ready at /home/vcap/tmp/broker-1305240764267821665
@@ -84,13 +84,13 @@ coab-depls/m_f49911f7-b69a-4aba-afdf-23fd11014278
   
 
 
-Q: how to recursively copy files & preserving symlinks ?
+[DONE]Q: how to recursively copy files & preserving symlinks ?
 
-Q: how to assert expected dir ?
+[DONE]Q: how to assert expected dir ?
 * using string representation of the directory
    * execute tree command
    * find a java-based tree impl
-* commit the expected output in the reference dataset & compare
+[DONE]* commit the expected output in the reference dataset & compare
    * find java compare directory tree 
       * including symlinks
       * including coab-vars content 
@@ -263,8 +263,6 @@ Server error, status code: 409, error code: 60016, message: An operation for ser
    - Refactor secrets and templates generator to have little methods
    - Split Junit tests between check and generate in order to improve readability (target little methods instead of global method)
    - Use MessageFormat in StructureGeneratorHelper
-   - Use Builder in Junit tests to improve readability
-   - Manage “-tpl” files
    - Improve test coverage StructureGeneratorHelper (ONGOING)
    - Update integration test to use a builder (e.g. for OSB req/resps) 
    

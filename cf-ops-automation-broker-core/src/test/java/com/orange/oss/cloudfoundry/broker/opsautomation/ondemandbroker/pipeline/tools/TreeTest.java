@@ -7,8 +7,11 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 import java.io.IOException;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 
@@ -35,4 +38,16 @@ public class TreeTest {
 
         System.out.println((new Tree()).print(rootPath));
     }
+
+    @Test
+    @Ignore
+    public void test_bis() throws IOException, URISyntaxException {
+
+        //Search from classpath the test repository using a file marker  /tree-test
+        URL resource = this.getClass().getResource("/tree-test");
+        Path referenceDataModel = Paths.get(resource.toURI());
+
+        System.out.println((new Tree()).print(referenceDataModel));
+    }
+
 }

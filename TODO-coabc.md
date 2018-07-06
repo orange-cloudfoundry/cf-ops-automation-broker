@@ -82,7 +82,16 @@ coab-depls/m_f49911f7-b69a-4aba-afdf-23fd11014278
    2018-07-05T23:50:39.02+0200 [APP/PROC/WEB/0] OUT 2018-07-05 21:50:39.027  INFO 8 --- [nio-8080-exec-7] o.o.ProcessorChainServiceInstanceService : Unable to create service with request CreateServiceInstanceRequest(super=AsyncParameterizedServiceInstanceRequest(super=AsyncServiceInstanceRequest(super=ServiceBrokerRequest(cfInstanceId=null, apiInfoLocation=my-api.com/v2/info, originatingIdentity=Context(platform=cloudfoundry, properties={user_id=0d02117b-aa21-43e2-b35e-8ad6f8223519})), asyncAccepted=true), parameters=null, context=CloudFoundryContext(organizationGuid=b65a1232-add9-49ab-8bf1-283ddc08c0de, spaceGuid=62c51153-303f-4c6e-af31-05f8509141ff)), serviceDefinitionId=mongodb-ondemand-service, planId=mongodb-ondemand-plan, organizationGuid=b65a1232-add9-49ab-8bf1-283ddc08c0de, spaceGuid=62c51153-303f-4c6e-af31-05f8509141ff, serviceInstanceId=b737e3a6-d49e-4ebf-af7f-df15442145f9), caught com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.DeploymentException: Model deployment directory doesn't exist at: /home/vcap/tmp/broker-1305240764267821665/coab-depls/mongodb
    2018-07-05T23:50:39.02+0200 [APP/PROC/WEB/0] OUT com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.DeploymentException: Model deployment directory doesn't exist at: /home/vcap/tmp/broker-1305240764267821665/coab-depls/mongodb
   
+hypothesis:
+* feature branch does not contain mongodb model/typo
+* config issue: mongodb clone at the wrong position
+* coab regression
 
+diagnostic steps:
+* include more debug traces into broker at various steps through 
+   * tree of repo content 
+   * git log display 
+* compare traces with cassandra broker: does not create branch
 
 [DONE]Q: how to recursively copy files & preserving symlinks ?
 

@@ -47,8 +47,9 @@ public class TemplatesGeneratorTest extends StructureGeneratorImplTest{
     private static String SYM_LINK = "../../";
 
     @Before
-    public void setUp() throws IOException {
+    public void setUp() throws Exception {
         super.setUp();
+        //Shared template generator
         this.templatesGenerator = new TemplatesGenerator(this.deploymentProperties.getRootDeployment(),
                 this.deploymentProperties.getModelDeployment(),
                 this.deploymentProperties.getTemplate(),
@@ -218,6 +219,9 @@ public class TemplatesGeneratorTest extends StructureGeneratorImplTest{
                 .withDirectoryHierarchy(this.deploymentProperties.getRootDeployment(),
                         this.templatesGenerator.computeDeploymentName(SERVICE_INSTANCE_ID),
                         this.deploymentProperties.getTemplate()).build();
+
+
+
 
 
         //When

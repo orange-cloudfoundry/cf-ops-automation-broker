@@ -32,7 +32,7 @@ public class StructureGeneratorImplTest {
     public TemporaryFolder temporaryFolder = new TemporaryFolder();
 
     @Before
-    public void setUp() throws IOException {
+    public void setUp() throws Exception {
         this.deploymentProperties = aDeploymentProperties();
         this.file = temporaryFolder.newFolder(REPOSITORY_DIRECTORY);
         this.workDir = file.toPath();

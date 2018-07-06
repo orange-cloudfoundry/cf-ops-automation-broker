@@ -33,7 +33,7 @@ public class SecretsGeneratorTest extends StructureGeneratorImplTest{
     private SecretsGenerator secretsGenerator;
 
     @Before
-    public void setUp() throws IOException {
+    public void setUp() throws Exception {
         super.setUp();
         this.secretsGenerator = new SecretsGenerator(this.deploymentProperties.getRootDeployment(),
                                     this.deploymentProperties.getModelDeployment(),

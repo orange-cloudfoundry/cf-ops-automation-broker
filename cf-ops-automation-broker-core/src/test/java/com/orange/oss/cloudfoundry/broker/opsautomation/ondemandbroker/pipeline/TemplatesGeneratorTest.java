@@ -382,6 +382,8 @@ public class TemplatesGeneratorTest extends StructureGeneratorImplTest{
         URL resource = this.getClass().getResource("/sample-deployment-model");
         Path referenceDataModel = Paths.get(resource.toURI());
 
+        //Path referenceDataModel = Paths.get("../sample-deployment");
+
         //Copy reference data model
         EnumSet<FileVisitOption> opts = EnumSet.of(FileVisitOption.FOLLOW_LINKS);
         Copy.TreeCopier tc = new Copy.TreeCopier(referenceDataModel, paasTemplatePath, "coab-depls", false, true);

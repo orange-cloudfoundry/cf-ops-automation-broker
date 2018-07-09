@@ -68,33 +68,6 @@ coab-depls/m_f49911f7-b69a-4aba-afdf-23fd11014278
    2018-07-05T23:50:27.54+0200 [APP/PROC/WEB/0] OUT 	at com.orange.oss.ondemandbroker.ProcessorChainServiceInstanceService.deleteServiceInstance(ProcessorChainServiceInstanceService.java:91) ~[cf-ops-automation-broker-core-0.27.0-SNAPSHOT.jar!/:0.27.0-SNAPSHOT]
    2018-07-05T23:50:27.54+0200 [APP/PROC/WEB/0] OUT 	at org.springframework.cloud.servicebroker.controller.ServiceInstanceController.deleteServiceInstance(ServiceInstanceController.java:146) [spring-cloud-cloudfoundry-service-broker-1.0.2.RELEASE.jar!/:na]
  
-- [DONE]debug failed mongodb => The directory structure was missing in configuration respository
-
-  2018-07-05T23:50:29.67+0200 [APP/PROC/WEB/0] OUT 2018-07-05 21:50:29.672  INFO 8 --- [nio-8080-exec-7] c.o.o.c.b.o.o.git.GitProcessor           : [paas-secrets.] cloning repo from https://elpaaso-gitlab.redacted-domain.org/skc-ops-int/int-secrets.git
-   2018-07-05T23:50:35.19+0200 [APP/PROC/WEB/0] OUT 2018-07-05 21:50:35.197  INFO 8 --- [nio-8080-exec-7] c.o.o.c.b.o.o.git.GitProcessor           : [paas-secrets.] git repo is ready at /home/vcap/tmp/broker-1305240764267821665
-   2018-07-05T23:50:35.19+0200 [APP/PROC/WEB/0] OUT 2018-07-05 21:50:35.197  INFO 8 --- [nio-8080-exec-7] c.o.o.c.b.o.o.git.GitProcessor           : [paas-template.] cloning repo from https://elpaaso-gitlab.redacted-domain.org/skc-ops-int/paas-templates.git
-   2018-07-05T23:50:38.76+0200 [APP/PROC/WEB/0] OUT 2018-07-05 21:50:38.762  INFO 8 --- [nio-8080-exec-7] c.o.o.c.b.o.o.git.GitProcessor           : [paas-template.] checked out branch feature-coab-mongodb
-   2018-07-05T23:50:38.77+0200 [APP/PROC/WEB/0] OUT 2018-07-05 21:50:38.771  INFO 8 --- [nio-8080-exec-7] c.o.o.c.b.o.o.git.GitProcessor           : [paas-template.] created branch feature-coabdepls-mongodb-serviceinstances from current HEAD
-   2018-07-05T23:50:38.77+0200 [APP/PROC/WEB/0] OUT 2018-07-05 21:50:38.771  INFO 8 --- [nio-8080-exec-7] c.o.o.c.b.o.o.git.GitProcessor           : [paas-template.] checked out local branch feature-coabdepls-mongodb-serviceinstances
-   2018-07-05T23:50:38.83+0200 [APP/PROC/WEB/0] OUT 2018-07-05 21:50:38.832  INFO 8 --- [nio-8080-exec-7] c.o.o.c.b.o.o.git.GitProcessor           : [paas-template.] git repo is ready at /home/vcap/tmp/broker-1384795874762530630
-   2018-07-05T23:50:38.88+0200 [APP/PROC/WEB/0] OUT 2018-07-05 21:50:38.882  INFO 8 --- [nio-8080-exec-7] c.o.o.c.b.o.o.git.GitProcessor           : [paas-template.] cleaning-up /home/vcap/tmp/broker-1384795874762530630 work directory
-   2018-07-05T23:50:38.95+0200 [APP/PROC/WEB/0] OUT 2018-07-05 21:50:38.949  INFO 8 --- [nio-8080-exec-7] c.o.o.c.b.o.o.git.GitProcessor           : [paas-secrets.] cleaning-up /home/vcap/tmp/broker-1305240764267821665 work directory
-   2018-07-05T23:50:39.02+0200 [APP/PROC/WEB/0] OUT 2018-07-05 21:50:39.027  INFO 8 --- [nio-8080-exec-7] o.o.ProcessorChainServiceInstanceService : Unable to create service with request CreateServiceInstanceRequest(super=AsyncParameterizedServiceInstanceRequest(super=AsyncServiceInstanceRequest(super=ServiceBrokerRequest(cfInstanceId=null, apiInfoLocation=my-api.com/v2/info, originatingIdentity=Context(platform=cloudfoundry, properties={user_id=0d02117b-aa21-43e2-b35e-8ad6f8223519})), asyncAccepted=true), parameters=null, context=CloudFoundryContext(organizationGuid=b65a1232-add9-49ab-8bf1-283ddc08c0de, spaceGuid=62c51153-303f-4c6e-af31-05f8509141ff)), serviceDefinitionId=mongodb-ondemand-service, planId=mongodb-ondemand-plan, organizationGuid=b65a1232-add9-49ab-8bf1-283ddc08c0de, spaceGuid=62c51153-303f-4c6e-af31-05f8509141ff, serviceInstanceId=b737e3a6-d49e-4ebf-af7f-df15442145f9), caught com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.DeploymentException: Model deployment directory doesn't exist at: /home/vcap/tmp/broker-1305240764267821665/coab-depls/mongodb
-   2018-07-05T23:50:39.02+0200 [APP/PROC/WEB/0] OUT com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.DeploymentException: Model deployment directory doesn't exist at: /home/vcap/tmp/broker-1305240764267821665/coab-depls/mongodb
-
-
-  
-hypothesis:
-* feature branch does not contain mongodb model/typo
-* config issue: mongodb clone at the wrong position
-* coab regression
-* coab is unnecessary checking for unrelated mongodb model activation in paas-secrets, failing the deployment. While the consistency on the data model is not required to have service instances working, this does not prevent disabling the reference data model (by commenting out enable-deployment.yml in secrets repo) 
-
-diagnostic steps:
-* include more debug traces into broker at various steps through 
-   * tree of repo content 
-   * git log display 
-* compare traces with cassandra broker: does not create branch
 
 [DONE]Q: how to recursively copy files & preserving symlinks ?
 

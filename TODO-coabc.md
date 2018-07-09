@@ -84,8 +84,10 @@ coab-depls/m_f49911f7-b69a-4aba-afdf-23fd11014278
    - add systematic symlink of any secrets/ file 
    - regardless of their name if their present as file in this directory,
 
-[TODO] https://github.com/orange-cloudfoundry/cf-ops-automation/issues/150
-    - review deployment-dependencies.yml generation. See  
+[DONE] https://github.com/orange-cloudfoundry/cf-ops-automation/issues/150
+    - [DONE]deployment-dependencies.yml generation as symlink
+    - [TODO]enable symlink generation instead of file generation     
+    - [TODO]clean useless code (file generation)
 
 [DONE]
    - investigate intellij/maven handling of symlinks in resources and workarounds:

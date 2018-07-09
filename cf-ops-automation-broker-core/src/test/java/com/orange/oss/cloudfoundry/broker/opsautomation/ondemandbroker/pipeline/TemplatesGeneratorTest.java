@@ -193,6 +193,31 @@ public class TemplatesGeneratorTest extends StructureGeneratorImplTest{
     }
 
     @Test
+    public void check_that_symlink_towards_deployment_dependencies_file_is_generated() throws Exception {
+        //Given repository, root deployment,model deployment and operators directory with coab-operators file
+        Structure modelStructure = new Structure.StructureBuilder(this.workDir)
+                .withFile(new String[]{this.deploymentProperties.getRootDeployment(), this.deploymentProperties.getModelDeployment()},
+                        DeploymentConstants.DEPLOYMENT_DEPENDENCIES_FILENAME)
+                .build();
+        Structure deploymentStructure = new Structure.StructureBuilder(this.workDir)
+                .withDirectoryHierarchy(this.deploymentProperties.getRootDeployment(),  this.templatesGenerator.computeDeploymentName(SERVICE_INSTANCE_ID))
+                .build();
+
+        //When
+        this.templatesGenerator.generateDeploymentDependenciesFileSymLink(this.workDir, SERVICE_INSTANCE_ID);
+
+        //Then
+        Path targetDeploymentDependenciesFile = StructureGeneratorHelper.generatePath(this.workDir,
+                this.deploymentProperties.getRootDeployment(),
+                this.templatesGenerator.computeDeploymentName(SERVICE_INSTANCE_ID),
+                DeploymentConstants.DEPLOYMENT_DEPENDENCIES_FILENAME);
+        assertThat("Symbolic link towards deployment dependencies file doesn't exist", Files.exists(targetDeploymentDependenciesFile));
+        assertThat("Deployment dependencies file is not a symbolic link", Files.isSymbolicLink(targetDeploymentDependenciesFile));
+        assertThat(Files.readSymbolicLink(targetDeploymentDependenciesFile).toString(), is(equalTo("../" + this.deploymentProperties.getModelDeployment() +
+                File.separator + DeploymentConstants.DEPLOYMENT_DEPENDENCIES_FILENAME)));
+    }
+
+    @Test
     public void check_that_all_symlinks_templates_directory_are_generated() throws Exception {
 
         //Given : The model structure is initialized in setup method

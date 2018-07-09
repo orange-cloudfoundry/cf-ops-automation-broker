@@ -238,6 +238,7 @@ public class TemplatesGeneratorTest extends StructureGeneratorImplTest{
         //Check all models
         checkDeployment("coab-depls", "mongodb", "m");
         checkDeployment("coab-depls", "cassandravarsops", "c");
+        checkDeployment("coab-depls", "cassandra", "s");
         checkDeployment("coab-depls", "cf-mysql", "y");
 
     }

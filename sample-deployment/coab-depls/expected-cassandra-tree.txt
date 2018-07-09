@@ -1,0 +1,14 @@
+cassandra
+└── deployment-dependencies.yml
+└── template
+    └── cassandra-vars.yml
+    └── cassandra.yml
+    └── coab-operators.yml
+    └── coab-vars.yml
+{0}
+└── deployment-dependencies.yml
+└── template
+    └── cassandra-vars.yml -> ../../cassandra/template/cassandra-vars.yml
+    └── coab-operators.yml -> ../../cassandra/template/coab-operators.yml
+    └── coab-vars.yml
+    └── {0}.yml -> ../../cassandra/template/cassandra.yml

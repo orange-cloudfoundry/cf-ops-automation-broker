@@ -378,11 +378,8 @@ public class TemplatesGeneratorTest extends StructureGeneratorImplTest{
         //Given a template repository in /tmp
         Path paasTemplatePath = temporaryFolder.getRoot().toPath();
 
-        //Search from classpath the test repository using a file marker  /SampleModelTestGenerator/
-        URL resource = this.getClass().getResource("/sample-deployment-model");
-        Path referenceDataModel = Paths.get(resource.toURI());
-
-        //Path referenceDataModel = Paths.get("../sample-deployment");
+        //Search for the sample-deployment
+        Path referenceDataModel = Paths.get("../sample-deployment");
 
         //Copy reference data model
         EnumSet<FileVisitOption> opts = EnumSet.of(FileVisitOption.FOLLOW_LINKS);

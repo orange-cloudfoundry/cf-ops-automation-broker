@@ -83,7 +83,7 @@ public class Copy {
             }
             if (file.getFileName().toString().contentEquals(parts[i])){
                 resolve = false;
-                targetFile = targetFile.resolve(file.getFileName().toString().replaceFirst("#sl#", ""));
+                targetFile = targetFile.resolve(file.getFileName());
             }
             if (resolve == true){
                 targetFile = targetFile.resolve(parts[i]);
@@ -129,9 +129,7 @@ public class Copy {
 
             Path newdir = target.resolve(source.relativize(dir));
             try {
-                if (!dir.getFileName().toString().contains("#nc#")) {
-                    Files.copy(dir, newdir, options);
-                }
+                Files.copy(dir, newdir, options);
             } catch (FileAlreadyExistsException x) {
                 // ignore
             } catch (IOException x) {
@@ -143,16 +141,11 @@ public class Copy {
 
         @Override
         public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
-            // no copy if tag #nc#
-            if (file.getFileName().toString().contains("#sl#")){
+            if (Files.isSymbolicLink(file)){
                 createSymbolicLink(file, target, root);
-            }else if (!file.getFileName().toString().contains("#nc#")){
-                copyFile(file, target.resolve(source.relativize(file)),
-                        prompt, preserve);
+            }else {
+                copyFile(file, target.resolve(source.relativize(file)), prompt, preserve);
             }
-
-
-
             return CONTINUE;
         }
 

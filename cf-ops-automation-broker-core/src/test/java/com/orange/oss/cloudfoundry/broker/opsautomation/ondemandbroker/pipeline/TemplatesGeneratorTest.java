@@ -215,10 +215,6 @@ public class TemplatesGeneratorTest extends StructureGeneratorImplTest{
                         this.templatesGenerator.computeDeploymentName(SERVICE_INSTANCE_ID),
                         DeploymentConstants.TEMPLATE).build();
 
-
-
-
-
         //When
         this.templatesGenerator.generateAllSymLinks(workDir, SERVICE_INSTANCE_ID);
 
@@ -228,6 +224,22 @@ public class TemplatesGeneratorTest extends StructureGeneratorImplTest{
         this.assertOperatorsFile();
         this.assertIassTypeFile();
     }
+
+    private void aReferenceModelStructure() throws IOException {
+        //Given a template repository in /tmp
+        Path paasTemplatePath = temporaryFolder.getRoot().toPath();
+
+        //Search for the sample-deployment
+        Path referenceDataModel = Paths.get("../sample-deployment");
+
+        //Copy reference data model
+        EnumSet<FileVisitOption> opts = EnumSet.of(FileVisitOption.FOLLOW_LINKS);
+        Copy.TreeCopier tc = new Copy.TreeCopier(referenceDataModel, paasTemplatePath, "coab-depls", false, true);
+        Files.walkFileTree(referenceDataModel, opts, Integer.MAX_VALUE, tc);
+    }
+
+
+
 
     private void aModelStructure(){
         Structure modelStructure = new Structure.StructureBuilder(this.workDir)

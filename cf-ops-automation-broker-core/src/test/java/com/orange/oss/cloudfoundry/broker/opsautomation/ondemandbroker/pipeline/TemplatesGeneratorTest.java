@@ -423,8 +423,8 @@ public class TemplatesGeneratorTest extends StructureGeneratorImplTest{
     }
 
     private String expectedStructure(String rootDeployment, String expectedTreeFile, String deploymentName) throws URISyntaxException, IOException{
-        URL resource = this.getClass().getResource("/sample-deployment-model" + File.separator + rootDeployment + File.separator + expectedTreeFile);
-        List<String> expectedTree = Files.readAllLines(Paths.get(resource.toURI()));
+        Path referenceDataModel = Paths.get("../sample-deployment").resolve(rootDeployment).resolve(expectedTreeFile);
+        List<String> expectedTree = Files.readAllLines(referenceDataModel);
         StringBuilder sb = new StringBuilder();
         for (String s:expectedTree){
             sb.append(s).append(System.getProperty("line.separator"));

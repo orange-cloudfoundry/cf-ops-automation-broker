@@ -16,6 +16,7 @@ import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.DeploymentProperties;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.OsbProxyImpl;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.SecretsGenerator;
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.tools.Copy;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.Context;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.terraform.TerraformModuleHelper;
 import io.restassured.RestAssured;
@@ -42,8 +43,11 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Writer;
+import java.nio.file.FileVisitOption;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -188,8 +192,20 @@ public class BoshServiceProvisionningTest {
 
             //root deployment
             Path coabDepls = gitWorkDir.toPath().resolve(deploymentProperties.getRootDeployment());
+
+            //Search for the sample-deployment
+            Path referenceDataModel = Paths.get("../sample-deployment");
+
+            //Copy reference data model
+            EnumSet<FileVisitOption> opts = EnumSet.of(FileVisitOption.FOLLOW_LINKS);
+            Copy.TreeCopier tc = new Copy.TreeCopier(referenceDataModel, gitWorkDir.toPath(), "coab-depls", false, true);
+            Files.walkFileTree(referenceDataModel, opts, Integer.MAX_VALUE, tc);
+
+
+
+
             //sub deployments
-            Path templateDir = coabDepls
+/*            Path templateDir = coabDepls
                     .resolve(deploymentProperties.getModelDeployment())
                     .resolve(DeploymentConstants.TEMPLATE);
             createDir(templateDir);
@@ -201,7 +217,7 @@ public class BoshServiceProvisionningTest {
                     .resolve(DeploymentConstants.OPERATORS);
             createDir(operatorsDir);
             createDummyFile(operatorsDir.resolve(DeploymentConstants.COAB + DeploymentConstants.HYPHEN + DeploymentConstants.OPERATORS + DeploymentConstants.YML_EXTENSION));
-
+*/
             AddCommand addC = git.add().addFilepattern(".");
             addC.call();
 

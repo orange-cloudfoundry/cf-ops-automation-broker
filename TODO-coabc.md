@@ -36,7 +36,7 @@ coab-depls/m_f49911f7-b69a-4aba-afdf-23fd11014278
 ```
 [DONE]- update TemplatesGeneratorTest.aModelStructure() to use the src/test/resources/sample-deployment-model/coab-depls/mongodb or a distinct dedicated deployment model
     + consider removing assertXX() methods redundant with populatePaasTemplates() 
-[ONGOING/JCL]- Update BoshServiceProvisionningTest#initPaasTemplate() to use file copy as well instead of crafting individual files explicitly
+[DONE]- Update BoshServiceProvisionningTest#initPaasTemplate() to use file copy as well instead of crafting individual files explicitly
 [ONGOING/GB]- convert parasite configurable properties into constants in DeploymentProperties
     private String secrets = "secrets"; //Secrets directory (i.e secrets)
     private String meta = "meta"; //Meta directory (i.e meta)

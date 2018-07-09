@@ -93,7 +93,8 @@ coab-depls/m_f49911f7-b69a-4aba-afdf-23fd11014278
     how to get to sources ? 
         current dir
         relative to classapth  target/src/resources/../../../sample-deployment-model   
-   - [ONGOING] investigate bug on circle CI when I introduce an empty directory (cf-mysql-deployment) in cf-mysql sample-deployment
+   - [DONE] investigate bug on circle CI when I introduce an empty directory (cf-mysql-deployment) in cf-mysql sample-deployment
+    No empty directory. A sigle file .keep filtered by the Copy.java class
 
 
 

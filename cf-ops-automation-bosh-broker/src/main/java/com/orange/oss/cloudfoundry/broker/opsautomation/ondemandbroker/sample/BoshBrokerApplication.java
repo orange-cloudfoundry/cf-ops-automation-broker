@@ -46,7 +46,7 @@ public class BoshBrokerApplication {
     @ConfigurationProperties(prefix = "deployment")
     @Bean
     public DeploymentProperties deploymentProperties() {
-        return new DeploymentProperties();
+        return new DeploymentProperties(); //would 
     }
 
     @Bean

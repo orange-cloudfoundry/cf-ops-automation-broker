@@ -103,6 +103,8 @@ public class StructureGeneratorImplTest {
         DeploymentProperties deploymentProperties = new DeploymentProperties();
         deploymentProperties.setRootDeployment("coab-depls");
         deploymentProperties.setModelDeployment("mongodb");
+        deploymentProperties.setModelDeploymentShortAlias("m_");
+        deploymentProperties.setBrokerDisplayName("mongo db");
         return deploymentProperties;
     }
 

@@ -9,10 +9,10 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @ConfigurationProperties(prefix = "deployment")
 public class DeploymentProperties {
 
-    private String brokerDisplayName;  // e.g. "Cassandra",  used in broker traces.
-    private String rootDeployment;  //e g.. "coab-depls"; //Root deployment (i.e coab-depls)
-    private String modelDeployment ; // e.g. "cassandravarsops", Model deployment (i.e cassandra, cassandravarsops, ...)
-    private String modelDeploymentShortAlias ; // e.g. "c", shortname for the model deployment. Enables distinguishing services. Should be short so that broker URL remains shorter than 63 chars
+    private String brokerDisplayName = "Cassandra"; //used in broker traces.
+    private String rootDeployment = "coab-depls"; //Root deployment (i.e coab-depls)
+    private String modelDeployment = "cassandravarsops"; //Model deployment (i.e cassandra, cassandravarsops, ...)
+    private String modelDeploymentShortAlias = "c"; //shortname for the model deployment. Enables distinguishing services. Should be short so that broker URL remains shorter than 63 chars
 
     public String getRootDeployment() {
         return rootDeployment;

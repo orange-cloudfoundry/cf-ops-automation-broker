@@ -21,7 +21,7 @@ import java.util.List;
 public class BoshBrokerApplication {
 
     @SuppressWarnings("WeakerAccess")
-    static final String TEMPLATES_REPOSITORY_ALIAS_NAME = "paas-template.";
+    static final String TEMPLATES_REPOSITORY_ALIAS_NAME = "paas-templates.";
     static final String SECRETS_REPOSITORY_ALIAS_NAME = "paas-secrets.";
 
     public static void main(String[] args) {

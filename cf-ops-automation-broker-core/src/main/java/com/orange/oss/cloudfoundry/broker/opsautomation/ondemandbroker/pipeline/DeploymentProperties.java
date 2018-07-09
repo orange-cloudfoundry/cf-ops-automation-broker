@@ -13,7 +13,6 @@ public class DeploymentProperties {
     private String rootDeployment = "coab-depls"; //Root deployment (i.e coab-depls)
     private String modelDeployment = "cassandravarsops"; //Model deployment (i.e cassandra, cassandravarsops, ...)
     private String modelDeploymentShortAlias = "c"; //shortname for the model deployment. Enables distinguishing services. Should be short so that broker URL remains shorter than 63 chars
-    private String operators = "operators"; //Operators suffix (i.e operators)
 
     public String getRootDeployment() {
         return rootDeployment;
@@ -29,14 +28,6 @@ public class DeploymentProperties {
 
     public void setModelDeployment(String modelDeployment) {
         this.modelDeployment = modelDeployment;
-    }
-
-    public String getOperators() {
-        return operators;
-    }
-
-    public void setOperators(String operators) {
-        this.operators = operators;
     }
 
     public String getModelDeploymentShortAlias() {

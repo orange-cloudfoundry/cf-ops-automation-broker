@@ -50,7 +50,6 @@ public class TemplatesGeneratorTest extends StructureGeneratorImplTest{
         //Shared template generator
         this.templatesGenerator = new TemplatesGenerator(this.deploymentProperties.getRootDeployment(),
                 this.deploymentProperties.getModelDeployment(),
-                this.deploymentProperties.getOperators(),
                 "c",
                 new VarsFilesYmlFormatter());
     }
@@ -183,8 +182,8 @@ public class TemplatesGeneratorTest extends StructureGeneratorImplTest{
     public void check_that_symlink_towards_coab_operators_file_is_generated() throws Exception {
         //Given repository, root deployment,model deployment and operators directory with coab-operators file
         Structure modelStructure = new Structure.StructureBuilder(this.workDir)
-                .withFile(new String[]{this.deploymentProperties.getRootDeployment(), this.deploymentProperties.getModelDeployment(), this.deploymentProperties.getOperators()},
-                        DeploymentConstants.COAB + DeploymentConstants.HYPHEN + this.deploymentProperties.getOperators() + DeploymentConstants.YML_EXTENSION)
+                .withFile(new String[]{this.deploymentProperties.getRootDeployment(), this.deploymentProperties.getModelDeployment(), DeploymentConstants.OPERATORS},
+                        DeploymentConstants.COAB + DeploymentConstants.HYPHEN + DeploymentConstants.OPERATORS + DeploymentConstants.YML_EXTENSION)
                 .build();
         Structure deploymentStructure = new Structure.StructureBuilder(this.workDir)
                 .withDirectoryHierarchy(this.deploymentProperties.getRootDeployment(),  this.templatesGenerator.computeDeploymentName(SERVICE_INSTANCE_ID), DeploymentConstants.TEMPLATE)
@@ -198,11 +197,11 @@ public class TemplatesGeneratorTest extends StructureGeneratorImplTest{
                 this.deploymentProperties.getRootDeployment(),
                 this.templatesGenerator.computeDeploymentName(SERVICE_INSTANCE_ID),
                 DeploymentConstants.TEMPLATE,
-                DeploymentConstants.COAB + DeploymentConstants.HYPHEN + this.deploymentProperties.getOperators() + DeploymentConstants.YML_EXTENSION);
+                DeploymentConstants.COAB + DeploymentConstants.HYPHEN + DeploymentConstants.OPERATORS + DeploymentConstants.YML_EXTENSION);
         assertThat("Symbolic link towards coab operators file doesn't exist", Files.exists(targetOperatorsFile));
         assertThat("Coab operators file is not a symbolic link", Files.isSymbolicLink(targetOperatorsFile));
         assertThat(Files.readSymbolicLink(targetOperatorsFile).toString(), is(equalTo(SYM_LINK + this.deploymentProperties.getModelDeployment() +
-                        File.separator + this.deploymentProperties.getOperators() + File.separator +
+                        File.separator + DeploymentConstants.OPERATORS + File.separator +
                         DeploymentConstants.COAB + DeploymentConstants.COA_OPERATORS_FILE_SUFFIX)));
     }
 
@@ -241,8 +240,8 @@ public class TemplatesGeneratorTest extends StructureGeneratorImplTest{
                         this.deploymentProperties.getModelDeployment() + DeploymentConstants.COA_VARS_FILE + DeploymentConstants.YML_EXTENSION) //model-vars.yml
                 .withFile(new String[]{this.deploymentProperties.getRootDeployment(), this.deploymentProperties.getModelDeployment(), DeploymentConstants.TEMPLATE},
                         this.deploymentProperties.getModelDeployment() + DeploymentConstants.COA_VARS_FILE + DeploymentConstants.COA_TEMPLATE_FILE_SUFFIX) //model-vars-tpl.yml
-                .withDirectoryHierarchy(this.deploymentProperties.getRootDeployment(), this.deploymentProperties.getModelDeployment(), this.deploymentProperties.getOperators())
-                .withFile(new String[]{this.deploymentProperties.getRootDeployment(), this.deploymentProperties.getModelDeployment(), this.deploymentProperties.getOperators()},
+                .withDirectoryHierarchy(this.deploymentProperties.getRootDeployment(), this.deploymentProperties.getModelDeployment(), DeploymentConstants.OPERATORS)
+                .withFile(new String[]{this.deploymentProperties.getRootDeployment(), this.deploymentProperties.getModelDeployment(), DeploymentConstants.OPERATORS},
                        DeploymentConstants.COAB + DeploymentConstants.COA_OPERATORS_FILE_SUFFIX) //coab-operators.yml in subdir operators
                 .withFile(new String[]{this.deploymentProperties.getRootDeployment(), this.deploymentProperties.getModelDeployment(), DeploymentConstants.TEMPLATE},
                        DeploymentConstants.COAB + DeploymentConstants.COA_OPERATORS_FILE_SUFFIX) //coab-operators.yml
@@ -400,7 +399,6 @@ public class TemplatesGeneratorTest extends StructureGeneratorImplTest{
         //Given a template generator
         TemplatesGenerator templatesGenerator = new TemplatesGenerator(rootDeployment,
                 modelDeployment,
-                "operators",
                 modelDeploymentShortAlias,
                 new VarsFilesYmlFormatter());
 
@@ -462,7 +460,6 @@ public class TemplatesGeneratorTest extends StructureGeneratorImplTest{
         //Given a template generator
         TemplatesGenerator templatesGenerator = new TemplatesGenerator("coab-depls",
                 "cf-mysql",
-                "operators",
                 "y",
                 new VarsFilesYmlFormatter());
 

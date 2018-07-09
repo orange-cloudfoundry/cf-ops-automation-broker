@@ -198,9 +198,9 @@ public class BoshServiceProvisionningTest {
 
             Path operatorsDir = coabDepls
                     .resolve(deploymentProperties.getModelDeployment())
-                    .resolve(deploymentProperties.getOperators());
+                    .resolve(DeploymentConstants.OPERATORS);
             createDir(operatorsDir);
-            createDummyFile(operatorsDir.resolve(DeploymentConstants.COAB + DeploymentConstants.HYPHEN + deploymentProperties.getOperators() + DeploymentConstants.YML_EXTENSION));
+            createDummyFile(operatorsDir.resolve(DeploymentConstants.COAB + DeploymentConstants.HYPHEN + DeploymentConstants.OPERATORS + DeploymentConstants.YML_EXTENSION));
 
             AddCommand addC = git.add().addFilepattern(".");
             addC.call();

@@ -121,9 +121,7 @@ public class GitProcessor extends DefaultBrokerProcessor {
             logger.info(prefixLog("cloning repo from {}"), this.gitUrl);
 
 
-            String prefix = "broker-";
-
-            Path workDir = Files.createTempDirectory(prefix);
+            Path workDir = Files.createTempDirectory(getRepoWorkDirPrefix(repoAliasName));
 
             int timeoutSeconds = 60; //git timeout
             CloneCommand clone = new CloneCommand()
@@ -155,6 +153,10 @@ public class GitProcessor extends DefaultBrokerProcessor {
             throw new IllegalArgumentException(e);
         }
 
+    }
+
+    String getRepoWorkDirPrefix(String repoAliasName) {
+        return repoAliasName.replaceAll("[^a-zA-Z0-9]", "-") + "clone-";
     }
 
     private void fetchSubmodulesIfNeeded(Context ctx, Git git) throws GitAPIException {

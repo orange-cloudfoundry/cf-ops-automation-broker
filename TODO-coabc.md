@@ -81,6 +81,8 @@ coab-depls/m_f49911f7-b69a-4aba-afdf-23fd11014278
    2018-07-05T23:50:38.95+0200 [APP/PROC/WEB/0] OUT 2018-07-05 21:50:38.949  INFO 8 --- [nio-8080-exec-7] c.o.o.c.b.o.o.git.GitProcessor           : [paas-secrets.] cleaning-up /home/vcap/tmp/broker-1305240764267821665 work directory
    2018-07-05T23:50:39.02+0200 [APP/PROC/WEB/0] OUT 2018-07-05 21:50:39.027  INFO 8 --- [nio-8080-exec-7] o.o.ProcessorChainServiceInstanceService : Unable to create service with request CreateServiceInstanceRequest(super=AsyncParameterizedServiceInstanceRequest(super=AsyncServiceInstanceRequest(super=ServiceBrokerRequest(cfInstanceId=null, apiInfoLocation=my-api.com/v2/info, originatingIdentity=Context(platform=cloudfoundry, properties={user_id=0d02117b-aa21-43e2-b35e-8ad6f8223519})), asyncAccepted=true), parameters=null, context=CloudFoundryContext(organizationGuid=b65a1232-add9-49ab-8bf1-283ddc08c0de, spaceGuid=62c51153-303f-4c6e-af31-05f8509141ff)), serviceDefinitionId=mongodb-ondemand-service, planId=mongodb-ondemand-plan, organizationGuid=b65a1232-add9-49ab-8bf1-283ddc08c0de, spaceGuid=62c51153-303f-4c6e-af31-05f8509141ff, serviceInstanceId=b737e3a6-d49e-4ebf-af7f-df15442145f9), caught com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.DeploymentException: Model deployment directory doesn't exist at: /home/vcap/tmp/broker-1305240764267821665/coab-depls/mongodb
    2018-07-05T23:50:39.02+0200 [APP/PROC/WEB/0] OUT com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.DeploymentException: Model deployment directory doesn't exist at: /home/vcap/tmp/broker-1305240764267821665/coab-depls/mongodb
+
+
   
 hypothesis:
 * feature branch does not contain mongodb model/typo
@@ -109,6 +111,11 @@ diagnostic steps:
 - review deployment-dependencies.yml generation. See https://github.com/orange-cloudfoundry/cf-ops-automation/issues/150 
 
 
+- investigate intellij/maven handling of symlinks in resources and workarounds:
+   - consider moving reference data set from cf-ops-automation-broker/cf-ops-automation-broker-core/src/test/resources/sample-deployment-model/coab-depls/cf-mysql/template/cf-mysql.yml vers cf-ops-automation-broker/cf-ops-automation-broker-core/sample-deployment-model/coab-depls/cf-mysql/template/cf-mysql.yml 
+    how to get to sources ? 
+        current dir
+        relative to classapth  target/src/resources/../../../sample-deployment-model   
 
 
 - Bump jackson to 2.9.2 or later and pull https://github.com/FasterXML/jackson-dataformats-text/tree/master/yaml

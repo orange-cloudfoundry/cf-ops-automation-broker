@@ -331,6 +331,23 @@ public class GitProcessorTest {
     }
 
     @Test
+    public void creates_human_readeable_workdir_repo_dir_prefix() {
+        String repoWorkDirPrefix;
+
+        //when invoked with a repo alias consistent with what BoshBroker assigns (i.e. with a containing dot)
+        repoWorkDirPrefix = processor.getRepoWorkDirPrefix("paas-templates.");
+
+        //then
+        assertThat(repoWorkDirPrefix).isEqualTo("paas-templates-clone-");
+
+        //when invoked with a repo alias with an invalid char for paths
+        repoWorkDirPrefix = processor.getRepoWorkDirPrefix("paas-templates/");
+
+        //then it is replaced by dash
+        assertThat(repoWorkDirPrefix).isEqualTo("paas-templates-clone-");
+    }
+
+    @Test
     public void cleans_up_workdir_on_cleanup_method() {
         //given a clone of an empty repo
         processor.cloneRepo(ctx);

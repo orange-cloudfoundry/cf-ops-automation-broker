@@ -8,15 +8,13 @@ public class SecretsGenerator extends StructureGeneratorImpl implements SecretsR
 
     private static Logger logger = LoggerFactory.getLogger(SecretsGenerator.class.getName());
     private String secrets;
-    private String meta;
 
     public SecretsGenerator(){
     }
 
-    public SecretsGenerator(String rootDeployment, String modelDeployment, String secrets, String meta, String modelDeploymentShortAlias){
+    public SecretsGenerator(String rootDeployment, String modelDeployment, String secrets, String modelDeploymentShortAlias){
         super(rootDeployment,modelDeployment, modelDeploymentShortAlias);
         this.secrets = secrets;
-        this.meta = meta;
     }
 
     @Override
@@ -101,7 +99,7 @@ public class SecretsGenerator extends StructureGeneratorImpl implements SecretsR
                 this.rootDeployment,
                 this.modelDeployment,
                 this.secrets,
-                this.meta + DeploymentConstants.YML_EXTENSION);
+                DeploymentConstants.META + DeploymentConstants.YML_EXTENSION);
         if (StructureGeneratorHelper.isMissingResource(metaFile)){
             throw new DeploymentException(DeploymentConstants.META_FILE_EXCEPTION);
         }
@@ -128,7 +126,7 @@ public class SecretsGenerator extends StructureGeneratorImpl implements SecretsR
     protected void generateMetaFile(Path workDir, String serviceInstanceId){
         String[] sourcePathElements = new String[] {this.rootDeployment, this.modelDeployment, this.secrets};
         String[] targetPathElements = new String[] {this.rootDeployment, this.computeDeploymentName(serviceInstanceId), this.secrets};
-        String fileName = this.meta + DeploymentConstants.YML_EXTENSION;
+        String fileName = DeploymentConstants.META + DeploymentConstants.YML_EXTENSION;
         StructureGeneratorHelper.generateSymbolicLink(workDir, sourcePathElements, targetPathElements, fileName, fileName);
     }
 
@@ -147,7 +145,7 @@ public class SecretsGenerator extends StructureGeneratorImpl implements SecretsR
 
     protected void removeMetaFile(Path workDir, String serviceInstanceId) {
         String[] pathElements = new String[] {this.rootDeployment, this.computeDeploymentName(serviceInstanceId), this.secrets};
-        String fileName = this.meta + DeploymentConstants.YML_EXTENSION;
+        String fileName = DeploymentConstants.META + DeploymentConstants.YML_EXTENSION;
         StructureGeneratorHelper.removeFile(workDir, pathElements, fileName);
     }
 

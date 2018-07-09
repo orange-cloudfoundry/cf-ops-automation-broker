@@ -59,7 +59,6 @@ import static io.restassured.RestAssured.given;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.text.IsEmptyString.isEmptyString;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 import static org.springframework.cloud.servicebroker.model.CloudFoundryContext.CLOUD_FOUNDRY_PLATFORM;
 import static org.springframework.http.HttpStatus.ACCEPTED;
@@ -230,7 +229,7 @@ public class BoshServiceProvisionningTest {
                     .resolve(deploymentProperties.getModelDeployment())
                     .resolve(deploymentProperties.getSecrets());
             createDir(secretsDir);
-            createDummyFile(secretsDir.resolve(deploymentProperties.getMeta() + DeploymentConstants.YML_EXTENSION));
+            createDummyFile(secretsDir.resolve(DeploymentConstants.META + DeploymentConstants.YML_EXTENSION));
             createDummyFile(secretsDir.resolve(deploymentProperties.getSecrets() + DeploymentConstants.YML_EXTENSION));
             AddCommand addC = git.add().addFilepattern(".");
             addC.call();

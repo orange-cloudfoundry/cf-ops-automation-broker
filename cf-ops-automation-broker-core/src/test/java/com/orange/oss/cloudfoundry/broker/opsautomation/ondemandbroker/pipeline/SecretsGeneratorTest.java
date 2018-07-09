@@ -4,7 +4,6 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -38,8 +37,7 @@ public class SecretsGeneratorTest extends StructureGeneratorImplTest{
         this.secretsGenerator = new SecretsGenerator(this.deploymentProperties.getRootDeployment(),
                                     this.deploymentProperties.getModelDeployment(),
                                     this.deploymentProperties.getSecrets(),
-                                    this.deploymentProperties.getMeta(),
-                                    this.deploymentProperties.getModelDeploymentShortAlias());
+                this.deploymentProperties.getModelDeploymentShortAlias());
     }
 
     @Test
@@ -145,7 +143,7 @@ public class SecretsGeneratorTest extends StructureGeneratorImplTest{
                 this.deploymentProperties.getRootDeployment(),
                 this.secretsGenerator.computeDeploymentName(SERVICE_INSTANCE_ID),
                 this.deploymentProperties.getSecrets(),
-                this.deploymentProperties.getMeta() + DeploymentConstants.YML_EXTENSION);
+                DeploymentConstants.META + DeploymentConstants.YML_EXTENSION);
         assertThat("Meta file doesn't exist :"+ targetMetaFile, Files.exists(targetMetaFile));
         assertThat("Meta file is not a symbolic link", Files.isSymbolicLink(targetMetaFile));
     }
@@ -195,7 +193,6 @@ public class SecretsGeneratorTest extends StructureGeneratorImplTest{
         secretsGenerator = new SecretsGenerator("coab-depls",
                 "cassandravarsops",
                 "secrets",
-                "meta",
                 "m");
 
 
@@ -224,7 +221,7 @@ public class SecretsGeneratorTest extends StructureGeneratorImplTest{
                 this.deploymentProperties.getRootDeployment(),
                 this.secretsGenerator.computeDeploymentName(SERVICE_INSTANCE_ID),
                 this.deploymentProperties.getSecrets(),
-                this.deploymentProperties.getMeta() + DeploymentConstants.YML_EXTENSION);
+                DeploymentConstants.META + DeploymentConstants.YML_EXTENSION);
         assertThat("Meta file is still existing", Files.notExists(targetMetaFile));
     }
 
@@ -266,7 +263,7 @@ public class SecretsGeneratorTest extends StructureGeneratorImplTest{
     private void aModelStructure(){
         Structure modelStructure = new Structure.StructureBuilder(this.workDir)
                 .withFile(new String[]{this.deploymentProperties.getRootDeployment(), this.deploymentProperties.getModelDeployment(), this.deploymentProperties.getSecrets()},
-                        this.deploymentProperties.getMeta() + DeploymentConstants.YML_EXTENSION) //meta.yml
+                        DeploymentConstants.META + DeploymentConstants.YML_EXTENSION) //meta.yml
                 .withFile(new String[]{this.deploymentProperties.getRootDeployment(), this.deploymentProperties.getModelDeployment(), this.deploymentProperties.getSecrets()},
                         this.deploymentProperties.getSecrets() + DeploymentConstants.YML_EXTENSION) //secrets.yml
                 .build();
@@ -275,7 +272,7 @@ public class SecretsGeneratorTest extends StructureGeneratorImplTest{
     private void aDeploymentStructure(){
         Structure deploymentStructure = new Structure.StructureBuilder(this.workDir)
                 .withFile(new String[]{this.deploymentProperties.getRootDeployment(), this.secretsGenerator.computeDeploymentName(SERVICE_INSTANCE_ID), this.deploymentProperties.getSecrets()},
-                        this.deploymentProperties.getMeta() + DeploymentConstants.YML_EXTENSION) //meta.yml
+                        DeploymentConstants.META + DeploymentConstants.YML_EXTENSION) //meta.yml
                 .withFile(new String[]{this.deploymentProperties.getRootDeployment(), this.secretsGenerator.computeDeploymentName(SERVICE_INSTANCE_ID), this.deploymentProperties.getSecrets()},
                         this.deploymentProperties.getSecrets() + DeploymentConstants.YML_EXTENSION) //secrets.yml
                 .withFile(new String[]{this.deploymentProperties.getRootDeployment(), this.secretsGenerator.computeDeploymentName(SERVICE_INSTANCE_ID)},

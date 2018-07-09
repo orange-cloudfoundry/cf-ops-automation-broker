@@ -81,7 +81,6 @@ public class BoshBrokerApplication {
                 deploymentProperties.getRootDeployment(),
                 deploymentProperties.getModelDeployment(),
                 deploymentProperties.getSecrets(),
-                deploymentProperties.getMeta(),
                 deploymentProperties.getModelDeploymentShortAlias()
         );
     }

@@ -7,7 +7,6 @@ import org.junit.rules.ExpectedException;
 import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
@@ -107,7 +106,6 @@ public class StructureGeneratorImplTest {
         deploymentProperties.setTemplate("template");
         deploymentProperties.setVars("vars");
         deploymentProperties.setOperators("operators");
-        deploymentProperties.setMeta("meta");
         deploymentProperties.setSecrets("secrets");
         return deploymentProperties;
     }

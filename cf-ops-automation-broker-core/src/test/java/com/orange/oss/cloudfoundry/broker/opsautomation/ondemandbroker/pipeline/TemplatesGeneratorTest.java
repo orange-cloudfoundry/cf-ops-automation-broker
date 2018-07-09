@@ -8,8 +8,6 @@ import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URISyntaxException;
-import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.FileVisitOption;
 import java.nio.file.Files;
@@ -52,7 +50,6 @@ public class TemplatesGeneratorTest extends StructureGeneratorImplTest{
         //Shared template generator
         this.templatesGenerator = new TemplatesGenerator(this.deploymentProperties.getRootDeployment(),
                 this.deploymentProperties.getModelDeployment(),
-                this.deploymentProperties.getTemplate(),
                 this.deploymentProperties.getVars(),
                 this.deploymentProperties.getOperators(),
                 "c",
@@ -136,7 +133,7 @@ public class TemplatesGeneratorTest extends StructureGeneratorImplTest{
         Path templateDir = StructureGeneratorHelper.generatePath(this.workDir,
                 this.deploymentProperties.getRootDeployment(),
                 this.templatesGenerator.computeDeploymentName(SERVICE_INSTANCE_ID),
-                this.deploymentProperties.getTemplate()
+                DeploymentConstants.TEMPLATE
         );
         assertThat("Template directory doesn't exist", Files.exists(templateDir));
     }
@@ -165,7 +162,7 @@ public class TemplatesGeneratorTest extends StructureGeneratorImplTest{
     public void check_that_coab_vars_file_is_generated() throws IOException {
         //Given
         Structure deploymentStructure = new Structure.StructureBuilder(this.workDir)
-                .withDirectoryHierarchy(this.deploymentProperties.getRootDeployment(),  this.templatesGenerator.computeDeploymentName(SERVICE_INSTANCE_ID), this.deploymentProperties.getTemplate())
+                .withDirectoryHierarchy(this.deploymentProperties.getRootDeployment(),  this.templatesGenerator.computeDeploymentName(SERVICE_INSTANCE_ID), DeploymentConstants.TEMPLATE)
                 .build();
         CoabVarsFileDto coabVarsFileDto = aTypicalUserProvisionningRequest();
 
@@ -176,7 +173,7 @@ public class TemplatesGeneratorTest extends StructureGeneratorImplTest{
         Path coabVarsFile = StructureGeneratorHelper.generatePath(this.workDir,
                 this.deploymentProperties.getRootDeployment(),
                 this.templatesGenerator.computeDeploymentName(SERVICE_INSTANCE_ID),
-                this.deploymentProperties.getTemplate(),
+                DeploymentConstants.TEMPLATE,
                 DeploymentConstants.COAB + DeploymentConstants.HYPHEN + this.deploymentProperties.getVars() + DeploymentConstants.YML_EXTENSION
         );
         assertThat("Coab vars file should exist", Files.exists(coabVarsFile));
@@ -191,7 +188,7 @@ public class TemplatesGeneratorTest extends StructureGeneratorImplTest{
                         DeploymentConstants.COAB + DeploymentConstants.HYPHEN + this.deploymentProperties.getOperators() + DeploymentConstants.YML_EXTENSION)
                 .build();
         Structure deploymentStructure = new Structure.StructureBuilder(this.workDir)
-                .withDirectoryHierarchy(this.deploymentProperties.getRootDeployment(),  this.templatesGenerator.computeDeploymentName(SERVICE_INSTANCE_ID), this.deploymentProperties.getTemplate())
+                .withDirectoryHierarchy(this.deploymentProperties.getRootDeployment(),  this.templatesGenerator.computeDeploymentName(SERVICE_INSTANCE_ID), DeploymentConstants.TEMPLATE)
                 .build();
 
         //When
@@ -201,7 +198,7 @@ public class TemplatesGeneratorTest extends StructureGeneratorImplTest{
         Path targetOperatorsFile = StructureGeneratorHelper.generatePath(this.workDir,
                 this.deploymentProperties.getRootDeployment(),
                 this.templatesGenerator.computeDeploymentName(SERVICE_INSTANCE_ID),
-                this.deploymentProperties.getTemplate(),
+                DeploymentConstants.TEMPLATE,
                 DeploymentConstants.COAB + DeploymentConstants.HYPHEN + this.deploymentProperties.getOperators() + DeploymentConstants.YML_EXTENSION);
         assertThat("Symbolic link towards coab operators file doesn't exist", Files.exists(targetOperatorsFile));
         assertThat("Coab operators file is not a symbolic link", Files.isSymbolicLink(targetOperatorsFile));
@@ -218,7 +215,7 @@ public class TemplatesGeneratorTest extends StructureGeneratorImplTest{
         Structure deploymentStructure = new Structure.StructureBuilder(this.workDir)
                 .withDirectoryHierarchy(this.deploymentProperties.getRootDeployment(),
                         this.templatesGenerator.computeDeploymentName(SERVICE_INSTANCE_ID),
-                        this.deploymentProperties.getTemplate()).build();
+                        DeploymentConstants.TEMPLATE).build();
 
 
 
@@ -236,28 +233,28 @@ public class TemplatesGeneratorTest extends StructureGeneratorImplTest{
 
     private void aModelStructure(){
         Structure modelStructure = new Structure.StructureBuilder(this.workDir)
-                .withDirectoryHierarchy(this.deploymentProperties.getRootDeployment(), this.deploymentProperties.getModelDeployment(), this.deploymentProperties.getTemplate())
-                .withFile(new String[]{this.deploymentProperties.getRootDeployment(), this.deploymentProperties.getModelDeployment(), this.deploymentProperties.getTemplate()},
+                .withDirectoryHierarchy(this.deploymentProperties.getRootDeployment(), this.deploymentProperties.getModelDeployment(), DeploymentConstants.TEMPLATE)
+                .withFile(new String[]{this.deploymentProperties.getRootDeployment(), this.deploymentProperties.getModelDeployment(), DeploymentConstants.TEMPLATE},
                         this.deploymentProperties.getModelDeployment() + DeploymentConstants.YML_EXTENSION) //model.yml
-                .withFile(new String[]{this.deploymentProperties.getRootDeployment(), this.deploymentProperties.getModelDeployment(), this.deploymentProperties.getTemplate()},
+                .withFile(new String[]{this.deploymentProperties.getRootDeployment(), this.deploymentProperties.getModelDeployment(), DeploymentConstants.TEMPLATE},
                         this.deploymentProperties.getModelDeployment() + DeploymentConstants.COA_TEMPLATE_FILE_SUFFIX) //model-tpl.yml
-                .withFile(new String[]{this.deploymentProperties.getRootDeployment(), this.deploymentProperties.getModelDeployment(), this.deploymentProperties.getTemplate()},
+                .withFile(new String[]{this.deploymentProperties.getRootDeployment(), this.deploymentProperties.getModelDeployment(), DeploymentConstants.TEMPLATE},
                         this.deploymentProperties.getModelDeployment() + DeploymentConstants.COA_VARS_FILE + DeploymentConstants.YML_EXTENSION) //model-vars.yml
-                .withFile(new String[]{this.deploymentProperties.getRootDeployment(), this.deploymentProperties.getModelDeployment(), this.deploymentProperties.getTemplate()},
+                .withFile(new String[]{this.deploymentProperties.getRootDeployment(), this.deploymentProperties.getModelDeployment(), DeploymentConstants.TEMPLATE},
                         this.deploymentProperties.getModelDeployment() + DeploymentConstants.COA_VARS_FILE + DeploymentConstants.COA_TEMPLATE_FILE_SUFFIX) //model-vars-tpl.yml
                 .withDirectoryHierarchy(this.deploymentProperties.getRootDeployment(), this.deploymentProperties.getModelDeployment(), this.deploymentProperties.getOperators())
                 .withFile(new String[]{this.deploymentProperties.getRootDeployment(), this.deploymentProperties.getModelDeployment(), this.deploymentProperties.getOperators()},
                        DeploymentConstants.COAB + DeploymentConstants.COA_OPERATORS_FILE_SUFFIX) //coab-operators.yml in subdir operators
-                .withFile(new String[]{this.deploymentProperties.getRootDeployment(), this.deploymentProperties.getModelDeployment(), this.deploymentProperties.getTemplate()},
+                .withFile(new String[]{this.deploymentProperties.getRootDeployment(), this.deploymentProperties.getModelDeployment(), DeploymentConstants.TEMPLATE},
                        DeploymentConstants.COAB + DeploymentConstants.COA_OPERATORS_FILE_SUFFIX) //coab-operators.yml
-                .withFile(new String[]{this.deploymentProperties.getRootDeployment(), this.deploymentProperties.getModelDeployment(), this.deploymentProperties.getTemplate()},
+                .withFile(new String[]{this.deploymentProperties.getRootDeployment(), this.deploymentProperties.getModelDeployment(), DeploymentConstants.TEMPLATE},
                         DeploymentConstants.COAB + DeploymentConstants.COA_VARS_FILE + DeploymentConstants.YML_EXTENSION) //coab-vars.yml
-                .withDirectoryHierarchy(this.deploymentProperties.getRootDeployment(), this.deploymentProperties.getModelDeployment(), this.deploymentProperties.getTemplate(), "openstack-hws")
-                .withFile(new String[]{this.deploymentProperties.getRootDeployment(), this.deploymentProperties.getModelDeployment(), this.deploymentProperties.getTemplate(), "openstack-hws"},
+                .withDirectoryHierarchy(this.deploymentProperties.getRootDeployment(), this.deploymentProperties.getModelDeployment(), DeploymentConstants.TEMPLATE, "openstack-hws")
+                .withFile(new String[]{this.deploymentProperties.getRootDeployment(), this.deploymentProperties.getModelDeployment(), DeploymentConstants.TEMPLATE, "openstack-hws"},
                         "network-operators.yml") //network-operators.yml in subdir openstack-hws
-                .withFile(new String[]{this.deploymentProperties.getRootDeployment(), this.deploymentProperties.getModelDeployment(), this.deploymentProperties.getTemplate(), "openstack-hws"},
+                .withFile(new String[]{this.deploymentProperties.getRootDeployment(), this.deploymentProperties.getModelDeployment(), DeploymentConstants.TEMPLATE, "openstack-hws"},
                         "network-vars.yml") //network-vars.yml
-                .withFile(new String[]{this.deploymentProperties.getRootDeployment(), this.deploymentProperties.getModelDeployment(), this.deploymentProperties.getTemplate(), "openstack-hws"},
+                .withFile(new String[]{this.deploymentProperties.getRootDeployment(), this.deploymentProperties.getModelDeployment(), DeploymentConstants.TEMPLATE, "openstack-hws"},
                         "network-vars-tpl.yml") //network-vars-tpl.yml
                 .build();
     }
@@ -266,25 +263,25 @@ public class TemplatesGeneratorTest extends StructureGeneratorImplTest{
         Path expectedManifestFile = StructureGeneratorHelper.generatePath(this.workDir,
                 this.deploymentProperties.getRootDeployment(),
                 this.templatesGenerator.computeDeploymentName(SERVICE_INSTANCE_ID),
-                this.deploymentProperties.getTemplate(),
+                DeploymentConstants.TEMPLATE,
                 this.templatesGenerator.computeDeploymentName(SERVICE_INSTANCE_ID) + DeploymentConstants.YML_EXTENSION);
         assertThat("Symbolic link towards manifest file doesn't exist", Files.exists(expectedManifestFile));
         assertThat("Manifest file is not a symbolic link", Files.isSymbolicLink(expectedManifestFile));
         assertThat(Files.readSymbolicLink(expectedManifestFile).toString(), is(equalTo(SYM_LINK +
                 this.deploymentProperties.getModelDeployment() +
-                File.separator + this.deploymentProperties.getTemplate() + File.separator +
+                File.separator + DeploymentConstants.TEMPLATE + File.separator +
                 this.deploymentProperties.getModelDeployment() + DeploymentConstants.YML_EXTENSION)));
 
         Path expectedManifestTplFile = StructureGeneratorHelper.generatePath(this.workDir,
                 this.deploymentProperties.getRootDeployment(),
                 this.templatesGenerator.computeDeploymentName(SERVICE_INSTANCE_ID),
-                this.deploymentProperties.getTemplate(),
+                DeploymentConstants.TEMPLATE,
                 this.templatesGenerator.computeDeploymentName(SERVICE_INSTANCE_ID) + DeploymentConstants.COA_TEMPLATE_FILE_SUFFIX);
         assertThat("Symbolic link towards manifest file doesn't exist", Files.exists(expectedManifestTplFile));
         assertThat("Manifest file is not a symbolic link", Files.isSymbolicLink(expectedManifestTplFile));
         assertThat(Files.readSymbolicLink(expectedManifestTplFile).toString(), is(equalTo(SYM_LINK +
                 this.deploymentProperties.getModelDeployment() +
-                File.separator + this.deploymentProperties.getTemplate() + File.separator +
+                File.separator + DeploymentConstants.TEMPLATE + File.separator +
                 this.deploymentProperties.getModelDeployment() + DeploymentConstants.COA_TEMPLATE_FILE_SUFFIX)));
 
     }
@@ -293,25 +290,25 @@ public class TemplatesGeneratorTest extends StructureGeneratorImplTest{
         Path expectedVarsFile = StructureGeneratorHelper.generatePath(this.workDir,
                 this.deploymentProperties.getRootDeployment(),
                 this.templatesGenerator.computeDeploymentName(SERVICE_INSTANCE_ID),
-                this.deploymentProperties.getTemplate(),
+                DeploymentConstants.TEMPLATE,
                 this.deploymentProperties.getModelDeployment() + DeploymentConstants.COA_VARS_FILE + DeploymentConstants.YML_EXTENSION);
         assertThat("Symbolic link towards vars file doesn't exist", Files.exists(expectedVarsFile));
         assertThat("Vars file is not a symbolic link", Files.isSymbolicLink(expectedVarsFile));
         assertThat(Files.readSymbolicLink(expectedVarsFile).toString(), is(equalTo(SYM_LINK +
                 this.deploymentProperties.getModelDeployment() +
-                File.separator + this.deploymentProperties.getTemplate() + File.separator +
+                File.separator + DeploymentConstants.TEMPLATE + File.separator +
                 this.deploymentProperties.getModelDeployment() + DeploymentConstants.COA_VARS_FILE + DeploymentConstants.YML_EXTENSION)));
 
         Path expectedVarsTplFile = StructureGeneratorHelper.generatePath(this.workDir,
                 this.deploymentProperties.getRootDeployment(),
                 this.templatesGenerator.computeDeploymentName(SERVICE_INSTANCE_ID),
-                this.deploymentProperties.getTemplate(),
+                DeploymentConstants.TEMPLATE,
                 this.deploymentProperties.getModelDeployment() + DeploymentConstants.COA_VARS_FILE + DeploymentConstants.COA_TEMPLATE_FILE_SUFFIX);
         assertThat("Symbolic link towards vars file doesn't exist", Files.exists(expectedVarsTplFile));
         assertThat("Vars file is not a symbolic link", Files.isSymbolicLink(expectedVarsTplFile));
         assertThat(Files.readSymbolicLink(expectedVarsTplFile).toString(), is(equalTo(SYM_LINK +
                 this.deploymentProperties.getModelDeployment() +
-                File.separator + this.deploymentProperties.getTemplate() + File.separator +
+                File.separator + DeploymentConstants.TEMPLATE + File.separator +
                 this.deploymentProperties.getModelDeployment() + DeploymentConstants.COA_VARS_FILE + DeploymentConstants.COA_TEMPLATE_FILE_SUFFIX)));
     }
 
@@ -319,13 +316,13 @@ public class TemplatesGeneratorTest extends StructureGeneratorImplTest{
         Path expectedOperatorsFile = StructureGeneratorHelper.generatePath(this.workDir,
                 this.deploymentProperties.getRootDeployment(),
                 this.templatesGenerator.computeDeploymentName(SERVICE_INSTANCE_ID),
-                this.deploymentProperties.getTemplate(),
+                DeploymentConstants.TEMPLATE,
                 DeploymentConstants.COAB + DeploymentConstants.COA_OPERATORS_FILE_SUFFIX);
         assertThat("Symbolic link towards operators file doesn't exist", Files.exists(expectedOperatorsFile));
         assertThat("Operators file is not a symbolic link", Files.isSymbolicLink(expectedOperatorsFile));
         assertThat(Files.readSymbolicLink(expectedOperatorsFile).toString(), is(equalTo(SYM_LINK +
                 this.deploymentProperties.getModelDeployment() +
-                File.separator + this.deploymentProperties.getTemplate() + File.separator +
+                File.separator + DeploymentConstants.TEMPLATE + File.separator +
                 DeploymentConstants.COAB + DeploymentConstants.COA_OPERATORS_FILE_SUFFIX)));
     }
 
@@ -333,48 +330,48 @@ public class TemplatesGeneratorTest extends StructureGeneratorImplTest{
         Path expectedIassTypeOperatorsFile = StructureGeneratorHelper.generatePath(this.workDir,
                 this.deploymentProperties.getRootDeployment(),
                 this.templatesGenerator.computeDeploymentName(SERVICE_INSTANCE_ID),
-                this.deploymentProperties.getTemplate(),
+                DeploymentConstants.TEMPLATE,
                 "openstack-hws",
                 "network-operators.yml");
         assertThat("Symbolic link towards iaas type operators file doesn't exist", Files.exists(expectedIassTypeOperatorsFile));
         assertThat("Iaas type operators file is not a symbolic link", Files.isSymbolicLink(expectedIassTypeOperatorsFile));
         assertThat(Files.readSymbolicLink(expectedIassTypeOperatorsFile).toString(), is(equalTo("../../../" +
                 this.deploymentProperties.getModelDeployment() +
-                File.separator + this.deploymentProperties.getTemplate() + File.separator +
+                File.separator + DeploymentConstants.TEMPLATE + File.separator +
                 "openstack-hws" + File.separator +
                 "network-operators.yml")));
 
         Path expectedIassTypeVarsFile = StructureGeneratorHelper.generatePath(this.workDir,
                 this.deploymentProperties.getRootDeployment(),
                 this.templatesGenerator.computeDeploymentName(SERVICE_INSTANCE_ID),
-                this.deploymentProperties.getTemplate(),
+                DeploymentConstants.TEMPLATE,
                 "openstack-hws",
                 "network-vars.yml");
         assertThat("Symbolic link towards iaas type vars file doesn't exist", Files.exists(expectedIassTypeVarsFile));
         assertThat("Iaas type vars file is not a symbolic link", Files.isSymbolicLink(expectedIassTypeVarsFile));
         assertThat(Files.readSymbolicLink(expectedIassTypeVarsFile).toString(), is(equalTo("../../../" +
                 this.deploymentProperties.getModelDeployment() +
-                File.separator + this.deploymentProperties.getTemplate() + File.separator +
+                File.separator + DeploymentConstants.TEMPLATE + File.separator +
                 "openstack-hws" + File.separator +
                 "network-vars.yml")));
 
         Path expectedIassTypeVarsTplFile = StructureGeneratorHelper.generatePath(this.workDir,
                 this.deploymentProperties.getRootDeployment(),
                 this.templatesGenerator.computeDeploymentName(SERVICE_INSTANCE_ID),
-                this.deploymentProperties.getTemplate(),
+                DeploymentConstants.TEMPLATE,
                 "openstack-hws",
                 "network-vars-tpl.yml");
         assertThat("Symbolic link towards iaas type vars file doesn't exist", Files.exists(expectedIassTypeVarsTplFile));
         assertThat("Iaas type vars file is not a symbolic link", Files.isSymbolicLink(expectedIassTypeVarsTplFile));
         assertThat(Files.readSymbolicLink(expectedIassTypeVarsTplFile).toString(), is(equalTo("../../../" +
                 this.deploymentProperties.getModelDeployment() +
-                File.separator + this.deploymentProperties.getTemplate() + File.separator +
+                File.separator + DeploymentConstants.TEMPLATE + File.separator +
                 "openstack-hws" + File.separator +
                 "network-vars-tpl.yml")));
     }
 
     @Test
-    public void check_generation_against_sample_deployment_model() throws URISyntaxException, IOException {
+    public void check_generation_against_sample_deployment_model() throws IOException {
         //Given a template repository in /tmp
         Path paasTemplatePath = temporaryFolder.getRoot().toPath();
 
@@ -393,7 +390,7 @@ public class TemplatesGeneratorTest extends StructureGeneratorImplTest{
 
     }
 
-    private void checkDeployment(String rootDeployment, String modelDeployment, String modelDeploymentShortAlias) throws URISyntaxException, IOException{
+    private void checkDeployment(String rootDeployment, String modelDeployment, String modelDeploymentShortAlias) throws IOException{
 
         //Given a path
         Path paasTemplatePath = temporaryFolder.getRoot().toPath();
@@ -404,7 +401,6 @@ public class TemplatesGeneratorTest extends StructureGeneratorImplTest{
         //Given a template generator
         TemplatesGenerator templatesGenerator = new TemplatesGenerator(rootDeployment,
                 modelDeployment,
-                "template",
                 "vars",
                 "operators",
                 modelDeploymentShortAlias,
@@ -425,7 +421,7 @@ public class TemplatesGeneratorTest extends StructureGeneratorImplTest{
        //System.out.println("=> Success");
     }
 
-    private String expectedStructure(String rootDeployment, String expectedTreeFile, String deploymentName) throws URISyntaxException, IOException{
+    private String expectedStructure(String rootDeployment, String expectedTreeFile, String deploymentName) throws IOException{
         Path referenceDataModel = Paths.get("../sample-deployment").resolve(rootDeployment).resolve(expectedTreeFile);
         List<String> expectedTree = Files.readAllLines(referenceDataModel);
         StringBuilder sb = new StringBuilder();
@@ -468,7 +464,6 @@ public class TemplatesGeneratorTest extends StructureGeneratorImplTest{
         //Given a template generator
         TemplatesGenerator templatesGenerator = new TemplatesGenerator("coab-depls",
                 "cf-mysql",
-                "template",
                 "vars",
                 "operators",
                 "y",

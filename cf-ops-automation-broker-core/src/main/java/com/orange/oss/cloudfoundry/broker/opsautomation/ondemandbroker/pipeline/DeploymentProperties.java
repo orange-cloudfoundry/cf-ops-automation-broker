@@ -14,7 +14,6 @@ public class DeploymentProperties {
     private String modelDeployment = "cassandravarsops"; //Model deployment (i.e cassandra, cassandravarsops, ...)
     private String modelDeploymentShortAlias = "c"; //shortname for the model deployment. Enables distinguishing services. Should be short so that broker URL remains shorter than 63 chars
     private String secrets = "secrets"; //Secrets directory (i.e secrets)
-    private String template = "template"; //Template directory (i.e template)
     private String vars = "vars"; //Vars suffix (i.e vars)
     private String operators = "operators"; //Operators suffix (i.e operators)
 
@@ -40,14 +39,6 @@ public class DeploymentProperties {
 
     public void setSecrets(String secrets) {
         this.secrets = secrets;
-    }
-
-    public String getTemplate() {
-        return template;
-    }
-
-    public void setTemplate(String template) {
-        this.template = template;
     }
 
     public String getVars() {

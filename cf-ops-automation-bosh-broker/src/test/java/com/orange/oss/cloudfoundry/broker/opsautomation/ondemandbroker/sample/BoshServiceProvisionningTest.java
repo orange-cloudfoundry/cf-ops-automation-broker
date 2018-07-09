@@ -191,7 +191,7 @@ public class BoshServiceProvisionningTest {
             //sub deployments
             Path templateDir = coabDepls
                     .resolve(deploymentProperties.getModelDeployment())
-                    .resolve(deploymentProperties.getTemplate());
+                    .resolve(DeploymentConstants.TEMPLATE);
             createDir(templateDir);
             createDummyFile(templateDir.resolve(deploymentProperties.getModelDeployment() + DeploymentConstants.YML_EXTENSION));
             createDummyFile(templateDir.resolve(deploymentProperties.getModelDeployment() + DeploymentConstants.HYPHEN + deploymentProperties.getVars()+ DeploymentConstants.YML_EXTENSION));

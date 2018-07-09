@@ -88,6 +88,7 @@ hypothesis:
 * feature branch does not contain mongodb model/typo
 * config issue: mongodb clone at the wrong position
 * coab regression
+* coab is unnecessary checking for unrelated mongodb model activation in paas-secrets, failing the deployment. While the consistency on the data model is not required to have service instances working, this does not prevent disabling the reference data model (by commenting out enable-deployment.yml in secrets repo) 
 
 diagnostic steps:
 * include more debug traces into broker at various steps through 

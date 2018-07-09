@@ -36,4 +36,5 @@ public class DeploymentConstants {
     public static final String OSB_DELETE_REQUEST_CLASS_NAME = "org.springframework.cloud.servicebroker.model.DeleteServiceInstanceRequest";
     public static final String META = "meta"; //meta.yml file
     public static final String SECRETS = "secrets"; //secrets dir and secrets.yml file
+    public static final String VARS = "vars"; //coab-vars.yml
 }

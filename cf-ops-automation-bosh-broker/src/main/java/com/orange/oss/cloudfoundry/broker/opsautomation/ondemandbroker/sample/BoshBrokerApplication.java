@@ -89,7 +89,6 @@ public class BoshBrokerApplication {
         return new TemplatesGenerator(
                 deploymentProperties.getRootDeployment(),
                 deploymentProperties.getModelDeployment(),
-                deploymentProperties.getVars(),
                 deploymentProperties.getOperators(),
                 deploymentProperties.getModelDeploymentShortAlias(),
                 new VarsFilesYmlFormatter() //externalize if needed

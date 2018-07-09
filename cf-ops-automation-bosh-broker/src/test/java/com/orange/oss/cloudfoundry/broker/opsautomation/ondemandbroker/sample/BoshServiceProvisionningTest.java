@@ -194,7 +194,7 @@ public class BoshServiceProvisionningTest {
                     .resolve(DeploymentConstants.TEMPLATE);
             createDir(templateDir);
             createDummyFile(templateDir.resolve(deploymentProperties.getModelDeployment() + DeploymentConstants.YML_EXTENSION));
-            createDummyFile(templateDir.resolve(deploymentProperties.getModelDeployment() + DeploymentConstants.HYPHEN + deploymentProperties.getVars()+ DeploymentConstants.YML_EXTENSION));
+            createDummyFile(templateDir.resolve(deploymentProperties.getModelDeployment() + DeploymentConstants.HYPHEN + DeploymentConstants.VARS + DeploymentConstants.YML_EXTENSION));
 
             Path operatorsDir = coabDepls
                     .resolve(deploymentProperties.getModelDeployment())

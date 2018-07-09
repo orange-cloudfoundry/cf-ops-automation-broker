@@ -50,7 +50,6 @@ public class TemplatesGeneratorTest extends StructureGeneratorImplTest{
         //Shared template generator
         this.templatesGenerator = new TemplatesGenerator(this.deploymentProperties.getRootDeployment(),
                 this.deploymentProperties.getModelDeployment(),
-                this.deploymentProperties.getVars(),
                 this.deploymentProperties.getOperators(),
                 "c",
                 new VarsFilesYmlFormatter());
@@ -174,7 +173,7 @@ public class TemplatesGeneratorTest extends StructureGeneratorImplTest{
                 this.deploymentProperties.getRootDeployment(),
                 this.templatesGenerator.computeDeploymentName(SERVICE_INSTANCE_ID),
                 DeploymentConstants.TEMPLATE,
-                DeploymentConstants.COAB + DeploymentConstants.HYPHEN + this.deploymentProperties.getVars() + DeploymentConstants.YML_EXTENSION
+                DeploymentConstants.COAB + DeploymentConstants.HYPHEN + DeploymentConstants.VARS + DeploymentConstants.YML_EXTENSION
         );
         assertThat("Coab vars file should exist", Files.exists(coabVarsFile));
         assertThat("Coab vars file should contain deployment name", new String(Files.readAllBytes(coabVarsFile), StandardCharsets.UTF_8), containsString(coabVarsFileDto.deployment_name));
@@ -401,7 +400,6 @@ public class TemplatesGeneratorTest extends StructureGeneratorImplTest{
         //Given a template generator
         TemplatesGenerator templatesGenerator = new TemplatesGenerator(rootDeployment,
                 modelDeployment,
-                "vars",
                 "operators",
                 modelDeploymentShortAlias,
                 new VarsFilesYmlFormatter());
@@ -464,7 +462,6 @@ public class TemplatesGeneratorTest extends StructureGeneratorImplTest{
         //Given a template generator
         TemplatesGenerator templatesGenerator = new TemplatesGenerator("coab-depls",
                 "cf-mysql",
-                "vars",
                 "operators",
                 "y",
                 new VarsFilesYmlFormatter());

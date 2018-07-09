@@ -15,13 +15,11 @@ public class TemplatesGenerator extends StructureGeneratorImpl{
 
     private static Logger logger = LoggerFactory.getLogger(TemplatesGenerator.class.getName());
 
-    private String vars;
     private String operators;
     private VarsFilesYmlFormatter formatter;
 
-    public TemplatesGenerator(String rootDeployment, String modelDeployment, String vars, String operators, String modelDeploymentShortAlias, VarsFilesYmlFormatter formatter){
+    public TemplatesGenerator(String rootDeployment, String modelDeployment, String operators, String modelDeploymentShortAlias, VarsFilesYmlFormatter formatter){
         super(rootDeployment,modelDeployment, modelDeploymentShortAlias);
-        this.vars = vars;
         this.operators = operators;
         this.formatter = formatter;
     }
@@ -157,7 +155,7 @@ public class TemplatesGenerator extends StructureGeneratorImpl{
 
     protected void generateCoabVarsFile(Path workDir, String serviceInstanceId, CoabVarsFileDto coabVarsFileDto){
         String[] targetPathElements = new String[] {this.rootDeployment, this.computeDeploymentName(serviceInstanceId), DeploymentConstants.TEMPLATE};
-        String sourceFileName = DeploymentConstants.COAB + DeploymentConstants.HYPHEN + this.vars + DeploymentConstants.YML_EXTENSION;
+        String sourceFileName = DeploymentConstants.COAB + DeploymentConstants.HYPHEN + DeploymentConstants.VARS + DeploymentConstants.YML_EXTENSION;
 
         //Compute target path
         Path targetDir = StructureGeneratorHelper.generatePath(workDir, targetPathElements);

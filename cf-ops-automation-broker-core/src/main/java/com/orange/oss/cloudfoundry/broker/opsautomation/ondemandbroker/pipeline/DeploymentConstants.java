@@ -34,5 +34,6 @@ public class DeploymentConstants {
     public static final String OSB_OPERATION_DELETE = "delete";
     public static final String OSB_CREATE_REQUEST_CLASS_NAME = "org.springframework.cloud.servicebroker.model.CreateServiceInstanceRequest";
     public static final String OSB_DELETE_REQUEST_CLASS_NAME = "org.springframework.cloud.servicebroker.model.DeleteServiceInstanceRequest";
-    public static final String META = "meta";
+    public static final String META = "meta"; //meta.yml file
+    public static final String SECRETS = "secrets"; //secrets dir and secrets.yml file
 }

@@ -80,7 +80,6 @@ public class BoshBrokerApplication {
         return new SecretsGenerator(
                 deploymentProperties.getRootDeployment(),
                 deploymentProperties.getModelDeployment(),
-                deploymentProperties.getSecrets(),
                 deploymentProperties.getModelDeploymentShortAlias()
         );
     }

@@ -105,7 +105,6 @@ public class StructureGeneratorImplTest {
         deploymentProperties.setModelDeployment("mongodb");
         deploymentProperties.setVars("vars");
         deploymentProperties.setOperators("operators");
-        deploymentProperties.setSecrets("secrets");
         return deploymentProperties;
     }
 

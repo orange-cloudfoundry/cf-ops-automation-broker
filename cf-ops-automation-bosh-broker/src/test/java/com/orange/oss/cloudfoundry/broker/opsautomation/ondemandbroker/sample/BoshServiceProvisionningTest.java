@@ -227,10 +227,10 @@ public class BoshServiceProvisionningTest {
             //sub deployments
             Path secretsDir = coabDepls
                     .resolve(deploymentProperties.getModelDeployment())
-                    .resolve(deploymentProperties.getSecrets());
+                    .resolve(DeploymentConstants.SECRETS);
             createDir(secretsDir);
             createDummyFile(secretsDir.resolve(DeploymentConstants.META + DeploymentConstants.YML_EXTENSION));
-            createDummyFile(secretsDir.resolve(deploymentProperties.getSecrets() + DeploymentConstants.YML_EXTENSION));
+            createDummyFile(secretsDir.resolve(DeploymentConstants.SECRETS + DeploymentConstants.YML_EXTENSION));
             AddCommand addC = git.add().addFilepattern(".");
             addC.call();
 

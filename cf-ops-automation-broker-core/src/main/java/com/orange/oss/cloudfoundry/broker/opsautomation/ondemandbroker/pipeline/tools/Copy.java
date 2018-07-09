@@ -144,7 +144,9 @@ public class Copy {
             if (Files.isSymbolicLink(file)){
                 createSymbolicLink(file, target, root);
             }else {
-                copyFile(file, target.resolve(source.relativize(file)), prompt, preserve);
+                if (!file.getFileName().toString().contentEquals(".keep")){
+                    copyFile(file, target.resolve(source.relativize(file)), prompt, preserve);
+                }
             }
             return CONTINUE;
         }

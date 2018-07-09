@@ -12,7 +12,7 @@ cf-mysql
     └── cf-mysql.yml -> fake.txt
     └── coab-operators.yml
     └── coab-vars.yml
-y_aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa10
+{0}
 └── deployment-dependencies.yml
 └── template
     └── 01-add-broker-operators.yml -> ../../cf-mysql/template/01-add-broker-operators.yml
@@ -25,4 +25,4 @@ y_aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa10
     └── cf-mysql-vars-tpl.yml -> ../../cf-mysql/template/cf-mysql-vars-tpl.yml
     └── coab-operators.yml -> ../../cf-mysql/template/coab-operators.yml
     └── coab-vars.yml
-    └── y_aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa10.yml -> ../../cf-mysql/template/cf-mysql.yml
+    └── {0}.yml -> ../../cf-mysql/template/cf-mysql.yml

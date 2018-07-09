@@ -195,13 +195,14 @@ public class TemplatesGeneratorTest extends StructureGeneratorImplTest{
     @Test
     public void check_that_all_symlinks_templates_directory_are_generated() throws Exception {
 
+        //Given : The model structure is initialized in setup method
         //Given a template generator
         TemplatesGenerator templatesGenerator = new TemplatesGenerator("coab-depls",
                 "areferencemodel",
                 "r",
                 new VarsFilesYmlFormatter());
 
-        //Given a deployment structure
+        //Given a minimal deployment structure
         Structure deploymentStructure = new Structure.StructureBuilder(this.temporaryFolder.getRoot().toPath())
                 .withDirectoryHierarchy("coab-depls",
                         templatesGenerator.computeDeploymentName(SERVICE_INSTANCE_ID),
@@ -231,16 +232,8 @@ public class TemplatesGeneratorTest extends StructureGeneratorImplTest{
 
     @Test
     public void check_generation_against_sample_deployment_model() throws IOException {
-        //Given a template repository in /tmp
-        Path paasTemplatePath = temporaryFolder.getRoot().toPath();
 
-        //Search for the sample-deployment
-        Path referenceDataModel = Paths.get("../sample-deployment");
-
-        //Copy reference data model
-        EnumSet<FileVisitOption> opts = EnumSet.of(FileVisitOption.FOLLOW_LINKS);
-        Copy.TreeCopier tc = new Copy.TreeCopier(referenceDataModel, paasTemplatePath, "coab-depls", false, true);
-        Files.walkFileTree(referenceDataModel, opts, Integer.MAX_VALUE, tc);
+        //Given : The model structure is initialized in setup method
 
         //Check all models
         checkDeployment("coab-depls", "mongodb", "m");

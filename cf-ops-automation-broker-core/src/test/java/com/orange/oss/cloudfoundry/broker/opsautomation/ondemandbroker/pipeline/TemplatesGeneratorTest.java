@@ -383,8 +383,8 @@ public class TemplatesGeneratorTest extends StructureGeneratorImplTest{
         Files.walkFileTree(referenceDataModel, opts, Integer.MAX_VALUE, tc);
 
         //Check all models
-        //checkDeployment("coab-depls", "mongodb", "m");
-        //checkDeployment("coab-depls", "cassandravarsops", "c");
+        checkDeployment("coab-depls", "mongodb", "m");
+        checkDeployment("coab-depls", "cassandravarsops", "c");
         checkDeployment("coab-depls", "cf-mysql", "y");
 
     }
@@ -413,10 +413,10 @@ public class TemplatesGeneratorTest extends StructureGeneratorImplTest{
        System.out.print("Checking : " + modelDeployment);
        String expectedStructure = expectedStructure(rootDeployment, "expected-" + modelDeployment + "-tree.txt", templatesGenerator.computeDeploymentName(SERVICE_INSTANCE_ID));
        String generatedStructure = generatedStructure(rootDeployment, modelDeployment, templatesGenerator.computeDeploymentName(SERVICE_INSTANCE_ID));
-       System.out.println(expectedStructure);
-       System.out.println(generatedStructure);
+       //System.out.println(expectedStructure);
+       //System.out.println(generatedStructure);
        assertEquals(expectedStructure, generatedStructure);
-       //System.out.println("=> Success");
+       System.out.println("=> Success");
     }
 
     private String expectedStructure(String rootDeployment, String expectedTreeFile, String deploymentName) throws IOException{

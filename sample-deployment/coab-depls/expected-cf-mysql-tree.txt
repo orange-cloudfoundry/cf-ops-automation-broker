@@ -8,7 +8,6 @@ cf-mysql
     └── 40-enable-prometheus-exporter-operators.yml
     └── 41-enable-shield-operators.yml
     └── 50-spec-cf-mysql-fixed-operators.yml
-    └── cf-mysql-deployment
     └── cf-mysql-vars-tpl.yml
     └── cf-mysql.yml -> fake.txt
     └── coab-operators.yml

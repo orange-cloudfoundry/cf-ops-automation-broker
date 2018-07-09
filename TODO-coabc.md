@@ -34,10 +34,10 @@ coab-depls/m_f49911f7-b69a-4aba-afdf-23fd11014278
     |-- m_f49911f7-b69a-4aba-afdf-23fd11014278.yml -> ../../mongodb/template/mongodb.yml
     `-- coab-vars.yml
 ```
-[ONGOING]- update TemplatesGeneratorTest.aModelStructure() to use the src/test/resources/sample-deployment-model/coab-depls/mongodb or a distinct dedicated deployment model
+[DONE]- update TemplatesGeneratorTest.aModelStructure() to use the src/test/resources/sample-deployment-model/coab-depls/mongodb or a distinct dedicated deployment model
     + consider removing assertXX() methods redundant with populatePaasTemplates() 
-[ONGOING]- Update BoshServiceProvisionningTest#initPaasTemplate() to use file copy as well instead of crafting individual files explicitly
-[ONGOING]- convert parasite configurable properties into constants in DeploymentProperties
+[ONGOING/JCL]- Update BoshServiceProvisionningTest#initPaasTemplate() to use file copy as well instead of crafting individual files explicitly
+[ONGOING/GB]- convert parasite configurable properties into constants in DeploymentProperties
     private String secrets = "secrets"; //Secrets directory (i.e secrets)
     private String meta = "meta"; //Meta directory (i.e meta)
     private String template = "template"; //Template directory (i.e template)
@@ -80,16 +80,21 @@ coab-depls/m_f49911f7-b69a-4aba-afdf-23fd11014278
       * including symlinks
       * including coab-vars content 
 
-- add systematic symlink of any secrets/ file 
+[TODO]secrets generation like template generation
+   - add systematic symlink of any secrets/ file 
    - regardless of their name if their present as file in this directory,
-- review deployment-dependencies.yml generation. See https://github.com/orange-cloudfoundry/cf-ops-automation/issues/150 
 
+[TODO] https://github.com/orange-cloudfoundry/cf-ops-automation/issues/150
+    - review deployment-dependencies.yml generation. See  
 
-- investigate intellij/maven handling of symlinks in resources and workarounds:
-   - consider moving reference data set from cf-ops-automation-broker/cf-ops-automation-broker-core/src/test/resources/sample-deployment-model/coab-depls/cf-mysql/template/cf-mysql.yml vers cf-ops-automation-broker/cf-ops-automation-broker-core/sample-deployment-model/coab-depls/cf-mysql/template/cf-mysql.yml 
+[DONE]
+   - investigate intellij/maven handling of symlinks in resources and workarounds:
+   - [DONE]consider moving reference data set from cf-ops-automation-broker/cf-ops-automation-broker-core/src/test/resources/sample-deployment-model/coab-depls/cf-mysql/template/cf-mysql.yml vers cf-ops-automation-broker/cf-ops-automation-broker-core/sample-deployment-model/coab-depls/cf-mysql/template/cf-mysql.yml 
     how to get to sources ? 
         current dir
         relative to classapth  target/src/resources/../../../sample-deployment-model   
+   - [ONGOING] investigate bug on circle CI when I introduce an empty directory (cf-mysql-deployment) in cf-mysql sample-deployment
+
 
 
 - Bump jackson to 2.9.2 or later and pull https://github.com/FasterXML/jackson-dataformats-text/tree/master/yaml

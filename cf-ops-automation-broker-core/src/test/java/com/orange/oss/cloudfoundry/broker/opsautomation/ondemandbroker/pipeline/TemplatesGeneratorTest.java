@@ -124,26 +124,6 @@ public class TemplatesGeneratorTest extends StructureGeneratorImplTest{
     }
 
     @Test
-    public void check_that_deployment_dependencies_file_is_generated() {
-        //Given
-        Structure deploymentStructure = new Structure.StructureBuilder(this.workDir)
-                .withDirectoryHierarchy(this.deploymentProperties.getRootDeployment(),  this.templatesGenerator.computeDeploymentName(SERVICE_INSTANCE_ID))
-                .build();
-
-        //When
-        this.templatesGenerator.generateDeploymentDependenciesFile(this.workDir, SERVICE_INSTANCE_ID);
-
-        //Then
-        Path deploymentDependenciesFile = StructureGeneratorHelper.generatePath(this.workDir,
-                this.deploymentProperties.getRootDeployment(),
-                this.templatesGenerator.computeDeploymentName(SERVICE_INSTANCE_ID),
-                DeploymentConstants.DEPLOYMENT_DEPENDENCIES_FILENAME
-        );
-        assertThat("Deployment dependencies file doesn't exist:" + deploymentDependenciesFile, Files.exists(deploymentDependenciesFile));
-    }
-
-
-    @Test
     public void check_that_coab_vars_file_is_generated() throws IOException {
         //Given
         Structure deploymentStructure = new Structure.StructureBuilder(this.workDir)

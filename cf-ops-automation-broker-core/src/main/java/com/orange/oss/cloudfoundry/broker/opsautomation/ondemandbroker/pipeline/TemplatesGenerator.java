@@ -52,8 +52,7 @@ public class TemplatesGenerator extends StructureGeneratorImpl{
         //Generate template directory
         this.generateTemplateDirectory(workDir, serviceInstanceId);
 
-        //Generate deployment dependencies file
-        //this.generateDeploymentDependenciesFile(workDir, serviceInstanceId);
+        //Generate deployment dependencies symlink
         this.generateDeploymentDependenciesFileSymLink(workDir, serviceInstanceId);
 
         //Generate coab vars file
@@ -142,14 +141,6 @@ public class TemplatesGenerator extends StructureGeneratorImpl{
                 this.rootDeployment,
                 this.computeDeploymentName(serviceInstanceId),
                 DeploymentConstants.TEMPLATE);
-    }
-
-    protected void generateDeploymentDependenciesFile(Path workDir, String serviceInstanceId){
-        Map<String, String> mapDeploymentDependenciesFile = new HashMap<>();
-        mapDeploymentDependenciesFile.put(DeploymentConstants.DEPLOYMENT_NAME_PATTERN, this.computeDeploymentName(serviceInstanceId));
-        String[] targetPathElements = new String[] {this.rootDeployment, this.computeDeploymentName(serviceInstanceId)};
-        String sourceFileName = DeploymentConstants.DEPLOYMENT_DEPENDENCIES_FILENAME;
-        StructureGeneratorHelper.generateFile(workDir, targetPathElements, sourceFileName, sourceFileName, mapDeploymentDependenciesFile);
     }
 
     protected void generateDeploymentDependenciesFileSymLink(Path workDir, String serviceInstanceId){

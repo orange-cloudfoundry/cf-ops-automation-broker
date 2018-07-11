@@ -86,8 +86,8 @@ coab-depls/m_f49911f7-b69a-4aba-afdf-23fd11014278
 
 [DONE] https://github.com/orange-cloudfoundry/cf-ops-automation/issues/150
     - [DONE]deployment-dependencies.yml generation as symlink
-    - [TODO]enable symlink generation instead of file generation     
-    - [TODO]clean useless code (file generation)
+    - [DONE]enable symlink generation instead of file generation     
+    - [DONE]clean useless code (file generation)
 
 [DONE]
    - investigate intellij/maven handling of symlinks in resources and workarounds:
@@ -255,14 +255,6 @@ Server error, status code: 409, error code: 60016, message: An operation for ser
 
 
 --------------------------------
-
-- Refactor to generalize to another deployment (e.g. mysql)
-   - Introduce configuration class and builder in order to hold secrets/templates static information
-   - Refactor secrets and templates generator to have little methods
-   - Split Junit tests between check and generate in order to improve readability (target little methods instead of global method)
-   - Use MessageFormat in StructureGeneratorHelper
-   - Improve test coverage StructureGeneratorHelper (ONGOING)
-   - Update integration test to use a builder (e.g. for OSB req/resps) 
    
    
 - refine logback config to 

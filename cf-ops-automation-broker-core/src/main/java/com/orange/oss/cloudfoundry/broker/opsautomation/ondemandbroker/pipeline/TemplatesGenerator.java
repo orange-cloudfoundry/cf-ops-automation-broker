@@ -53,8 +53,8 @@ public class TemplatesGenerator extends StructureGeneratorImpl{
         this.generateTemplateDirectory(workDir, serviceInstanceId);
 
         //Generate deployment dependencies file
-        this.generateDeploymentDependenciesFile(workDir, serviceInstanceId);
-        //this.generateDeploymentDependenciesFileSymLink(workDir, serviceInstanceId);
+        //this.generateDeploymentDependenciesFile(workDir, serviceInstanceId);
+        this.generateDeploymentDependenciesFileSymLink(workDir, serviceInstanceId);
 
         //Generate coab vars file
         this.generateCoabVarsFile(workDir, serviceInstanceId, coabVarsFileDto);

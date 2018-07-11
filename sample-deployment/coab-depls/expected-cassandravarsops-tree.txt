@@ -8,7 +8,7 @@ cassandravarsops
     └── coab-operators.yml
     └── coab-vars.yml
 {0}
-└── deployment-dependencies.yml
+└── deployment-dependencies.yml -> ../cassandravarsops/deployment-dependencies.yml
 └── template
     └── {0}.yml -> ../../cassandravarsops/template/cassandravarsops.yml
     └── cassandravarsops-vars.yml -> ../../cassandravarsops/template/cassandravarsops-vars.yml

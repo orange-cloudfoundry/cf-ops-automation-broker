@@ -14,7 +14,7 @@ cf-mysql
     └── coab-operators.yml
     └── coab-vars.yml
 {0}
-└── deployment-dependencies.yml
+└── deployment-dependencies.yml -> ../cf-mysql/deployment-dependencies.yml
 └── template
     └── 01-add-broker-operators.yml -> ../../cf-mysql/template/01-add-broker-operators.yml
     └── 02-no-arbitrator-operators.yml -> ../../cf-mysql/template/02-no-arbitrator-operators.yml

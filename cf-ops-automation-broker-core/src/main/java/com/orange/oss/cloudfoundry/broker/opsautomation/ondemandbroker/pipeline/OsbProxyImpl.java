@@ -225,7 +225,7 @@ public class OsbProxyImpl implements OsbProxy {
         String description = null;
         if (deprovisionException != null) {
             operationState = OperationState.SUCCEEDED;
-            logger.info("Ignoring rejected inner broker deprovision request:" + deprovisionException);
+            logger.warn("Ignoring rejected inner broker deprovision request:" + deprovisionException);
         } else {
             if (delegatedResponse.getStatusCode() == HttpStatus.OK) {
                 operationState = OperationState.SUCCEEDED;

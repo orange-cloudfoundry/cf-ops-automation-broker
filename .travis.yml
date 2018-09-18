@@ -38,4 +38,7 @@ addons:
     #mvn test -B: 
     #  -B,--batch-mode                        Run in non-interactive (batch) mode
     build_command: "mvn test install -B"
-    branch_pattern: mysql
+    #avoid running out of coverity quota by only running analysis on pushes from a specific
+    #branch.
+    #beware that travis-ci coverity add-on is only triggered within branch pushs and does not trigger on PRs
+    branch_pattern: coverity_scan

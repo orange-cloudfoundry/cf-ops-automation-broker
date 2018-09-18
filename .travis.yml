@@ -32,7 +32,8 @@ addons:
     project:
       name: "orange-cloudfoundry/cf-ops-automation-broker"
       description: "Build submitted via Travis CI"
-    notification_email: guillaume.berche@orange.com
+    # email configured within coverity settings as to preserve confidentiality and avoid spams
+    # notification_email: redacted
     #force clean of previous compilation so that coverity picks up all files
     build_command_prepend: "mvn clean"
     #mvn test -B: 

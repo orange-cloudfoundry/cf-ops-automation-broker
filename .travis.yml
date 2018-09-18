@@ -6,6 +6,11 @@ sudo: true
 jdk:
 - oraclejdk8
 
+#keep maven dependencies in cache as to speed up maven build process
+cache:
+  directories:
+- $HOME/.m2
+
 # coverity default config
 env:
   global:

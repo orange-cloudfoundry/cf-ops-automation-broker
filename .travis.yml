@@ -27,8 +27,9 @@ addons:
       name: "orange-cloudfoundry/cf-ops-automation-broker"
       description: "Build submitted via Travis CI"
     notification_email: guillaume.berche@orange.com
-    build_command_prepend: echo "build automated in circle-ci"
+    #force clean of previous compilation so that coverity picks up all files
+    build_command_prepend: "mvn clean"
     #mvn test -B: 
     #  -B,--batch-mode                        Run in non-interactive (batch) mode
-    build_command: "mvn test -B"
+    build_command: "mvn test install -B"
     branch_pattern: mysql

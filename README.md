@@ -1,6 +1,11 @@
 # cf-ops-automation-broker [![CI](https://circleci.com/gh/orange-cloudfoundry/cf-ops-automation-broker.svg?style=shield&circle-token=:circle-token)](https://circleci.com/gh/orange-cloudfoundry/cf-ops-automation-broker)
 On demand dedicated services through COA concourse pipeline engine
 
+<a href="https://scan.coverity.com/projects/orange-cloudfoundry-cf-ops-automation-broker">
+  <img alt="Coverity Scan Build Status"
+       src="https://scan.coverity.com/projects/14836/badge.svg"/>
+</a>
+
 ## Overview
 
 COAB is a generic service broker which enables operators to provide on-demand dedicated services from available building blocks:

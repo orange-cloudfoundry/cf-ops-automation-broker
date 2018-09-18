@@ -1,10 +1,5 @@
-# cf-ops-automation-broker [![CI](https://circleci.com/gh/orange-cloudfoundry/cf-ops-automation-broker.svg?style=shield&circle-token=:circle-token)](https://circleci.com/gh/orange-cloudfoundry/cf-ops-automation-broker)
+# cf-ops-automation-broker [![CI](https://circleci.com/gh/orange-cloudfoundry/cf-ops-automation-broker.svg?style=shield&circle-token=:circle-token)](https://circleci.com/gh/orange-cloudfoundry/cf-ops-automation-broker) [![coverity](https://img.shields.io/coverity/scan/14836.svg)](https://scan.coverity.com/projects/orange-cloudfoundry-cf-ops-automation-broker?tab=project_settings)
 On demand dedicated services through COA concourse pipeline engine
-
-<a href="https://scan.coverity.com/projects/orange-cloudfoundry-cf-ops-automation-broker">
-  <img alt="Coverity Scan Build Status"
-       src="https://scan.coverity.com/projects/14836/badge.svg"/>
-</a>
 
 ## Overview
 

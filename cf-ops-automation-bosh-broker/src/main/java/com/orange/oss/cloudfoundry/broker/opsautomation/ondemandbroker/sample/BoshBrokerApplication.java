@@ -138,6 +138,9 @@ public class BoshBrokerApplication {
         List<BrokerProcessor> processors = new ArrayList<>();
 
         processors.add(paasTemplateBranchSelector);
+        // git push wil trigger 1st for paas-templates and then 2nd for paas-secrets,
+        // reducing occurences of fail-fast consistency check failures
+        // see related https://github.com/orange-cloudfoundry/cf-ops-automation/issues/201
         processors.add(secretsGitProcessor);
         processors.add(templateGitProcessor);
         processors.add(boshProcessor);

@@ -12,6 +12,10 @@ COAB is a generic service broker which enables operators to provide on-demand de
 
 COAB leverages concourse-based pipelines to deploy and operate the dedicated resources, managed by the [cf-ops-automation (COA)](https://github.com/orange-cloudfoundry/cf-ops-automation) collaboration framework.
 
+Here are some slides to provide more background to this project:
+
+[![image](https://user-images.githubusercontent.com/4748380/46364595-85ead380-c676-11e8-947d-2c6b32516a43.png)](https://docs.google.com/presentation/d/1ChrpHQRxwdLzpt4m4sLe2PVJICqP0bCo9B5ffCPv57Q/edit?usp=sharing)
+
 The following diagram illustrates COAB interactions
 ![Overview of COAB interactions](coab-overview.png)
 

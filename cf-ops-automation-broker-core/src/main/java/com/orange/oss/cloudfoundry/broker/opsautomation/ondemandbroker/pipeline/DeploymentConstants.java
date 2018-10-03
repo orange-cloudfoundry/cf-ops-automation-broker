@@ -39,3 +39,4 @@ public class DeploymentConstants {
     public static final String VARS = "vars"; //coab-vars.yml
     public static final String OPERATORS = "operators"; //TODO: remove, not needed anymore
 }
+

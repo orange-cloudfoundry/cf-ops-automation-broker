@@ -1,4 +1,7 @@
-# cf-ops-automation-broker [![CI](https://circleci.com/gh/orange-cloudfoundry/cf-ops-automation-broker.svg?style=shield&circle-token=:circle-token)](https://circleci.com/gh/orange-cloudfoundry/cf-ops-automation-broker) [![coverity](https://img.shields.io/coverity/scan/14836.svg)](https://scan.coverity.com/projects/orange-cloudfoundry-cf-ops-automation-broker?tab=project_settings)
+# cf-ops-automation-broker 
+
+[![CI](https://circleci.com/gh/orange-cloudfoundry/cf-ops-automation-broker.svg?style=shield&circle-token=:circle-token)](https://circleci.com/gh/orange-cloudfoundry/cf-ops-automation-broker) [![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Forange-cloudfoundry%2Fcf-ops-automation-broker.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Forange-cloudfoundry%2Fcf-ops-automation-broker?ref=badge_shield) [![Coverity Scan](https://img.shields.io/coverity/scan/3997.svg)](https://scan.coverity.com/projects/orange-cloudfoundry-cf-ops-automation-broker)
+
 On demand dedicated services through COA concourse pipeline engine
 
 ## Overview

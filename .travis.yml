@@ -25,7 +25,7 @@ before_install:
 - cat ./openssl-connect.stderr
 - rm ./openssl-connect.stderr
 
-script: "echo 'only run coverity tasks, as to save travis-resources while main build is in circle'"
+script: "echo 'only run coverity tasks, as to save travis-resources while main build is in circle-ci'"
 
 addons:
   coverity_scan:
@@ -36,9 +36,10 @@ addons:
     # notification_email: redacted
     #force clean of previous compilation so that coverity picks up all files
     build_command_prepend: "mvn clean"
-    #mvn test -B: 
+    #mvn  -B: 
     #  -B,--batch-mode                        Run in non-interactive (batch) mode
-    build_command: "mvn test install -B"
+    # skip test during analysis toi exclude false positives from test sources
+    build_command: "mvn install -Dmaven.skip.test=true -B"
     #avoid running out of coverity quota by only running analysis on pushes from a specific
     #branch.
     #beware that travis-ci coverity add-on is only triggered within branch pushs and does not trigger on PRs

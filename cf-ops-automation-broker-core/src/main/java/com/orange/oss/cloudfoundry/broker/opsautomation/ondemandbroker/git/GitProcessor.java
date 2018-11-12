@@ -116,12 +116,12 @@ public class GitProcessor extends DefaultBrokerProcessor {
      * @param ctx exposing the workDir Path in context
      */
     void cloneRepo(Context ctx) {
+        Path workDir = null;
         try {
 
             logger.info(prefixLog("cloning repo from {}"), this.gitUrl);
 
-
-            Path workDir = Files.createTempDirectory(getRepoWorkDirPrefix(repoAliasName));
+            workDir = Files.createTempDirectory(getRepoWorkDirPrefix(repoAliasName));
 
             int timeoutSeconds = 60; //git timeout
             CloneCommand clone = new CloneCommand()
@@ -145,11 +145,12 @@ public class GitProcessor extends DefaultBrokerProcessor {
             fetchSubmodulesIfNeeded(ctx, git);
 
             logger.info(prefixLog("git repo is ready at {}"), workDir);
-            //push the work dir in invokation context
+            //push the work dir in invocation context
             setWorkDir(workDir, ctx);
 
         } catch (Exception e) {
             logger.warn(prefixLog("caught ") + e, e);
+            deleteWorkingDir(workDir);
             throw new IllegalArgumentException(e);
         }
 
@@ -251,7 +252,7 @@ public class GitProcessor extends DefaultBrokerProcessor {
                 .findFirst();
     }
 
-    Optional<Ref> lookUpLocalBranch(Git git, String branchName) throws GitAPIException {
+    private Optional<Ref> lookUpLocalBranch(Git git, String branchName) throws GitAPIException {
         List<Ref> branches = git.branchList().setListMode(ListBranchCommand.ListMode.ALL).call();
         return branches.stream()
                 .filter(ref -> ref.getName().equals("refs/heads/" + branchName))
@@ -432,6 +433,11 @@ public class GitProcessor extends DefaultBrokerProcessor {
      */
     void deleteWorkingDir(Context ctx)  {
         Path workDir = this.getWorkDir(ctx);
+        deleteWorkingDir(workDir);
+        setWorkDir(null, ctx);
+    }
+
+    private void deleteWorkingDir(Path workDir) {
         try {
             // cleaning workDir
             if (workDir != null) {
@@ -446,7 +452,6 @@ public class GitProcessor extends DefaultBrokerProcessor {
                 Files.walk(workDir)
                         .sorted(Comparator.reverseOrder())
                         .forEach(deleter);
-                setWorkDir(null, ctx);
             }
         } catch (IOException e) {
             logger.error("Unable to clean up workdir: " + workDir, e);

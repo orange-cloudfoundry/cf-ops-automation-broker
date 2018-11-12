@@ -149,7 +149,8 @@ public class GitProcessor extends DefaultBrokerProcessor {
             setWorkDir(workDir, ctx);
 
         } catch (Exception e) {
-            logger.warn(prefixLog("caught ") + e, e);
+            String msgContext = (workDir == null) ? "" : (" while cloning into dir: " + workDir);
+            logger.warn(prefixLog("caught ") + e + msgContext, e);
             deleteWorkingDir(workDir);
             throw new IllegalArgumentException(e);
         }

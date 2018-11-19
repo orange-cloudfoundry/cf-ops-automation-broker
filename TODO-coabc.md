@@ -1,3 +1,58 @@
+-------------------
+- Git repo caching
+
+Reqs:
+    - operability: be able to distinguish (from disk or else from logs) cache entries from actively used clones
+    - cache entries gets discarded when disk full reached upon fetch/clone
+
+Option 1: add AOP/spring caching behavior
+         https://docs.spring.io/spring/docs/current/spring-framework-reference/integration.html#cache
+         Pb: does not map well a caching abstraction, this is rather a pool abstraction
+
+Option 2: look for an off-the-shelf pooling cache component + refactor Processor
+
+
+Matching pooling libraries/concepts
+    - https://commons.apache.org/proper/commons-pool/api-2.6.0/index.html
+
+Q: do we need to distinguish pooled repos (e.g. remote URI, remote branch, submodules fetched) ?
+A: yes: both paas-secret and paas-template URIs should be fetched, with distinct remote branches  
++ we instead refresh pooled repos each time we take them from the pool (git fetch + git reset) 
+
+```
+public interface PooledObjectFactory<T> {
+    PooledObject<T> makeObject();
+    void activateObject(PooledObject<T> obj);
+    void passivateObject(PooledObject<T> obj);
+    boolean validateObject(PooledObject<T> obj);
+    void destroyObject(PooledObject<T> obj);
+}
+```
+
+Q: how do we pass in the context keys to the Factory impl ?
+- introduce keep one pool per key
+- use KeyedPooledObjectFactory<K,V> instead https://commons.apache.org/proper/commons-pool/api-2.6.0/org/apache/commons/pool2/KeyedPooledObjectFactory.html   
+
+
+
+-------------------
+Better error handling
+
+     19:38:41.629: [APP/PROC/WEB.0] Caused by: org.eclipse.jgit.errors.TransportException: No space left on device
+     19:38:41.629: [APP/PROC/WEB.0] 	at org.eclipse.jgit.transport.BasePackFetchConnection.doFetch(BasePackFetchConnection.java:376) ~[org.eclipse.jgit-4.9.0.201710071750-r.jar!/:4.9.0.201710071750-r]
+     19:38:41.629: [APP/PROC/WEB.0] 	at org.eclipse.jgit.transport.TransportHttp$SmartHttpFetchConnection.doFetch(TransportHttp.java:1090) ~[org.eclipse.jgit-4.9.0.201710071750-r.jar!/:4.9.0.201710071750-r]
+     19:38:41.629: [APP/PROC/WEB.0] 	at org.eclipse.jgit.transport.BasePackFetchConnection.fetch(BasePackFetchConnection.java:303) ~[org.eclipse.jgit-4.9.0.201710071750-r.jar!/:4.9.0.201710071750-r]
+     19:38:41.629: [APP/PROC/WEB.0] 	at org.eclipse.jgit.transport.BasePackFetchConnection.fetch(BasePackFetchConnection.java:292) ~[org.eclipse.jgit-4.9.0.201710071750-r.jar!/:4.9.0.201710071750-r]
+     19:38:41.629: [APP/PROC/WEB.0] 	at org.eclipse.jgit.transport.FetchProcess.fetchObjects(FetchProcess.java:246) ~[org.eclipse.jgit-4.9.0.201710071750-r.jar!/:4.9.0.201710071750-r]
+     19:38:41.629: [APP/PROC/WEB.0] 	at org.eclipse.jgit.transport.FetchProcess.executeImp(FetchProcess.java:162) ~[org.eclipse.jgit-4.9.0.201710071750-r.jar!/:4.9.0.201710071750-r]
+     19:38:41.629: [APP/PROC/WEB.0] 	at org.eclipse.jgit.transport.FetchProcess.execute(FetchProcess.java:123) ~[org.eclipse.jgit-4.9.0.201710071750-r.jar!/:4.9.0.201710071750-r]
+     19:38:41.629: [APP/PROC/WEB.0] 	at org.eclipse.jgit.transport.Transport.fetch(Transport.java:1236) ~[org.eclipse.jgit-4.9.0.201710071750-r.jar!/:4.9.0.201710071750-r]
+     19:38:41.629: [APP/PROC/WEB.0] 	at org.eclipse.jgit.api.FetchCommand.call(FetchCommand.java:239) ~[org.eclipse.jgit-4.9.0.201710071750-r.jar!/:4.9.0.201710071750-r]
+
+
+
+
+
 #30 Full COA conventions support:
 - [DONE]set COA rules as constants (in DeploymentConstants?) instead of configuration flags:
    - https://github.com/orange-cloudfoundry/cf-ops-automation#ops-files

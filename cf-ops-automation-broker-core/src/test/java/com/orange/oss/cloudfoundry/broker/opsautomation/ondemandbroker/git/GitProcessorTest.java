@@ -113,6 +113,21 @@ public class GitProcessorTest {
         assertThat(secondLookup.isPresent()).isTrue();
     }
 
+    @Test
+    @Ignore("Only gathering ideas/specs for now")
+    public void caches_git_clones() {
+        //Given an existing repo
+        //when a clone is requested
+        //then a clone is stored on local disk with a "clone" prefix
+        //when the clone is cleaned up
+        //it gets renamed with a "cache" prefix
+
+        //Given the repo gets pushed some new modifs
+
+        //when a new clone is requested
+        //the cached clone is renamed with a "clone" prefix
+        //the clone get fetched the repo content, and reset to the requested branch
+    }
 
     @Test
     public void supports_createBranchIfMissing_key() throws IOException {

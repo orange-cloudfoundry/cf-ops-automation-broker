@@ -1,6 +1,7 @@
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git;
 
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.Context;
+import org.eclipse.jgit.api.Git;
 
 public interface GitManager {
 
@@ -9,7 +10,7 @@ public interface GitManager {
      *
      * @param ctx exposing the workDir Path in context
      */
-    void cloneRepo(Context ctx);
+    Git cloneRepo(Context ctx);
 
     /**
      * commit, rebase the push the modification

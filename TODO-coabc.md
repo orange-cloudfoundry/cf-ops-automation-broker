@@ -1,6 +1,15 @@
 -------------------
 - Git repo caching
 
+Q: rename PooledGitManager into SimpleGitProcessor ?
+- Modify clients to instanciate PooledGitManager
+- PooledGitManager: delegates commitPush to gitManager
+- PooledGitManager: tunes the pool (max size, ...)
+- PooledGitManager: expose metrics for operability (pool stats)
+- PooledGitRepoFoctory: validates pooled git repo through a git pull & git reset
+- PooledGitRepoFoctory: un/passivate pooled git repo by renaming their dir ? 
+
+
 Reqs:
     - operability: be able to distinguish (from disk or else from logs) cache entries from actively used clones
     - cache entries gets discarded when disk full reached upon fetch/clone

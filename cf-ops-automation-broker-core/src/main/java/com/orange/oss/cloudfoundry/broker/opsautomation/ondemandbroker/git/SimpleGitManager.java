@@ -57,7 +57,7 @@ public class SimpleGitManager extends DefaultBrokerProcessor implements GitManag
 
 
     @Override
-    public void cloneRepo(Context ctx) {
+    public Git cloneRepo(Context ctx) {
         Path workDir = null;
         try {
 
@@ -89,7 +89,7 @@ public class SimpleGitManager extends DefaultBrokerProcessor implements GitManag
             logger.info(prefixLog("git repo is ready at {}"), workDir);
             //push the work dir in invocation context
             setWorkDir(workDir, ctx);
-
+            return git;
         } catch (Exception e) {
             String msgContext = (workDir == null) ? "" : (" while cloning into dir: " + workDir);
             logger.warn(prefixLog("caught ") + e + msgContext, e);

@@ -33,7 +33,7 @@ import java.util.stream.StreamSupport;
  *
  * @author poblin-orange
  */
-public class GitProcessor extends DefaultBrokerProcessor {
+public class GitProcessor extends DefaultBrokerProcessor implements GitManager {
 
 
     private static final String PRIVATE_GIT_INSTANCE = "private-git-instance";
@@ -110,12 +110,8 @@ public class GitProcessor extends DefaultBrokerProcessor {
         deleteWorkingDir(ctx);
     }
 
-    /**
-     * local clone a repo
-     *
-     * @param ctx exposing the workDir Path in context
-     */
-    void cloneRepo(Context ctx) {
+    @Override
+    public void cloneRepo(Context ctx) {
         Path workDir = null;
         try {
 
@@ -301,10 +297,8 @@ public class GitProcessor extends DefaultBrokerProcessor {
         }
     }
 
-    /**
-     * commit, rebase the push the modification
-     */
-    void commitPushRepo(Context ctx, boolean deleteRepo) {
+    @Override
+    public void commitPushRepo(Context ctx, boolean deleteRepo) {
         try {
             logger.info(prefixLog("commit push"));
 
@@ -429,10 +423,8 @@ public class GitProcessor extends DefaultBrokerProcessor {
         return configuredMessage == null ? "commit by ondemand broker" : configuredMessage;
     }
 
-    /**
-     * recursively delete working directory
-     */
-    void deleteWorkingDir(Context ctx)  {
+    @Override
+    public void deleteWorkingDir(Context ctx)  {
         Path workDir = this.getWorkDir(ctx);
         deleteWorkingDir(workDir);
         setWorkDir(null, ctx);

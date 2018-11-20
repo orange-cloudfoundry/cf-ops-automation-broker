@@ -1,7 +1,7 @@
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git;
 
 /**
- * Contract supported by the GitProcessor.
+ * Contract supported by the SimpleGitManager.
  * This Enum is ordered the same as what the processor will handle operations
  */
 public enum GitProcessorContext {

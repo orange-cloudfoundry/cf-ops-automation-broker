@@ -1,6 +1,7 @@
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.sample;
 
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.GitProcessor;
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.SimpleGitManager;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.GitProcessorContext;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.GitProperties;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.osbclient.OsbClientFactory;
@@ -112,24 +113,26 @@ public class BoshBrokerApplication {
 
     @Bean
     public BrokerProcessor secretsGitProcessor(GitProperties secretsGitProperties) {
-        return new GitProcessor(
+        SimpleGitManager simpleGitManager = new SimpleGitManager(
                 secretsGitProperties.getUser(),
                 secretsGitProperties.getPassword(),
                 secretsGitProperties.getUrl(),
                 secretsGitProperties.committerName(),
                 secretsGitProperties.committerEmail(),
                 SECRETS_REPOSITORY_ALIAS_NAME);
+        return new GitProcessor(simpleGitManager);
     }
 
     @Bean
     public BrokerProcessor templateGitProcessor(GitProperties templateGitProperties) {
-        return new GitProcessor(
+        SimpleGitManager gitManager = new SimpleGitManager(
                 templateGitProperties.getUser(),
                 templateGitProperties.getPassword(),
                 templateGitProperties.getUrl(),
                 templateGitProperties.committerName(),
                 templateGitProperties.committerEmail(),
                 TEMPLATES_REPOSITORY_ALIAS_NAME);
+        return new GitProcessor(gitManager);
     }
 
 

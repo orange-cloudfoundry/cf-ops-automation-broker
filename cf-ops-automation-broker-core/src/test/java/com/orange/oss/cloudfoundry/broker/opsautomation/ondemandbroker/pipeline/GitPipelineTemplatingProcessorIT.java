@@ -1,6 +1,7 @@
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline;
 
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.GitProcessor;
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.SimpleGitManager;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.GitProperties;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.GitServer;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.BrokerProcessor;
@@ -40,9 +41,9 @@ public class GitPipelineTemplatingProcessorIT {
 	@Test
 	public void testTemplatingProcessor() {
 		
-		GitProcessor processor=new GitProcessor(gitProperties.getUser(), gitProperties.getPassword(), gitProperties.getUrl(), "committerName", "committerEmail", null);
+		SimpleGitManager processor=new SimpleGitManager(gitProperties.getUser(), gitProperties.getPassword(), gitProperties.getUrl(), "committerName", "committerEmail", null);
 		List<BrokerProcessor> processors= new ArrayList<>();
-		processors.add(processor);
+		processors.add(new GitProcessor(processor));
 		processors.add(new GitPipelineTemplatingProcessor("on-demand-depl",this.manifestResource));
 		ProcessorChain chain=new ProcessorChain(processors, new DefaultBrokerSink());
 

@@ -5,7 +5,7 @@ import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.common.Slf4jNotifier;
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
 import com.github.tomakehurst.wiremock.recording.SnapshotRecordResult;
-import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.GitProcessor;
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.SimpleGitManager;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.GitProcessorContext;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.GitServer;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.osbclient.CatalogServiceClient;
@@ -102,7 +102,7 @@ public class BoshServiceProvisionningTest {
 
     @Autowired
     @Qualifier(value = "secretsGitProcessor")
-    GitProcessor secretsGitProcessor;
+    SimpleGitManager secretsSimpleGitManager;
 
     @Autowired
     OsbProxyProperties osbProxyProperties;
@@ -262,16 +262,16 @@ public class BoshServiceProvisionningTest {
         }
     }
 
-    public void simulateManifestGeneration(GitProcessor gitProcessor) throws IOException {
+    public void simulateManifestGeneration(SimpleGitManager simpleGitManager) throws IOException {
         Context context = new Context();
-        gitProcessor.preCreate(context);
+        simpleGitManager.preCreate(context);
 
         Path workDirPath = (Path) context.contextKeys.get(SECRETS_REPOSITORY_ALIAS_NAME + GitProcessorContext.workDir.toString());
         Path targetManifestFilePath = secretsGenerator.getTargetManifestFilePath(workDirPath, SERVICE_INSTANCE_ID);
         createDir(targetManifestFilePath.getParent());
         createDummyFile(targetManifestFilePath);
 
-        gitProcessor.postCreate(context);
+        simpleGitManager.postCreate(context);
     }
 
     public static void createDir(Path dir) throws IOException {
@@ -302,7 +302,7 @@ public class BoshServiceProvisionningTest {
 
         polls_last_operation(operation, HttpStatus.SC_OK, "in progress", "");
 
-        simulateManifestGeneration(secretsGitProcessor);
+        simulateManifestGeneration(secretsSimpleGitManager);
 
         polls_last_operation(operation, HttpStatus.SC_OK, "succeeded", "");
 

@@ -44,7 +44,7 @@ public class GitIT {
     @Test
     public void testGitProcessor() {
 
-        GitProcessor gitProcessor = new GitProcessor(gitProperties.getUser(), gitProperties.getPassword(), gitProperties.getUrl(), gitProperties.committerName(), gitProperties.committerEmail(), null);
+        SimpleGitManager simpleGitManager = new SimpleGitManager(gitProperties.getUser(), gitProperties.getPassword(), gitProperties.getUrl(), gitProperties.committerName(), gitProperties.committerEmail(), null);
         BrokerProcessor paasTemplateSelector = new DefaultBrokerProcessor() {
             @Override
             public void preCreate(Context ctx) {
@@ -67,7 +67,7 @@ public class GitIT {
         };
         List<BrokerProcessor> processors = new ArrayList<>();
         processors.add(paasTemplateSelector);
-        processors.add(gitProcessor);
+        processors.add(new GitProcessor(simpleGitManager));
         processors.add(paasTemplateGenerator);
         ProcessorChain chain = new ProcessorChain(processors, new DefaultBrokerSink());
 

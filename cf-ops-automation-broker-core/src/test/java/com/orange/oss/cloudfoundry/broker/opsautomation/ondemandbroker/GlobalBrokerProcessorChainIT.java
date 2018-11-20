@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.GitProcessor;
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.SimpleGitManager;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.GitServer;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.BrokerProcessor;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.GitPipelineTemplatingProcessor;
@@ -42,9 +43,10 @@ public class GlobalBrokerProcessorChainIT {
 	@Test
 	public void testCompositeProcessorChain() {
 		
-		GitProcessor processor=new GitProcessor(gitProperties.getUser(), gitProperties.getPassword(), gitProperties.getUrl(), gitProperties.committerName(), gitProperties.committerEmail(), null);
+		SimpleGitManager gitManager=new SimpleGitManager(gitProperties.getUser(), gitProperties.getPassword(), gitProperties.getUrl(), gitProperties.committerName(), gitProperties.committerEmail(), null);
+
 		List<BrokerProcessor> processors= new ArrayList<>();
-		processors.add(processor);
+		processors.add(new GitProcessor(gitManager));
 		//TODO: add credhub password generation
 		processors.add(new GitPipelineTemplatingProcessor("on-demand-depl",this.manifestResource));
 		ProcessorChain chain=new ProcessorChain(processors, new DefaultBrokerSink());

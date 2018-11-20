@@ -8,6 +8,8 @@ Reqs:
 Option 1: add AOP/spring caching behavior
          https://docs.spring.io/spring/docs/current/spring-framework-reference/integration.html#cache
          Pb: does not map well a caching abstraction, this is rather a pool abstraction
+         
+         Same with https://github.com/ben-manes/caffeine even with http://static.javadoc.io/com.github.ben-manes.caffeine/caffeine/2.6.2/com/github/benmanes/caffeine/cache/RemovalListener.html
 
 Option 2: look for an off-the-shelf pooling cache component + refactor Processor
 
@@ -16,7 +18,9 @@ Matching pooling libraries/concepts
     - https://commons.apache.org/proper/commons-pool/api-2.6.0/index.html
 
 Q: do we need to distinguish pooled repos (e.g. remote URI, remote branch, submodules fetched) ?
-A: yes: both paas-secret and paas-template URIs should be fetched, with distinct remote branches  
+A: 
+- both paas-secret and paas-template URIs should be fetched, with distinct remote branches
+- however the git repo uri is provided to the GitProcessor constructor  
 + we instead refresh pooled repos each time we take them from the pool (git fetch + git reset) 
 
 ```
@@ -33,6 +37,16 @@ Q: how do we pass in the context keys to the Factory impl ?
 - introduce keep one pool per key
 - use KeyedPooledObjectFactory<K,V> instead https://commons.apache.org/proper/commons-pool/api-2.6.0/org/apache/commons/pool2/KeyedPooledObjectFactory.html   
 
+
+First experiment: does it make sense to extract GitCloner ?
+- GitProcess becomes anemic
+- GitProcessorTest 
+    - does white box testing (protected methods) 
+    - set up using clone/commit implies coupling to GitCloner/GitPusher 
+
+Deadcode:
+
+processor.configureCrLf(repository.getConfig());
 
 
 -------------------

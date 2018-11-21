@@ -20,7 +20,6 @@ public class PooledGitManagerTest {
         pooledGitManager.cloneRepo(ctx1);
         //Then the git manager gets delegated the call to clone the repo
         verify(gitManager).cloneRepo(ctx1);
-        Mockito.reset(gitManager);
 
         //When a 1st clone is restored to the pool
         pooledGitManager.deleteWorkingDir(ctx1);
@@ -29,7 +28,7 @@ public class PooledGitManagerTest {
         pooledGitManager.cloneRepo(ctx2);
 
         //Then a second clone is NOT created
-        verify(gitManager, never()).cloneRepo(ctx1);
+        verify(gitManager, never()).cloneRepo(ctx2);
     }
 
 

@@ -1,6 +1,19 @@
 -------------------
-- Git repo caching
+Git repo caching
 
+- check behavior of pool w.r.t. two non equal context objects. 
+   - Do we really need the Key in the pool ?
+   - Instead store a Git or Context object (git, workdir...) ?
+     - Git: missing workDir to delete to ? 
+     - Context: awkward to pool the whole context which might include other objects and create memory leak
+     - a new object with needed info the the fetch & refresh ?
+     
+     => implement gitFetchAndReset() 
+     
+- refine error handling  
+    - add diagnostic logs before rethrowing Exception
+    - clear pooled entries ?
+ 
 Q: rename PooledGitManager into SimpleGitProcessor ?
 - Modify clients to instanciate PooledGitManager
 - PooledGitManager: delegates commitPush to gitManager

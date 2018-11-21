@@ -1,3 +1,17 @@
+Git clone optimizations: 
+- avoid two checkouts during clone, by using the --branch argument 
+
+```
+       --branch <name>, -b <name>
+           Instead of pointing the newly created HEAD to the branch pointed to by the cloned repository’s HEAD, point to <name> branch instead. In a non-bare repository, this is the branch that will be checked out.  --branch can also take tags and detaches the HEAD at that commit in the resulting repository.
+```
+
+Check behavior when the specified branch does not exist. Is the clone/fetch still performed, or do we need to retry the fetch ? 
+
+- avoid fetching branches we don't need 
+
+setBranchesToClone(Collection<String> branchesToClone) instead of setCloneAllBranches(boolean cloneAllBranches)
+
 -------------------
 Git repo caching
 
@@ -5,10 +19,62 @@ Git repo caching
    - Do we really need the Key in the pool ?
    - Instead store a Git or Context object (git, workdir...) ?
      - Git: missing workDir to delete to ? 
-     - Context: awkward to pool the whole context which might include other objects and create memory leak
+     - Requested context: awkward to pool the whole context which might include other objects and create memory leak (e.g. credhub, )
      - a new object with needed info the the fetch & refresh ?
+         - A new Context object 
+            - with only git relevant keys in it:
+                - request: createBranchIfMissing,checkOutRemoteBranch  
+                - state: PRIVATE_GIT_INSTANCE
+                - response: workDir
+            - filtered out keys           
+                - request:
+                    - commitMessage
+                    - deleteRemoteBranch
+                    - deadcode: submoduleListToFetch, fetchAllSubModules, 
+                - state: PRIVATE_SUBMODULES_LIST 
      
-     => implement gitFetchAndReset() 
+     => implement gitFetchAndReset() to fetch only the branch we need
+        - git fetch origin refs/heads/master 
+        - git reset 'origin/master' --hard 
+
+
+Clone:
+- Borrow from Pool: 
+    - get pooledContext: Git, workDir
+- insert in user Context: workDir, pooledContext
+
+CommitPush:
+- get from userContext: commit msg, ...
+- insert into pooled context: commit msg, ...  
+- delegate with pooled context: Git, workDir + other keys (commit msg) 
+
+Cleanup:
+- get pooledContext from user request
+- delegate with cleanup pooled context: 
+- clear request specific keys in pooled context: commitMessage, deleteRemoteBranch 
+- Return to pool: pooledContext  
+
+=> No need for a KeyedPool. Instead Pool "pooled Git-only Context" objects
+
+Q: tag/prefix keys to ease their filtering ?
+A: add a pooleable flag on the enum. 
+
+-----
+Q: can we have GitManager expose strong method prototypes and not deal with Context anymore ?
+- extract methods with inputs, context outputs and state (Git, submodules)
+    - not clear where to store state
+- update GitManager to this contract
+- inline wrapping calls in GitProcessor: Context contract moves to GitProcessor
+- rename SimpleGitManagerTest into GitProcessorTest
+
+Benefits:
+- strong typing on the GitManager: explicit arguments made visible
+
+A: expensive refactoring, only worth if more git related work/complexity, and associated Test cleanup.
+=> delay it
+
+     
+-----     
      
 - refine error handling  
     - add diagnostic logs before rethrowing Exception

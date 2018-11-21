@@ -24,6 +24,8 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
+import static org.eclipse.jgit.lib.Constants.DEFAULT_REMOTE_NAME;
+
 
 /**
  * Git Mediation :
@@ -99,6 +101,33 @@ public class SimpleGitManager extends DefaultBrokerProcessor implements GitManag
 
     }
 
+    /**
+     * Overrides local branch with remote. Useful when git repo was pooled.
+     * - git fetch origin refs/heads/master
+     * - git reset 'origin/master' --hard
+     */
+    @Override
+    public void fetchRemoteAndResetCurrentBranch(Context ctx) {
+        Git git = getGit(ctx);
+        String remoteBranch = getImplicitRemoteBranchToDisplay(ctx);
+        String fetchRef = "+refs/heads/" +remoteBranch + ":refs/remotes/" + DEFAULT_REMOTE_NAME + "/" + remoteBranch;
+        FetchCommand fetchCommand = git.fetch().
+                setRefSpecs(fetchRef).
+                setRemote(DEFAULT_REMOTE_NAME);
+        String resetRef = DEFAULT_REMOTE_NAME + "/" + remoteBranch;
+        ResetCommand resetCommand = git.reset().setRef(resetRef).setMode(ResetCommand.ResetType.HARD);
+        try {
+            logger.info(prefixLog("fetching from " + fetchRef));
+            fetchCommand.call();
+            logger.info(prefixLog("resetting from " + resetRef));
+            resetCommand.call();
+        } catch (Exception e) {
+            logger.error(prefixLog("caught ") + e + " while fetching & resetting branch: " + remoteBranch, e);
+            throw new RuntimeException(e);
+        }
+
+    }
+
     String getRepoWorkDirPrefix(String repoAliasName) {
         return repoAliasName.replaceAll("[^a-zA-Z0-9]", "-") + "clone-";
     }
@@ -160,7 +189,7 @@ public class SimpleGitManager extends DefaultBrokerProcessor implements GitManag
                 logger.debug(prefixLog("existing remote branch {}"), branchName);
                 git.branchCreate()
                         .setName(branchName)
-                        .setStartPoint("refs/remotes/origin/" + branchName)
+                        .setStartPoint("refs/remotes/" + DEFAULT_REMOTE_NAME+ "/" + branchName)
                         .setUpstreamMode(CreateBranchCommand.SetupUpstreamMode.SET_UPSTREAM)
                         .call();
                 logger.info(prefixLog("created local branch from remote branch {}"), branchName);
@@ -170,7 +199,7 @@ public class SimpleGitManager extends DefaultBrokerProcessor implements GitManag
                         .call();
 
                 git.getRepository().getConfig()
-                        .setString("branch", branchName, "remote", "origin");
+                        .setString("branch", branchName, "remote", DEFAULT_REMOTE_NAME);
                 git.getRepository().getConfig()
                         .setString("push", branchName, "default", "upstream"); //overkill ?
                 git.getRepository().getConfig()
@@ -191,7 +220,7 @@ public class SimpleGitManager extends DefaultBrokerProcessor implements GitManag
     Optional<Ref> lookUpRemoteBranch(Git git, String branchName) throws GitAPIException {
         List<Ref> branches = git.branchList().setListMode(ListBranchCommand.ListMode.ALL).call();
         return branches.stream() 
-                .filter(ref -> ref.getName().equals("refs/remotes/origin/" + branchName))
+                .filter(ref -> ref.getName().equals("refs/remotes/"+ DEFAULT_REMOTE_NAME + "/" + branchName))
                 .findFirst();
     }
 
@@ -222,7 +251,7 @@ public class SimpleGitManager extends DefaultBrokerProcessor implements GitManag
             git.checkout()
                     .setCreateBranch(shouldCreateLocalBranch).setName(branch) //create local branch
                     .setUpstreamMode(CreateBranchCommand.SetupUpstreamMode.SET_UPSTREAM)
-                    .setStartPoint("origin/" + branch) //from remote branch
+                    .setStartPoint(DEFAULT_REMOTE_NAME + "/" + branch) //from remote branch
                     .call();
             logger.info(prefixLog("checked out remote branch {}"), branch);
         }

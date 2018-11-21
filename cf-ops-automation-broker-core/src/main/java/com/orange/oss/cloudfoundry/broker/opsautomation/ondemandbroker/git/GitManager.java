@@ -21,4 +21,6 @@ public interface GitManager {
      * recursively delete working directory
      */
     void deleteWorkingDir(Context ctx);
+
+    void fetchRemoteAndResetCurrentBranch(Context ctxt);
 }

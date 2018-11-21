@@ -299,6 +299,38 @@ public class SimpleGitManagerTest {
         addAndDeleteFilesForRepoAlias(this.gitManager, this.ctx, "");
     }
 
+    @Test
+    public void supports_pooling_with_git_fetch_adds_reset() throws Exception {
+        //given an existing repo
+        String repoName = "paas-template.git";
+        gitServer.initRepo(repoName, this::initPaasTemplate);
+        gitManager = new SimpleGitManager("gituser", "gitsecret", GIT_BASE_URL + repoName, "committerName", "committer@address.org", null);
+        ctx.contextKeys.put(GitProcessorContext.checkOutRemoteBranch.toString(), "develop");
+
+        //and asking to clone it
+        gitManager.cloneRepo(ctx);
+
+        //and some new commits gets added to the repo by someone else
+        Git git = gitServer.getRepo(repoName);
+        git.checkout().setName("develop").call();
+        Path gitServerWorkDir = git.getRepository().getDirectory().getParentFile().toPath();
+        addAFile("new context", "newFileAfterClone.txt", gitServerWorkDir);
+        git.add().addFilepattern("newFileAfterClone.txt").call();
+        git.commit().setMessage("dummy msg").call();
+        git.close();
+
+        //and the repo is asked to be recycled
+        gitManager.fetchRemoteAndResetCurrentBranch(ctx);
+
+        //then the updated file gets fetched
+        Path workDir = getWorkDir(ctx, "");
+        File fetchedFile = workDir.resolve("newFileAfterClone.txt").toFile();
+        assertThat(fetchedFile).exists();
+
+        //Note: ignore debug JGit traces, apparent side effect of git repo test setup
+        //org.eclipse.jgit.lib.Repository - close() called when useCnt is already zero for Repository
+    }
+
     private void addAndDeleteFilesForRepoAlias(SimpleGitManager processor, Context context, String repoAlias) throws IOException {
         //given a clone of an empty repo
         processor.cloneRepo(context);
@@ -392,7 +424,7 @@ public class SimpleGitManagerTest {
     public void fetches_submodules_when_asked() {
 
         //given a repo with submodules configured
-        gitServer.initRepo("paas-template.git", this::initPaasTemplate);
+        gitServer.initRepo("paas-template.git", this::initPaasTemplateWithSubModules);
         gitManager = new SimpleGitManager("gituser", "gitsecret", GIT_BASE_URL + "paas-template.git", "committerName", "committer@address.org", null);
         ctx.contextKeys.put(GitProcessorContext.checkOutRemoteBranch.toString(), "develop");
 
@@ -433,7 +465,7 @@ public class SimpleGitManagerTest {
     public void ignores_fetches_submodules_from_staged_files() {
 
         //given a repo with submodules configured
-        gitServer.initRepo("paas-template.git", this::initPaasTemplate);
+        gitServer.initRepo("paas-template.git", this::initPaasTemplateWithSubModules);
         gitManager = new SimpleGitManager("gituser", "gitsecret", GIT_BASE_URL + "paas-template.git", "committerName", "committer@address.org", null);
         ctx.contextKeys.put(GitProcessorContext.checkOutRemoteBranch.toString(), "develop");
 
@@ -448,7 +480,7 @@ public class SimpleGitManagerTest {
         //so that submodules get excluded from commit list
     }
 
-    private void initPaasTemplate(Git git) {
+    private void initPaasTemplateWithSubModules(Git git) {
         File gitWorkDir = git.getRepository().getDirectory().getParentFile();
         try {
             git.commit().setMessage("Initial empty repo setup").call();
@@ -473,6 +505,31 @@ public class SimpleGitManagerTest {
 //            repository.create();
             git.submoduleAdd().setPath("bosh-deployment").setURI(GIT_BASE_URL + "bosh-deployment.git").call();
             git.submoduleAdd().setPath("mysql-deployment").setURI(GIT_BASE_URL + "mysql-deployment").call();
+            git.commit().setMessage("GitIT#startGitServer").call();
+
+            git.checkout().setName("master").call();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private void initPaasTemplate(Git git) {
+        File gitWorkDir = git.getRepository().getDirectory().getParentFile();
+        try {
+            git.commit().setMessage("Initial empty repo setup").call();
+
+            //In develop branch
+            git.checkout().setName("develop").setCreateBranch(true).call();
+
+            //root deployment
+            Path coabDepls = gitWorkDir.toPath().resolve("coab-depls");
+            createDir(coabDepls);
+            //sub deployments
+            createDir(coabDepls.resolve("cassandra"));
+
+            AddCommand addC = git.add().addFilepattern(".");
+            addC.call();
+
             git.commit().setMessage("GitIT#startGitServer").call();
 
             git.checkout().setName("master").call();
@@ -642,6 +699,10 @@ public class SimpleGitManagerTest {
 
     private void addAFile(Context ctx, String content, String fileRelativePath, String repoAlias) throws IOException {
         Path workDir = getWorkDir(ctx, repoAlias);
+        addAFile(content, fileRelativePath, workDir);
+    }
+
+    private void addAFile(String content, String fileRelativePath, Path workDir) throws IOException {
         try (FileWriter writer = new FileWriter(workDir.resolve(fileRelativePath).toFile())) {
             writer.append(content);
         }

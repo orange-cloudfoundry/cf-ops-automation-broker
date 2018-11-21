@@ -36,4 +36,9 @@ public class PooledGitManager implements GitManager {
             throw new RuntimeException(e);
         }
     }
+
+    @Override
+    public void fetchRemoteAndResetCurrentBranch(Context ctxt) {
+        throw new IllegalArgumentException("Not supported in pooled impl. Would be the sign of an infinite recursive call");
+    }
 }

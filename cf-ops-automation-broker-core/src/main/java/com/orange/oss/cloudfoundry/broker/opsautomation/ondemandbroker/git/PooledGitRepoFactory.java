@@ -4,38 +4,54 @@ import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processor
 import org.apache.commons.pool2.KeyedPooledObjectFactory;
 import org.apache.commons.pool2.PooledObject;
 import org.apache.commons.pool2.impl.DefaultPooledObject;
-import org.eclipse.jgit.api.Git;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-public class PooledGitRepoFactory implements KeyedPooledObjectFactory<Context, Git> {
+public class PooledGitRepoFactory implements KeyedPooledObjectFactory<GitContext, Context> {
     private GitManager gitManager;
+    private static final Logger logger = LoggerFactory.getLogger(PooledGitRepoFactory.class.getName());
 
     PooledGitRepoFactory(GitManager gitManager) {
         this.gitManager = gitManager;
     }
 
     @Override
-    public PooledObject<Git> makeObject(Context key) {
-        Git repo = gitManager.cloneRepo(key);
-        return new DefaultPooledObject<>(repo);
+    public PooledObject<Context> makeObject(GitContext key) {
+        Context ctx = makeContext(key);
+        gitManager.cloneRepo(ctx);
+        return new DefaultPooledObject<>(ctx);
     }
 
     @Override
-    public void destroyObject(Context key, PooledObject<Git> p) {
-        gitManager.deleteWorkingDir(key);
+    public boolean validateObject(GitContext key, PooledObject<Context> p) {
+        Context context = p.getObject();
+        try {
+            gitManager.fetchRemoteAndResetCurrentBranch(context);
+        } catch (Exception e) {
+            logger.warn("Failed to refresh git repo, invalidating pooled entry. Caught:" + e);
+            return false;
+        }
+        return true;
     }
 
     @Override
-    public boolean validateObject(Context key, PooledObject<Git> p) {
-        return false;
+    public void activateObject(GitContext key, PooledObject<Context> p) {
+
+    }
+    @Override
+    public void passivateObject(GitContext key, PooledObject<Context> p) {
+
     }
 
     @Override
-    public void activateObject(Context key, PooledObject<Git> p) {
-
+    public void destroyObject(GitContext key, PooledObject<Context> p) {
+        gitManager.deleteWorkingDir(p.getObject());
     }
 
-    @Override
-    public void passivateObject(Context key, PooledObject<Git> p) {
 
+    private Context makeContext(GitContext key) {
+        Context ctx = new Context();
+        ctx.contextKeys.putAll(key.getKeys());
+        return ctx;
     }
 }

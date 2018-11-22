@@ -13,13 +13,13 @@ public enum GitProcessorContext {
 	 * (e.g."master-depls/bosh-expe/template/bosh-deployment" ) to fetch/update.
 	 * If this key is missing or empty, no submodule is fetched by default.
 	 */
-	submoduleListToFetch,
+	submoduleListToFetch(false, true),
 
 	/**
 	 * When this key is set a boolean true value, then all submodules are fetched without requiring
 	 * to individually list them. This overrides the behavior or submoduleListToFetch key
 	 */
-	fetchAllSubModules,
+	fetchAllSubModules(false, true),
 
 	/**
 	 * In: When this key is specified, the gitProcessor will fail if the cloned repo does contain
@@ -27,7 +27,7 @@ public enum GitProcessorContext {
 	 * git branch -rl service-instance-guid  # TODO: and fail if service-instance-guid displays
 	 * </pre>
 	 */
-	failIfRemoteBranchExists,
+	failIfRemoteBranchExists(true, false),
 
 	/**
 	 * In: Name of an expected remote branch to checkout following clone. Defaults to master if missing.
@@ -38,7 +38,7 @@ public enum GitProcessorContext {
 	 * git checkout cassandra # fails if remote cassandra branch does not exist
 	 * </pre>
 	 */
-	checkOutRemoteBranch,
+	checkOutRemoteBranch(true, false),
 
 	/**
 	 * In: This key represents the name of a branch to checkout (e.g. "service-instance-guid").
@@ -54,20 +54,20 @@ public enum GitProcessorContext {
 	 * git checkout cassandra # checkout
 	 * </pre>
 	 */
-	createBranchIfMissing,
+	createBranchIfMissing(true, false),
 
 
 	/**
 	 * Out: Workdir result of the preCreate activity (a java.nio.file.Path)
 	 */
-	workDir,
+	workDir(false, false),
 
 	// Postcreate
 
 	/**
 	 * In: Use this key to specify the commit message (usually 1st line \n\nadditional details)
 	 */
-	commitMessage,
+	commitMessage(false, false),
 
 
 	/**
@@ -78,6 +78,27 @@ public enum GitProcessorContext {
 	 *  git push :service-instance-guid # delete the branch.
 	 * </pre>
 	 */
-	deleteRemoteBranch
+	deleteRemoteBranch(false, false);
 
+	private final boolean rejectWhenPooled;
+	private final boolean poolable;
+
+	GitProcessorContext(boolean poolable, boolean rejectWhenPooled) {
+		this.poolable = poolable;
+		this.rejectWhenPooled = rejectWhenPooled;
+	}
+
+	/**
+	 * Indicates whether the request field is a discrimant key when pooling the request (i.e. is discrimant
+	 */
+	boolean isPoolable() {
+		return poolable;
+	}
+
+	/**
+	 * Indicates whether the request field is not supported when using pooling.
+	 */
+	boolean isRejectWhenPooled() {
+		return rejectWhenPooled;
+	}
 }

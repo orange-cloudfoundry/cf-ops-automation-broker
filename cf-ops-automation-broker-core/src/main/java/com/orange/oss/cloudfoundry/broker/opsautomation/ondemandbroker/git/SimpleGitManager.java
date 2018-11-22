@@ -103,13 +103,18 @@ public class SimpleGitManager extends DefaultBrokerProcessor implements GitManag
 
     /**
      * Overrides local branch with remote. Useful when git repo was pooled.
-     * - git fetch origin refs/heads/master
-     * - git reset 'origin/master' --hard
      */
     @Override
     public void fetchRemoteAndResetCurrentBranch(Context ctx) {
         Git git = getGit(ctx);
         String remoteBranch = getImplicitRemoteBranchToDisplay(ctx);
+        //See https://git-scm.com/book/en/v2/Git-Internals-The-Refspec about the refspec/
+        //The format of the refspec is:
+        // first, an optional +, followed by <src>:<dst>,
+        // where:
+        // <src> is the pattern for references on the remote side and
+        // <dst> is where those references will be tracked locally.
+        // The + tells Git to update the reference even if it isn’t a fast-forward.
         String fetchRef = "+refs/heads/" +remoteBranch + ":refs/remotes/" + DEFAULT_REMOTE_NAME + "/" + remoteBranch;
         FetchCommand fetchCommand = git.fetch().
                 setRefSpecs(fetchRef).

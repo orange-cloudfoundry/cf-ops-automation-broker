@@ -63,7 +63,7 @@ jobs:
         - |
           echo "trigger-job -j $BUILD_PIPELINE_NAME/approve-and-delete-disabled-deployments" | tee -a result-dir/flight-plan
       params:
-        BUILD_PIPELINE_NAME: coab-depls-generated
+        BUILD_PIPELINE_NAME: coab-depls-bosh-generated
   - task: fly-into-concourse
     input_mapping: {fly-cmd: delete-plan}
     output_mapping: {flight-report: concourse-delete-report}

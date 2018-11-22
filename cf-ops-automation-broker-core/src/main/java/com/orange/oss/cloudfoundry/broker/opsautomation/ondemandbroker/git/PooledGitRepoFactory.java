@@ -11,12 +11,13 @@ public class PooledGitRepoFactory implements KeyedPooledObjectFactory<GitContext
     private GitManager gitManager;
     private static final Logger logger = LoggerFactory.getLogger(PooledGitRepoFactory.class.getName());
 
-    PooledGitRepoFactory(GitManager gitManager) {
+    public PooledGitRepoFactory(GitManager gitManager) {
         this.gitManager = gitManager;
     }
 
     @Override
     public PooledObject<Context> makeObject(GitContext key) {
+        logger.info("Building new git repo");
         Context ctx = makeContext(key);
         gitManager.cloneRepo(ctx);
         return new DefaultPooledObject<>(ctx);
@@ -24,6 +25,7 @@ public class PooledGitRepoFactory implements KeyedPooledObjectFactory<GitContext
 
     @Override
     public boolean validateObject(GitContext key, PooledObject<Context> p) {
+        logger.info("Validating pooled git repo before reusing it");
         Context context = p.getObject();
         try {
             gitManager.fetchRemoteAndResetCurrentBranch(context);

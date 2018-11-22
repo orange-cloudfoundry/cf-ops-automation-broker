@@ -1,9 +1,6 @@
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.sample;
 
-import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.GitProcessor;
-import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.SimpleGitManager;
-import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.GitProcessorContext;
-import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.GitProperties;
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.*;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.osbclient.OsbClientFactory;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.*;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.*;
@@ -113,25 +110,29 @@ public class BoshBrokerApplication {
 
     @Bean
     public BrokerProcessor secretsGitProcessor(GitProperties secretsGitProperties) {
-        SimpleGitManager simpleGitManager = new SimpleGitManager(
+        return makeBrokerProcessor(secretsGitProperties, SECRETS_REPOSITORY_ALIAS_NAME);
+    }
+
+    @Bean
+    public BrokerProcessor templateGitProcessor(GitProperties templateGitProperties) {
+        return makeBrokerProcessor(templateGitProperties, TEMPLATES_REPOSITORY_ALIAS_NAME);
+    }
+
+    private BrokerProcessor makeBrokerProcessor(GitProperties secretsGitProperties, String repoAliasName) {
+        GitManager simpleGitManager = new SimpleGitManager(
                 secretsGitProperties.getUser(),
                 secretsGitProperties.getPassword(),
                 secretsGitProperties.getUrl(),
                 secretsGitProperties.committerName(),
                 secretsGitProperties.committerEmail(),
-                SECRETS_REPOSITORY_ALIAS_NAME);
-        return new GitProcessor(simpleGitManager);
-    }
-
-    @Bean
-    public BrokerProcessor templateGitProcessor(GitProperties templateGitProperties) {
-        SimpleGitManager gitManager = new SimpleGitManager(
-                templateGitProperties.getUser(),
-                templateGitProperties.getPassword(),
-                templateGitProperties.getUrl(),
-                templateGitProperties.committerName(),
-                templateGitProperties.committerEmail(),
-                TEMPLATES_REPOSITORY_ALIAS_NAME);
+                repoAliasName);
+        GitManager gitManager;
+        if (!secretsGitProperties.isUsePooling()) {
+            gitManager = simpleGitManager;
+        } else {
+            PooledGitRepoFactory factory = new PooledGitRepoFactory(simpleGitManager);
+            gitManager= new PooledGitManager(factory, repoAliasName, simpleGitManager);
+        }
         return new GitProcessor(gitManager);
     }
 
@@ -157,6 +158,10 @@ public class BoshBrokerApplication {
         return new DefaultBrokerProcessor() {
             @Override
             public void preCreate(Context ctx) {
+                registerPaasTemplatesBranches(ctx);
+            }
+
+            private void registerPaasTemplatesBranches(Context ctx) {
                 ctx.contextKeys.put(TEMPLATES_REPOSITORY_ALIAS_NAME + GitProcessorContext.checkOutRemoteBranch.toString(), pipelineProperties.getCheckOutRemoteBranch()); //"develop"
                 ctx.contextKeys.put(TEMPLATES_REPOSITORY_ALIAS_NAME + GitProcessorContext.createBranchIfMissing.toString(), pipelineProperties.getCreateBranchIfMissing()); //"feature-coadepls-cassandra-serviceinstances"
             }

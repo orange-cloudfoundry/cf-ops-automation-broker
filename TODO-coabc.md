@@ -12,66 +12,29 @@ Check behavior when the specified branch does not exist. Is the clone/fetch stil
 
 setBranchesToClone(Collection<String> branchesToClone) instead of setCloneAllBranches(boolean cloneAllBranches)
 
+- avoid cloning paas-templates when we don't need it: 
+    - we don't need it during: get last operation, DSI: only paas-secret is written to. 
+    - need it during CSI, USI, BSI/UBSI (for custom bind params): to write coab-vars.yml
+
+Alternative impls:
+- a new key in context to explicitly require/skip clone, that targets the repo alias
+    - SimpleGitManager ignores the clone: pb it will be pooled, so need to also need to evict such context in PooledGitManager
+    - PooledGitManager ignores the clone
+    - GitProcessor ignores all requests (requires it having knowledge of the repo alias) 
+- 
+
 -------------------
 Git repo caching
 
-- check behavior of pool w.r.t. two non equal context objects. 
-   - Do we really need the Key in the pool ?
-   - Instead store a Git or Context object (git, workdir...) ?
-     - Git: missing workDir to delete to ? 
-     - Requested context: awkward to pool the whole context which might include other objects and create memory leak (e.g. credhub, )
-     - a new object with needed info the the fetch & refresh ?
-         - A new Context object 
-            - with only git relevant keys in it:
-                - request: createBranchIfMissing,checkOutRemoteBranch  
-                - state: PRIVATE_GIT_INSTANCE
-                - response: workDir
-            - filtered out keys           
-                - request:
-                    - commitMessage
-                    - deleteRemoteBranch
-                    - deadcode: submoduleListToFetch, fetchAllSubModules, 
-                - state: PRIVATE_SUBMODULES_LIST 
-     
-     => implement gitFetchAndReset() to fetch only the branch we need
-        - git fetch origin refs/heads/master 
-        - git reset 'origin/master' --hard 
+- add flag to turn it on in the broker
 
+How can we make sure we properly pool the git repos ?
 
-Clone:
-- Borrow from Pool: 
-    - get pooledContext: Git, workDir
-- insert in user Context: workDir, pooledContext
+What are source of pool misses ?
+- 
 
-CommitPush:
-- get from userContext: commit msg, ...
-- insert into pooled context: commit msg, ...  
-- delegate with pooled context: Git, workDir + other keys (commit msg) 
-
-Cleanup:
-- get pooledContext from user request
-- delegate with cleanup pooled context: 
-- clear request specific keys in pooled context: commitMessage, deleteRemoteBranch 
-- Return to pool: pooledContext  
-
-=> No need for a KeyedPool. Instead Pool "pooled Git-only Context" objects
-
-Q: tag/prefix keys to ease their filtering ?
-A: add a pooleable flag on the enum. 
 
 -----
-Q: can we have GitManager expose strong method prototypes and not deal with Context anymore ?
-- extract methods with inputs, context outputs and state (Git, submodules)
-    - not clear where to store state
-- update GitManager to this contract
-- inline wrapping calls in GitProcessor: Context contract moves to GitProcessor
-- rename SimpleGitManagerTest into GitProcessorTest
-
-Benefits:
-- strong typing on the GitManager: explicit arguments made visible
-
-A: expensive refactoring, only worth if more git related work/complexity, and associated Test cleanup.
-=> delay it
 
      
 -----     

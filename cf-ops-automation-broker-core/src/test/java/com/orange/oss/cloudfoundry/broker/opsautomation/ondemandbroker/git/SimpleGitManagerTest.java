@@ -37,7 +37,7 @@ public class SimpleGitManagerTest {
 
 
     @BeforeClass
-    public static void startGitServer() throws IOException, GitAPIException {
+    public static void startGitServer() throws IOException {
         gitServer = new GitServer();
         gitServer.startEphemeralReposServer(GitServer.NO_OP_INITIALIZER);
     }
@@ -331,18 +331,18 @@ public class SimpleGitManagerTest {
         //org.eclipse.jgit.lib.Repository - close() called when useCnt is already zero for Repository
     }
 
-    private void addAndDeleteFilesForRepoAlias(SimpleGitManager processor, Context context, String repoAlias) throws IOException {
+    private void addAndDeleteFilesForRepoAlias(SimpleGitManager gitManager, Context context, String repoAlias) throws IOException {
         //given a clone of an empty repo
-        processor.cloneRepo(context);
+        gitManager.cloneRepo(context);
 
         //when adding files
         //and asking to commit and push
         addAFile(context, "hello.txt", "afile.txt", repoAlias);
-        processor.commitPushRepo(context, true);
+        gitManager.commitPushRepo(context, true);
 
         //then file should be persisted
         Context ctx1 = new Context();
-        processor.preCreate(ctx1);
+        gitManager.cloneRepo(ctx1);
         Path secondClone = getWorkDir(ctx1, repoAlias);
         File secondCloneSameFile = secondClone.resolve("afile.txt").toFile();
         assertThat(secondCloneSameFile).exists();
@@ -350,15 +350,15 @@ public class SimpleGitManagerTest {
         //when deleting file
         assertThat(secondCloneSameFile.delete()).isTrue();
         //and committing
-        processor.commitPushRepo(ctx1, true);
+        gitManager.commitPushRepo(ctx1, true);
 
         //then file should be removed from repo
-        Path thirdClone = cloneRepo(processor, repoAlias);
+        Path thirdClone = cloneRepo(gitManager, repoAlias);
         File thirdCloneFile = thirdClone.resolve("afile.txt").toFile();
         assertThat(thirdCloneFile).doesNotExist();
 
         //cleanup
-        processor.deleteWorkingDir(ctx1);
+        gitManager.deleteWorkingDir(ctx1);
     }
 
     @Test
@@ -386,7 +386,7 @@ public class SimpleGitManagerTest {
         assertThat(workDir.toFile().exists()).isTrue();
 
         //when
-        gitManager.cleanUp(ctx);
+        gitManager.deleteWorkingDir(ctx);
 
         //then
         assertThat(workDir.toFile().exists()).isFalse();
@@ -675,7 +675,7 @@ public class SimpleGitManagerTest {
         Context ctx1 = new Context();
         processor = new SimpleGitManager("gituser", "gitsecret", GIT_URL, "committerName", "committer@address.org", null);
         ctx1.contextKeys.put(GitProcessorContext.checkOutRemoteBranch.toString(), branch);
-        processor.preCreate(ctx1);
+        processor.cloneRepo(ctx1);
         Path secondClone = getWorkDir(ctx1, "");
         File secondCloneSameFile = secondClone.resolve("afile-in-" + branch + "-branch.txt").toFile();
         assertThat(secondCloneSameFile).exists();
@@ -722,7 +722,7 @@ public class SimpleGitManagerTest {
 
     private Path cloneRepo(SimpleGitManager processor, String repoAlias) {
         Context ctx = new Context();
-        processor.preCreate(ctx);
+        processor.cloneRepo(ctx);
 
         return getWorkDir(ctx, repoAlias);
     }

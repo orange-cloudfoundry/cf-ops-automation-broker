@@ -1,7 +1,6 @@
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git;
 
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.Context;
-import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.DefaultBrokerProcessor;
 import org.apache.commons.lang.builder.ToStringBuilder;
 import org.eclipse.jgit.api.*;
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -35,7 +34,7 @@ import static org.eclipse.jgit.lib.Constants.DEFAULT_REMOTE_NAME;
  *
  * @author poblin-orange
  */
-public class SimpleGitManager extends DefaultBrokerProcessor implements GitManager {
+public class SimpleGitManager implements GitManager {
 
 
     private static final String PRIVATE_GIT_INSTANCE = "private-git-instance";
@@ -59,7 +58,7 @@ public class SimpleGitManager extends DefaultBrokerProcessor implements GitManag
 
 
     @Override
-    public Git cloneRepo(Context ctx) {
+    public void cloneRepo(Context ctx) {
         Path workDir = null;
         try {
 

@@ -1,51 +1,92 @@
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git;
 
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.Context;
-import org.junit.Ignore;
+import org.apache.commons.pool2.KeyedPooledObjectFactory;
+import org.apache.commons.pool2.impl.DefaultPooledObject;
 import org.junit.Test;
-import org.mockito.Mockito;
 
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
+import java.nio.file.FileSystems;
+import java.nio.file.Path;
+import java.util.Collections;
+
+import static org.fest.assertions.Assertions.assertThat;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class PooledGitManagerTest {
 
-    private GitManager gitManager = Mockito.mock(GitManager.class);
-    private PooledGitManager pooledGitManager= new PooledGitManager(new PooledGitRepoFactory(gitManager));
+    @SuppressWarnings("unchecked")
+    private KeyedPooledObjectFactory<GitContext, Context> factory = mock(KeyedPooledObjectFactory.class);
+    private String repoAlias = "paas-templates.";
+    private GitManager gitManager = mock(GitManager.class);
+    private PooledGitManager pooledGitManager = new PooledGitManager(factory, repoAlias, gitManager);
+    private Context ctx = new Context();
 
     @Test
-    public void pools_a_git_repo_across_invocations() {
-        //When a 1st clone is pulled and restored to the pool
-        Context ctx1 = new Context();
-        pooledGitManager.cloneRepo(ctx1);
-        //Then the git manager gets delegated the call to clone the repo
-        verify(gitManager).cloneRepo(ctx1);
+    public void creates_pool_key_from_selected_received_context_request_fields() {
+        //given
+        Context ctx = new Context();
+        ctx.contextKeys.put(repoAlias + GitProcessorContext.checkOutRemoteBranch.toString(), "develop");
+        ctx.contextKeys.put(repoAlias + GitProcessorContext.createBranchIfMissing.toString(), "service-instance-guid");
+        //when
+        GitContext gitContext = pooledGitManager.makeLocalContext(ctx);
+        //then
+        assertThat(gitContext.getKeys()).isEqualTo(ctx.contextKeys);
+    }
 
-        //When a 1st clone is restored to the pool
-        pooledGitManager.deleteWorkingDir(ctx1);
-        //And a new clone is requested
-        Context ctx2 = new Context();
-        pooledGitManager.cloneRepo(ctx2);
+    @Test
+    public void creates_pool_key_filtering_out_irrelevant_non_pooleable_fields() {
+        //given
+        Context ctx = new Context();
+        ctx.contextKeys.put(repoAlias + GitProcessorContext.checkOutRemoteBranch.toString(), "develop");
+        ctx.contextKeys.put(repoAlias + GitProcessorContext.createBranchIfMissing.toString(), "service-instance-guid");
+        ctx.contextKeys.put(repoAlias + GitProcessorContext.commitMessage.toString(), "a msg");
+        //when
+        GitContext gitContext = pooledGitManager.makeLocalContext(ctx);
+        //then
+        Context expectedCtx = new Context();
+        expectedCtx.contextKeys.put(repoAlias + GitProcessorContext.checkOutRemoteBranch.toString(), "develop");
+        expectedCtx.contextKeys.put(repoAlias + GitProcessorContext.createBranchIfMissing.toString(), "service-instance-guid");
+        assertThat(gitContext.getKeys()).isEqualTo(expectedCtx.contextKeys);
+    }
 
-        //Then a second clone is NOT created
-        verify(gitManager, never()).cloneRepo(ctx2);
+    @Test(expected = RuntimeException.class)
+    public void rejects_pool_key_for_unsupported_submodules_request_fields() {
+
+        //given
+        Context ctx = new Context();
+        ctx.contextKeys.put(repoAlias + GitProcessorContext.checkOutRemoteBranch.toString(), "develop");
+        ctx.contextKeys.put(repoAlias + GitProcessorContext.createBranchIfMissing.toString(), "service-instance-guid");
+        ctx.contextKeys.put(repoAlias + GitProcessorContext.submoduleListToFetch.toString(), Collections.singletonList("mysql-deployment"));
+
+        //when asked to process a request with unsupported attribute
+        pooledGitManager.makeLocalContext(ctx);
+        //then it rejects by throwing an exception
     }
 
 
     @Test
-    @Ignore("Only gathering ideas/specs for now")
-    public void caches_git_clones() {
-        //Given an existing repo
-        //when a clone is requested
-        //then a clone is stored on local disk with a "clone" prefix
-        //when the clone is cleaned up
-        //it gets renamed with a "cache" prefix
+    public void clone_exposed_outputs_from_pooled_repo() throws Exception {
+        //given
+        ctx.contextKeys.put(repoAlias + GitProcessorContext.checkOutRemoteBranch.toString(), "develop");
+        ctx.contextKeys.put(repoAlias + GitProcessorContext.createBranchIfMissing.toString(), "service-instance-guid");
 
-        //Given the repo gets pushed some new modifs
+        //and pool returns a context when invoked with return keys
+        Context pooledCtx = new Context();
+        pooledCtx.contextKeys.put(repoAlias + GitProcessorContext.checkOutRemoteBranch.toString(), "develop");
+        pooledCtx.contextKeys.put(repoAlias + GitProcessorContext.createBranchIfMissing.toString(), "service-instance-guid");
+        Path gitRepoPath = FileSystems.getDefault().getPath("dummy/path");
+        pooledCtx.contextKeys.put(repoAlias + GitProcessorContext.workDir.toString(), gitRepoPath);
+        when(factory.makeObject(any(GitContext.class))).thenReturn(new DefaultPooledObject<>(pooledCtx));
+        //when asked to clone
+        pooledGitManager.cloneRepo(ctx);
 
-        //when a new clone is requested
-        //the cached clone is renamed with a "clone" prefix
-        //the clone get fetched the repo content, and reset to the requested branch
+        //then returned context contain response values
+        Path workDir = (Path) ctx.contextKeys.get(repoAlias + GitProcessorContext.workDir.toString());
+        assertThat(workDir).isNotNull();
+        assertThat(workDir == gitRepoPath).isTrue();
     }
+
 
 }

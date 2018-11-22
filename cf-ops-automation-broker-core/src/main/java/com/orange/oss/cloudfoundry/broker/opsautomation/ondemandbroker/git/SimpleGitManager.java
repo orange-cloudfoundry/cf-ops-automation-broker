@@ -91,7 +91,6 @@ public class SimpleGitManager extends DefaultBrokerProcessor implements GitManag
             logger.info(prefixLog("git repo is ready at {}"), workDir);
             //push the work dir in invocation context
             setWorkDir(workDir, ctx);
-            return git;
         } catch (Exception e) {
             String msgContext = (workDir == null) ? "" : (" while cloning into dir: " + workDir);
             logger.warn(prefixLog("caught ") + e + msgContext, e);

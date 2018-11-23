@@ -73,7 +73,7 @@ public class TerraformBrokerApplication {
     @Bean
     public BrokerProcessor gitProcessor(GitProperties gitProperties) {
         SimpleGitManager gitManager = new SimpleGitManager(gitProperties.getUser(), gitProperties.getPassword(), gitProperties.getUrl(), gitProperties.committerName(), gitProperties.committerEmail(), null);
-        return new GitProcessor(gitManager);
+        return new GitProcessor(gitManager, null);
     }
 
     @Bean

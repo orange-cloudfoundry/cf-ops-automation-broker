@@ -71,6 +71,11 @@ public enum GitProcessorContext {
 
 
 	/**
+	 * In: Use this key to not perform a clone and clone clean up in the step associated with this context. Value can contain non null java.lang.Object
+	 */
+	ignoreStep(false, false),
+
+	/**
 	 * In: ask to delete the specified remote branch
 	 *
 	 * Equivalent of:

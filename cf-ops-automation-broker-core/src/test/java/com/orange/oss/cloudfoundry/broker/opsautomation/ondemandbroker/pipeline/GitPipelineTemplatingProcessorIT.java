@@ -43,7 +43,7 @@ public class GitPipelineTemplatingProcessorIT {
 		
 		SimpleGitManager processor=new SimpleGitManager(gitProperties.getUser(), gitProperties.getPassword(), gitProperties.getUrl(), "committerName", "committerEmail", null);
 		List<BrokerProcessor> processors= new ArrayList<>();
-		processors.add(new GitProcessor(processor));
+		processors.add(new GitProcessor(processor, null));
 		processors.add(new GitPipelineTemplatingProcessor("on-demand-depl",this.manifestResource));
 		ProcessorChain chain=new ProcessorChain(processors, new DefaultBrokerSink());
 
@@ -52,10 +52,10 @@ public class GitPipelineTemplatingProcessorIT {
 
 	}
 
-	GitServer gitServer;
+	private GitServer gitServer;
 
 	@Before
-	public void startGitServer() throws IOException, GitAPIException {
+	public void startGitServer() throws IOException {
 		gitServer = new GitServer();
 		gitServer.startEphemeralReposServer(GitServer.NO_OP_INITIALIZER);
 		//FIXME: initialize git mock repo or reference publicly accessible git repo

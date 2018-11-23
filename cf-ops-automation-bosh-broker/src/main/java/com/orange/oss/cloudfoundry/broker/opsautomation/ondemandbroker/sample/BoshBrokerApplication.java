@@ -133,15 +133,15 @@ public class BoshBrokerApplication {
             PooledGitRepoFactory factory = new PooledGitRepoFactory(simpleGitManager);
             gitManager= new PooledGitManager(factory, repoAliasName, simpleGitManager);
         }
-        return new GitProcessor(gitManager);
+        return new GitProcessor(gitManager, repoAliasName);
     }
 
 
     @Bean
-    public ProcessorChain processorChain(BrokerProcessor boshProcessor, BrokerProcessor secretsGitProcessor, BrokerProcessor templateGitProcessor, BrokerProcessor paasTemplateBranchSelector) {
+    public ProcessorChain processorChain(BrokerProcessor boshProcessor, BrokerProcessor secretsGitProcessor, BrokerProcessor templateGitProcessor, BrokerProcessor paasTemplateContextFilter) {
         List<BrokerProcessor> processors = new ArrayList<>();
 
-        processors.add(paasTemplateBranchSelector);
+        processors.add(paasTemplateContextFilter);
         // git push wil trigger 1st for paas-templates and then 2nd for paas-secrets,
         // reducing occurences of fail-fast consistency check failures
         // see related https://github.com/orange-cloudfoundry/cf-ops-automation/issues/201
@@ -154,16 +154,33 @@ public class BoshBrokerApplication {
     }
 
     @Bean
-    public BrokerProcessor paasTemplateBranchSelector(PipelineProperties pipelineProperties) {
+    public BrokerProcessor paasTemplateContextFilter(PipelineProperties pipelineProperties) {
         return new DefaultBrokerProcessor() {
+
+            // for necessary steps, configure the right branch to fetch
             @Override
-            public void preCreate(Context ctx) {
-                registerPaasTemplatesBranches(ctx);
-            }
+            public void preCreate(Context ctx) { registerPaasTemplatesBranches(ctx); }
+
+            //for steps only requiring paas-secrets, don't clone paas-templates
+            @Override
+            public void preGetLastOperation(Context ctx) { skipPaasTemplateGitCloneAndPush(ctx); }
+            @Override
+            public void preDelete(Context ctx) { skipPaasTemplateGitCloneAndPush(ctx); }
+
+            //for yet unimplemented steps, don't clone paas-templates
+            @Override
+            public void preBind(Context ctx) { skipPaasTemplateGitCloneAndPush(ctx); }
+            @Override
+            public void preUnBind(Context ctx) { skipPaasTemplateGitCloneAndPush(ctx); }
+            @Override
+            public void preUpdate(Context ctx) { skipPaasTemplateGitCloneAndPush(ctx); }
 
             private void registerPaasTemplatesBranches(Context ctx) {
                 ctx.contextKeys.put(TEMPLATES_REPOSITORY_ALIAS_NAME + GitProcessorContext.checkOutRemoteBranch.toString(), pipelineProperties.getCheckOutRemoteBranch()); //"develop"
                 ctx.contextKeys.put(TEMPLATES_REPOSITORY_ALIAS_NAME + GitProcessorContext.createBranchIfMissing.toString(), pipelineProperties.getCreateBranchIfMissing()); //"feature-coadepls-cassandra-serviceinstances"
+            }
+            private void skipPaasTemplateGitCloneAndPush(Context ctx) {
+                ctx.contextKeys.put(TEMPLATES_REPOSITORY_ALIAS_NAME + GitProcessorContext.ignoreStep.toString(), "true"); //"develop"
             }
 
         };

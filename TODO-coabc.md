@@ -12,16 +12,6 @@ Check behavior when the specified branch does not exist. Is the clone/fetch stil
 
 setBranchesToClone(Collection<String> branchesToClone) instead of setCloneAllBranches(boolean cloneAllBranches)
 
-- avoid cloning paas-templates when we don't need it: 
-    - we don't need it during: get last operation, DSI: only paas-secret is written to. 
-    - need it during CSI, USI, BSI/UBSI (for custom bind params): to write coab-vars.yml
-
-Alternative impls:
-- a new key in context to explicitly require/skip clone, that targets the repo alias
-    - SimpleGitManager ignores the clone: pb it will be pooled, so need to also need to evict such context in PooledGitManager
-    - PooledGitManager ignores the clone
-    - GitProcessor ignores all requests (requires it having knowledge of the repo alias) 
-- 
 
 -------------------
 Git repo caching
@@ -29,10 +19,42 @@ Git repo caching
 - add flag to turn it on in the broker
 
 How can we make sure we properly pool the git repos ?
+- assert the pool stats in 
 
 What are source of pool misses ?
 - 
 
+Refactor GitManager impls to extract common repo alias +log support? in a common ~super~/collaborator class. 
+   + use it in tests 
+   + use it and in clients
+
+    private String getContextValue(Context ctx, GitProcessorContext key) {
+        return (String) ctx.contextKeys.get(getContextKey(key));
+    }
+
+    String getContextKey(GitProcessorContext keyEnum) {
+        return repoAliasName + keyEnum.toString();
+    }
+
+    String prefixLog(String logMessage) {
+        if ("".equals(this.repoAliasName)) {
+            return logMessage;
+        } else {
+            return "[" + this.repoAliasName + "] " + logMessage;
+        }
+    }
+
+Q:in Context object itself ?
+
+    Q: why did we use string instead of the plain enum in Context ? 
+    A: to add the repo alias to keys
+    
+    Q: can we simplify this ?
+    A: 
+    - use a Pojo with enum + repo alias + equals/hashcode, with a builder
+    - introduce the concept in the pipeline instead, i.e. in the Context object 
+
+Q: as an Helper class 
 
 -----
 

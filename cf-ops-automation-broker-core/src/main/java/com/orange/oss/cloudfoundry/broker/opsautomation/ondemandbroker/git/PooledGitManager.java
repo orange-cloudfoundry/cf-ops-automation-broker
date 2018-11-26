@@ -6,6 +6,8 @@ import org.apache.commons.pool2.KeyedPooledObjectFactory;
 import org.apache.commons.pool2.impl.GenericKeyedObjectPool;
 import org.apache.commons.pool2.impl.GenericKeyedObjectPoolConfig;
 
+import javax.management.*;
+import java.lang.management.ManagementFactory;
 import java.nio.file.Path;
 
 /**
@@ -76,6 +78,16 @@ public class PooledGitManager implements GitManager {
         throw new IllegalArgumentException("Not supported in pooled impl. Would be the sign of an infinite recursive call");
     }
 
+    public Long getPoolAttribute(Metric metric)  {
+        //See https://docs.oracle.com/javase/7/docs/technotes/guides/management/jconsole.html for object name syntax
+        //and possibly https://www.oracle.com/technetwork/java/javase/tech/best-practices-jsp-136021.html
+        try {
+            return (Long) ManagementFactory.getPlatformMBeanServer().getAttribute(new ObjectName("org.apache.commons.pool2" + ":type=GenericKeyedObjectPool,name=" + this.repoAliasName), metric.toString() + "Count");
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     private void mapOutputResponse(Context ctx, Context pooledContext) {
         Path workDir = (Path) pooledContext.contextKeys.get(repoAliasName + GitProcessorContext.workDir.toString());
         ctx.contextKeys.put(repoAliasName + GitProcessorContext.workDir.toString(), workDir);
@@ -113,8 +125,12 @@ public class PooledGitManager implements GitManager {
         return builder.build();
     }
 
-    public int getActivePlusIdleClones() {
-        return pool.getNumActive() + pool.getNumIdle();
+    public enum Metric {
+        Created,
+        Borrowed,
+        Destroyed,
+        Returned
 
     }
+
 }

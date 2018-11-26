@@ -19,7 +19,11 @@ Git repo caching
 - add flag to turn it on in the broker
 
 How can we make sure we properly pool the git repos ?
-- assert the pool stats in 
+- assert the pool stats in
+    - from JMX beans
+        - complete JMX configuration to be able to distinguish secrets from templates pools
+
+Investigate if/how the pool JMX can be exposed as actuactor metrics   
 
 What are source of pool misses ?
 - 

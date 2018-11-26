@@ -4,6 +4,7 @@ import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processor
 import org.apache.commons.pool2.KeyedObjectPool;
 import org.apache.commons.pool2.KeyedPooledObjectFactory;
 import org.apache.commons.pool2.impl.GenericKeyedObjectPool;
+import org.apache.commons.pool2.impl.GenericKeyedObjectPoolConfig;
 
 import java.nio.file.Path;
 
@@ -28,9 +29,16 @@ public class PooledGitManager implements GitManager {
     private GitManager gitManager;
 
     public PooledGitManager(KeyedPooledObjectFactory<GitContext, Context> factory, String repoAliasName, GitManager gitManager) {
-        pool = new GenericKeyedObjectPool<>(factory);
+        GenericKeyedObjectPoolConfig<Context> poolConfig = constructPoolConfig(repoAliasName);
+        pool = new GenericKeyedObjectPool<>(factory, poolConfig);
         this.repoAliasName = repoAliasName;
         this.gitManager = gitManager;
+    }
+
+    private GenericKeyedObjectPoolConfig<Context> constructPoolConfig(String repoAliasName) {
+        GenericKeyedObjectPoolConfig<Context> poolConfig = new GenericKeyedObjectPoolConfig<>();
+        poolConfig.setJmxNamePrefix(repoAliasName);
+        return poolConfig;
     }
 
     @Override
@@ -103,5 +111,10 @@ public class PooledGitManager implements GitManager {
         }
 
         return builder.build();
+    }
+
+    public int getActivePlusIdleClones() {
+        return pool.getNumActive() + pool.getNumIdle();
+
     }
 }

@@ -13,13 +13,13 @@ public enum GitProcessorContext {
 	 * (e.g."master-depls/bosh-expe/template/bosh-deployment" ) to fetch/update.
 	 * If this key is missing or empty, no submodule is fetched by default.
 	 */
-	submoduleListToFetch(false, true),
+	submoduleListToFetch(false, true, false),
 
 	/**
 	 * When this key is set a boolean true value, then all submodules are fetched without requiring
 	 * to individually list them. This overrides the behavior or submoduleListToFetch key
 	 */
-	fetchAllSubModules(false, true),
+	fetchAllSubModules(false, true, false),
 
 	/**
 	 * In: When this key is specified, the gitProcessor will fail if the cloned repo does contain
@@ -27,7 +27,7 @@ public enum GitProcessorContext {
 	 * git branch -rl service-instance-guid  # TODO: and fail if service-instance-guid displays
 	 * </pre>
 	 */
-	failIfRemoteBranchExists(true, false),
+	failIfRemoteBranchExists(true, false, false),
 
 	/**
 	 * In: Name of an expected remote branch to checkout following clone. Defaults to master if missing.
@@ -38,7 +38,7 @@ public enum GitProcessorContext {
 	 * git checkout cassandra # fails if remote cassandra branch does not exist
 	 * </pre>
 	 */
-	checkOutRemoteBranch(true, false),
+	checkOutRemoteBranch(true, false, false),
 
 	/**
 	 * In: This key represents the name of a branch to checkout (e.g. "service-instance-guid").
@@ -54,26 +54,26 @@ public enum GitProcessorContext {
 	 * git checkout cassandra # checkout
 	 * </pre>
 	 */
-	createBranchIfMissing(true, false),
+	createBranchIfMissing(true, false, false),
 
 
 	/**
 	 * Out: Workdir result of the preCreate activity (a java.nio.file.Path)
 	 */
-	workDir(false, false),
+	workDir(false, false, false),
 
 	// Postcreate
 
 	/**
 	 * In: Use this key to specify the commit message (usually 1st line \n\nadditional details)
 	 */
-	commitMessage(false, false),
+	commitMessage(false, false, true),
 
 
 	/**
 	 * In: Use this key to not perform a clone and clone clean up in the step associated with this context. Value can contain non null java.lang.Object
 	 */
-	ignoreStep(false, false),
+	ignoreStep(false, false, false),
 
 	/**
 	 * In: ask to delete the specified remote branch
@@ -83,21 +83,23 @@ public enum GitProcessorContext {
 	 *  git push :service-instance-guid # delete the branch.
 	 * </pre>
 	 */
-	deleteRemoteBranch(false, false);
+	deleteRemoteBranch(false, false, true);
 
 	private final boolean rejectWhenPooled;
-	private final boolean poolable; //is discrimant in pool key
+	private boolean transientRequestToPass;
+	private final boolean poolDiscriminant; //is discrimant in pool key
 
-	GitProcessorContext(boolean poolable, boolean rejectWhenPooled) {
-		this.poolable = poolable;
+	GitProcessorContext(boolean poolDiscriminant, boolean rejectWhenPooled, boolean transientRequestToPass) {
+		this.poolDiscriminant = poolDiscriminant;
 		this.rejectWhenPooled = rejectWhenPooled;
+		this.transientRequestToPass = transientRequestToPass;
 	}
 
 	/**
 	 * Indicates whether the request field is a discrimant key when pooling the request (i.e. is discrimant
 	 */
-	boolean isPoolable() {
-		return poolable;
+	boolean isPoolDiscriminant() {
+		return poolDiscriminant;
 	}
 
 	/**
@@ -105,5 +107,9 @@ public enum GitProcessorContext {
 	 */
 	boolean isRejectWhenPooled() {
 		return rejectWhenPooled;
+	}
+
+	public boolean isTransientRequestToPass() {
+		return transientRequestToPass;
 	}
 }

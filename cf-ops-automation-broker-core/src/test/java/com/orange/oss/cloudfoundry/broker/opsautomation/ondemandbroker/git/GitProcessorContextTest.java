@@ -8,7 +8,7 @@ public class GitProcessorContextTest {
 
     @Test
     public void supports_pooleable_flag() {
-        assertThat(GitProcessorContext.createBranchIfMissing.isPoolable()).isTrue();
+        assertThat(GitProcessorContext.createBranchIfMissing.isPoolDiscriminant()).isTrue();
     }
 
 }

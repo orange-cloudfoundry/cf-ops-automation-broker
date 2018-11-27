@@ -75,6 +75,24 @@ public class PooledGitManagerTest {
         assertThat(dest.contextKeys).isEqualTo(expected.contextKeys);
     }
 
+    @Test
+    public void clears_non_pooleable_fields_after_commit() {
+        //given
+        Context dest = new Context();
+        dest.contextKeys.put(repoAlias + GitProcessorContext.commitMessage.toString(), "a msg");
+        dest.contextKeys.put(repoAlias + GitProcessorContext.checkOutRemoteBranch.toString(), "develop");
+        dest.contextKeys.put(repoAlias + GitProcessorContext.createBranchIfMissing.toString(), "service-instance-guid");
+        dest.contextKeys.put(repoAlias + GitProcessorContext.workDir.toString(), "a path");
+        //when commit triggers and clean up launched
+        pooledGitManager.clearNonPooleableEntries(dest);
+        //then
+        Context expected = new Context();
+        expected.contextKeys.put(repoAlias + GitProcessorContext.checkOutRemoteBranch.toString(), "develop");
+        expected.contextKeys.put(repoAlias + GitProcessorContext.createBranchIfMissing.toString(), "service-instance-guid");
+        expected.contextKeys.put(repoAlias + GitProcessorContext.workDir.toString(), "a path");
+        assertThat(dest.contextKeys).isEqualTo(expected.contextKeys);
+    }
+
     @Test(expected = RuntimeException.class)
     public void rejects_pool_key_for_unsupported_submodules_request_fields() {
 

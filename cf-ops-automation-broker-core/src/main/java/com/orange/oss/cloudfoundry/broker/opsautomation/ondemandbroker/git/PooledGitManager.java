@@ -125,7 +125,7 @@ public class PooledGitManager implements GitManager {
             if (contextKey.isRejectWhenPooled()) {
                 throw new IllegalArgumentException("Git Key is not supported when git pooling is enabled:" + contextKey);
             }
-            if (contextKey.isPoolable()) {
+            if (contextKey.isPoolDiscriminant()) {
                 builder.putKeys(contextKeyString, contextValue);
             }
         }
@@ -149,19 +149,19 @@ public class PooledGitManager implements GitManager {
             if (contextValue == null) {
                 continue;
             }
-            if (!contextKey.isPoolable()) {
+            if (contextKey.isTransientRequestToPass()) {
                 dest.contextKeys.put(contextKeyString, contextValue);
             }
         }
     }
-    private void clearNonPooleableEntries(Context ctx) {
+    void clearNonPooleableEntries(Context ctx) {
         for (GitProcessorContext contextKey : GitProcessorContext.values()) {
             String contextKeyString = repoAliasName + contextKey.toString();
             Object contextValue= ctx.contextKeys.get(contextKeyString);
             if (contextValue == null) {
                 continue;
             }
-            if (!contextKey.isPoolable()) {
+            if (contextKey.isTransientRequestToPass()) {
                 ctx.contextKeys.remove(contextKeyString);
             }
         }

@@ -14,6 +14,9 @@ jobs:
           at: ~/cf-ops-automation-broker
       - run:
           name: Build
+          environment:
+          #Workaround OpenJdk8 regression which crashes JVM. See https://stackoverflow.com/a/53085816
+          - _JAVA_OPTIONS: "-Djdk.net.URLClassPath.disableClassPathURLCheck=true"
           command: |
             mvn -q install:help --settings settings.xml
             mvn install --settings settings.xml
@@ -69,7 +72,7 @@ jobs:
   release_to_github:
     working_directory: ~/cf-ops-automation-broker
     docker:
-      - image: circleci/golang:1.8.1
+      - image: circleci/openjdk:8-jdk
     steps:
       - attach_workspace:
           at: ~/cf-ops-automation-broker

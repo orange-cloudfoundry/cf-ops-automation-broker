@@ -1,3 +1,164 @@
+-------------------
+- Git repo caching
+
+Reqs:
+    - operability: be able to distinguish (from disk or else from logs) cache entries from actively used clones
+    - cache entries gets discarded when disk full reached upon fetch/clone
+
+Option 1: add AOP/spring caching behavior
+         https://docs.spring.io/spring/docs/current/spring-framework-reference/integration.html#cache
+         Pb: does not map well a caching abstraction, this is rather a pool abstraction
+
+Option 2: look for an off-the-shelf pooling cache component + refactor Processor
+
+
+Matching pooling libraries/concepts
+    - https://commons.apache.org/proper/commons-pool/api-2.6.0/index.html
+
+Q: do we need to distinguish pooled repos (e.g. remote URI, remote branch, submodules fetched) ?
+A: yes: both paas-secret and paas-template URIs should be fetched, with distinct remote branches  
++ we instead refresh pooled repos each time we take them from the pool (git fetch + git reset) 
+
+```
+public interface PooledObjectFactory<T> {
+    PooledObject<T> makeObject();
+    void activateObject(PooledObject<T> obj);
+    void passivateObject(PooledObject<T> obj);
+    boolean validateObject(PooledObject<T> obj);
+    void destroyObject(PooledObject<T> obj);
+}
+```
+
+Q: how do we pass in the context keys to the Factory impl ?
+- introduce keep one pool per key
+- use KeyedPooledObjectFactory<K,V> instead https://commons.apache.org/proper/commons-pool/api-2.6.0/org/apache/commons/pool2/KeyedPooledObjectFactory.html   
+
+
+
+-------------------
+Better error handling
+
+     19:38:41.629: [APP/PROC/WEB.0] Caused by: org.eclipse.jgit.errors.TransportException: No space left on device
+     19:38:41.629: [APP/PROC/WEB.0] 	at org.eclipse.jgit.transport.BasePackFetchConnection.doFetch(BasePackFetchConnection.java:376) ~[org.eclipse.jgit-4.9.0.201710071750-r.jar!/:4.9.0.201710071750-r]
+     19:38:41.629: [APP/PROC/WEB.0] 	at org.eclipse.jgit.transport.TransportHttp$SmartHttpFetchConnection.doFetch(TransportHttp.java:1090) ~[org.eclipse.jgit-4.9.0.201710071750-r.jar!/:4.9.0.201710071750-r]
+     19:38:41.629: [APP/PROC/WEB.0] 	at org.eclipse.jgit.transport.BasePackFetchConnection.fetch(BasePackFetchConnection.java:303) ~[org.eclipse.jgit-4.9.0.201710071750-r.jar!/:4.9.0.201710071750-r]
+     19:38:41.629: [APP/PROC/WEB.0] 	at org.eclipse.jgit.transport.BasePackFetchConnection.fetch(BasePackFetchConnection.java:292) ~[org.eclipse.jgit-4.9.0.201710071750-r.jar!/:4.9.0.201710071750-r]
+     19:38:41.629: [APP/PROC/WEB.0] 	at org.eclipse.jgit.transport.FetchProcess.fetchObjects(FetchProcess.java:246) ~[org.eclipse.jgit-4.9.0.201710071750-r.jar!/:4.9.0.201710071750-r]
+     19:38:41.629: [APP/PROC/WEB.0] 	at org.eclipse.jgit.transport.FetchProcess.executeImp(FetchProcess.java:162) ~[org.eclipse.jgit-4.9.0.201710071750-r.jar!/:4.9.0.201710071750-r]
+     19:38:41.629: [APP/PROC/WEB.0] 	at org.eclipse.jgit.transport.FetchProcess.execute(FetchProcess.java:123) ~[org.eclipse.jgit-4.9.0.201710071750-r.jar!/:4.9.0.201710071750-r]
+     19:38:41.629: [APP/PROC/WEB.0] 	at org.eclipse.jgit.transport.Transport.fetch(Transport.java:1236) ~[org.eclipse.jgit-4.9.0.201710071750-r.jar!/:4.9.0.201710071750-r]
+     19:38:41.629: [APP/PROC/WEB.0] 	at org.eclipse.jgit.api.FetchCommand.call(FetchCommand.java:239) ~[org.eclipse.jgit-4.9.0.201710071750-r.jar!/:4.9.0.201710071750-r]
+
+
+
+
+
+#30 Full COA conventions support:
+- [DONE]set COA rules as constants (in DeploymentConstants?) instead of configuration flags:
+   - https://github.com/orange-cloudfoundry/cf-ops-automation#ops-files
+    > By convention, all files in template dir matching *-operators.yml are used by bosh-deployment as ops-files inputs.
+- [DONE]remove prereq to have a file `operators/coab-operators.yml` present but still preserve symlinking it
+   - it is fine to have a deployment without any operators file
+- add systematic symlink of any template/ file 
+   - [DONE]1st step: ignoring subdirs, regardless of their name if their present as file in this directory,
+   - [DONE]2nd step: also mirror the subdirs with nested symlinks to support iaas-specific templates
+- [DONE]refine TemplatesGeneratorTest.populatePaasTemplates to make bdd style integration test:
+* [DONE]given a reference model in the src/test/resources such as 
+```
+coab-depls/mongodb
+|-- deployment-dependencies.yml
+`-- template
+    |-- coab-operators.yml
+    |-- add-prometheus-operators.yml
+    |-- add-shield-operators.yml
+    |-- mongodb-vars.yml
+    `-- mongodb.yml
+```
+* and a user request 
+* when generating the service instance
+* then the service instance looks like
+
+```
+$tree coab-depls/m_f49911f7-b69a-4aba-afdf-23fd11014278
+
+coab-depls/m_f49911f7-b69a-4aba-afdf-23fd11014278
+|-- deployment-dependencies.yml -> ../../template/mongodb/deployment-dependencies.yml
+`-- template
+    |-- coab-operators.yml -> ../../mongodb/operators/coab-operators.yml
+    |-- mongodb-vars.yml -> ../../mongodb/template/mongodb-vars.yml
+    |-- m_f49911f7-b69a-4aba-afdf-23fd11014278.yml -> ../../mongodb/template/mongodb.yml
+    `-- coab-vars.yml
+```
+[DONE]- update TemplatesGeneratorTest.aModelStructure() to use the src/test/resources/sample-deployment-model/coab-depls/mongodb or a distinct dedicated deployment model
+    + consider removing assertXX() methods redundant with populatePaasTemplates() 
+[DONE]- Update BoshServiceProvisionningTest#initPaasTemplate() to use file copy as well instead of crafting individual files explicitly
+[ONGOING/GB]- convert parasite configurable properties into constants in DeploymentProperties
+    private String secrets = "secrets"; //Secrets directory (i.e secrets)
+    private String meta = "meta"; //Meta directory (i.e meta)
+    private String template = "template"; //Template directory (i.e template)
+    private String vars = "vars"; //Vars suffix (i.e vars)
+    private String operators = "operators"; //Operators suffix (i.e operators)
+
+- remove extra checks that should be valided by getting the deployment model green. Only validate configuration errors in the broker matching relevant DeploymentProperties  
+    public static final String ROOT_DEPLOYMENT_EXCEPTION = "Root deployment directory doesn't exist at: ";
+    public static final String MODEL_DEPLOYMENT_EXCEPTION = "Model deployment directory doesn't exist at: ";
+    public static final String TEMPLATE_EXCEPTION = "Template directory doesn't exist at: ";
+    public static final String OPERATORS_EXCEPTION = "Operators directory doesn't exist at: ";
+    public static final String MANIFEST_FILE_EXCEPTION = "Model manifest file doesn't exist";
+    public static final String VARS_FILE_EXCEPTION = "Model vars file doesn't exist";
+    public static final String COAB_OPERATORS_FILE_EXCEPTION = "Coab operators file doesn't exist";
+    public static final String SECRETS_EXCEPTION = "Secrets directory doesn't exist at: ";
+    public static final String META_FILE_EXCEPTION = "Model meta file doesn't exist";
+    public static final String SECRETS_FILE_EXCEPTION = "Model secrets file doesn't exist";
+    
+- reconsider whether checks are necessary prior to delete service instances, as this may prevent cleaning up invalid/deprecated/N-1 models (i.e. a service instance branch with missing models)
+ 
+   2018-07-05T23:50:27.54+0200 [APP/PROC/WEB/0] OUT 2018-07-05 21:50:27.547  INFO 8 --- [nio-8080-exec-3] o.o.ProcessorChainServiceInstanceService : Unable to delete service with request DeleteServiceInstanceRequest(super=AsyncServiceInstanceRequest(super=ServiceBrokerRequest(cfInstanceId=null, apiInfoLocation=my-api.com/v2/info, originatingIdentity=Context(platform=cloudfoundry, properties={user_id=0d02117b-aa21-43e2-b35e-8ad6f8223519})), asyncAccepted=true), serviceInstanceId=ac4895ca-8021-4f6c-96a0-cd3915c9fa0f, serviceDefinitionId=mongodb-ondemand-service, planId=mongodb-ondemand-plan), caught com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.DeploymentException: Model deployment directory doesn't exist at: /home/vcap/tmp/broker-4671928892822661429/coab-depls/mongodb
+   2018-07-05T23:50:27.54+0200 [APP/PROC/WEB/0] OUT com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.DeploymentException: Model deployment directory doesn't exist at: /home/vcap/tmp/broker-4671928892822661429/coab-depls/mongodb
+   2018-07-05T23:50:27.54+0200 [APP/PROC/WEB/0] OUT 	at com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.StructureGeneratorImpl.checkThatModelDeploymentExists(StructureGeneratorImpl.java:37) ~[cf-ops-automation-broker-core-0.27.0-SNAPSHOT.jar!/:0.27.0-SNAPSHOT]
+   2018-07-05T23:50:27.54+0200 [APP/PROC/WEB/0] OUT 	at com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.StructureGeneratorImpl.checkPrerequisites(StructureGeneratorImpl.java:24) ~[cf-ops-automation-broker-core-0.27.0-SNAPSHOT.jar!/:0.27.0-SNAPSHOT]
+   2018-07-05T23:50:27.54+0200 [APP/PROC/WEB/0] OUT 	at com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.SecretsGenerator.checkPrerequisites(SecretsGenerator.java:25) ~[cf-ops-automation-broker-core-0.27.0-SNAPSHOT.jar!/:0.27.0-SNAPSHOT]
+   2018-07-05T23:50:27.54+0200 [APP/PROC/WEB/0] OUT 	at com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.BoshProcessor.preDelete(BoshProcessor.java:123) ~[cf-ops-automation-broker-core-0.27.0-SNAPSHOT.jar!/:0.27.0-SNAPSHOT]
+   2018-07-05T23:50:27.54+0200 [APP/PROC/WEB/0] OUT 	at com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.ProcessorChain.delete(ProcessorChain.java:123) ~[cf-ops-automation-broker-framework-0.27.0-SNAPSHOT.jar!/:0.27.0-SNAPSHOT]
+   2018-07-05T23:50:27.54+0200 [APP/PROC/WEB/0] OUT 	at com.orange.oss.ondemandbroker.ProcessorChainServiceInstanceService.deleteServiceInstance(ProcessorChainServiceInstanceService.java:91) ~[cf-ops-automation-broker-core-0.27.0-SNAPSHOT.jar!/:0.27.0-SNAPSHOT]
+   2018-07-05T23:50:27.54+0200 [APP/PROC/WEB/0] OUT 	at org.springframework.cloud.servicebroker.controller.ServiceInstanceController.deleteServiceInstance(ServiceInstanceController.java:146) [spring-cloud-cloudfoundry-service-broker-1.0.2.RELEASE.jar!/:na]
+ 
+
+[DONE]Q: how to recursively copy files & preserving symlinks ?
+
+[DONE]Q: how to assert expected dir ?
+* using string representation of the directory
+   * execute tree command
+   * find a java-based tree impl
+[DONE]* commit the expected output in the reference dataset & compare
+   * find java compare directory tree 
+      * including symlinks
+      * including coab-vars content 
+
+[TODO]secrets generation like template generation
+   - add systematic symlink of any secrets/ file 
+   - regardless of their name if their present as file in this directory,
+
+[DONE] https://github.com/orange-cloudfoundry/cf-ops-automation/issues/150
+    - [DONE]deployment-dependencies.yml generation as symlink
+    - [DONE]enable symlink generation instead of file generation     
+    - [DONE]clean useless code (file generation)
+
+[DONE]
+   - investigate intellij/maven handling of symlinks in resources and workarounds:
+   - [DONE]consider moving reference data set from cf-ops-automation-broker/cf-ops-automation-broker-core/src/test/resources/sample-deployment-model/coab-depls/cf-mysql/template/cf-mysql.yml vers cf-ops-automation-broker/cf-ops-automation-broker-core/sample-deployment-model/coab-depls/cf-mysql/template/cf-mysql.yml 
+    how to get to sources ? 
+        current dir
+        relative to classapth  target/src/resources/../../../sample-deployment-model   
+   - [DONE] investigate bug on circle CI when I introduce an empty directory (cf-mysql-deployment) in cf-mysql sample-deployment
+    No empty directory. A sigle file .keep filtered by the Copy.java class
+
+
+
+
+- Bump jackson to 2.9.2 or later and pull https://github.com/FasterXML/jackson-dataformats-text/tree/master/yaml
+
+
 
 - gracefully log case when operation state missing from Request? 
  
@@ -6,19 +167,6 @@ java.lang.NullPointerException: null
 	at com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.BoshProcessor.preGetLastOperation(BoshProcessor.java:74) ~[classes/:na]
 
        
-
-- rename brokers to more generic names
-   - rename jars
-   - search for cloudflare specifics: see  
-      - //FIXME: cloudflare specifics to be moved out
-      - //FIXME: cloudflare specific default to be changed
-      - config: route-suffix 
-      - arbitrary param: route
-         - + unicity of this param
-   
-   - make a new release
-      - register in bintray new project
-   - update jars in paas-template
 
 - bump cloudflare version in paas-template
 - Generalization
@@ -49,12 +197,6 @@ java.lang.NullPointerException: null
 
 
 
-- Continue generalization of vars/ops
-   - replace deployment_name with service-instance-guid
-   - add service plan name
-   - add space_guid,org_guid, originating_user
-
-
 - Refine tarball automatic deployment to filter on the current cassandra PR branch name to avoid deploying old version
    - investigate an additional "branch" filter accepted on the artifact endpoint: https://circleci.com/api/v1.1/project/github/orange-cloudfoundry/cf-ops-automation-broker/latest/artifacts?filter=successful 
 
@@ -73,14 +215,8 @@ java.lang.NullPointerException: null
   
 
 
-- harden smoke tests:
-   - to ease CF/concourse correlation: rename service instance with the the service instance guid
-   - refactor to use more readeable syntax: trap, seq, functions, see 
-      - https://github.com/cloudfoundry/capi-release/blob/develop/src/capi_utils/monit_utils.sh
-      - https://github.com/cloudfoundry/cf-deployment-concourse-tasks/blob/master/bosh-delete-deployment/task
-      
-
 - Bump to springboot 2.0
+    - Use javax bean validation 2.0 in VarsFilesYmlFormatter for validating maps  
 - Bump to spring cloud service broker 2.0
 - Upgrade to mockito 2
 - Upgrade to junit5 to benefit from nested junit classes as well as descrptive names https://junit.org/junit5/docs/5.0.1/user-guide/
@@ -89,10 +225,6 @@ java.lang.NullPointerException: null
    - https://github.com/mockito/mockito/issues/1348
 
 
-
-- complete refactoring of  CassandraServiceProvisionningTest to use OSB client instead of raw rest assured:CassandraServiceProvisionningTest rest-assured based client which is not compliant w.r.t. "X-Broker-API-Originating-Identity" mandatory header.
-               
-                                   
 - future bind request mapping improvements
    - factor out plan mapping into a method and then a bean 
    - support route binding responses                 
@@ -179,16 +311,6 @@ Server error, status code: 409, error code: 60016, message: An operation for ser
 
 
 --------------------------------
-
-- Refactor to generalize to another deployment (e.g. mysql)
-   - Introduce configuration class and builder in order to hold secrets/templates static information
-   - Refactor secrets and templates generator to have little methods
-   - Split Junit tests between check and generate in order to improve readability (target little methods instead of global method)
-   - Use MessageFormat in StructureGeneratorHelper
-   - Use Builder in Junit tests to improve readability
-   - Manage “-tpl” files
-   - Improve test coverage StructureGeneratorHelper (ONGOING)
-   - Update integration test to use a builder (e.g. for OSB req/resps) 
    
    
 - refine logback config to 

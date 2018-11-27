@@ -1,0 +1,121 @@
+---
+#mongodb.yml
+name: mongodb
+
+releases:
+  - {name: mongodb-services, version: latest}
+  - {name: route-registrar, version: latest}
+  - {name: prometheus, version: latest}
+
+update:
+  canaries: 1
+  canary_watch_time: 30000-240000
+  update_watch_time:  30000-240000
+  max_in_flight: 1 #<-- important to limit max in flight
+  serial: false
+
+stemcells:
+- alias: trusty
+  os: ubuntu-trusty
+  version: latest
+
+instance_groups:
+- name: mongodb-broker
+  instances: 1
+  vm_type: default
+  stemcell: trusty
+  azs: [z1]
+  networks: [{name: tf-net-coab-depls-instance}]
+  persistent_disk_type: default
+  jobs:
+  - name: broker-smoke-tests
+    release: mongodb-services
+    properties:
+      cf:
+        api:
+          url: ((cf.api.url))
+        admin:
+          username: admin
+          password: ((cf.admin.password))
+        skip:
+          ssl:
+            validation: true
+        org: service-sandbox
+        space: mongodb-smoke-tests
+        mongodb:
+          appdomain: ((cf.mongodb.appdomain))
+          servicename: mongodb
+          serviceplan: default
+          serviceinstancename: mongodb-instance
+  - name: broker
+    release: mongodb-services
+    consumes:
+      server: {from: deployment-server}
+    properties:
+      broker:
+        user: mongodb-broker
+        password: ((broker.password))
+      mongodb_node:
+        root_username: MongoRoot
+        root_password: ((!mongo_root_password))
+  # this is a route to expose mongodb broker  via cf routers
+  - name: route-registrar
+    release: route-registrar
+    properties:
+      route_registrar:
+        external_host: ((route_registrar.external_host))
+        port: 8080
+        message_bus_servers:
+        - host:  ((route_registrar.message_bus_servers.host)) # <-- cf nats, cant use dns cause cf is in bosh-ops powerdns, not bosh-master
+          user: nats
+          password: ((route_registrar.message_bus_servers.password))  #nats
+        health_checker:
+          interval: 10
+          name: healthchk
+- name: mongod
+  release: mongodb-services
+  azs: [z1]
+  instances: 3
+  vm_type: large
+  env:
+    bosh:
+      swap_size: 0
+    persistent_disk_fs: xfs
+  stemcell: trusty
+  networks: [{name: tf-net-coab-depls-instance}]
+  persistent_disk_type: xlarge
+  jobs:
+  - name: mongod
+    release: mongodb-services
+    consumes:
+      server: {from: deployment-server}
+    provides:
+      server: {as: deployment-server}
+    properties:
+      admin_password: ((!mongo_admin_password))
+      root_password: ((!mongo_root_password))
+      require_ssl: 0
+      node_role: rs
+      replication:
+        enable: 1
+        key: ((!mongo_keyfile_content))
+
+  - name: mongodb_exporter
+    release: prometheus
+    properties:
+      mongodb_exporter:
+        mongodb:
+          uri: mongodb://MongoRoot:((!mongo_root_password))@localhost:27017?authSource=admin
+        web:
+          port: 9001
+        collect_oplog: true
+        collect_replset: true
+
+variables:
+- name: mongo_admin_password
+  type: password
+- name: mongo_root_password
+  type: password
+- name: mongo_keyfile_content
+  type: password
+

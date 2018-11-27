@@ -1,4 +1,4 @@
-package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors;
+package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker;
 
 public class UserFacingRuntimeException extends RuntimeException {
     public UserFacingRuntimeException(String message) {

@@ -1,0 +1,124 @@
+---
+## neested broker
+## provide persistent_disk value to broker
+#- type: replace
+#  path: /instance_groups/name=broker/jobs/name=cf-mysql-broker/properties/cf_mysql/mysql/persistent_disk
+#  value: 200000
+#
+##modifying community  plans to avoid conflict
+##because we already have plans used the same id as the community plans but with different capacity
+#- type: remove
+#  path: /instance_groups/name=broker/jobs/name=cf-mysql-broker/properties/cf_mysql/broker?/services/name=p-mysql/plans
+#
+##- type: replace
+##  path: /instance_groups/name=broker/jobs/name=cf-mysql-broker/properties/cf_mysql/broker?/services/name=p-mysql/plans?/-
+##  value:
+##    description: Shared MySQL Server
+##    id: 6ca6446a-cec2-11e7-abc4-cec278b6b50a
+##    max_storage_mb: 10
+##    max_user_connections: 20
+##    name: 10mb
+##    metadata:
+##      bullets:
+##      - Shared MySQL server
+##      - 10 MB storage
+##      - 20 concurrent connections
+##      costs:
+##      - amount:
+##          usd: 0
+##        unit: MONTH
+##      displayName: 10 MB
+##
+##
+##
+##- type: replace
+##  path: /instance_groups/name=broker/jobs/name=cf-mysql-broker/properties/cf_mysql/broker?/services/name=p-mysql/plans/-
+##  value:
+##    description: Shared MySQL Server
+##    id: 7240804e-cf61-11e7-abc4-cec278b6b50a
+##    max_storage_mb: 20
+##    max_user_connections: 40
+##    name: 20mb
+##    metadata:
+##      bullets:
+##      - Shared MySQL server
+##      - 20 MB storage
+##      - 20 concurrent connections
+##      costs:
+##      - amount:
+##          usd: 0
+##        unit: MONTH
+##      displayName: 20 MB
+##
+##
+##
+##
+##
+##
+###modifying plans section
+##
+##- type: replace
+##  path: /instance_groups/name=broker/jobs/name=cf-mysql-broker/properties/cf_mysql/broker?/services/name=p-mysql/plans/-
+##  value:
+##    name: 100mb
+##    id: ab08f1bc-e6fc-4b56-a767-ee0fea6e3f20
+##    description: Shared MySQL Server
+##    max_storage_mb: 100
+##    max_user_connections: 20
+##    metadata:
+##      costs:
+##      - amount:
+##          usd: 0.0
+##        unit: MONTH
+##      bullets:
+##        - Shared MySQL server
+##        - 100 MB storage
+##        - 20 concurrent connections
+##      displayName: "100 MB"
+##
+##- type: replace
+##  path: /instance_groups/name=broker/jobs/name=cf-mysql-broker/properties/cf_mysql/broker?/services/name=p-mysql/plans/-
+##  value:
+##    name: 1gb
+##    id: 11d0aa36-dcec-4021-85f5-ea4d9a5c8342
+##    description: Shared MySQL Server
+##    max_storage_mb: 1000
+##    max_user_connections: 40
+##    metadata:
+##      costs:
+##      - amount:
+##          usd: 0.0
+##        unit: MONTH
+##      bullets:
+##        - Shared MySQL server
+##        - 1000 MB storage
+##        - 40 concurrent connections
+##      displayName: "1 GB"
+##
+#
+#- type: replace
+#  path: /instance_groups/name=broker/jobs/name=cf-mysql-broker/properties/cf_mysql/broker?/services/name=p-mysql/plans/-
+#  value:
+#    name: 100GB
+#    id: c3683fa8-dc72-4ea6-b95c-722a074f5e82
+#    description: Dedicated MySQL Server
+#    max_storage_mb: 102400
+#    max_user_connections: 150
+#    metadata:
+#      costs:
+#      - amount:
+#          usd: 0.0
+#        unit: MONTH
+#      bullets:
+#        - Dedicated MySQL server
+#        - 100000 MB storage
+#        - 150 concurrent connections
+#      displayName: "100 GB"
+#
+#
+#
+#modifyng broker username
+#change the default broker username to cc to ensure the update of Cloud Foundry catalogue via terraform
+#- type: replace
+#  path: /instance_groups/name=broker/jobs/name=cf-mysql-broker/properties/cf_mysql/broker/auth_username?
+#  value: cc

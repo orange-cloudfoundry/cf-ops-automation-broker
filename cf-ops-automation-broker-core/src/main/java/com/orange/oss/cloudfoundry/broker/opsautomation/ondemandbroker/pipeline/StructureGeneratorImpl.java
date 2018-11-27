@@ -1,11 +1,7 @@
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline;
 
-import java.nio.file.Files;
 import java.nio.file.Path;
 
-/**
- * Created by ijly7474 on 15/12/17.
- */
 public class StructureGeneratorImpl implements StructureGenerator {
 
     String rootDeployment;
@@ -22,25 +18,32 @@ public class StructureGeneratorImpl implements StructureGenerator {
     }
 
     public void checkPrerequisites(Path workDir) {
-        Path rootDeploymentDir = StructureGeneratorHelper.generatePath(workDir,
-                this.rootDeployment);
-        if (Files.notExists(rootDeploymentDir)){
-            throw new DeploymentException(DeploymentConstants.ROOT_DEPLOYMENT_EXCEPTION);
-        }
-        Path modelDeploymentDir = StructureGeneratorHelper.generatePath(workDir,
-                this.rootDeployment,
-                this.modelDeployment);
-        if (Files.notExists(modelDeploymentDir)){
-            throw new DeploymentException(DeploymentConstants.MODEL_DEPLOYMENT_EXCEPTION);
+
+        this.checkThatRootDeploymentExists(workDir);
+
+        this.checkThatModelDeploymentExists(workDir);
+    }
+
+    protected void checkThatRootDeploymentExists(Path workDir){
+        Path rootDeploymentDir = StructureGeneratorHelper.generatePath(workDir, this.rootDeployment);
+        if (StructureGeneratorHelper.isMissingResource(rootDeploymentDir)){
+            throw new DeploymentException(DeploymentConstants.ROOT_DEPLOYMENT_EXCEPTION + rootDeploymentDir);
         }
     }
 
-    public void generate(Path workDir, String serviceInstanceId) {
+    protected void checkThatModelDeploymentExists(Path workDir){
+        Path modelDeploymentDir = StructureGeneratorHelper.generatePath(workDir, this.rootDeployment, this.modelDeployment);
+        if (StructureGeneratorHelper.isMissingResource(modelDeploymentDir)){
+            throw new DeploymentException(DeploymentConstants.MODEL_DEPLOYMENT_EXCEPTION + modelDeploymentDir);
+        }
+    }
+
+    public void generate(Path workDir, String serviceInstanceId, CoabVarsFileDto coabVarsFileDto) {
             ////Generate service directory
-            StructureGeneratorHelper.generateDirectory(workDir, this.rootDeployment, this.computeDeploymentInstance(serviceInstanceId));
+            StructureGeneratorHelper.generateDirectory(workDir, this.rootDeployment, this.computeDeploymentName(serviceInstanceId));
     }
 
-    public String computeDeploymentInstance(String serviceInstanceId){
+    public String computeDeploymentName(String serviceInstanceId){
         return this.modelDeploymentShortAlias + DeploymentConstants.UNDERSCORE + serviceInstanceId;
     }
 

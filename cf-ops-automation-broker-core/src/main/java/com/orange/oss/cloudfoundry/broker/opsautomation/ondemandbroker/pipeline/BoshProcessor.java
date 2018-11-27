@@ -18,6 +18,7 @@ public class BoshProcessor extends DefaultBrokerProcessor {
 
 	private static Logger logger = LoggerFactory.getLogger(BoshProcessor.class.getName());
 	private final String brokerDisplayName;
+	private String modelDeploymentShortAlias;
 
 	private String templatesRepositoryAliasName;
 	private String secretsRepositoryAliasName;
@@ -25,13 +26,14 @@ public class BoshProcessor extends DefaultBrokerProcessor {
 	private TemplatesGenerator templatesGenerator;
 	private SecretsGenerator secretsGenerator;
 
-	public BoshProcessor(String templatesRepositoryAliasName, String secretsRepositoryAliasName, TemplatesGenerator templatesGenerator, SecretsGenerator secretsGenerator, PipelineCompletionTracker tracker, String brokerDisplayName) {
+	public BoshProcessor(String templatesRepositoryAliasName, String secretsRepositoryAliasName, TemplatesGenerator templatesGenerator, SecretsGenerator secretsGenerator, PipelineCompletionTracker tracker, String brokerDisplayName, String modelDeploymentShortAlias) {
         this.templatesRepositoryAliasName = templatesRepositoryAliasName;
         this.secretsRepositoryAliasName = secretsRepositoryAliasName;
         this.templatesGenerator = templatesGenerator;
 		this.secretsGenerator = secretsGenerator;
 		this.tracker = tracker;
 		this.brokerDisplayName = brokerDisplayName;
+		this.modelDeploymentShortAlias = modelDeploymentShortAlias;
 	}
 
 	@Override
@@ -45,13 +47,15 @@ public class BoshProcessor extends DefaultBrokerProcessor {
 		String serviceInstanceId = creationRequest.getServiceInstanceId();
 		logger.debug("service instance id is " + serviceInstanceId);
 
-		//Check pre-requisites and generate paas-template structure
+        CoabVarsFileDto coabVarsFileDto = wrapOsbIntoVarsDto(creationRequest);
+
+        //Check pre-requisites and generate paas-template structure
 		this.templatesGenerator.checkPrerequisites(templatesWorkDir);
-		this.templatesGenerator.generate(templatesWorkDir, serviceInstanceId);
+		this.templatesGenerator.generate(templatesWorkDir, serviceInstanceId, coabVarsFileDto);
 
 		//Check pre-requisites and generate paas-secrets structure
 		this.secretsGenerator.checkPrerequisites(secretsWorkDir);
-		this.secretsGenerator.generate(secretsWorkDir, serviceInstanceId);
+		this.secretsGenerator.generate(secretsWorkDir, serviceInstanceId, null);
 
 		//Create response and put it into context
 		CreateServiceInstanceResponse creationResponse = new CreateServiceInstanceResponse();
@@ -134,21 +138,36 @@ public class BoshProcessor extends DefaultBrokerProcessor {
 		String originDetails;
 
 		Object userKey = extractUserKeyFromOsbContext(request.getOriginatingIdentity());
-		String spaceGuid = null;
-		String organizationGuid = null;
 
-		org.springframework.cloud.servicebroker.model.Context context = request.getContext();
-		if ((context != null) && OsbConstants.ORIGINATING_CLOUDFOUNDRY_PLATFORM.equals(context.getPlatform())) {
-			spaceGuid = (String) context.getProperty(OSB_PROFILE_SPACE_GUID);
-			organizationGuid = (String) context.getProperty(OSB_PROFILE_ORGANIZATION_GUID);
-		}
-		spaceGuid = (spaceGuid == null) ? request.getSpaceGuid() : spaceGuid;
-		organizationGuid = (organizationGuid == null) ? request.getOrganizationGuid() : organizationGuid;
+		String organizationGuid = extractCfOrgGuid(request);
+		String spaceGuid = extractCfSpaceGuid(request);
 
 		originDetails = "Requested from space_guid=" + spaceGuid + " org_guid=" + organizationGuid + " by user_guid=" + userKey;
 		return brokerDisplayName + " broker: create instance id=" + request.getServiceInstanceId()
 				+ "\n\n" + originDetails;
     }
+
+	private String extractCfSpaceGuid(CreateServiceInstanceRequest request) {
+		org.springframework.cloud.servicebroker.model.Context context = request.getContext();
+		String spaceGuid = null;
+		if ((context != null) && OsbConstants.ORIGINATING_CLOUDFOUNDRY_PLATFORM.equals(context.getPlatform())) {
+			spaceGuid = (String) context.getProperty(OSB_PROFILE_SPACE_GUID);
+		}
+        //noinspection deprecation
+        spaceGuid = (spaceGuid == null) ? request.getSpaceGuid() : spaceGuid;
+		return spaceGuid;
+	}
+
+	private String extractCfOrgGuid(CreateServiceInstanceRequest request) {
+		org.springframework.cloud.servicebroker.model.Context context = request.getContext();
+		String organizationGuid = null;
+		if ((context != null) && OsbConstants.ORIGINATING_CLOUDFOUNDRY_PLATFORM.equals(context.getPlatform())) {
+			organizationGuid = (String) context.getProperty(OSB_PROFILE_ORGANIZATION_GUID);
+		}
+        //noinspection deprecation
+        organizationGuid = (organizationGuid == null) ? request.getOrganizationGuid() : organizationGuid;
+		return organizationGuid;
+	}
 
 	protected String formatUnprovisionCommitMsg(DeleteServiceInstanceRequest request) {
         Object userKey = extractUserKeyFromOsbContext(request.getOriginatingIdentity());
@@ -157,12 +176,14 @@ public class BoshProcessor extends DefaultBrokerProcessor {
 				+ "\n\nRequested by user_guid=" + userKey;
 	}
 
-    private Object extractUserKeyFromOsbContext(org.springframework.cloud.servicebroker.model.Context context) {
-        Object userKey = null;
-        String platform = context.getPlatform();
-        if (OsbConstants.ORIGINATING_CLOUDFOUNDRY_PLATFORM.equals(platform)) {
-            userKey = context.getProperty(OsbConstants.ORIGINATING_USER_KEY);
-        }
+    private String extractUserKeyFromOsbContext(org.springframework.cloud.servicebroker.model.Context context) {
+        String userKey = null;
+        if (context != null) {
+			String platform = context.getPlatform();
+			if (OsbConstants.ORIGINATING_CLOUDFOUNDRY_PLATFORM.equals(platform)) {
+				userKey = (String) context.getProperty(OsbConstants.ORIGINATING_USER_KEY);
+			}
+		}
         return userKey;
     }
 
@@ -186,5 +207,24 @@ public class BoshProcessor extends DefaultBrokerProcessor {
 		ctx.contextKeys.put(secretsRepositoryAliasName + GitProcessorContext.commitMessage.toString(), msg);
 	}
 
+	protected CoabVarsFileDto wrapOsbIntoVarsDto(CreateServiceInstanceRequest request) {
+		String userKey = extractUserKeyFromOsbContext(request.getOriginatingIdentity());
+		String organizationGuid = extractCfOrgGuid(request);
+		String spaceGuid = extractCfSpaceGuid(request);
+
+		CoabVarsFileDto coabVarsFileDto = new CoabVarsFileDto();
+		coabVarsFileDto.deployment_name = modelDeploymentShortAlias+ "_" + request.getServiceInstanceId();
+		coabVarsFileDto.instance_id = request.getServiceInstanceId();
+		coabVarsFileDto.service_id = request.getServiceDefinitionId();
+		coabVarsFileDto.plan_id = request.getPlanId();
+
+		coabVarsFileDto.context.user_guid = userKey;
+		coabVarsFileDto.context.space_guid = spaceGuid;
+		coabVarsFileDto.context.organization_guid = organizationGuid;
+		if (request.getParameters() != null) {
+			coabVarsFileDto.parameters.putAll(request.getParameters());
+		}
+        return coabVarsFileDto;
+    }
 }
 

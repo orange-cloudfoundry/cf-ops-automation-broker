@@ -22,7 +22,7 @@ public enum GitProcessorContext {
 	fetchAllSubModules,
 
 	/**
-	 * In: When this key is specified, the gitProcessor will fail of the cloned repo does not contain
+	 * In: When this key is specified, the gitProcessor will fail if the cloned repo does contain
 	 * <pre>
 	 * git branch -rl service-instance-guid  # TODO: and fail if service-instance-guid displays
 	 * </pre>
@@ -43,7 +43,7 @@ public enum GitProcessorContext {
 	/**
 	 * In: This key represents the name of a branch to checkout (e.g. "service-instance-guid").
 	 *
-	 * If the branch is missing from the clone, then it will be created from the branch checked out (specified in the GitProcessor constructor)
+	 * If the branch is missing from the clone, then it will be created from the branch checked out (specified in the checkOutRemoteBranch key)
 	 *
 	 * If the branch is present in the clone, it will simply be used.
 	 *

@@ -1,0 +1,46 @@
+#leverages travis ci defaults
+#https://docs.travis-ci.com/user/languages/java/#projects-using-maven
+#
+
+language: java
+sudo: true
+jdk:
+- oraclejdk8
+
+#keep maven dependencies in cache as to speed up maven build process
+cache:
+  directories:
+  - $HOME/.m2
+
+# coverity default config
+env:
+  global:
+  # The next declaration is the encrypted COVERITY_SCAN_TOKEN, created
+  #   via the "travis encrypt" command using the project repo's public key
+  - secure: "f6Y5GuWg18pNaYh71Xd0v8xVLpJxNp2Qc5cE+gCYrUamXeQRRZEOWAFliz/WPKVnG3EGRMe1TzKA1ZSUHw5Y1FkRDqDNr3irSe/mZ8k1H0Wjtr1k75z1DEX6qQCiSnFbWDBrTJ1ne7Q8xwEOnXfhzhZBtj+jl0J2Umc3xIpF3O+UBsLs3Do63HPytDUPlWCL3rGQ/PHN1I76ziqIjNPYg+flAry0gbEhk7kc+ZxGW7ANTEUOgEOxEo4p74nW7Tsag0OOr8AucrvIXoDDWcpBIrOnCgfEM5mz8PKTpRs/D/6CbhNIyyM3vMV4PD0Uc/qC/CpeLI8wUwy0nOe4RtTODa4GLV8O4EhjmpyvXkvFWxkrJyzjE4zA/jvNLJsgQwUeIEPlqIPAZ1SDJnyo4LDWl2+Do/sYgoxOHhC94fkc1E6lv2cjhvP9xYmMXwWe8I1Tvc9K1Yf1q8jyccT9LTG/zgJuQ7cCQGe9aQjYZ5xwmolEDZXpfMvR1zfYr4RgO05DofR/lXs8P4EdOi6oYBCrN47Xfg3JgPThPlvjt6wsQ3lbqlHSUrYujd0iKYMWybGK1pXMo1tKeaHZ/ERhV/sas0upxxOPTkmohmhx8VZEWZVGftKNidL5ZC4EnsR4C6FHaKDY5t7UrLtRGIFw3/Mz4RTWNcnirwdwOH/PEIQro5c="
+
+before_install:
+- echo -n | openssl s_client -connect scan.coverity.com:443 2>./openssl-connect.stderr | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' | sudo tee -a /etc/ssl/certs/ca-certificates.crt
+- echo "OpenSSL connect stderr:"
+- cat ./openssl-connect.stderr
+- rm ./openssl-connect.stderr
+
+script: "echo 'only run coverity tasks, as to save travis-resources while main build is in circle-ci'"
+
+addons:
+  coverity_scan:
+    project:
+      name: "orange-cloudfoundry/cf-ops-automation-broker"
+      description: "Build submitted via Travis CI"
+    # email configured within coverity settings as to preserve confidentiality and avoid spams
+    # notification_email: redacted
+    #force clean of previous compilation so that coverity picks up all files
+    build_command_prepend: "mvn clean"
+    #mvn  -B: 
+    #  -B,--batch-mode                        Run in non-interactive (batch) mode
+    # skip test during analysis toi exclude false positives from test sources
+    build_command: "mvn install -Dmaven.skip.test=true -B"
+    #avoid running out of coverity quota by only running analysis on pushes from a specific
+    #branch.
+    #beware that travis-ci coverity add-on is only triggered within branch pushs and does not trigger on PRs
+    branch_pattern: coverity_scan

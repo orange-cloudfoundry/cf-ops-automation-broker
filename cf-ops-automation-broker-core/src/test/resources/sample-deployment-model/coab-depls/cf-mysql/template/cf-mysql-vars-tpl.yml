@@ -1,0 +1,37 @@
+---
+deployment_name: cf-mysql
+network_name   : tf-net-coab-depls-instance
+
+vm-cf-mysql:
+  persistent_disk_type: xlarge-performant
+  vm_type:              xlarge-performant
+
+# spec release cf-mysql fixed
+spec-cf-mysql:
+  max_connections:  150
+  disable_auto_sst: true
+
+# spec release cf-mysql  modifiable by project
+parameters:
+  long_query_time:     1.0
+  server_audit_events: ""
+
+
+##cf:
+##  api:
+##    url: "https://api.((!/secrets/cloudfoundry_system_domain))"
+##  admin:
+##    password: ((!/secrets/cloudfoundry_admin_password))
+##  cloudfoundry-mysql:
+##    appdomain: ((!/secrets/cloudfoundry_apps_domain))
+##    mysql_admin_password: ((!/secrets/p-mysql-root-password))
+##
+#broker:
+#  password: ((!/secrets/cloudfoundry_service_brokers_p-mysql_password)) 
+#
+#route_registrar:
+#  external_host: "cf-mysql-broker.((!/secrets/cloudfoundry_system_domain))"
+#  message_bus_servers:
+#    host: "((!/secrets/cloudfoundry_nats_host)):4222"
+#    password: ((!/secrets/cloudfoundry_nats_password))
+#

@@ -55,16 +55,16 @@ public class BoshProcessorTest {
         @SuppressWarnings("unchecked")
         PipelineCompletionTracker tracker = aCompletionTracker();
 
-        BoshProcessor boshProcessor = new BoshProcessor(TEMPLATES_REPOSITORY_ALIAS_NAME, SECRETS_REPOSITORY_ALIAS_NAME, templatesGenerator, secretsGenerator, tracker, "Cassandra");
+        BoshProcessor boshProcessor = new BoshProcessor(TEMPLATES_REPOSITORY_ALIAS_NAME, SECRETS_REPOSITORY_ALIAS_NAME, templatesGenerator, secretsGenerator, tracker, "Cassandra", "c_");
 
         //When
         boshProcessor.preCreate(context);
 
         //Then verify parameters and delegation on calls
         verify(templatesGenerator).checkPrerequisites(aGitRepoWorkDir());
-        verify(templatesGenerator).generate(aGitRepoWorkDir(), SERVICE_INSTANCE_ID);
+        verify(templatesGenerator).generate(eq(aGitRepoWorkDir()), eq(SERVICE_INSTANCE_ID), any(CoabVarsFileDto.class));
         verify(secretsGenerator).checkPrerequisites(aGitRepoWorkDir());
-        verify(secretsGenerator).generate(aGitRepoWorkDir(), SERVICE_INSTANCE_ID);
+        verify(secretsGenerator).generate(aGitRepoWorkDir(), SERVICE_INSTANCE_ID, null);
 
         //Then verify populated context
         CreateServiceInstanceResponse serviceInstanceResponse = (CreateServiceInstanceResponse) context.contextKeys.get(ProcessorChainServiceInstanceService.CREATE_SERVICE_INSTANCE_RESPONSE);
@@ -83,9 +83,59 @@ public class BoshProcessorTest {
         assertThat(customSecretsMessage).isNotNull();
     }
 
+    @Test
+    public void constructs_a_dto_from_a_provisionning_request() {
+        //Given mocked dependencies
+        TemplatesGenerator templatesGenerator = mock(TemplatesGenerator.class);
+        SecretsGenerator secretsGenerator = mock(SecretsGenerator.class);
+        PipelineCompletionTracker tracker = aCompletionTracker();
+
+        //Given a basic processor with deployment model
+        BoshProcessor boshProcessor = new BoshProcessor(TEMPLATES_REPOSITORY_ALIAS_NAME, SECRETS_REPOSITORY_ALIAS_NAME, templatesGenerator, secretsGenerator, tracker, "Cassandra", "c");
+
+
+        //Given a creation request with both deprecated and new OSB syntax
+        Map<String, Object> contextProperties = new HashMap<>();
+        contextProperties.put(OSB_PROFILE_ORGANIZATION_GUID, "org_id1");
+        contextProperties.put(OSB_PROFILE_SPACE_GUID, "space_id1");
+
+        Map<String, Object> params = new HashMap<>();
+        params.put("a-string-param", "a-string-value");
+        params.put("a number param", 24);
+        params.put("a boolean param", true);
+
+        CreateServiceInstanceRequest request = new CreateServiceInstanceRequest("service_definition_id1",
+                "plan_id1",
+                "org_id1",
+                "space_id1",
+                new org.springframework.cloud.servicebroker.model.Context(
+                        CLOUD_FOUNDRY_PLATFORM,
+                        contextProperties
+                ),
+                params
+        );
+        request.withServiceInstanceId("service-instance-id1");
+        Map<String, Object> properties = new HashMap<>();
+        properties.put(OsbConstants.ORIGINATING_USER_KEY, "user_guid1");
+        request.withOriginatingIdentity(new org.springframework.cloud.servicebroker.model.Context(OsbConstants.ORIGINATING_CLOUDFOUNDRY_PLATFORM, properties));
+
+        //when
+        CoabVarsFileDto coabVarsFileDto = boshProcessor.wrapOsbIntoVarsDto(request);
+
+        //then
+        assertThat(coabVarsFileDto.instance_id).isEqualTo("service-instance-id1");
+        assertThat(coabVarsFileDto.plan_id).isEqualTo("plan_id1");
+        assertThat(coabVarsFileDto.service_id).isEqualTo("service_definition_id1");
+        assertThat(coabVarsFileDto.deployment_name).isEqualTo("c" + "_" + "service-instance-id1");
+        assertThat(coabVarsFileDto.context.organization_guid).isEqualTo("org_id1");
+        assertThat(coabVarsFileDto.context.space_guid).isEqualTo("space_id1");
+        assertThat(coabVarsFileDto.context.user_guid).isEqualTo("user_guid1");
+        assertThat(coabVarsFileDto.parameters).isEqualTo(params);
+    }
+
 
     @Test
-    public void provision_commit_msg_includes_requester_details_without_context() {
+    public void provision_commit_msg_includes_requester_details_with_empty_context() {
         //Given a creation request with both deprecated OSB syntax
 
         CreateServiceInstanceRequest request = new CreateServiceInstanceRequest("service_definition_id",
@@ -102,6 +152,25 @@ public class BoshProcessorTest {
 
         //then commit msg is valid
         provision_commit_msg_includes_requester_details(request);
+    }
+
+    @Test
+    public void provision_commit_msg_includes_requester_details_without_context() {
+        //Given a creation request with both deprecated OSB syntax
+
+        CreateServiceInstanceRequest request = new CreateServiceInstanceRequest("service_definition_id",
+                "plan_id",
+                "org_id1",
+                "space_id1",
+                null,
+                null
+        );
+        request.withServiceInstanceId(SERVICE_INSTANCE_ID);
+
+        //then commit msg is valid
+        BoshProcessor boshProcessor = aBasicBoshProcessor();
+        assertThat(boshProcessor.formatProvisionCommitMsg(request)).isEqualTo("Cassandra broker: create instance id=aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa0" +
+                "\n\nRequested from space_guid=space_id1 org_guid=org_id1 by user_guid=null");
     }
 
     @Test
@@ -130,18 +199,21 @@ public class BoshProcessorTest {
         Map<String, Object> properties = new HashMap<>();
         properties.put(OsbConstants.ORIGINATING_USER_KEY, "user_guid1");
         request.withOriginatingIdentity(new org.springframework.cloud.servicebroker.model.Context(OsbConstants.ORIGINATING_CLOUDFOUNDRY_PLATFORM, properties));
+        BoshProcessor boshProcessor = aBasicBoshProcessor();
 
 
+        //When
+        assertThat(boshProcessor.formatProvisionCommitMsg(request)).isEqualTo("Cassandra broker: create instance id=aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa0" +
+                "\n\nRequested from space_guid=space_id1 org_guid=org_id1 by user_guid=user_guid1");
+    }
+
+    private BoshProcessor aBasicBoshProcessor() {
         //Given mocked dependencies
         TemplatesGenerator templatesGenerator = mock(TemplatesGenerator.class);
         SecretsGenerator secretsGenerator = mock(SecretsGenerator.class);
         PipelineCompletionTracker tracker = aCompletionTracker();
 
-        BoshProcessor boshProcessor = new BoshProcessor(TEMPLATES_REPOSITORY_ALIAS_NAME, SECRETS_REPOSITORY_ALIAS_NAME, templatesGenerator, secretsGenerator, tracker, "Cassandra");
-
-        //When
-        assertThat(boshProcessor.formatProvisionCommitMsg(request)).isEqualTo("Cassandra broker: create instance id=aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa0" +
-                "\n\nRequested from space_guid=space_id1 org_guid=org_id1 by user_guid=user_guid1");
+        return new BoshProcessor(TEMPLATES_REPOSITORY_ALIAS_NAME, SECRETS_REPOSITORY_ALIAS_NAME, templatesGenerator, secretsGenerator, tracker, "Cassandra", "c");
     }
 
     @Test
@@ -159,11 +231,7 @@ public class BoshProcessorTest {
 
 
         //Given mocked dependencies
-        TemplatesGenerator templatesGenerator = mock(TemplatesGenerator.class);
-        SecretsGenerator secretsGenerator = mock(SecretsGenerator.class);
-        PipelineCompletionTracker tracker = aCompletionTracker();
-
-        BoshProcessor boshProcessor = new BoshProcessor(TEMPLATES_REPOSITORY_ALIAS_NAME, SECRETS_REPOSITORY_ALIAS_NAME, templatesGenerator, secretsGenerator, tracker, "Cassandra");
+        BoshProcessor boshProcessor = aBasicBoshProcessor();
 
         //When
         assertThat(boshProcessor.formatUnprovisionCommitMsg(request)).isEqualTo("Cassandra broker: delete instance id=aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa0" +
@@ -193,7 +261,7 @@ public class BoshProcessorTest {
 
 
         //When
-        BoshProcessor boshProcessor = new BoshProcessor(TEMPLATES_REPOSITORY_ALIAS_NAME, SECRETS_REPOSITORY_ALIAS_NAME, null, null, tracker, "Cassandra");
+        BoshProcessor boshProcessor = new BoshProcessor(TEMPLATES_REPOSITORY_ALIAS_NAME, SECRETS_REPOSITORY_ALIAS_NAME, null, null, tracker, "Cassandra", "c");
         boshProcessor.preGetLastOperation(context);
 
         //Then mapped response from tracker is returned
@@ -218,7 +286,7 @@ public class BoshProcessorTest {
 
 
         //When
-        BoshProcessor boshProcessor = new BoshProcessor(TEMPLATES_REPOSITORY_ALIAS_NAME, SECRETS_REPOSITORY_ALIAS_NAME, null, null, tracker, "Cassandra");
+        BoshProcessor boshProcessor = new BoshProcessor(TEMPLATES_REPOSITORY_ALIAS_NAME, SECRETS_REPOSITORY_ALIAS_NAME, null, null, tracker, "Cassandra", "c");
         boshProcessor.preBind(context);
 
         //Then
@@ -243,7 +311,7 @@ public class BoshProcessorTest {
         doNothing().when(tracker).delegateUnbindRequest(any(Path.class), any(DeleteServiceInstanceBindingRequest.class));
 
         //When
-        BoshProcessor boshProcessor = new BoshProcessor(TEMPLATES_REPOSITORY_ALIAS_NAME, SECRETS_REPOSITORY_ALIAS_NAME, null, null, tracker, "Cassandra");
+        BoshProcessor boshProcessor = new BoshProcessor(TEMPLATES_REPOSITORY_ALIAS_NAME, SECRETS_REPOSITORY_ALIAS_NAME, null, null, tracker, "Cassandra", "c");
         boshProcessor.preUnBind(context);
 
         //Then
@@ -273,7 +341,7 @@ public class BoshProcessorTest {
         when(tracker.getDeploymentExecStatus(any(Path.class), eq(SERVICE_INSTANCE_ID), eq(DeploymentConstants.OSB_OPERATION_CREATE), any(GetLastServiceOperationRequest.class))).thenReturn(expectedResponse);
 
         //When
-        BoshProcessor boshProcessor = new BoshProcessor(TEMPLATES_REPOSITORY_ALIAS_NAME, SECRETS_REPOSITORY_ALIAS_NAME, null, null, tracker, "Cassandra");
+        BoshProcessor boshProcessor = new BoshProcessor(TEMPLATES_REPOSITORY_ALIAS_NAME, SECRETS_REPOSITORY_ALIAS_NAME, null, null, tracker, "Cassandra", "c");
         boshProcessor.preGetLastOperation(context);
 
         //Then mapped response from tracker is returned
@@ -305,7 +373,7 @@ public class BoshProcessorTest {
 
 
         //When
-        BoshProcessor boshProcessor = new BoshProcessor(TEMPLATES_REPOSITORY_ALIAS_NAME, SECRETS_REPOSITORY_ALIAS_NAME, null, secretsGenerator, tracker, "Cassandra");
+        BoshProcessor boshProcessor = new BoshProcessor(TEMPLATES_REPOSITORY_ALIAS_NAME, SECRETS_REPOSITORY_ALIAS_NAME, null, secretsGenerator, tracker, "Cassandra", "c");
         boshProcessor.preDelete(context);
 
         //Then verify parameters and delegation on calls

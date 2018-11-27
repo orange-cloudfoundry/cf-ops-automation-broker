@@ -16,6 +16,7 @@ import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.DeploymentProperties;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.OsbProxyImpl;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.SecretsGenerator;
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.tools.Copy;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.Context;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.terraform.TerraformModuleHelper;
 import io.restassured.RestAssured;
@@ -42,8 +43,11 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Writer;
+import java.nio.file.FileVisitOption;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -59,7 +63,6 @@ import static io.restassured.RestAssured.given;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.text.IsEmptyString.isEmptyString;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 import static org.springframework.cloud.servicebroker.model.CloudFoundryContext.CLOUD_FOUNDRY_PLATFORM;
 import static org.springframework.http.HttpStatus.ACCEPTED;
@@ -189,20 +192,32 @@ public class BoshServiceProvisionningTest {
 
             //root deployment
             Path coabDepls = gitWorkDir.toPath().resolve(deploymentProperties.getRootDeployment());
+
+            //Search for the sample-deployment
+            Path referenceDataModel = Paths.get("../sample-deployment");
+
+            //Copy reference data model
+            EnumSet<FileVisitOption> opts = EnumSet.of(FileVisitOption.FOLLOW_LINKS);
+            Copy.TreeCopier tc = new Copy.TreeCopier(referenceDataModel, gitWorkDir.toPath(), "coab-depls", false, true);
+            Files.walkFileTree(referenceDataModel, opts, Integer.MAX_VALUE, tc);
+
+
+
+
             //sub deployments
-            Path templateDir = coabDepls
+/*            Path templateDir = coabDepls
                     .resolve(deploymentProperties.getModelDeployment())
-                    .resolve(deploymentProperties.getTemplate());
+                    .resolve(DeploymentConstants.TEMPLATE);
             createDir(templateDir);
             createDummyFile(templateDir.resolve(deploymentProperties.getModelDeployment() + DeploymentConstants.YML_EXTENSION));
-            createDummyFile(templateDir.resolve(deploymentProperties.getModelDeployment() + DeploymentConstants.HYPHEN + deploymentProperties.getVars()+ DeploymentConstants.YML_EXTENSION));
+            createDummyFile(templateDir.resolve(deploymentProperties.getModelDeployment() + DeploymentConstants.HYPHEN + DeploymentConstants.VARS + DeploymentConstants.YML_EXTENSION));
 
             Path operatorsDir = coabDepls
                     .resolve(deploymentProperties.getModelDeployment())
-                    .resolve(deploymentProperties.getOperators());
+                    .resolve(DeploymentConstants.OPERATORS);
             createDir(operatorsDir);
-            createDummyFile(operatorsDir.resolve(DeploymentConstants.COAB + DeploymentConstants.HYPHEN + deploymentProperties.getOperators() + DeploymentConstants.YML_EXTENSION));
-
+            createDummyFile(operatorsDir.resolve(DeploymentConstants.COAB + DeploymentConstants.HYPHEN + DeploymentConstants.OPERATORS + DeploymentConstants.YML_EXTENSION));
+*/
             AddCommand addC = git.add().addFilepattern(".");
             addC.call();
 
@@ -228,10 +243,10 @@ public class BoshServiceProvisionningTest {
             //sub deployments
             Path secretsDir = coabDepls
                     .resolve(deploymentProperties.getModelDeployment())
-                    .resolve(deploymentProperties.getSecrets());
+                    .resolve(DeploymentConstants.SECRETS);
             createDir(secretsDir);
-            createDummyFile(secretsDir.resolve(deploymentProperties.getMeta() + DeploymentConstants.YML_EXTENSION));
-            createDummyFile(secretsDir.resolve(deploymentProperties.getSecrets() + DeploymentConstants.YML_EXTENSION));
+            createDummyFile(secretsDir.resolve(DeploymentConstants.META + DeploymentConstants.YML_EXTENSION));
+            createDummyFile(secretsDir.resolve(DeploymentConstants.SECRETS + DeploymentConstants.YML_EXTENSION));
             AddCommand addC = git.add().addFilepattern(".");
             addC.call();
 

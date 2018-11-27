@@ -21,7 +21,7 @@ import java.util.List;
 public class BoshBrokerApplication {
 
     @SuppressWarnings("WeakerAccess")
-    static final String TEMPLATES_REPOSITORY_ALIAS_NAME = "paas-template.";
+    static final String TEMPLATES_REPOSITORY_ALIAS_NAME = "paas-templates.";
     static final String SECRETS_REPOSITORY_ALIAS_NAME = "paas-secrets.";
 
     public static void main(String[] args) {
@@ -46,7 +46,7 @@ public class BoshBrokerApplication {
     @ConfigurationProperties(prefix = "deployment")
     @Bean
     public DeploymentProperties deploymentProperties() {
-        return new DeploymentProperties();
+        return new DeploymentProperties(); //would 
     }
 
     @Bean
@@ -70,7 +70,7 @@ public class BoshBrokerApplication {
                 clock,
                 osbProxyProperties.getMaxExecutionDurationSeconds(),
                 createServiceInstanceResponseOsbProxy,
-                (SecretsReader) secretsGenerator
+                secretsGenerator
         );
     }
 
@@ -80,23 +80,17 @@ public class BoshBrokerApplication {
         return new SecretsGenerator(
                 deploymentProperties.getRootDeployment(),
                 deploymentProperties.getModelDeployment(),
-                deploymentProperties.getSecrets(),
-                deploymentProperties.getMeta(),
                 deploymentProperties.getModelDeploymentShortAlias()
         );
     }
 
     @Bean
-    public TemplatesGenerator templatesGenerator(
-            DeploymentProperties deploymentProperties
-    ) {
+    public TemplatesGenerator templatesGenerator(DeploymentProperties deploymentProperties) {
         return new TemplatesGenerator(
                 deploymentProperties.getRootDeployment(),
                 deploymentProperties.getModelDeployment(),
-                deploymentProperties.getTemplate(),
-                deploymentProperties.getVars(),
-                deploymentProperties.getOperators(),
-                deploymentProperties.getModelDeploymentShortAlias()
+                deploymentProperties.getModelDeploymentShortAlias(),
+                new VarsFilesYmlFormatter() //externalize if needed
         );
     }
 
@@ -112,7 +106,8 @@ public class BoshBrokerApplication {
                 templatesGenerator,
                 secretsGenerator,
                 pipelineCompletionTracker,
-                deploymentProperties.getBrokerDisplayName());
+                deploymentProperties.getBrokerDisplayName(),
+                deploymentProperties.getModelDeploymentShortAlias());
     }
 
     @Bean
@@ -143,6 +138,9 @@ public class BoshBrokerApplication {
         List<BrokerProcessor> processors = new ArrayList<>();
 
         processors.add(paasTemplateBranchSelector);
+        // git push wil trigger 1st for paas-templates and then 2nd for paas-secrets,
+        // reducing occurences of fail-fast consistency check failures
+        // see related https://github.com/orange-cloudfoundry/cf-ops-automation/issues/201
         processors.add(secretsGitProcessor);
         processors.add(templateGitProcessor);
         processors.add(boshProcessor);

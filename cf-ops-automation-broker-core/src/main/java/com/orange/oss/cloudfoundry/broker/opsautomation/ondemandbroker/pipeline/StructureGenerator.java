@@ -9,6 +9,6 @@ public interface StructureGenerator {
 
     void checkPrerequisites(Path workDir);
 
-    void generate(Path workDir, String serviceInstanceId);
+    void generate(Path workDir, String serviceInstanceId, CoabVarsFileDto coabVarsFileDto);
 
 }

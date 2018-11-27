@@ -1,0 +1,9 @@
+#replace deployment name
+- type: replace
+  path: /name
+  value: ((deployment_name))
+
+#replace external host
+- type: replace
+  path: /instance_groups/name=cassandra-broker/jobs/name=route-registrar/properties/route_registrar/external_host
+  value: cassandra-broker-((deployment_name)).((!/secrets/cloudfoundry_system_domain))

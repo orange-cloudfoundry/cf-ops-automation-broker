@@ -1,0 +1,25 @@
+areferencemodel
+└── deployment-dependencies.yml
+└── template
+    └── areferencemodel-tpl.yml
+    └── areferencemodel-vars-tpl.yml
+    └── areferencemodel-vars.yml
+    └── areferencemodel.yml
+    └── coab-operators.yml
+    └── coab-vars.yml
+    └── iaas-type
+        └── network-operators.yml
+        └── network-vars-tpl.yml
+        └── network-vars.yml
+{0}
+└── template
+    └── areferencemodel-vars-tpl.yml -> ../../areferencemodel/template/areferencemodel-vars-tpl.yml
+    └── areferencemodel-vars.yml -> ../../areferencemodel/template/areferencemodel-vars.yml
+    └── coab-operators.yml -> ../../areferencemodel/template/coab-operators.yml
+    └── coab-vars.yml -> ../../areferencemodel/template/coab-vars.yml
+    └── iaas-type
+    │   └── network-operators.yml -> ../../../areferencemodel/template/iaas-type/network-operators.yml
+    │   └── network-vars-tpl.yml -> ../../../areferencemodel/template/iaas-type/network-vars-tpl.yml
+    │   └── network-vars.yml -> ../../../areferencemodel/template/iaas-type/network-vars.yml
+    └── {0}-tpl.yml -> ../../areferencemodel/template/areferencemodel-tpl.yml
+    └── {0}.yml -> ../../areferencemodel/template/areferencemodel.yml

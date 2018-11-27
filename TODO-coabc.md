@@ -22,6 +22,11 @@ How can we make sure we properly pool the git repos ?
 - assert the pool stats in
     - from JMX beans
         - complete JMX configuration to be able to distinguish secrets from templates pools
+    - Pb: we observe borrowcount=4, return count=2, =>creates 2 objects
+        - Clean up are performed properly, and before http response is returned
+        - All http requests wait for response before triggering a new one
+        - 
+
 
 Investigate if/how the pool JMX can be exposed as actuactor metrics   
 

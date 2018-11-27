@@ -31,10 +31,10 @@ public class PooledGitManager implements GitManager {
     private GitManager gitManager;
 
     public PooledGitManager(KeyedPooledObjectFactory<GitContext, Context> factory, String repoAliasName, GitManager gitManager) {
-        GenericKeyedObjectPoolConfig<Context> poolConfig = constructPoolConfig(repoAliasName);
-        pool = new GenericKeyedObjectPool<>(factory, poolConfig);
         this.repoAliasName = repoAliasName;
         this.gitManager = gitManager;
+        GenericKeyedObjectPoolConfig<Context> poolConfig = constructPoolConfig(repoAliasName);
+        pool = new GenericKeyedObjectPool<>(factory, poolConfig);
     }
 
     private GenericKeyedObjectPoolConfig<Context> constructPoolConfig(String repoAliasName) {
@@ -123,6 +123,15 @@ public class PooledGitManager implements GitManager {
         }
 
         return builder.build();
+    }
+
+    @SuppressWarnings("WeakerAccess")
+    public void resetMetrics() {
+        try {
+            pool.close();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public enum Metric {

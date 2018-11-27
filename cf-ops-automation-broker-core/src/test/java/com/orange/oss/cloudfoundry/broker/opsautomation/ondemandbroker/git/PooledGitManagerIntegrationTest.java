@@ -90,6 +90,16 @@ public class PooledGitManagerIntegrationTest {
         assertThat((long) pooledGitManager.getPoolAttribute(Returned)).isEqualTo(0);
     }
 
+    @Test(expected=RuntimeException.class)
+    public void resets_pool_metrics_upon_request() {
+        //given
+        PooledGitManager pooledGitManager = pools_a_git_repo_across_invocations("pool-reset-test");
+        //when
+        pooledGitManager.resetMetrics();
+        //then: metric is missing from JMX
+        pooledGitManager.getPoolAttribute(Created);
+    }
+
     @Test
     public void exposes_pool_metrics() {
         PooledGitManager pooledGitManager = pools_a_git_repo_across_invocations("unique-id-across-tests-in-jvm");
@@ -97,7 +107,7 @@ public class PooledGitManagerIntegrationTest {
         assertThat((long) pooledGitManager.getPoolAttribute(Created)).isEqualTo(1);
         assertThat((long) pooledGitManager.getPoolAttribute(Borrowed)).isEqualTo(2);
         assertThat((long) pooledGitManager.getPoolAttribute(Destroyed)).isEqualTo(0);
-        assertThat((long) pooledGitManager.getPoolAttribute(Returned)).isEqualTo(1);
+        assertThat((long) pooledGitManager.getPoolAttribute(Returned)).isEqualTo(1); //we don't return the 2nd clone to the pool
     }
 
 

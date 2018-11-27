@@ -109,16 +109,27 @@ public class BoshBrokerApplication {
     }
 
     @Bean
-    public BrokerProcessor secretsGitProcessor(GitProperties secretsGitProperties) {
-        return makeBrokerProcessor(secretsGitProperties, SECRETS_REPOSITORY_ALIAS_NAME);
+    public GitManager secretsGitManager(GitProperties secretsGitProperties) {
+        return gitManager(secretsGitProperties, SECRETS_REPOSITORY_ALIAS_NAME);
     }
 
     @Bean
-    public BrokerProcessor templateGitProcessor(GitProperties templateGitProperties) {
-        return makeBrokerProcessor(templateGitProperties, TEMPLATES_REPOSITORY_ALIAS_NAME);
+    public GitManager templatesGitManager(GitProperties templateGitProperties) {
+        return gitManager(templateGitProperties, TEMPLATES_REPOSITORY_ALIAS_NAME);
     }
 
-    private BrokerProcessor makeBrokerProcessor(GitProperties secretsGitProperties, String repoAliasName) {
+    @Bean
+    public BrokerProcessor templateGitProcessor(GitManager templatesGitManager) {
+        return new GitProcessor(templatesGitManager, TEMPLATES_REPOSITORY_ALIAS_NAME);
+    }
+
+    @Bean
+    public BrokerProcessor secretsGitProcessor(GitManager secretsGitManager) {
+        return new GitProcessor(secretsGitManager, SECRETS_REPOSITORY_ALIAS_NAME);
+    }
+
+    private GitManager gitManager(GitProperties secretsGitProperties, String repoAliasName) {
+        GitManager gitManager;
         GitManager simpleGitManager = new SimpleGitManager(
                 secretsGitProperties.getUser(),
                 secretsGitProperties.getPassword(),
@@ -126,14 +137,13 @@ public class BoshBrokerApplication {
                 secretsGitProperties.committerName(),
                 secretsGitProperties.committerEmail(),
                 repoAliasName);
-        GitManager gitManager;
         if (!secretsGitProperties.isUsePooling()) {
             gitManager = simpleGitManager;
         } else {
             PooledGitRepoFactory factory = new PooledGitRepoFactory(simpleGitManager);
             gitManager= new PooledGitManager(factory, repoAliasName, simpleGitManager);
         }
-        return new GitProcessor(gitManager, repoAliasName);
+        return gitManager;
     }
 
 

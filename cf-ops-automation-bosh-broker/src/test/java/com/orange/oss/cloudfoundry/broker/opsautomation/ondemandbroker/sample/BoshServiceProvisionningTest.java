@@ -5,10 +5,7 @@ import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.common.Slf4jNotifier;
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
 import com.github.tomakehurst.wiremock.recording.SnapshotRecordResult;
-import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.GitProcessor;
-import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.SimpleGitManager;
-import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.GitProcessorContext;
-import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.GitServer;
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.*;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.osbclient.CatalogServiceClient;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.osbclient.OsbClientFactory;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.osbclient.ServiceInstanceBindingServiceClient;
@@ -24,7 +21,6 @@ import io.restassured.RestAssured;
 import org.apache.http.HttpStatus;
 import org.eclipse.jgit.api.AddCommand;
 import org.eclipse.jgit.api.Git;
-import org.eclipse.jgit.api.errors.GitAPIException;
 import org.fest.assertions.Assertions;
 import org.junit.After;
 import org.junit.Before;
@@ -103,7 +99,27 @@ public class BoshServiceProvisionningTest {
 
     @Autowired
     @Qualifier(value = "secretsGitProcessor")
-    GitProcessor gitProcessor;
+    GitProcessor gitSecretsProcessor;
+
+    @Autowired
+    @Qualifier(value = "templateGitProcessor")
+    GitProcessor gitTemplatesProcessor;
+
+    @Autowired
+    @Qualifier(value = "secretsGitManager")
+    GitManager secretsGitManager;
+
+    @Autowired
+    @Qualifier(value = "templatesGitManager")
+    GitManager templatesGitManager;
+
+    @Autowired
+    @Qualifier("templateGitProperties")
+    GitProperties templatesGitProperties;
+
+    @Autowired
+    @Qualifier("secretsGitProperties")
+    GitProperties secretsGitProperties;
 
     @Autowired
     OsbProxyProperties osbProxyProperties;
@@ -273,6 +289,7 @@ public class BoshServiceProvisionningTest {
         createDummyFile(targetManifestFilePath);
 
         gitProcessor.postCreate(context);
+        gitProcessor.cleanUp(context); //make sure to return to the pool
     }
 
     public static void createDir(Path dir) throws IOException {
@@ -303,7 +320,7 @@ public class BoshServiceProvisionningTest {
 
         polls_last_operation(operation, HttpStatus.SC_OK, "in progress", "");
 
-        simulateManifestGeneration(gitProcessor);
+        simulateManifestGeneration(gitSecretsProcessor);
 
         polls_last_operation(operation, HttpStatus.SC_OK, "succeeded", "");
 
@@ -315,6 +332,28 @@ public class BoshServiceProvisionningTest {
         polls_last_operation(deleteOperation,
                 HttpStatus.SC_GONE, //async delete expects a 410 status
                 "succeeded", "succeeded");
+
+        assertGitClonesWerePooledAndReturned();
+
+    }
+
+    private void assertGitClonesWerePooledAndReturned() {
+        assertGitClonesWerePooledAndReturned(secretsGitProperties, secretsGitManager);
+        assertGitClonesWerePooledAndReturned(templatesGitProperties, templatesGitManager);
+    }
+
+    private void assertGitClonesWerePooledAndReturned(GitProperties gitProperties, GitManager templatesGitManager) {
+        if (gitProperties.isUsePooling()) {
+            assertThat(templatesGitManager instanceof PooledGitManager).isTrue();
+            //noinspection ConstantConditions
+            PooledGitManager pooledGitManager = (PooledGitManager) templatesGitManager;
+            long borrowed = pooledGitManager.getPoolAttribute(PooledGitManager.Metric.Borrowed);
+            long returned = pooledGitManager.getPoolAttribute(PooledGitManager.Metric.Returned);
+            long created = pooledGitManager.getPoolAttribute(PooledGitManager.Metric.Created);
+            assertThat(borrowed).isGreaterThanOrEqualTo(1);
+            assertThat(returned).isEqualTo(borrowed);
+            assertThat(created).isEqualTo(1);
+        }
     }
 
     private void create_service_binding() {
@@ -358,7 +397,6 @@ public class BoshServiceProvisionningTest {
         return createResponse.getBody().getOperation();
     }
 
-    @Test
     public void exposes_catalog() {
         Catalog catalog = catalogServiceClient.getCatalog();
         assertThat(catalog.getServiceDefinitions()).isNotEmpty();

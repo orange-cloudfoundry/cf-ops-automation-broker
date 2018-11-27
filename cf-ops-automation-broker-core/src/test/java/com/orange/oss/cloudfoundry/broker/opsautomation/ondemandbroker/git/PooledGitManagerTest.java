@@ -17,7 +17,7 @@ import static org.mockito.Mockito.when;
 public class PooledGitManagerTest {
 
     @SuppressWarnings("unchecked")
-    private KeyedPooledObjectFactory<GitContext, Context> factory = mock(KeyedPooledObjectFactory.class);
+    private KeyedPooledObjectFactory<GitPoolKey, Context> factory = mock(KeyedPooledObjectFactory.class);
     private String repoAlias = "paas-templates.";
     private GitManager gitManager = mock(GitManager.class);
     private PooledGitManager pooledGitManager = new PooledGitManager(factory, repoAlias, gitManager);
@@ -30,9 +30,9 @@ public class PooledGitManagerTest {
         ctx.contextKeys.put(repoAlias + GitProcessorContext.checkOutRemoteBranch.toString(), "develop");
         ctx.contextKeys.put(repoAlias + GitProcessorContext.createBranchIfMissing.toString(), "service-instance-guid");
         //when
-        GitContext gitContext = pooledGitManager.makeLocalContext(ctx);
+        GitPoolKey gitPoolKey = pooledGitManager.makePoolKey(ctx);
         //then
-        assertThat(gitContext.getKeys()).isEqualTo(ctx.contextKeys);
+        assertThat(gitPoolKey.getKeys()).isEqualTo(ctx.contextKeys);
     }
 
     @Test
@@ -43,12 +43,36 @@ public class PooledGitManagerTest {
         ctx.contextKeys.put(repoAlias + GitProcessorContext.createBranchIfMissing.toString(), "service-instance-guid");
         ctx.contextKeys.put(repoAlias + GitProcessorContext.commitMessage.toString(), "a msg");
         //when
-        GitContext gitContext = pooledGitManager.makeLocalContext(ctx);
+        GitPoolKey gitPoolKey = pooledGitManager.makePoolKey(ctx);
         //then
-        Context expectedCtx = new Context();
-        expectedCtx.contextKeys.put(repoAlias + GitProcessorContext.checkOutRemoteBranch.toString(), "develop");
-        expectedCtx.contextKeys.put(repoAlias + GitProcessorContext.createBranchIfMissing.toString(), "service-instance-guid");
-        assertThat(gitContext.getKeys()).isEqualTo(expectedCtx.contextKeys);
+        GitPoolKey expectedCtx = ImmutableGitPoolKey.builder().
+                putKeys(repoAlias + GitProcessorContext.checkOutRemoteBranch.toString(), "develop").
+                putKeys(repoAlias + GitProcessorContext.createBranchIfMissing.toString(), "service-instance-guid")
+                .build();
+        assertThat(gitPoolKey.getKeys()).isEqualTo(expectedCtx.getKeys());
+    }
+
+    @Test
+    public void copies_non_pooleable_fields() {
+        //given
+        Context src = new Context();
+        src.contextKeys.put(repoAlias + GitProcessorContext.checkOutRemoteBranch.toString(), "develop");
+        src.contextKeys.put(repoAlias + GitProcessorContext.createBranchIfMissing.toString(), "service-instance-guid");
+        src.contextKeys.put(repoAlias + GitProcessorContext.commitMessage.toString(), "a msg");
+        //and
+        Context dest = new Context();
+        dest.contextKeys.put(repoAlias + GitProcessorContext.checkOutRemoteBranch.toString(), "develop");
+        dest.contextKeys.put(repoAlias + GitProcessorContext.createBranchIfMissing.toString(), "service-instance-guid");
+        dest.contextKeys.put(repoAlias + GitProcessorContext.workDir.toString(), "a path");
+        //when
+        pooledGitManager.copyNonPooleableEntries(src, dest);
+        //then
+        Context expected = new Context();
+        expected.contextKeys.put(repoAlias + GitProcessorContext.checkOutRemoteBranch.toString(), "develop");
+        expected.contextKeys.put(repoAlias + GitProcessorContext.createBranchIfMissing.toString(), "service-instance-guid");
+        expected.contextKeys.put(repoAlias + GitProcessorContext.workDir.toString(), "a path");
+        expected.contextKeys.put(repoAlias + GitProcessorContext.commitMessage.toString(), "a msg");
+        assertThat(dest.contextKeys).isEqualTo(expected.contextKeys);
     }
 
     @Test(expected = RuntimeException.class)
@@ -61,7 +85,7 @@ public class PooledGitManagerTest {
         ctx.contextKeys.put(repoAlias + GitProcessorContext.submoduleListToFetch.toString(), Collections.singletonList("mysql-deployment"));
 
         //when asked to process a request with unsupported attribute
-        pooledGitManager.makeLocalContext(ctx);
+        pooledGitManager.makePoolKey(ctx);
         //then it rejects by throwing an exception
     }
 
@@ -78,7 +102,7 @@ public class PooledGitManagerTest {
         pooledCtx.contextKeys.put(repoAlias + GitProcessorContext.createBranchIfMissing.toString(), "service-instance-guid");
         Path gitRepoPath = FileSystems.getDefault().getPath("dummy/path");
         pooledCtx.contextKeys.put(repoAlias + GitProcessorContext.workDir.toString(), gitRepoPath);
-        when(factory.makeObject(any(GitContext.class))).thenReturn(new DefaultPooledObject<>(pooledCtx));
+        when(factory.makeObject(any(GitPoolKey.class))).thenReturn(new DefaultPooledObject<>(pooledCtx));
         //when asked to clone
         pooledGitManager.cloneRepo(ctx);
 

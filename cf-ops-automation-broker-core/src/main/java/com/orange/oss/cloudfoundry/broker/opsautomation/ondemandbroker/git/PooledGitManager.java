@@ -14,10 +14,10 @@ import java.nio.file.Path;
 
 /**
  * <pre>
- *     (Processor) Context <---> GitContext <---> (SimpleGitManager) Context
+ *     (Processor) Context <---> GitPoolKey <---> (SimpleGitManager) Context
  * </pre>
  *
- * Received Context gets, mapped into a local context (GitContext) with only relevant keys.
+ * Received Context gets, mapped into a local context (GitPoolKey) with only relevant keys.
  * The local context gets mapped to a SimpleGitManager-scoped Context.
  *
  * The local context gets used as a key to the pool.
@@ -28,13 +28,13 @@ public class PooledGitManager implements GitManager {
 
     private static final String PRIVATE_POOLED_GIT_CONTEXT = "PrivatePooledGitContext";
     private static final String PRIVATE_LOCAL_GIT_CONTEXT = "PrivateLocalGitContext";
-    private KeyedObjectPool<GitContext, Context> pool;
+    private KeyedObjectPool<GitPoolKey, Context> pool;
     private String repoAliasName;
     private GitManager gitManager;
     private static final Logger logger = LoggerFactory.getLogger(PooledGitManager.class.getName());
 
 
-    public PooledGitManager(KeyedPooledObjectFactory<GitContext, Context> factory, String repoAliasName, GitManager gitManager) {
+    public PooledGitManager(KeyedPooledObjectFactory<GitPoolKey, Context> factory, String repoAliasName, GitManager gitManager) {
         this.repoAliasName = repoAliasName;
         this.gitManager = gitManager;
         GenericKeyedObjectPoolConfig<Context> poolConfig = constructPoolConfig(repoAliasName);
@@ -51,7 +51,7 @@ public class PooledGitManager implements GitManager {
     public void cloneRepo(Context ctx) {
         logger.debug("Pool with alias {} asked to clone repo with keys {}", repoAliasName, ctx.contextKeys);
         try {
-            GitContext localContext = makeLocalContext(ctx);
+            GitPoolKey localContext = makePoolKey(ctx);
             Context pooledContext = pool.borrowObject(localContext);
             mapOutputResponse(ctx, pooledContext);
             saveMappedContexts(ctx, pooledContext, localContext);
@@ -63,15 +63,17 @@ public class PooledGitManager implements GitManager {
     @Override
     public void commitPushRepo(Context ctx, boolean deleteRepo) {
         Context pooledContext = getPooledContext(ctx);
+        copyNonPooleableEntries(ctx, pooledContext);
         gitManager.commitPushRepo(pooledContext,
                 false); //don't delete the underling repo that gets pooled instead
+        clearNonPooleableEntries(pooledContext);
     }
 
     @Override
     public void deleteWorkingDir(Context ctx) {
         logger.debug("Pool with alias {} asked to release repo with keys {}", repoAliasName, ctx.contextKeys);
         Context pooledContext = getPooledContext(ctx);
-        GitContext localContext = getLocalContext(ctx);
+        GitPoolKey localContext = getLocalContext(ctx);
         try {
             pool.returnObject(localContext, pooledContext);
         } catch (Exception e) {
@@ -99,7 +101,7 @@ public class PooledGitManager implements GitManager {
         ctx.contextKeys.put(repoAliasName + GitProcessorContext.workDir.toString(), workDir);
     }
 
-    private void saveMappedContexts(Context ctx, Context pooledContext, GitContext local) {
+    private void saveMappedContexts(Context ctx, Context pooledContext, GitPoolKey local) {
         ctx.contextKeys.put(repoAliasName + PRIVATE_POOLED_GIT_CONTEXT, pooledContext);
         ctx.contextKeys.put(repoAliasName + PRIVATE_LOCAL_GIT_CONTEXT, local);
     }
@@ -107,13 +109,13 @@ public class PooledGitManager implements GitManager {
     private Context getPooledContext(Context ctx) {
         return (Context) ctx.contextKeys.get(repoAliasName + PRIVATE_POOLED_GIT_CONTEXT);
     }
-    private GitContext getLocalContext(Context ctx) {
-        return (GitContext) ctx.contextKeys.get(repoAliasName + PRIVATE_LOCAL_GIT_CONTEXT);
+    private GitPoolKey getLocalContext(Context ctx) {
+        return (GitPoolKey) ctx.contextKeys.get(repoAliasName + PRIVATE_LOCAL_GIT_CONTEXT);
     }
 
 
-    GitContext makeLocalContext(Context ctx) {
-        ImmutableGitContext.Builder builder = ImmutableGitContext.builder();
+    GitPoolKey makePoolKey(Context ctx) {
+        ImmutableGitPoolKey.Builder builder = ImmutableGitPoolKey.builder();
         for (GitProcessorContext contextKey : GitProcessorContext.values()) {
             String contextKeyString = repoAliasName + contextKey.toString();
             Object contextValue= ctx.contextKeys.get(contextKeyString);
@@ -137,6 +139,31 @@ public class PooledGitManager implements GitManager {
             pool.close();
         } catch (Exception e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    void copyNonPooleableEntries(Context src, Context dest) {
+        for (GitProcessorContext contextKey : GitProcessorContext.values()) {
+            String contextKeyString = repoAliasName + contextKey.toString();
+            Object contextValue= src.contextKeys.get(contextKeyString);
+            if (contextValue == null) {
+                continue;
+            }
+            if (!contextKey.isPoolable()) {
+                dest.contextKeys.put(contextKeyString, contextValue);
+            }
+        }
+    }
+    private void clearNonPooleableEntries(Context ctx) {
+        for (GitProcessorContext contextKey : GitProcessorContext.values()) {
+            String contextKeyString = repoAliasName + contextKey.toString();
+            Object contextValue= ctx.contextKeys.get(contextKeyString);
+            if (contextValue == null) {
+                continue;
+            }
+            if (!contextKey.isPoolable()) {
+                ctx.contextKeys.remove(contextKeyString);
+            }
         }
     }
 

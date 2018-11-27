@@ -16,12 +16,44 @@ setBranchesToClone(Collection<String> branchesToClone) instead of setCloneAllBra
 -------------------
 Git repo caching
 
+Pb: the commitKey isn't making to the SimpleGitManager. 
+Solutions:
+- add it to the context before commit and remove it after
+   - mark key as being transient which gets removed either
+    - during passivation:
+    - just after push: Pb: hard to test with mock, since mutable argument
+       - don't test it
+       - move it somewhere else
+     
+   copyNonPooleableEntries
+   clearNonPooleableEntries
+   
+   Pb: hard   
+   
+reject-when-pooled= true/false
+pool-discriminant
+   - true: included in pooled key
+   - false: not included in pooled key, and cleared after each request
 
 
 Investigate if/how the pool JMX can be exposed as actuactor metrics
 - indeed JMX metrics do not yet appear in /metrics actuator endpoint  
 - wait for springboot2 bump and micrometer
 - in the meantime refine debug logs, and use cf ssh to jmx instead https://github.com/cloudfoundry/java-buildpack/blob/master/docs/framework-jmx.md 
+
+
+//Given an existing repo
+//when a clone is requested
+//then a clone is stored on local disk with a "clone" prefix
+//when the clone is cleaned up
+//it gets renamed with a "cache" prefix
+
+//Given the repo gets pushed some new modifs
+
+//when a new clone is requested
+//the cached clone is renamed with a "clone" prefix
+//the clone get fetched the repo content, and reset to the requested branch
+
 
 
 Refactor GitManager impls to extract common repo alias +log support? in a common ~super~/collaborator class. 
@@ -57,6 +89,7 @@ Q:in Context object itself ?
 Q: as an Helper class 
 
 -----
+
 
      
 -----     

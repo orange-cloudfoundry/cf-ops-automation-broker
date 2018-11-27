@@ -86,7 +86,7 @@ public enum GitProcessorContext {
 	deleteRemoteBranch(false, false);
 
 	private final boolean rejectWhenPooled;
-	private final boolean poolable;
+	private final boolean poolable; //is discrimant in pool key
 
 	GitProcessorContext(boolean poolable, boolean rejectWhenPooled) {
 		this.poolable = poolable;

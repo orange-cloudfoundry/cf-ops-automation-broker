@@ -5,6 +5,6 @@ import org.immutables.value.Value;
 import java.util.Map;
 
 @Value.Immutable
-public abstract class GitContext {
+public abstract class GitPoolKey {
     public abstract Map<String, Object> getKeys();
 }

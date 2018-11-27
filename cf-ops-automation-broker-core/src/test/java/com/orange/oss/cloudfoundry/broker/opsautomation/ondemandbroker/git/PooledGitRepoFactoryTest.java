@@ -14,7 +14,7 @@ public class PooledGitRepoFactoryTest {
 
     private GitManager gitManager = Mockito.mock(GitManager.class);
     private PooledGitRepoFactory factory = new PooledGitRepoFactory(gitManager);
-    private GitContext ctx = ImmutableGitContext.builder().build();
+    private GitPoolKey ctx = ImmutableGitPoolKey.builder().build();
 
     @Test
     public void makes_object_by_delegating_clones_to_git_manager() {

@@ -1,10 +1,10 @@
 
 Context:
 
-(Processor) Context <---> GitContext <---> (SimpleGitManager) Context
+(Processor) Context <---> GitPoolKey <---> (SimpleGitManager) Context
 
 Responsibities:
-- PooledGitManager: interacts with pool, and maps (Processor) Context in/out of GitContext, and pooled Context
+- PooledGitManager: interacts with pool, and maps (Processor) Context in/out of GitPoolKey, and pooled Context
 - PooledGitFactory: maintains pooled Context, including reset
 
 

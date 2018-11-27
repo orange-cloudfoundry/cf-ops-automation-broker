@@ -7,7 +7,7 @@ import org.apache.commons.pool2.impl.DefaultPooledObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class PooledGitRepoFactory implements KeyedPooledObjectFactory<GitContext, Context> {
+public class PooledGitRepoFactory implements KeyedPooledObjectFactory<GitPoolKey, Context> {
     private GitManager gitManager;
     private static final Logger logger = LoggerFactory.getLogger(PooledGitRepoFactory.class.getName());
 
@@ -16,7 +16,7 @@ public class PooledGitRepoFactory implements KeyedPooledObjectFactory<GitContext
     }
 
     @Override
-    public PooledObject<Context> makeObject(GitContext key) {
+    public PooledObject<Context> makeObject(GitPoolKey key) {
         logger.info("Building new git repo with keys {}", key.getKeys());
         Context ctx = makeContext(key);
         gitManager.cloneRepo(ctx);
@@ -24,7 +24,7 @@ public class PooledGitRepoFactory implements KeyedPooledObjectFactory<GitContext
     }
 
     @Override
-    public boolean validateObject(GitContext key, PooledObject<Context> p) {
+    public boolean validateObject(GitPoolKey key, PooledObject<Context> p) {
         logger.info("Validating pooled git repo before reusing it");
         Context context = p.getObject();
         try {
@@ -37,21 +37,21 @@ public class PooledGitRepoFactory implements KeyedPooledObjectFactory<GitContext
     }
 
     @Override
-    public void activateObject(GitContext key, PooledObject<Context> p) {
+    public void activateObject(GitPoolKey key, PooledObject<Context> p) {
 
     }
     @Override
-    public void passivateObject(GitContext key, PooledObject<Context> p) {
+    public void passivateObject(GitPoolKey key, PooledObject<Context> p) {
 
     }
 
     @Override
-    public void destroyObject(GitContext key, PooledObject<Context> p) {
+    public void destroyObject(GitPoolKey key, PooledObject<Context> p) {
         gitManager.deleteWorkingDir(p.getObject());
     }
 
 
-    private Context makeContext(GitContext key) {
+    private Context makeContext(GitPoolKey key) {
         Context ctx = new Context();
         ctx.contextKeys.putAll(key.getKeys());
         return ctx;

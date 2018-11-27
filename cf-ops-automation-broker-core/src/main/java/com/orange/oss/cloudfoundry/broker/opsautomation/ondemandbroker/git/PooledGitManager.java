@@ -5,6 +5,8 @@ import org.apache.commons.pool2.KeyedObjectPool;
 import org.apache.commons.pool2.KeyedPooledObjectFactory;
 import org.apache.commons.pool2.impl.GenericKeyedObjectPool;
 import org.apache.commons.pool2.impl.GenericKeyedObjectPoolConfig;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.management.*;
 import java.lang.management.ManagementFactory;
@@ -29,6 +31,8 @@ public class PooledGitManager implements GitManager {
     private KeyedObjectPool<GitContext, Context> pool;
     private String repoAliasName;
     private GitManager gitManager;
+    private static final Logger logger = LoggerFactory.getLogger(PooledGitManager.class.getName());
+
 
     public PooledGitManager(KeyedPooledObjectFactory<GitContext, Context> factory, String repoAliasName, GitManager gitManager) {
         this.repoAliasName = repoAliasName;
@@ -45,6 +49,7 @@ public class PooledGitManager implements GitManager {
 
     @Override
     public void cloneRepo(Context ctx) {
+        logger.debug("Pool with alias {} asked to clone repo with keys {}", repoAliasName, ctx.contextKeys);
         try {
             GitContext localContext = makeLocalContext(ctx);
             Context pooledContext = pool.borrowObject(localContext);
@@ -64,6 +69,7 @@ public class PooledGitManager implements GitManager {
 
     @Override
     public void deleteWorkingDir(Context ctx) {
+        logger.debug("Pool with alias {} asked to release repo with keys {}", repoAliasName, ctx.contextKeys);
         Context pooledContext = getPooledContext(ctx);
         GitContext localContext = getLocalContext(ctx);
         try {

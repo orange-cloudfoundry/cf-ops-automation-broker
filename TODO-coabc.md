@@ -16,22 +16,13 @@ setBranchesToClone(Collection<String> branchesToClone) instead of setCloneAllBra
 -------------------
 Git repo caching
 
-- add flag to turn it on in the broker
-
-How can we make sure we properly pool the git repos ?
-- assert the pool stats in
-    - from JMX beans
-        - complete JMX configuration to be able to distinguish secrets from templates pools
-    - Pb: we observe borrowcount=4, return count=2, =>creates 2 objects
-        - Clean up are performed properly, and before http response is returned
-        - All http requests wait for response before triggering a new one
-        - 
 
 
-Investigate if/how the pool JMX can be exposed as actuactor metrics   
+Investigate if/how the pool JMX can be exposed as actuactor metrics
+- indeed JMX metrics do not yet appear in /metrics actuator endpoint  
+- wait for springboot2 bump and micrometer
+- in the meantime refine debug logs, and use cf ssh to jmx instead https://github.com/cloudfoundry/java-buildpack/blob/master/docs/framework-jmx.md 
 
-What are source of pool misses ?
-- 
 
 Refactor GitManager impls to extract common repo alias +log support? in a common ~super~/collaborator class. 
    + use it in tests 

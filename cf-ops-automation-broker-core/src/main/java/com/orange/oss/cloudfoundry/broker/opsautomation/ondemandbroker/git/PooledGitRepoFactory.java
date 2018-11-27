@@ -17,7 +17,7 @@ public class PooledGitRepoFactory implements KeyedPooledObjectFactory<GitContext
 
     @Override
     public PooledObject<Context> makeObject(GitContext key) {
-        logger.info("Building new git repo");
+        logger.info("Building new git repo with keys {}", key.getKeys());
         Context ctx = makeContext(key);
         gitManager.cloneRepo(ctx);
         return new DefaultPooledObject<>(ctx);

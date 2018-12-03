@@ -116,6 +116,7 @@ public class SimpleGitManager implements GitManager {
         // The + tells Git to update the reference even if it isn’t a fast-forward.
         String fetchRef = "+refs/heads/" +remoteBranch + ":refs/remotes/" + DEFAULT_REMOTE_NAME + "/" + remoteBranch;
         FetchCommand fetchCommand = git.fetch().
+                setCredentialsProvider(cred).
                 setRefSpecs(fetchRef).
                 setRemote(DEFAULT_REMOTE_NAME);
         String resetRef = DEFAULT_REMOTE_NAME + "/" + remoteBranch;

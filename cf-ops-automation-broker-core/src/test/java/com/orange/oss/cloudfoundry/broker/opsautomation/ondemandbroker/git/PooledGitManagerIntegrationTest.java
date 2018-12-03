@@ -28,6 +28,8 @@ public class PooledGitManagerIntegrationTest {
         pooledGitManager.cloneRepo(ctx1);
         //Then the git manager gets delegated the call to clone the repo
         verify(gitManager, times(1)).cloneRepo(any(Context.class));
+        //And a git pull/reset is triggered as a side effect, resulting into a noop
+        verify(gitManager, times(1)).fetchRemoteAndResetCurrentBranch(any(Context.class));
 
         //When a 1st clone is restored to the pool
         pooledGitManager.deleteWorkingDir(ctx1);
@@ -37,6 +39,8 @@ public class PooledGitManagerIntegrationTest {
 
         //Then a second clone is NOT created
         verify(gitManager, times(1)).cloneRepo(any(Context.class));
+        //And the pooled git repo is refreshed through a git fetch/reset
+        verify(gitManager, times(2)).fetchRemoteAndResetCurrentBranch(any(Context.class));
 
         return pooledGitManager;
     }

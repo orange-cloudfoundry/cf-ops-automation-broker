@@ -10,6 +10,7 @@ import org.eclipse.jgit.lib.StoredConfig;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.submodule.SubmoduleStatus;
 import org.eclipse.jgit.transport.PushResult;
+import org.eclipse.jgit.transport.RefSpec;
 import org.eclipse.jgit.transport.RemoteRefUpdate;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 import org.slf4j.Logger;
@@ -185,7 +186,8 @@ public class SimpleGitManager implements GitManager {
     private void createNewBranchIfNeeded(Git git, Context ctx) throws GitAPIException, IOException {
         String branchName = getContextValue(ctx, GitProcessorContext.createBranchIfMissing);
 
-        if (branchName != null) {
+        boolean requiredBranchExists = branchName != null;
+        if (requiredBranchExists) {
             Optional<Ref> existingMatchingRemoteBranchRef = lookUpRemoteBranch(git, branchName);
 
             if (existingMatchingRemoteBranchRef.isPresent()) {
@@ -196,6 +198,8 @@ public class SimpleGitManager implements GitManager {
                         .setUpstreamMode(CreateBranchCommand.SetupUpstreamMode.SET_UPSTREAM)
                         .call();
                 logger.info(prefixLog("created local branch from remote branch {}"), branchName);
+
+
             } else {
                 git.branchCreate()
                         .setName(branchName)
@@ -210,6 +214,20 @@ public class SimpleGitManager implements GitManager {
                 git.getRepository().getConfig().save();
 
                 logger.info(prefixLog("created branch {} from current HEAD"), branchName);
+
+                PushCommand pushCommand = git.push().setCredentialsProvider(cred);
+                String fetchRef = "refs/heads/" +branchName + ":refs/heads/" +branchName ;
+
+                Iterable<PushResult> pushResults = pushCommand.setRefSpecs(new RefSpec(fetchRef)).call();
+
+                List<RemoteRefUpdate.Status> failedStatuses = extractFailedStatuses(pushResults);
+                if (failedStatuses.isEmpty()) {
+                    logger.info(prefixLog("pushed new remote branch {}"), branchName);
+                } else {
+                    logger.error(prefixLog("failed to push new remote branch {}, got failures{}"), branchName, failedStatuses);
+                    throw new RuntimeException("failed to push: remote conflict. pull rebased failed:" + failedStatuses);
+                }
+
             }
 
 
@@ -384,6 +402,12 @@ public class SimpleGitManager implements GitManager {
                 .map(RemoteRefUpdate::getStatus)
                 .distinct()
                 .filter(status -> !RemoteRefUpdate.Status.OK.equals(status))
+                .collect(Collectors.toList());
+    }
+
+    private List<RemoteRefUpdate.Status> filterOutUptoDateStatus(List<RemoteRefUpdate.Status> statusList) {
+        return statusList.stream()
+                .filter(status -> !RemoteRefUpdate.Status.UP_TO_DATE.equals(status))
                 .collect(Collectors.toList());
     }
 

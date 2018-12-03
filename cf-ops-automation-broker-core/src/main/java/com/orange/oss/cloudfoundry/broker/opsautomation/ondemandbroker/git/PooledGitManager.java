@@ -44,6 +44,8 @@ public class PooledGitManager implements GitManager {
     private GenericKeyedObjectPoolConfig<Context> constructPoolConfig(String repoAliasName) {
         GenericKeyedObjectPoolConfig<Context> poolConfig = new GenericKeyedObjectPoolConfig<>();
         poolConfig.setJmxNamePrefix(repoAliasName);
+        poolConfig.setTestOnCreate(false);
+        poolConfig.setTestOnBorrow(true);
         return poolConfig;
     }
 

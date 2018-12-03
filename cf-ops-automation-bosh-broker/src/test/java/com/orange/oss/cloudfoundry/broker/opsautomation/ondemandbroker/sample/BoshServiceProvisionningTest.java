@@ -279,6 +279,7 @@ public class BoshServiceProvisionningTest {
         }
     }
 
+    // White box injection of manifest: does not protect against git pooling bugs
     public void simulateManifestGeneration(GitProcessor gitProcessor) throws IOException {
         Context context = new Context();
         gitProcessor.preCreate(context);

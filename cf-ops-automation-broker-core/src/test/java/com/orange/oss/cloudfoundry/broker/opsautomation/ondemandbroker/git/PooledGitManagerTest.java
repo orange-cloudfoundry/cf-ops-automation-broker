@@ -2,6 +2,7 @@ package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git;
 
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.Context;
 import org.apache.commons.pool2.KeyedPooledObjectFactory;
+import org.apache.commons.pool2.PooledObject;
 import org.apache.commons.pool2.impl.DefaultPooledObject;
 import org.junit.Test;
 
@@ -109,7 +110,7 @@ public class PooledGitManagerTest {
 
 
     @Test
-    public void clone_exposed_outputs_from_pooled_repo() throws Exception {
+    public void clone_exposes_outputs_from_pooled_repo() throws Exception {
         //given
         ctx.contextKeys.put(repoAlias + GitProcessorContext.checkOutRemoteBranch.toString(), "develop");
         ctx.contextKeys.put(repoAlias + GitProcessorContext.createBranchIfMissing.toString(), "service-instance-guid");
@@ -121,6 +122,7 @@ public class PooledGitManagerTest {
         Path gitRepoPath = FileSystems.getDefault().getPath("dummy/path");
         pooledCtx.contextKeys.put(repoAlias + GitProcessorContext.workDir.toString(), gitRepoPath);
         when(factory.makeObject(any(GitPoolKey.class))).thenReturn(new DefaultPooledObject<>(pooledCtx));
+        when(factory.validateObject(any(GitPoolKey.class), any(PooledObject.class))).thenReturn(true);
         //when asked to clone
         pooledGitManager.cloneRepo(ctx);
 

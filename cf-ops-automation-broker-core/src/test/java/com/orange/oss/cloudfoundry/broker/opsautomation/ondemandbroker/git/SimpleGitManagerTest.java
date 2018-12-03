@@ -331,6 +331,39 @@ public class SimpleGitManagerTest {
         //org.eclipse.jgit.lib.Repository - close() called when useCnt is already zero for Repository
     }
 
+    @Test
+    public void supports_pooling_with_git_fetch_adds_reset_and_create_new_branch() throws Exception {
+        //given an existing repo
+        String repoName = "paas-template.git";
+        gitServer.initRepo(repoName, this::initPaasTemplate);
+        gitManager = new SimpleGitManager("gituser", "gitsecret", GIT_BASE_URL + repoName, "committerName", "committer@address.org", null);
+        ctx.contextKeys.put(GitProcessorContext.checkOutRemoteBranch.toString(), "develop");
+        this.ctx.contextKeys.put(GitProcessorContext.createBranchIfMissing.toString(), "service-instance-guid");
+
+        //and asking to clone it
+        gitManager.cloneRepo(ctx);
+
+        //and some new commits gets added to the repo by someone else
+        Git git = gitServer.getRepo(repoName);
+        git.checkout().setName("service-instance-guid").call();
+        Path gitServerWorkDir = git.getRepository().getDirectory().getParentFile().toPath();
+        addAFile("new context", "newFileAfterClone.txt", gitServerWorkDir);
+        git.add().addFilepattern("newFileAfterClone.txt").call();
+        git.commit().setMessage("dummy msg").call();
+        git.close();
+
+        //and the repo is asked to be recycled
+        gitManager.fetchRemoteAndResetCurrentBranch(ctx);
+
+        //then the updated file gets fetched
+        Path workDir = getWorkDir(ctx, "");
+        File fetchedFile = workDir.resolve("newFileAfterClone.txt").toFile();
+        assertThat(fetchedFile).exists();
+
+        //Note: ignore debug JGit traces, apparent side effect of git repo test setup
+        //org.eclipse.jgit.lib.Repository - close() called when useCnt is already zero for Repository
+    }
+
     private void addAndDeleteFilesForRepoAlias(SimpleGitManager gitManager, Context context, String repoAlias) throws IOException {
         //given a clone of an empty repo
         gitManager.cloneRepo(context);

@@ -11,11 +11,5 @@
     limitations under the License.
 -->
 <settings>
-    <servers>
-        <server>
-            <id>bintray-elpaaso-maven</id>
-            <username>${env.BINTRAY_USER}</username>
-            <password>${env.BINTRAY_PASSWORD}</password>
-        </server>
-    </servers>
+
 </settings>

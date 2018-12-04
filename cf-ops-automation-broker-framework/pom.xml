@@ -23,14 +23,6 @@
 		<springCloudServiceBrokerVersion>1.0.0.RELEASE</springCloudServiceBrokerVersion>		
 	</properties>
 
-	<distributionManagement>
-		<repository>
-			<id>bintray-elpaaso-maven</id>
-			<name>elpaaso-maven</name>
-			<url>https://api.bintray.com/maven/elpaaso/maven/${project.artifactId}/;publish=1</url>
-		</repository>
-	</distributionManagement>
-
 	<dependencies>
 
 		<dependency>

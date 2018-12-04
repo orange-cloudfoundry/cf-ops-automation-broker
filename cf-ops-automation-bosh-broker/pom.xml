@@ -21,15 +21,6 @@
         <rest-assured.version>3.0.5</rest-assured.version>
     </properties>
 
-    <distributionManagement>
-        <repository>
-            <id>bintray-elpaaso-maven</id>
-            <name>elpaaso-maven</name>
-            <url>https://api.bintray.com/maven/elpaaso/maven/${project.artifactId}/;publish=1</url>
-        </repository>
-    </distributionManagement>
-
-
     <dependencies>
         <dependency>
             <groupId>com.orange.oss.cloudfoundry.broker.opsautomation</groupId>

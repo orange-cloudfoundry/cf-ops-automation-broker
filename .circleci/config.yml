@@ -45,8 +45,8 @@ jobs:
       - attach_workspace:
           at: ~/cf-ops-automation-broker
       - run:
-          name: deploy snapshots to bintray
-          command: bin/deploy_to_bintray.sh
+          name: building artefacts
+          command: bin/package_artefacts.sh
       - run:
           name: save jar artefacts
           command: |

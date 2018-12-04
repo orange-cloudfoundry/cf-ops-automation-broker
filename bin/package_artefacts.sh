@@ -26,7 +26,6 @@ export VERSION=$(mvn help:evaluate -Dexpression=project.version --settings setti
 
 echo "Current version extracted from pom.xml: $VERSION"
 
-echo "Compiling and deploying to bintray"
+echo "Compiling and packaging artefacts"
 
-mvn -q deploy:help --settings settings.xml
-mvn clean deploy --settings settings.xml
+mvn clean package --settings settings.xml

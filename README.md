@@ -143,7 +143,7 @@ Releasing is made using [maven release plugin](http://maven.apache.org/maven-rel
  
  ```
  
- Circle CI build will proceed, and will trigger the execution of `mvn release:perform`, and upload artifacts to both github and https://bintray.com/elpaaso. For further details, see [release:prepare goals](http://maven.apache.org/maven-release/maven-release-plugin/prepare-mojo.html)
+ Circle CI build will proceed, and will trigger the execution of `mvn release:perform`, and upload artifacts to github. For further details, see [release:prepare goals](http://maven.apache.org/maven-release/maven-release-plugin/prepare-mojo.html)
 
 Following the release:
 - edit the release notes in github
@@ -153,7 +153,6 @@ In case of issues, try:
 * `mvn release:rollback` (which creates a new commit reverting changes)
     * possibly revert the commits in git (`git reset --hard commitid`), 
 * clean up the git tag `git tag -d vXX && git push --delete origin vXX`, 
-* possibly clean up bintray releases uploaded while github release failed
 * `mvn release:clean`
 * fix the root cause and retry.
    * possibly resume circle ci workflow from failed step (from the workflow page)

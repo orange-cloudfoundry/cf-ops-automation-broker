@@ -16,6 +16,9 @@ set -ev
 
 echo "CIRCLE_BRANCH: <$CIRCLE_BRANCH> - CIRCLE_TAG: <$CIRCLE_TAG>"
 
+#Workaround OpenJdk8 regression which crashes JVM. See https://stackoverflow.com/a/53085816
+export _JAVA_OPTIONS="-Djdk.net.URLClassPath.disableClassPathURLCheck=true"
+
 #Download dependencies
 mvn -q help:evaluate -Dexpression=project.version --settings settings.xml
 # Capture execution of maven command - It looks like grep cannot be used like this on circle

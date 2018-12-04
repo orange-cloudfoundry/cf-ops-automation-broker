@@ -152,7 +152,7 @@
 		<dependency>
 			<groupId>io.github.openfeign</groupId>
 			<artifactId>feign-okhttp</artifactId>
-			<version>9.6.0</version>
+			<version>9.7.0</version>
 		</dependency>
 
 		<dependency>

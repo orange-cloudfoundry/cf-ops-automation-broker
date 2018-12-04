@@ -13,8 +13,8 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.context.embedded.LocalServerPort;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.web.server.LocalServerPort;
 import org.springframework.cloud.servicebroker.model.CreateServiceInstanceRequest;
 import org.springframework.test.context.junit4.SpringRunner;
 
@@ -47,7 +47,7 @@ public class TerraformServiceProvisionningTest {
 
     @LocalServerPort
     int port;
-    GitServer gitServer;
+    private GitServer gitServer;
 
     @Autowired
     TerraformProperties terraformProperties;
@@ -61,7 +61,7 @@ public class TerraformServiceProvisionningTest {
 
 
     @Before
-    public void startGitServer() throws IOException, GitAPIException {
+    public void startGitServer() throws IOException {
         gitServer = new GitServer();
 
         Consumer<Git> initPaasSecret = git -> {

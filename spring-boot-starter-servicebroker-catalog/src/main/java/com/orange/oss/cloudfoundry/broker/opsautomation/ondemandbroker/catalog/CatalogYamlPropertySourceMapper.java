@@ -12,10 +12,10 @@ import java.io.IOException;
  *
  * @author Sebastien Bortolussi
  */
-public class CatalogYamlPropertySourceMapper {
+class CatalogYamlPropertySourceMapper {
 
-    public static PropertySource<?> toPropertySource(Resource catalogResource) throws IOException {
+    static PropertySource<?> toPropertySource(Resource catalogResource) throws IOException {
         YamlPropertySourceLoader sourceLoader = new YamlPropertySourceLoader();
-        return sourceLoader.load("catalog_from_env_var", catalogResource, null);
+        return sourceLoader.load("catalog_from_env_var", catalogResource).get(0);
     }
 }

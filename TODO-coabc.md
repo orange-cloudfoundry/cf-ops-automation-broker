@@ -1,3 +1,36 @@
+
+Spring boot update
+
+```
+18:07:38.901 [main] ERROR org.springframework.boot.SpringApplication - Application run failed
+java.lang.NoSuchMethodError: org.springframework.boot.builder.SpringApplicationBuilder.<init>([Ljava/lang/Object;)V
+	at org.springframework.cloud.bootstrap.BootstrapApplicationListener.bootstrapServiceContext(BootstrapApplicationListener.java:161)
+	at org.springframework.cloud.bootstrap.BootstrapApplicationListener.onApplicationEvent(BootstrapApplicationListener.java:102)
+	at org.springframework.cloud.bootstrap.BootstrapApplicationListener.onApplicationEvent(BootstrapApplicationListener.java:68)
+```
+
+https://github.com/spring-projects/spring-boot/issues/12403
+ a NoSuchMethodError very often indicates a broken setup with incompatible libraries. This is the case here as well with incompatible versions of Spring Boot and Spring Cloud. Check start.spring.io/info for more info.
+ 
+ https://spring.io/projects/spring-cloud
+
+SpringCloud Release Train 	Boot Version
+Finchley SR2     Finchley        2.0.x
+Greenwich M3     Greenwich       2.1.x
+
+Finchley.SR2	"Spring Boot >=2.0.3.RELEASE and <2.0.8.BUILD-SNAPSHOT"
+ 
+https://github.com/spring-cloud/spring-cloud-open-service-broker/wiki/2.0-Migration-Guide
+
+
+/home/guillaume/code/workspaceElPaasov14/cf-ops-automation-broker/cf-ops-automation-broker-core/src/main/java/com/orange/oss/cloudfoundry/broker/opsautomation/ondemandbroker/osbclient/OsbClientFeignConfig.java:[28,47] package org.springframework.cloud.netflix.feign does not exist
+
+
+https://spring.io/blog/2018/02/27/spring-cloud-finchley-m7-has-been-released All of the code releated to Feign has been moved to a separate project, Spring Cloud OpenFeign.
+
+
+------------------------------
+
 Git clone optimizations: 
 - avoid two checkouts during clone, by using the --branch argument 
 

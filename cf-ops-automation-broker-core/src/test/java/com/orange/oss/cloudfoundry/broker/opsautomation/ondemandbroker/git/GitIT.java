@@ -3,7 +3,6 @@ package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.*;
 import org.eclipse.jgit.api.AddCommand;
 import org.eclipse.jgit.api.Git;
-import org.eclipse.jgit.api.errors.GitAPIException;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -44,7 +43,7 @@ public class GitIT {
     @Test
     public void testGitProcessor() {
 
-        GitProcessor gitProcessor = new GitProcessor(gitProperties.getUser(), gitProperties.getPassword(), gitProperties.getUrl(), gitProperties.committerName(), gitProperties.committerEmail(), null);
+        SimpleGitManager simpleGitManager = new SimpleGitManager(gitProperties.getUser(), gitProperties.getPassword(), gitProperties.getUrl(), gitProperties.committerName(), gitProperties.committerEmail(), null);
         BrokerProcessor paasTemplateSelector = new DefaultBrokerProcessor() {
             @Override
             public void preCreate(Context ctx) {
@@ -67,7 +66,7 @@ public class GitIT {
         };
         List<BrokerProcessor> processors = new ArrayList<>();
         processors.add(paasTemplateSelector);
-        processors.add(gitProcessor);
+        processors.add(new GitProcessor(simpleGitManager, null));
         processors.add(paasTemplateGenerator);
         ProcessorChain chain = new ProcessorChain(processors, new DefaultBrokerSink());
 
@@ -78,10 +77,10 @@ public class GitIT {
         //TODO: assert the files are properly pushed to feature-COAB-cassandra-IT branch
     }
 
-    GitServer gitServer;
+    private GitServer gitServer;
 
     @Before
-    public void startGitServer() throws IOException, GitAPIException {
+    public void startGitServer() throws IOException {
         gitServer = new GitServer();
 
         Consumer<Git> initPaasTemplate = this::initPaasTemplate;

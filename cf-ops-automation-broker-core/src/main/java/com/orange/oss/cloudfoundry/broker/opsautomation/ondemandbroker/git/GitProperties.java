@@ -14,6 +14,7 @@ public class GitProperties {
 	private String url;
 	private String committerName = "coab";
 	private String committerEmail = "coab@orange.com";
+	private boolean usePooling = true;
 
 	/**
 	 * Where submodules are replicated by default (e.g. "https://gitlab.internal.paas/"
@@ -57,5 +58,8 @@ public class GitProperties {
 
 	public void setReplicatedSubModuleBasePath(String replicatedSubModuleBasePath) { this.replicatedSubModuleBasePath = replicatedSubModuleBasePath; }
 	public String getReplicatedSubModuleBasePath() { return replicatedSubModuleBasePath; }
+
+	public boolean isUsePooling() { return usePooling; }
+	public void setUsePooling(boolean usePooling) { this.usePooling = usePooling; }
 }
 

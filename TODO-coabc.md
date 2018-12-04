@@ -1,5 +1,111 @@
+Git clone optimizations: 
+- avoid two checkouts during clone, by using the --branch argument 
+
+```
+       --branch <name>, -b <name>
+           Instead of pointing the newly created HEAD to the branch pointed to by the cloned repository’s HEAD, point to <name> branch instead. In a non-bare repository, this is the branch that will be checked out.  --branch can also take tags and detaches the HEAD at that commit in the resulting repository.
+```
+
+Check behavior when the specified branch does not exist. Is the clone/fetch still performed, or do we need to retry the fetch ? 
+
+- avoid fetching branches we don't need 
+
+setBranchesToClone(Collection<String> branchesToClone) instead of setCloneAllBranches(boolean cloneAllBranches)
+
+
 -------------------
-- Git repo caching
+Git repo caching
+
+Pb: the commitKey isn't making to the SimpleGitManager. 
+Solutions:
+- add it to the context before commit and remove it after
+   - mark key as being transient which gets removed either
+    - during passivation:
+    - just after push: Pb: hard to test with mock, since mutable argument
+       - don't test it
+       - move it somewhere else
+     
+   copyNonPooleableEntries
+   clearNonPooleableEntries
+   
+   Pb: hard   
+   
+reject-when-pooled= true/false
+pool-discriminant
+   - true: included in pooled key
+   - false: not included in pooled key, and cleared after each request
+
+
+Investigate if/how the pool JMX can be exposed as actuactor metrics
+- indeed JMX metrics do not yet appear in /metrics actuator endpoint  
+- wait for springboot2 bump and micrometer
+- in the meantime refine debug logs, and use cf ssh to jmx instead https://github.com/cloudfoundry/java-buildpack/blob/master/docs/framework-jmx.md 
+
+
+//Given an existing repo
+//when a clone is requested
+//then a clone is stored on local disk with a "clone" prefix
+//when the clone is cleaned up
+//it gets renamed with a "cache" prefix
+
+//Given the repo gets pushed some new modifs
+
+//when a new clone is requested
+//the cached clone is renamed with a "clone" prefix
+//the clone get fetched the repo content, and reset to the requested branch
+
+
+
+Refactor GitManager impls to extract common repo alias +log support? in a common ~super~/collaborator class. 
+   + use it in tests 
+   + use it and in clients
+
+    private String getContextValue(Context ctx, GitProcessorContext key) {
+        return (String) ctx.contextKeys.get(getContextKey(key));
+    }
+
+    String getContextKey(GitProcessorContext keyEnum) {
+        return repoAliasName + keyEnum.toString();
+    }
+
+    String prefixLog(String logMessage) {
+        if ("".equals(this.repoAliasName)) {
+            return logMessage;
+        } else {
+            return "[" + this.repoAliasName + "] " + logMessage;
+        }
+    }
+
+Q:in Context object itself ?
+
+    Q: why did we use string instead of the plain enum in Context ? 
+    A: to add the repo alias to keys
+    
+    Q: can we simplify this ?
+    A: 
+    - use a Pojo with enum + repo alias + equals/hashcode, with a builder
+    - introduce the concept in the pipeline instead, i.e. in the Context object 
+
+Q: as an Helper class 
+
+-----
+
+
+     
+-----     
+     
+- refine error handling  
+    - add diagnostic logs before rethrowing Exception
+    - clear pooled entries ?
+ 
+Q: rename PooledGitManager into SimpleGitProcessor ?
+- Modify clients to instanciate PooledGitManager
+- PooledGitManager: delegates commitPush to gitManager
+- PooledGitManager: tunes the pool (max size, ...)
+- PooledGitManager: expose metrics for operability (pool stats)
+- PooledGitRepoFoctory: validates pooled git repo through a git pull & git reset
+- PooledGitRepoFoctory: un/passivate pooled git repo by renaming their dir ? 
+
 
 Reqs:
     - operability: be able to distinguish (from disk or else from logs) cache entries from actively used clones
@@ -8,6 +114,8 @@ Reqs:
 Option 1: add AOP/spring caching behavior
          https://docs.spring.io/spring/docs/current/spring-framework-reference/integration.html#cache
          Pb: does not map well a caching abstraction, this is rather a pool abstraction
+         
+         Same with https://github.com/ben-manes/caffeine even with http://static.javadoc.io/com.github.ben-manes.caffeine/caffeine/2.6.2/com/github/benmanes/caffeine/cache/RemovalListener.html
 
 Option 2: look for an off-the-shelf pooling cache component + refactor Processor
 
@@ -16,7 +124,9 @@ Matching pooling libraries/concepts
     - https://commons.apache.org/proper/commons-pool/api-2.6.0/index.html
 
 Q: do we need to distinguish pooled repos (e.g. remote URI, remote branch, submodules fetched) ?
-A: yes: both paas-secret and paas-template URIs should be fetched, with distinct remote branches  
+A: 
+- both paas-secret and paas-template URIs should be fetched, with distinct remote branches
+- however the git repo uri is provided to the GitProcessor constructor  
 + we instead refresh pooled repos each time we take them from the pool (git fetch + git reset) 
 
 ```
@@ -33,6 +143,16 @@ Q: how do we pass in the context keys to the Factory impl ?
 - introduce keep one pool per key
 - use KeyedPooledObjectFactory<K,V> instead https://commons.apache.org/proper/commons-pool/api-2.6.0/org/apache/commons/pool2/KeyedPooledObjectFactory.html   
 
+
+First experiment: does it make sense to extract GitCloner ?
+- GitProcess becomes anemic
+- GitProcessorTest 
+    - does white box testing (protected methods) 
+    - set up using clone/commit implies coupling to GitCloner/GitPusher 
+
+Deadcode:
+
+processor.configureCrLf(repository.getConfig());
 
 
 -------------------

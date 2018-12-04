@@ -2,15 +2,11 @@ package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git;
 
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
-import org.eclipse.jgit.errors.RepositoryNotFoundException;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.eclipse.jgit.transport.Daemon;
 import org.eclipse.jgit.transport.DaemonClient;
-import org.eclipse.jgit.transport.ServiceMayNotContinueException;
 import org.eclipse.jgit.transport.resolver.RepositoryResolver;
-import org.eclipse.jgit.transport.resolver.ServiceNotAuthorizedException;
-import org.eclipse.jgit.transport.resolver.ServiceNotEnabledException;
 import org.springframework.util.FileSystemUtils;
 
 import java.io.File;
@@ -46,7 +42,7 @@ public class GitServer {
      * @param repoInitializer optional way to initialize the git repo on the fly
      *                        If not needed, use #NO_OP_INITIALIZER as a convenience
      */
-    public void startEphemeralReposServer(Consumer<Git> repoInitializer) throws IOException, GitAPIException {
+    public void startEphemeralReposServer(Consumer<Git> repoInitializer) throws IOException {
         this.server = new Daemon(new InetSocketAddress(9418));
         this.server.getService("git-receive-pack").setEnabled(true);
         this.server.setRepositoryResolver(new RepositoryResolverImplementation(repoInitializer));
@@ -92,6 +88,12 @@ public class GitServer {
         }
         repositories.clear();
     }
+
+    public Git getRepo(String repoName) {
+        Repository repository = repositories.get(repoName);
+        return new Git(repository);
+    }
+
     private final class RepositoryResolverImplementation implements
             RepositoryResolver<DaemonClient> {
 
@@ -103,10 +105,7 @@ public class GitServer {
         }
 
         @Override
-        public Repository open(DaemonClient client, String name)
-                throws RepositoryNotFoundException,
-                ServiceNotAuthorizedException, ServiceNotEnabledException,
-                ServiceMayNotContinueException {
+        public Repository open(DaemonClient client, String name) {
             return GitServer.this.initRepo(name, repoInitStep);
         }
 

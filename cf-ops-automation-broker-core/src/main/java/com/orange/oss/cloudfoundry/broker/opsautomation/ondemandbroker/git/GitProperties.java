@@ -14,7 +14,7 @@ public class GitProperties {
 	private String url;
 	private String committerName = "coab";
 	private String committerEmail = "coab@orange.com";
-	private boolean usePooling = false;
+	private boolean usePooling = true;
 
 	/**
 	 * Where submodules are replicated by default (e.g. "https://gitlab.internal.paas/"

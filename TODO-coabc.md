@@ -56,6 +56,7 @@ Investigate if/how the pool JMX can be exposed as actuactor metrics
 
 
 
+
 Refactor GitManager impls to extract common repo alias +log support? in a common ~super~/collaborator class. 
    + use it in tests 
    + use it and in clients

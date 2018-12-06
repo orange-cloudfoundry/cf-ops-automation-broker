@@ -1,7 +1,7 @@
 package com.orange.oss.ondemandbroker;
 
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.OsbBuilderHelper;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.*;
-import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.Context;
 import org.assertj.core.api.Assertions;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -9,16 +9,15 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.runners.MockitoJUnitRunner;
-import org.springframework.cloud.servicebroker.model.*;
+import org.mockito.junit.MockitoJUnitRunner;
+import org.springframework.cloud.servicebroker.model.instance.*;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 
 import static org.fest.assertions.Assertions.assertThat;
-import static org.mockito.Matchers.any;
+import static org.mockito.ArgumentMatchers.any;
 
 @RunWith(MockitoJUnitRunner.class)
 public class ProcessorChainServiceInstanceServiceTest {
@@ -32,19 +31,19 @@ public class ProcessorChainServiceInstanceServiceTest {
     ProcessorChainServiceInstanceService service;
 
     @Test
-    public void chains_create_processors_on_service_instance_creation() throws Exception {
+    public void chains_create_processors_on_service_instance_creation() {
         //given
-        CreateServiceInstanceRequest request = new CreateServiceInstanceRequest();
+        CreateServiceInstanceRequest request = CreateServiceInstanceRequest.builder().build();
 
         //when
         CreateServiceInstanceResponse response = service.createServiceInstance(request);
 
         //then the default response is returned
-        Assertions.assertThat(response).isEqualTo(new CreateServiceInstanceResponse());
+        Assertions.assertThat(response).isEqualTo(CreateServiceInstanceResponse.builder().build());
 
         //and call is properly chained
         ArgumentCaptor<Context> argument = ArgumentCaptor.forClass(Context.class);
-        Assertions.assertThat(response).isEqualTo(new CreateServiceInstanceResponse());
+        Assertions.assertThat(response).isEqualTo(CreateServiceInstanceResponse.builder().build());
         Mockito.verify(processorChain).create(argument.capture());
 
         //and context is populated with the request
@@ -53,9 +52,9 @@ public class ProcessorChainServiceInstanceServiceTest {
     }
 
    @Test(expected = RuntimeException.class)
-    public void creates_method_logs_and_rethrows_exceptions() throws Exception {
+    public void creates_method_logs_and_rethrows_exceptions() {
        RuntimeException confidentialException = new RuntimeException("unable to push at https://login:pwd@mygit.site.org/secret_path", new IOException());
-       CreateServiceInstanceRequest request = new CreateServiceInstanceRequest();
+       CreateServiceInstanceRequest request = CreateServiceInstanceRequest.builder().build();
        //given a processor throws an exception
        Mockito.doThrow(confidentialException).when(processorChain).create(any(Context.class));
 
@@ -67,11 +66,12 @@ public class ProcessorChainServiceInstanceServiceTest {
 
     @Test
     public void uses_create_response_from_context_when_set() {
-        CreateServiceInstanceRequest request = new CreateServiceInstanceRequest();
+        CreateServiceInstanceRequest request = CreateServiceInstanceRequest.builder().build();
 
         //given a processor that generates a response into the context
-        final CreateServiceInstanceResponse customResponse = new CreateServiceInstanceResponse()
-                .withDashboardUrl("https://a.dashboard.org");
+        final CreateServiceInstanceResponse customResponse = CreateServiceInstanceResponse.builder()
+                .dashboardUrl("https://a.dashboard.org")
+                .build();
 
         BrokerProcessor processor = new DefaultBrokerProcessor() {
             @Override
@@ -93,15 +93,17 @@ public class ProcessorChainServiceInstanceServiceTest {
     @Test
     public void chains_getLastCreateOperation_processors() throws Exception {
         //given
-        GetLastServiceOperationRequest request = new GetLastServiceOperationRequest("instanceId");
+        GetLastServiceOperationRequest request = GetLastServiceOperationRequest.builder()
+                .serviceInstanceId("instanceId").build();
 
         //when
         GetLastServiceOperationResponse response = service.getLastOperation(request);
 
         //then call is properly chained
         ArgumentCaptor<Context> argument = ArgumentCaptor.forClass(Context.class);
-        GetLastServiceOperationResponse expected = new GetLastServiceOperationResponse();
-        expected.withOperationState(OperationState.SUCCEEDED);
+        GetLastServiceOperationResponse expected = GetLastServiceOperationResponse.builder()
+                .operationState(OperationState.SUCCEEDED)
+                .build();
         Assertions.assertThat(response).isEqualTo(expected);
         Mockito.verify(processorChain).getLastOperation(argument.capture());
 
@@ -113,11 +115,15 @@ public class ProcessorChainServiceInstanceServiceTest {
     @Test
     public void uses_last_create_response_from_context_when_set() {
         //given
-        GetLastServiceOperationRequest request = new GetLastServiceOperationRequest("instanceId");
+
+        GetLastServiceOperationRequest request = GetLastServiceOperationRequest.builder()
+                .serviceInstanceId("instanceId")
+                .build();
 
         //given a processor that generates a response into the context
-        final GetLastServiceOperationResponse customResponse = new GetLastServiceOperationResponse()
-                .withDescription("progress 5%");
+        final GetLastServiceOperationResponse customResponse = GetLastServiceOperationResponse.builder()
+                .description("progress 5%")
+                .build();
 
         BrokerProcessor processor = new DefaultBrokerProcessor() {
             @Override
@@ -138,13 +144,10 @@ public class ProcessorChainServiceInstanceServiceTest {
 
 
     @Test
-    public void chains_delete_processors_on_service_instance_deletion() throws Exception {
+    public void chains_delete_processors_on_service_instance_deletion() {
         //given
-        DeleteServiceInstanceRequest request = new DeleteServiceInstanceRequest("instance_id",
-                "service_id",
-                "plan_id",
-                new ServiceDefinition(),
-                true);
+
+        DeleteServiceInstanceRequest request = OsbBuilderHelper.aDeleteServiceInstanceRequest();
 
         //when
         DeleteServiceInstanceResponse response = service.deleteServiceInstance(request);
@@ -152,7 +155,7 @@ public class ProcessorChainServiceInstanceServiceTest {
         ArgumentCaptor<Context> argument = ArgumentCaptor.forClass(Context.class);
         Mockito.verify(processorChain).delete(argument.capture());
         //and default response is returned
-        Assertions.assertThat(response).isEqualTo(new DeleteServiceInstanceResponse());
+        Assertions.assertThat(response).isEqualTo(DeleteServiceInstanceResponse.builder().build());
 
         //and context is populated with the request
         Context ctx=argument.getValue();
@@ -163,16 +166,13 @@ public class ProcessorChainServiceInstanceServiceTest {
     @Test
     public void uses_delete_response_from_context_when_set() {
         //given
-        DeleteServiceInstanceRequest request = new DeleteServiceInstanceRequest("instance_id",
-                "service_id",
-                "plan_id",
-                new ServiceDefinition(),
-                true);
+        DeleteServiceInstanceRequest request = OsbBuilderHelper.aDeleteServiceInstanceRequest();
 
         //given a processor that generates a response into the context
-        final DeleteServiceInstanceResponse customResponse = new DeleteServiceInstanceResponse()
-                .withAsync(true)
-                .withOperation("state");
+        final DeleteServiceInstanceResponse customResponse = DeleteServiceInstanceResponse.builder()
+                .async(true)
+                .operation("state")
+                .build();
 
         BrokerProcessor processor = new DefaultBrokerProcessor() {
             @Override
@@ -192,19 +192,15 @@ public class ProcessorChainServiceInstanceServiceTest {
     }
 
     @Test
-    public void chains_update_processors_on_service_instance_update() throws Exception {
+    public void chains_update_processors_on_service_instance_update() {
         //given
-        UpdateServiceInstanceRequest request = new UpdateServiceInstanceRequest(
-                "service_id",
-                "plan_id",
-                new HashMap<>());
-
+        UpdateServiceInstanceRequest request = OsbBuilderHelper.anUpdateServiceInstanceRequest();
         //when
         UpdateServiceInstanceResponse response = service.updateServiceInstance(request);
 
         //then call is properly chained
         ArgumentCaptor<Context> argument = ArgumentCaptor.forClass(Context.class);
-        Assertions.assertThat(response).isEqualTo(new UpdateServiceInstanceResponse());
+        Assertions.assertThat(response).isEqualTo(UpdateServiceInstanceResponse.builder().build());
         Mockito.verify(processorChain).update(argument.capture());
 
         //and context is populated with the request
@@ -216,15 +212,13 @@ public class ProcessorChainServiceInstanceServiceTest {
     @Test
     public void uses_update_response_from_context_when_set() {
         //given
-        UpdateServiceInstanceRequest request = new UpdateServiceInstanceRequest(
-                "service_id",
-                "plan_id",
-                new HashMap<>());
+        UpdateServiceInstanceRequest request = OsbBuilderHelper.anUpdateServiceInstanceRequest();
 
         //given a processor that generates a response into the context
-        final UpdateServiceInstanceResponse customResponse = new UpdateServiceInstanceResponse()
-                .withAsync(true)
-                .withOperation("state");
+        final UpdateServiceInstanceResponse customResponse = UpdateServiceInstanceResponse.builder()
+                .async(true)
+                .operation("state")
+                .build();
 
         BrokerProcessor processor = new DefaultBrokerProcessor() {
             @Override

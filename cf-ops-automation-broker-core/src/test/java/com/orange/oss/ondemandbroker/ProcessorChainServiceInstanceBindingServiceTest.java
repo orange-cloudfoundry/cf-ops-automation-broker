@@ -1,7 +1,7 @@
 package com.orange.oss.ondemandbroker;
 
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.OsbBuilderHelper;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.*;
-import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.Context;
 import org.assertj.core.api.Assertions;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -9,8 +9,11 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.runners.MockitoJUnitRunner;
-import org.springframework.cloud.servicebroker.model.*;
+import org.mockito.junit.MockitoJUnitRunner;
+import org.springframework.cloud.servicebroker.model.binding.CreateServiceInstanceAppBindingResponse;
+import org.springframework.cloud.servicebroker.model.binding.CreateServiceInstanceBindingRequest;
+import org.springframework.cloud.servicebroker.model.binding.CreateServiceInstanceBindingResponse;
+import org.springframework.cloud.servicebroker.model.binding.DeleteServiceInstanceBindingRequest;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -19,7 +22,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.fest.assertions.Assertions.assertThat;
-import static org.mockito.Matchers.any;
+import static org.mockito.ArgumentMatchers.any;
 
 @RunWith(MockitoJUnitRunner.class)
 public class ProcessorChainServiceInstanceBindingServiceTest {
@@ -33,18 +36,18 @@ public class ProcessorChainServiceInstanceBindingServiceTest {
     ProcessorChainServiceInstanceBindingService service;
 
     @Test
-    public void chains_bind_processors_on_service_instance_binding() throws Exception {
+    public void chains_bind_processors_on_service_instance_binding() {
         //given
-        CreateServiceInstanceBindingRequest request = new CreateServiceInstanceBindingRequest();
+        CreateServiceInstanceBindingRequest request = CreateServiceInstanceBindingRequest.builder().build();
 
         //when
         CreateServiceInstanceBindingResponse response = service.createServiceInstanceBinding(request);
 
         //then the default response is returned
-        Assertions.assertThat(response).isEqualTo(new CreateServiceInstanceBindingResponse());
+        Assertions.assertThat(response).isEqualTo(CreateServiceInstanceAppBindingResponse.builder().build());
         //and call is properly chained
         ArgumentCaptor<Context> argument = ArgumentCaptor.forClass(Context.class);
-        Assertions.assertThat(response).isEqualTo(new CreateServiceInstanceBindingResponse());
+        Assertions.assertThat(response).isEqualTo(CreateServiceInstanceAppBindingResponse.builder().build());
         Mockito.verify(processorChain).bind(argument.capture());
 
         //and context is populated with the request
@@ -53,9 +56,9 @@ public class ProcessorChainServiceInstanceBindingServiceTest {
     }
 
     @Test(expected = RuntimeException.class)
-    public void creates_method_logs_and_rethrows_exceptions() throws Exception {
+    public void creates_method_logs_and_rethrows_exceptions() {
         RuntimeException confidentialException = new RuntimeException("unable to push at https://login:pwd@mygit.site.org/secret_path", new IOException());
-        CreateServiceInstanceBindingRequest request = new CreateServiceInstanceBindingRequest();
+        CreateServiceInstanceBindingRequest request = CreateServiceInstanceBindingRequest.builder().build();
         //given a processor throws an exception
         Mockito.doThrow(confidentialException).when(processorChain).bind(any(Context.class));
 
@@ -68,7 +71,7 @@ public class ProcessorChainServiceInstanceBindingServiceTest {
 
     @Test
     public void uses_create_response_from_context_when_set() {
-        CreateServiceInstanceBindingRequest  request = new CreateServiceInstanceBindingRequest ();
+        CreateServiceInstanceBindingRequest  request = CreateServiceInstanceBindingRequest.builder().build();
 
         //given a processor that generates a response into the context
         Map<String, Object> credentials = new HashMap<>();
@@ -78,7 +81,8 @@ public class ProcessorChainServiceInstanceBindingServiceTest {
         credentials.put("port", "9142");
         credentials.put("jdbcUrl", "jdbc:cassandra://127.0.0.1:9142/ks055d0899_018d_4841_ba66_2e4d4ce91f47");
         credentials.put("login", "rbbbbbbbb_ba66_4841_018d_2e4d4ce91f47");
-        final CreateServiceInstanceBindingResponse customResponse = new CreateServiceInstanceAppBindingResponse().withCredentials(credentials);
+        final CreateServiceInstanceBindingResponse customResponse =
+                CreateServiceInstanceAppBindingResponse.builder().credentials(credentials).build();
 
         BrokerProcessor processor = new DefaultBrokerProcessor() {
             @Override
@@ -100,13 +104,9 @@ public class ProcessorChainServiceInstanceBindingServiceTest {
 
 
     @Test
-    public void chains_unbind_processors_on_service_instance_unbinding() throws Exception {
+    public void chains_unbind_processors_on_service_instance_unbinding() {
         //given
-        DeleteServiceInstanceBindingRequest request = new DeleteServiceInstanceBindingRequest("instance_id",
-                "binding_id",
-                "service_definition_id",
-                "plan_id",
-                new ServiceDefinition());
+        DeleteServiceInstanceBindingRequest request = OsbBuilderHelper.anUnbindRequest("service-instance-id", "service-binding-id");
 
         //when
         service.deleteServiceInstanceBinding(request);

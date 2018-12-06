@@ -47,7 +47,8 @@ public class TerraformProcessorTest {
     private
     TerraformRepository terraformRepository;
 
-    private TerraformProcessor terraformProcessor = new TerraformProcessor(aConfig(), aSuffixValidator(), getRepositoryFactory(), aTracker());
+    private final TerraformCompletionTracker completionTracker = Mockito.mock(TerraformCompletionTracker.class);
+    private TerraformProcessor terraformProcessor = new TerraformProcessor(aConfig(), aSuffixValidator(), getRepositoryFactory(), completionTracker);
 
 
     @Test(expected = UserFacingRuntimeException.class)
@@ -120,7 +121,7 @@ public class TerraformProcessorTest {
         TerraformRepository terraformRepository = Mockito.mock(TerraformRepository.class);
         when(terraformRepository.getByModuleProperty(TerraformProcessor.ROUTE_PREFIX, "avalidroute")).thenReturn(aTfModule());
 
-        terraformProcessor = new TerraformProcessor(aConfig(), aSuffixValidator(), getRepositoryFactory(), aTracker());
+        terraformProcessor = new TerraformProcessor(aConfig(), aSuffixValidator(), getRepositoryFactory(), completionTracker);
 
         //When a new module is requested to be added
         TerraformModule requestedModule = ImmutableTerraformModule.builder().from(aTfModule())
@@ -205,7 +206,7 @@ public class TerraformProcessorTest {
         ImmutableTerraformConfig cloudFlareConfig = ImmutableTerraformConfig.builder()
                 .routeSuffix("-cdn-cw-vdr-pprod-apps.redacted-domain.org")
                 .template(deserialized).build();
-        terraformProcessor = new TerraformProcessor(cloudFlareConfig, aSuffixValidator(), getRepositoryFactory(), aTracker());
+        terraformProcessor = new TerraformProcessor(cloudFlareConfig, aSuffixValidator(), getRepositoryFactory(), completionTracker);
 
         //given a user request with a route
         Map<String, Object> parameters = new HashMap<>();
@@ -381,13 +382,7 @@ public class TerraformProcessorTest {
     }
 
     private TerraformCompletionTracker aTracker() {
-        GetLastServiceOperationResponse expectedResponse = new GetLastServiceOperationResponse();
-        expectedResponse.withDescription("module exec in progress");
-        expectedResponse.withOperationState(IN_PROGRESS);
-        TerraformCompletionTracker tracker = Mockito.mock(TerraformCompletionTracker.class);
-        when(tracker.getModuleExecStatus(any(Path.class), anyString(), anyString())).thenReturn(expectedResponse);
-        when(tracker.getOperationStateAsJson(TerraformCompletionTracker.CREATE)).thenReturn("{\"lastOperationDate\":\"2017-11-14T17:24:08.007Z\",\"operation\":\"create\"}");
-        return tracker;
+        return Mockito.mock(TerraformCompletionTracker.class);
     }
 
     private CloudFlareRouteSuffixValidator aSuffixValidator() {

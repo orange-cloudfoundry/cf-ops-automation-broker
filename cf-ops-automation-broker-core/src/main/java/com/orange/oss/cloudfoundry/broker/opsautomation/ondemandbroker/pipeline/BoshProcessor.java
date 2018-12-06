@@ -11,9 +11,6 @@ import org.springframework.cloud.servicebroker.model.*;
 
 import java.nio.file.Path;
 
-import static com.orange.oss.ondemandbroker.ProcessorChainServiceInstanceService.OSB_PROFILE_ORGANIZATION_GUID;
-import static com.orange.oss.ondemandbroker.ProcessorChainServiceInstanceService.OSB_PROFILE_SPACE_GUID;
-
 public class BoshProcessor extends DefaultBrokerProcessor {
 
 	private static Logger logger = LoggerFactory.getLogger(BoshProcessor.class.getName());
@@ -148,25 +145,21 @@ public class BoshProcessor extends DefaultBrokerProcessor {
     }
 
 	private String extractCfSpaceGuid(CreateServiceInstanceRequest request) {
-		org.springframework.cloud.servicebroker.model.Context context = request.getContext();
-		String spaceGuid = null;
-		if ((context != null) && OsbConstants.ORIGINATING_CLOUDFOUNDRY_PLATFORM.equals(context.getPlatform())) {
-			spaceGuid = (String) context.getProperty(OSB_PROFILE_SPACE_GUID);
-		}
-        //noinspection deprecation
-        spaceGuid = (spaceGuid == null) ? request.getSpaceGuid() : spaceGuid;
-		return spaceGuid;
+        org.springframework.cloud.servicebroker.model.Context context = request.getContext();
+        if (context instanceof CloudFoundryContext) {
+            CloudFoundryContext cloudFoundryContext = (CloudFoundryContext) context;
+            return cloudFoundryContext.getSpaceGuid();
+        }
+        return null;
 	}
 
 	private String extractCfOrgGuid(CreateServiceInstanceRequest request) {
 		org.springframework.cloud.servicebroker.model.Context context = request.getContext();
-		String organizationGuid = null;
-		if ((context != null) && OsbConstants.ORIGINATING_CLOUDFOUNDRY_PLATFORM.equals(context.getPlatform())) {
-			organizationGuid = (String) context.getProperty(OSB_PROFILE_ORGANIZATION_GUID);
+		if (context instanceof CloudFoundryContext) {
+			CloudFoundryContext cloudFoundryContext = (CloudFoundryContext) context;
+			return cloudFoundryContext.getOrganizationGuid();
 		}
-        //noinspection deprecation
-        organizationGuid = (organizationGuid == null) ? request.getOrganizationGuid() : organizationGuid;
-		return organizationGuid;
+		return null;
 	}
 
 	protected String formatUnprovisionCommitMsg(DeleteServiceInstanceRequest request) {
@@ -177,14 +170,11 @@ public class BoshProcessor extends DefaultBrokerProcessor {
 	}
 
     private String extractUserKeyFromOsbContext(org.springframework.cloud.servicebroker.model.Context context) {
-        String userKey = null;
-        if (context != null) {
-			String platform = context.getPlatform();
-			if (OsbConstants.ORIGINATING_CLOUDFOUNDRY_PLATFORM.equals(platform)) {
-				userKey = (String) context.getProperty(OsbConstants.ORIGINATING_USER_KEY);
-			}
-		}
-        return userKey;
+        if (context instanceof CloudFoundryContext) {
+            CloudFoundryContext cloudFoundryContext = (CloudFoundryContext) context;
+            return (String) cloudFoundryContext.getProperty(OsbConstants.ORIGINATING_USER_KEY);
+        }
+        return null;
     }
 
 	private Path getPaasSecret(Context ctx) {

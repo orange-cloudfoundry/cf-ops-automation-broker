@@ -10,10 +10,7 @@ import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.osbclient
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.osbclient.OsbClientFactory;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.osbclient.ServiceInstanceBindingServiceClient;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.osbclient.ServiceInstanceServiceClient;
-import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.DeploymentConstants;
-import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.DeploymentProperties;
-import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.OsbProxyImpl;
-import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.SecretsGenerator;
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.*;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.tools.Copy;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.Context;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.terraform.TerraformModuleHelper;
@@ -32,7 +29,15 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.web.server.LocalServerPort;
-import org.springframework.cloud.servicebroker.model.*;
+import org.springframework.cloud.servicebroker.model.CloudFoundryContext;
+import org.springframework.cloud.servicebroker.model.binding.CreateServiceInstanceAppBindingResponse;
+import org.springframework.cloud.servicebroker.model.binding.CreateServiceInstanceBindingRequest;
+import org.springframework.cloud.servicebroker.model.catalog.Catalog;
+import org.springframework.cloud.servicebroker.model.catalog.Plan;
+import org.springframework.cloud.servicebroker.model.catalog.ServiceDefinition;
+import org.springframework.cloud.servicebroker.model.instance.CreateServiceInstanceRequest;
+import org.springframework.cloud.servicebroker.model.instance.CreateServiceInstanceResponse;
+import org.springframework.cloud.servicebroker.model.instance.DeleteServiceInstanceResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.junit4.SpringRunner;
 
@@ -357,8 +362,8 @@ public class BoshServiceProvisionningTest {
     }
 
     private void create_service_binding() {
-        CreateServiceInstanceBindingRequest serviceInstanceBindingRequest = aBindingRequest(SERVICE_INSTANCE_ID)
-                .withBindingId(SERVICE_BINDING_INSTANCE_ID);
+        CreateServiceInstanceBindingRequest serviceInstanceBindingRequest = aBindingRequest(SERVICE_INSTANCE_ID);
+        serviceInstanceBindingRequest.setBindingId(SERVICE_BINDING_INSTANCE_ID);
 
         ResponseEntity<CreateServiceInstanceAppBindingResponse> bindResponse = serviceInstanceBindingService.createServiceInstanceBinding(
                 SERVICE_INSTANCE_ID,
@@ -384,8 +389,8 @@ public class BoshServiceProvisionningTest {
 
     private String create_async_service_instance_using_osb_client() {
 
-        CreateServiceInstanceRequest createServiceInstanceRequest = aCreateServiceInstanceRequest()
-                .withServiceInstanceId(SERVICE_INSTANCE_ID);
+        CreateServiceInstanceRequest createServiceInstanceRequest = aCreateServiceInstanceRequest();
+                createServiceInstanceRequest.setServiceInstanceId(SERVICE_INSTANCE_ID);
         ResponseEntity<CreateServiceInstanceResponse> createResponse = serviceInstanceService.createServiceInstance(
                 SERVICE_INSTANCE_ID,
                 true,
@@ -447,26 +452,16 @@ public class BoshServiceProvisionningTest {
     }
 
     private CreateServiceInstanceRequest aCreateServiceInstanceRequest() {
-
-        CreateServiceInstanceRequest request = new CreateServiceInstanceRequest(SERVICE_DEFINITION_ID,
-                SERVICE_PLAN_ID,
-                "org_id",
-                "space_id",
-                aCfOsbContext(),
-                new HashMap<>()
-        );
-        request.withServiceInstanceId(SERVICE_INSTANCE_ID);
-        return request;
-    }
-
-    private org.springframework.cloud.servicebroker.model.Context aCfOsbContext() {
-        Map<String, Object> contextProperties = new HashMap<>();
-        contextProperties.put(OSB_PROFILE_ORGANIZATION_GUID, "org_id");
-        contextProperties.put(OSB_PROFILE_SPACE_GUID, "space_id");
-        return new org.springframework.cloud.servicebroker.model.Context(
-                CLOUD_FOUNDRY_PLATFORM,
-                contextProperties
-        );
+        return CreateServiceInstanceRequest.builder()
+                .serviceDefinitionId(SERVICE_DEFINITION_ID)
+                .planId(SERVICE_PLAN_ID)
+                .serviceInstanceId(SERVICE_INSTANCE_ID)
+                .context(CloudFoundryContext.builder()
+                        .organizationGuid("org_id")
+                        .spaceGuid("space_id")
+                        .build()
+                )
+                .build();
     }
 
 }

@@ -14,9 +14,6 @@ import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.orange.oss.ondemandbroker.ProcessorChainServiceInstanceService.OSB_PROFILE_ORGANIZATION_GUID;
-import static com.orange.oss.ondemandbroker.ProcessorChainServiceInstanceService.OSB_PROFILE_SPACE_GUID;
-
 /**
  *
  */
@@ -85,21 +82,14 @@ public class TerraformProcessor extends DefaultBrokerProcessor {
     }
 
     ImmutableTerraformModule constructModule(CreateServiceInstanceRequest request) {
-        String orgGuid = null;
-        if (request.getContext() != null) {
-            orgGuid = (String) request.getContext().getProperty(OSB_PROFILE_ORGANIZATION_GUID);
-        }
-        if (orgGuid == null) {
-            //noinspection deprecation
-            orgGuid = request.getOrganizationGuid();
-        }
-        String spaceGuid = null;
-        if (request.getContext() != null) {
-            spaceGuid = (String) request.getContext().getProperty(OSB_PROFILE_SPACE_GUID);
-        }
-        if (spaceGuid == null) {
-            //noinspection deprecation
-            spaceGuid = request.getSpaceGuid();
+        String orgGuid;
+        String spaceGuid;
+        if (request.getContext() instanceof CloudFoundryContext) {
+            CloudFoundryContext cloudFoundryContext = (CloudFoundryContext) request.getContext();
+            orgGuid = cloudFoundryContext.getOrganizationGuid();
+            spaceGuid = cloudFoundryContext.getSpaceGuid();
+        } else {
+            throw new RuntimeException("Excepting missing cloudfoundry context in request");
         }
         return ImmutableTerraformModule.builder()
                 .from(terraformConfig.getTemplate())

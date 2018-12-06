@@ -1,0 +1,7 @@
+depth=2 C = US, O = "Entrust, Inc.", OU = See www.entrust.net/legal-terms, OU = "(c) 2009 Entrust, Inc. - for authorized use only", CN = Entrust Root Certification Authority - G2
+verify return:1
+depth=1 C = US, O = "Entrust, Inc.", OU = See www.entrust.net/legal-terms, OU = "(c) 2012 Entrust, Inc. - for authorized use only", CN = Entrust Certification Authority - L1K
+verify return:1
+depth=0 C = US, ST = California, L = Mountain View, O = "Synopsys, Inc.", CN = scan.coverity.com
+verify return:1
+DONE

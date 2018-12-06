@@ -137,6 +137,8 @@ public class BoshProcessorTest {
     @Test
     public void provision_commit_msg_includes_requester_details_with_empty_context() {
         //Given a creation request with both deprecated OSB syntax
+        Map<String, Object> properties = new HashMap<>();
+        org.springframework.cloud.servicebroker.model.Context context = CloudFoundryContext.builder().build();
 
         CreateServiceInstanceRequest request = new CreateServiceInstanceRequest("service_definition_id",
                 "plan_id",
@@ -150,8 +152,12 @@ public class BoshProcessorTest {
         );
         request.withServiceInstanceId(SERVICE_INSTANCE_ID);
 
+
+        //When
         //then commit msg is valid
-        provision_commit_msg_includes_requester_details(request);
+        BoshProcessor boshProcessor = aBasicBoshProcessor();
+        assertThat(boshProcessor.formatProvisionCommitMsg(request)).isEqualTo("Cassandra broker: create instance id=aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa0" +
+                "\n\nRequested from space_guid=space_id1 org_guid=org_id1 by user_guid=null");
     }
 
     @Test
@@ -200,7 +206,6 @@ public class BoshProcessorTest {
         properties.put(OsbConstants.ORIGINATING_USER_KEY, "user_guid1");
         request.withOriginatingIdentity(new org.springframework.cloud.servicebroker.model.Context(OsbConstants.ORIGINATING_CLOUDFOUNDRY_PLATFORM, properties));
         BoshProcessor boshProcessor = aBasicBoshProcessor();
-
 
         //When
         assertThat(boshProcessor.formatProvisionCommitMsg(request)).isEqualTo("Cassandra broker: create instance id=aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa0" +

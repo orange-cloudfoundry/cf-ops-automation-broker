@@ -4,9 +4,10 @@ import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processor
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.ProcessorChain;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.cloud.servicebroker.model.CreateServiceInstanceBindingRequest;
-import org.springframework.cloud.servicebroker.model.CreateServiceInstanceBindingResponse;
-import org.springframework.cloud.servicebroker.model.DeleteServiceInstanceBindingRequest;
+import org.springframework.cloud.servicebroker.model.binding.CreateServiceInstanceAppBindingResponse;
+import org.springframework.cloud.servicebroker.model.binding.CreateServiceInstanceBindingRequest;
+import org.springframework.cloud.servicebroker.model.binding.CreateServiceInstanceBindingResponse;
+import org.springframework.cloud.servicebroker.model.binding.DeleteServiceInstanceBindingRequest;
 import org.springframework.cloud.servicebroker.service.ServiceInstanceBindingService;
 import org.springframework.stereotype.Service;
 
@@ -46,7 +47,7 @@ public class ProcessorChainServiceInstanceBindingService implements ServiceInsta
             if (ctx.contextKeys.get(CREATE_SERVICE_INSTANCE_BINDING_RESPONSE) instanceof CreateServiceInstanceBindingResponse) {
                 response = (CreateServiceInstanceBindingResponse) ctx.contextKeys.get(CREATE_SERVICE_INSTANCE_BINDING_RESPONSE);
             } else {
-                response = new CreateServiceInstanceBindingResponse();
+                response = CreateServiceInstanceAppBindingResponse.builder().build();
             }
             return response;
         } catch (RuntimeException e) {

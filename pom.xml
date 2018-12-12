@@ -35,7 +35,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <java.version>1.8</java.version>
-        <springCloudServiceBrokerVersion>1.0.2.RELEASE</springCloudServiceBrokerVersion>
+        <springCloudServiceBrokerVersion>2.0.1.RELEASE</springCloudServiceBrokerVersion>
     </properties>
 
     <modules>
@@ -43,7 +43,6 @@
         <module>cf-ops-automation-broker-framework</module>
         <module>cf-ops-automation-terraform-broker</module>
         <module>cf-ops-automation-bosh-broker</module>
-        <module>spring-boot-starter-servicebroker-catalog</module>
     </modules>
 
     <dependencies>
@@ -116,7 +115,7 @@
             </dependency>
             <dependency>
                 <groupId>org.springframework.cloud</groupId>
-                <artifactId>spring-cloud-cloudfoundry-service-broker</artifactId>
+                <artifactId>spring-cloud-starter-open-service-broker-webmvc</artifactId>
                 <version>${springCloudServiceBrokerVersion}</version>
             </dependency>
             <dependency>

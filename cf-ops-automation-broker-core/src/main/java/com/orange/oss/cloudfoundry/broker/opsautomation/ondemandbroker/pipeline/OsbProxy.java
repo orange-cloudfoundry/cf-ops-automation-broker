@@ -1,6 +1,12 @@
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline;
 
-import org.springframework.cloud.servicebroker.model.*;
+import org.springframework.cloud.servicebroker.model.binding.CreateServiceInstanceBindingRequest;
+import org.springframework.cloud.servicebroker.model.binding.CreateServiceInstanceBindingResponse;
+import org.springframework.cloud.servicebroker.model.binding.DeleteServiceInstanceBindingRequest;
+import org.springframework.cloud.servicebroker.model.instance.CreateServiceInstanceRequest;
+import org.springframework.cloud.servicebroker.model.instance.DeleteServiceInstanceRequest;
+import org.springframework.cloud.servicebroker.model.instance.GetLastServiceOperationRequest;
+import org.springframework.cloud.servicebroker.model.instance.GetLastServiceOperationResponse;
 
 public interface OsbProxy {
 

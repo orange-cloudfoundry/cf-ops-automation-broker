@@ -6,7 +6,12 @@ import com.orange.oss.ondemandbroker.ProcessorChainServiceInstanceBindingService
 import com.orange.oss.ondemandbroker.ProcessorChainServiceInstanceService;
 import org.junit.Test;
 import org.mockito.Mockito;
-import org.springframework.cloud.servicebroker.model.*;
+import org.springframework.cloud.servicebroker.model.CloudFoundryContext;
+import org.springframework.cloud.servicebroker.model.binding.CreateServiceInstanceBindingRequest;
+import org.springframework.cloud.servicebroker.model.binding.CreateServiceInstanceBindingResponse;
+import org.springframework.cloud.servicebroker.model.binding.DeleteServiceInstanceBindingRequest;
+import org.springframework.cloud.servicebroker.model.catalog.ServiceDefinition;
+import org.springframework.cloud.servicebroker.model.instance.*;
 
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
@@ -16,11 +21,12 @@ import java.time.ZoneId;
 import java.util.HashMap;
 import java.util.Map;
 
+import static com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.OsbConstants.ORIGINATING_EMAIL_KEY;
+import static com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.OsbConstants.ORIGINATING_USER_KEY;
 import static com.orange.oss.ondemandbroker.ProcessorChainServiceInstanceService.OSB_PROFILE_ORGANIZATION_GUID;
 import static com.orange.oss.ondemandbroker.ProcessorChainServiceInstanceService.OSB_PROFILE_SPACE_GUID;
 import static org.fest.assertions.Assertions.assertThat;
 import static org.mockito.Mockito.*;
-import static org.springframework.cloud.servicebroker.model.CloudFoundryContext.CLOUD_FOUNDRY_PLATFORM;
 
 public class BoshProcessorTest {
 
@@ -31,15 +37,16 @@ public class BoshProcessorTest {
     @Test
     public void creates_structures_and_returns_async_response() {
         //Given a creation request
-        CreateServiceInstanceRequest request = new CreateServiceInstanceRequest("service_definition_id",
-                "plan_id",
-                "org_id",
-                "space_id",
-                null
-        );
-        request.withServiceInstanceId(SERVICE_INSTANCE_ID);
-        request.withOriginatingIdentity(aContext());
-
+        CreateServiceInstanceRequest request = CreateServiceInstanceRequest.builder()
+                .serviceDefinitionId("service_definition_id")
+                .planId("plan_id")
+                .serviceInstanceId(SERVICE_INSTANCE_ID)
+                .context(CloudFoundryContext.builder()
+                        .organizationGuid("org_id1")
+                        .spaceGuid("space_id1")
+                        .build()
+                )
+                .build();
 
         //Given a populated context
         Context context = new Context();
@@ -104,20 +111,24 @@ public class BoshProcessorTest {
         params.put("a number param", 24);
         params.put("a boolean param", true);
 
-        CreateServiceInstanceRequest request = new CreateServiceInstanceRequest("service_definition_id1",
-                "plan_id1",
-                "org_id1",
-                "space_id1",
-                new org.springframework.cloud.servicebroker.model.Context(
-                        CLOUD_FOUNDRY_PLATFORM,
-                        contextProperties
-                ),
-                params
-        );
-        request.withServiceInstanceId("service-instance-id1");
+        //Given a creation request
         Map<String, Object> properties = new HashMap<>();
-        properties.put(OsbConstants.ORIGINATING_USER_KEY, "user_guid1");
-        request.withOriginatingIdentity(new org.springframework.cloud.servicebroker.model.Context(OsbConstants.ORIGINATING_CLOUDFOUNDRY_PLATFORM, properties));
+        properties.put(ORIGINATING_USER_KEY, "user_guid1");
+        properties.put(ORIGINATING_EMAIL_KEY, "user_email");
+        org.springframework.cloud.servicebroker.model.Context identityContext = CloudFoundryContext.builder()
+                .properties(properties).build();
+        CreateServiceInstanceRequest request = CreateServiceInstanceRequest.builder()
+                .serviceDefinitionId("service_definition_id1")
+                .planId("plan_id1")
+                .serviceInstanceId("service-instance-id1")
+                .context(CloudFoundryContext.builder()
+                        .organizationGuid("org_id1")
+                        .spaceGuid("space_id1")
+                        .build()
+                )
+                .parameters(params)
+                .originatingIdentity(identityContext)
+                .build();
 
         //when
         CoabVarsFileDto coabVarsFileDto = boshProcessor.wrapOsbIntoVarsDto(request);
@@ -140,17 +151,17 @@ public class BoshProcessorTest {
         Map<String, Object> properties = new HashMap<>();
         org.springframework.cloud.servicebroker.model.Context context = CloudFoundryContext.builder().build();
 
-        CreateServiceInstanceRequest request = new CreateServiceInstanceRequest("service_definition_id",
-                "plan_id",
-                "org_id1",
-                "space_id1",
-                new org.springframework.cloud.servicebroker.model.Context(
-                        CLOUD_FOUNDRY_PLATFORM,
-                        null
-                ),
-                null
-        );
-        request.withServiceInstanceId(SERVICE_INSTANCE_ID);
+        CreateServiceInstanceRequest request = CreateServiceInstanceRequest.builder()
+                .serviceDefinitionId("service_definition_id1")
+                .planId("plan_id1")
+                .serviceInstanceId(SERVICE_INSTANCE_ID)
+                .context(CloudFoundryContext.builder()
+                        .organizationGuid("org_id1")
+                        .spaceGuid("space_id1")
+                        .build()
+                )
+                .originatingIdentity(context)
+                .build();
 
 
         //When
@@ -164,14 +175,21 @@ public class BoshProcessorTest {
     public void provision_commit_msg_includes_requester_details_without_context() {
         //Given a creation request with both deprecated OSB syntax
 
-        CreateServiceInstanceRequest request = new CreateServiceInstanceRequest("service_definition_id",
-                "plan_id",
-                "org_id1",
-                "space_id1",
-                null,
-                null
-        );
-        request.withServiceInstanceId(SERVICE_INSTANCE_ID);
+        //Given a parameter request
+        Map<String, Object> parameters = new HashMap<>();
+        parameters.put("parameterName", "parameterValue");
+
+        CreateServiceInstanceRequest request = CreateServiceInstanceRequest.builder()
+                .serviceDefinitionId("service_definition_id")
+                .planId("plan_id")
+                .parameters(parameters)
+                .serviceInstanceId(SERVICE_INSTANCE_ID)
+                .context(CloudFoundryContext.builder()
+                        .organizationGuid("org_id1")
+                        .spaceGuid("space_id1")
+                        .build()
+                )
+                .build();
 
         //then commit msg is valid
         BoshProcessor boshProcessor = aBasicBoshProcessor();
@@ -182,29 +200,27 @@ public class BoshProcessorTest {
     @Test
     public void provision_commit_msg_includes_requester_details_with_context() {
         //Given a creation request with both deprecated OSB syntax and new context syntax
-        Map<String, Object> contextProperties = new HashMap<>();
-        contextProperties.put(OSB_PROFILE_ORGANIZATION_GUID, "org_id1");
-        contextProperties.put(OSB_PROFILE_SPACE_GUID, "space_id1");
+        Map<String, Object> properties = new HashMap<>();
+        properties.put(ORIGINATING_USER_KEY, "user_guid1");
+        org.springframework.cloud.servicebroker.model.Context context = CloudFoundryContext.builder()
+                .properties(properties).build();
 
-        CreateServiceInstanceRequest request = new CreateServiceInstanceRequest("service_definition_id",
-                "plan_id",
-                "org_id1",
-                "space_id1",
-                new org.springframework.cloud.servicebroker.model.Context(
-                        CLOUD_FOUNDRY_PLATFORM,
-                        contextProperties
-                ),
-                null
-        );
-        request.withServiceInstanceId(SERVICE_INSTANCE_ID);
+        CreateServiceInstanceRequest request = CreateServiceInstanceRequest.builder()
+                .serviceDefinitionId("service_definition_id")
+                .planId("plan_id")
+                .serviceInstanceId(SERVICE_INSTANCE_ID)
+                .context(CloudFoundryContext.builder()
+                        .organizationGuid("org_id1")
+                        .spaceGuid("space_id1")
+                        .build()
+                )
+                .originatingIdentity(context)
+                .build();
 
         provision_commit_msg_includes_requester_details(request);
     }
 
     protected void provision_commit_msg_includes_requester_details(CreateServiceInstanceRequest request) {
-        Map<String, Object> properties = new HashMap<>();
-        properties.put(OsbConstants.ORIGINATING_USER_KEY, "user_guid1");
-        request.withOriginatingIdentity(new org.springframework.cloud.servicebroker.model.Context(OsbConstants.ORIGINATING_CLOUDFOUNDRY_PLATFORM, properties));
         BoshProcessor boshProcessor = aBasicBoshProcessor();
 
         //When
@@ -224,15 +240,21 @@ public class BoshProcessorTest {
     @Test
     public void unprovision_commit_msg_includes_requester_details() {
         //Given a delete request
-        DeleteServiceInstanceRequest request = new DeleteServiceInstanceRequest(SERVICE_INSTANCE_ID,
-                "service_id",
-                "plan_id",
-                new ServiceDefinition(),
-                false);
-
+        // Given an incoming delete request
         Map<String, Object> properties = new HashMap<>();
-        properties.put(OsbConstants.ORIGINATING_USER_KEY, "user_guid1");
-        request.withOriginatingIdentity(new org.springframework.cloud.servicebroker.model.Context(OsbConstants.ORIGINATING_CLOUDFOUNDRY_PLATFORM, properties));
+        properties.put(ORIGINATING_USER_KEY, "user_guid1");
+        org.springframework.cloud.servicebroker.model.Context context = CloudFoundryContext.builder()
+                .properties(properties).build();
+
+        DeleteServiceInstanceRequest request = DeleteServiceInstanceRequest.builder()
+                .serviceInstanceId(SERVICE_INSTANCE_ID)
+                .serviceDefinitionId("service_id")
+                .planId("plan_id")
+                .serviceDefinition(ServiceDefinition.builder().build())
+                .asyncAccepted(false)
+                .originatingIdentity(context)
+                .build();
+
 
 
         //Given mocked dependencies
@@ -248,10 +270,12 @@ public class BoshProcessorTest {
     public void responds_to_get_last_service_operation_in_progress() {
 
         //Given a get last operation request (asynchronous polling from Cloud Controller)
-        GetLastServiceOperationRequest operationRequest = new GetLastServiceOperationRequest(SERVICE_INSTANCE_ID,
-                "service_definition_id",
-                "plan_id",
-                DeploymentConstants.OSB_OPERATION_CREATE);
+        GetLastServiceOperationRequest operationRequest = GetLastServiceOperationRequest.builder()
+                .serviceInstanceId(SERVICE_INSTANCE_ID)
+                .serviceDefinitionId("service_definition_id")
+                .planId("plan_id")
+                .operation(DeploymentConstants.OSB_OPERATION_CREATE)
+                .build();
 
         //Given a populated context
         Context context = new Context();
@@ -259,8 +283,9 @@ public class BoshProcessorTest {
         context.contextKeys.put(SECRETS_REPOSITORY_ALIAS_NAME + GitProcessorContext.workDir.toString(), aGitRepoWorkDir());
 
         //Given a mock behaviour (in progress state)
-        GetLastServiceOperationResponse expectedResponse = new GetLastServiceOperationResponse();
-        expectedResponse.withOperationState(OperationState.IN_PROGRESS);
+        GetLastServiceOperationResponse expectedResponse = GetLastServiceOperationResponse.builder()
+            .operationState(OperationState.IN_PROGRESS)
+            .build();
         PipelineCompletionTracker tracker = mock(PipelineCompletionTracker.class);
         when(tracker.getDeploymentExecStatus(any(Path.class), eq(SERVICE_INSTANCE_ID), eq(DeploymentConstants.OSB_OPERATION_CREATE), any(GetLastServiceOperationRequest.class))).thenReturn(expectedResponse);
 
@@ -328,10 +353,12 @@ public class BoshProcessorTest {
     public void responds_to_get_last_service_operation_succeeded() {
 
         //Given a get last operation request (asynchronous polling from Cloud Controller)
-        GetLastServiceOperationRequest operationRequest = new GetLastServiceOperationRequest(SERVICE_INSTANCE_ID,
-                "service_definition_id",
-                "plan_id",
-                DeploymentConstants.OSB_OPERATION_CREATE);
+        GetLastServiceOperationRequest operationRequest = GetLastServiceOperationRequest.builder()
+        .serviceInstanceId(SERVICE_INSTANCE_ID)
+                .serviceDefinitionId("service_definition_id")
+                .planId("plan_id")
+                .operation(DeploymentConstants.OSB_OPERATION_CREATE)
+                .build();
 
         //Given a populated context
         Context context = new Context();
@@ -339,9 +366,10 @@ public class BoshProcessorTest {
         context.contextKeys.put(SECRETS_REPOSITORY_ALIAS_NAME + GitProcessorContext.workDir.toString(), aGitRepoWorkDir());
 
         //Given a mock behaviour (succeeded state)
-        GetLastServiceOperationResponse expectedResponse = new GetLastServiceOperationResponse();
-        expectedResponse.withDescription("Creation is succeeded");
-        expectedResponse.withOperationState(OperationState.SUCCEEDED);
+        GetLastServiceOperationResponse expectedResponse = GetLastServiceOperationResponse.builder()
+                .description("Creation is succeeded")
+                .operationState(OperationState.SUCCEEDED)
+                .build();
         PipelineCompletionTracker tracker = mock(PipelineCompletionTracker.class);
         when(tracker.getDeploymentExecStatus(any(Path.class), eq(SERVICE_INSTANCE_ID), eq(DeploymentConstants.OSB_OPERATION_CREATE), any(GetLastServiceOperationRequest.class))).thenReturn(expectedResponse);
 
@@ -357,12 +385,15 @@ public class BoshProcessorTest {
     @Test
     public void unprovision_removes_secrets_structures_and_returns_async_response() {
         //Given a delete request
-        DeleteServiceInstanceRequest request = new DeleteServiceInstanceRequest(SERVICE_INSTANCE_ID,
-                "service_id",
-                "plan_id",
-                new ServiceDefinition(),
-                false);
-        request.withOriginatingIdentity(aContext());
+        // Given an incoming delete request
+        DeleteServiceInstanceRequest request = DeleteServiceInstanceRequest.builder()
+                .serviceInstanceId(SERVICE_INSTANCE_ID)
+                .serviceDefinitionId("service_id")
+                .planId("plan_id")
+                .serviceDefinition(ServiceDefinition.builder().build())
+                .asyncAccepted(false)
+                .originatingIdentity(aContext())
+                .build();
 
         //Given a populated context
         Context context = new Context();
@@ -413,10 +444,7 @@ public class BoshProcessorTest {
     }
 
     private org.springframework.cloud.servicebroker.model.Context aContext() {
-        Map<String, Object> properties = new HashMap<>();
-        properties.put(OsbConstants.ORIGINATING_USER_KEY, "user_guid");
-        properties.put(OsbConstants.ORIGINATING_EMAIL_KEY, "user_email");
-        return new org.springframework.cloud.servicebroker.model.Context(OsbConstants.ORIGINATING_CLOUDFOUNDRY_PLATFORM, properties);
+        return OsbBuilderHelper.aCfUserContext();
     }
 
 

@@ -17,7 +17,7 @@
 
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.osbclient;
 
-import org.springframework.cloud.servicebroker.model.Catalog;
+import org.springframework.cloud.servicebroker.model.catalog.Catalog;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 

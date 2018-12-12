@@ -1,4 +1,0 @@
-org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
-com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.catalog.ServiceBrokerCatalogAutoConfiguration
-org.springframework.context.ApplicationContextInitializer=\
-com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.catalog.YamlCataloglAsEnvironmentVarApplicationContextInitializer

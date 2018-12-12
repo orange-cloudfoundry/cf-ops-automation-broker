@@ -1,37 +1,32 @@
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import org.springframework.cloud.servicebroker.model.Catalog;
-import org.springframework.cloud.servicebroker.model.Plan;
-import org.springframework.cloud.servicebroker.model.ServiceDefinition;
+import org.springframework.cloud.servicebroker.model.catalog.Catalog;
+import org.springframework.cloud.servicebroker.model.catalog.Plan;
+import org.springframework.cloud.servicebroker.model.catalog.ServiceDefinition;
 import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Service;
+
+import java.util.*;
 
 @Service
 public class BrokerCatalogConfig {
 	@Bean
 	public Catalog catalog() {
-		return new Catalog(Collections.singletonList(
-				new ServiceDefinition(
-						"ondemand-service",
-						"ondemand",
-						"A simple ondemand service broker implementation",
-						true,
-						false,
-						Collections.singletonList(
-								new Plan("ondemand-plan",
-										"default",
-										"This is a default ondemand plan.  All services are created equally.",
-										getPlanMetadata())),
-						Arrays.asList("ondemand", "document"),
-						getServiceDefinitionMetadata(),
-						null,
-						null)));
+		return Catalog.builder().serviceDefinitions(
+				ServiceDefinition.builder()
+						.id("ondemand-service")
+						.name("ondemand")
+						.description("A simple ondemand service broker implementation")
+						.bindable(true)
+						.planUpdateable(false)
+						.plans(Plan.builder()
+								.id("ondemand-plan")
+								.name("default")
+								.description("This is a default ondemand plan.  All services are created equally.")
+								.metadata(getServiceDefinitionMetadata())
+								.build())
+						.build())
+				.build();
 	}
 
 

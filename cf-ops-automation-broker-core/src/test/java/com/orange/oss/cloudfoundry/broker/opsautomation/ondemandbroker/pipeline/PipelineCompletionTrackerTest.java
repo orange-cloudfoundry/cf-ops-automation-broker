@@ -10,7 +10,11 @@ import org.junit.rules.TemporaryFolder;
 import org.mockito.Mockito;
 import org.springframework.cloud.servicebroker.exception.ServiceBrokerException;
 import org.springframework.cloud.servicebroker.exception.ServiceInstanceDoesNotExistException;
-import org.springframework.cloud.servicebroker.model.*;
+import org.springframework.cloud.servicebroker.model.ServiceBrokerRequest;
+import org.springframework.cloud.servicebroker.model.binding.CreateServiceInstanceBindingRequest;
+import org.springframework.cloud.servicebroker.model.binding.CreateServiceInstanceBindingResponse;
+import org.springframework.cloud.servicebroker.model.binding.DeleteServiceInstanceBindingRequest;
+import org.springframework.cloud.servicebroker.model.instance.*;
 import org.springframework.http.HttpStatus;
 
 import java.io.File;
@@ -118,9 +122,10 @@ public class PipelineCompletionTrackerTest {
         Mockito.when(secretsReader.isBoshDeploymentAvailable(any(), any())).thenReturn(true);
         String jsonPipelineOperationState = createProvisionOperationStateInThePast();
         //Given a proxy that returns a custom response message
-        GetLastServiceOperationResponse proxiedResponse = new GetLastServiceOperationResponse();
-        proxiedResponse.withOperationState(OperationState.SUCCEEDED);
-        proxiedResponse.withDescription("osb proxied");
+        GetLastServiceOperationResponse proxiedResponse = GetLastServiceOperationResponse.builder()
+            .operationState(OperationState.SUCCEEDED)
+            .description("osb proxied")
+                .build();
 
         when(osbProxy.delegateProvision(any(), any(), any())).thenReturn(proxiedResponse);
 
@@ -192,9 +197,10 @@ public class PipelineCompletionTrackerTest {
         DeleteServiceInstanceRequest request = OsbBuilderHelper.aDeleteServiceInstanceRequest();
 
         //Given a proxy that returns a custom response message
-        GetLastServiceOperationResponse proxiedResponse = new GetLastServiceOperationResponse();
-        proxiedResponse.withOperationState(OperationState.SUCCEEDED);
-        proxiedResponse.withDescription("osb proxied");
+        GetLastServiceOperationResponse proxiedResponse = GetLastServiceOperationResponse.builder()
+                .operationState(OperationState.SUCCEEDED)
+                .description("osb proxied")
+                .build();
         when(osbProxy.delegateDeprovision(any(), any(), any())).thenReturn(proxiedResponse);
 
         //When
@@ -254,9 +260,10 @@ public class PipelineCompletionTrackerTest {
         DeleteServiceInstanceRequest request = OsbBuilderHelper.aDeleteServiceInstanceRequest();
 
         //Given a proxy that returns a custom response message
-        GetLastServiceOperationResponse proxiedResponse = new GetLastServiceOperationResponse();
-        proxiedResponse.withOperationState(OperationState.SUCCEEDED);
-        proxiedResponse.withDescription("osb proxied");
+        GetLastServiceOperationResponse proxiedResponse = GetLastServiceOperationResponse.builder()
+                .operationState(OperationState.SUCCEEDED)
+                .description("osb proxied")
+                .build();
         when(osbProxy.delegateDeprovision(any(), any(), any())).thenReturn(proxiedResponse);
 
         //When invoked before timeout
@@ -273,9 +280,10 @@ public class PipelineCompletionTrackerTest {
         DeleteServiceInstanceRequest request = OsbBuilderHelper.aDeleteServiceInstanceRequest();
 
         //Given a proxy that returns a custom response message
-        GetLastServiceOperationResponse proxiedResponse = new GetLastServiceOperationResponse();
-        proxiedResponse.withOperationState(OperationState.SUCCEEDED);
-        proxiedResponse.withDescription("osb proxied");
+        GetLastServiceOperationResponse proxiedResponse = GetLastServiceOperationResponse.builder()
+                .operationState(OperationState.SUCCEEDED)
+                .description("osb proxied")
+                .build();
         when(osbProxy.delegateDeprovision(any(), any(), any())).thenReturn(proxiedResponse);
 
         //When invoked after timeout

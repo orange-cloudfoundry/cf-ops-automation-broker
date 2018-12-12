@@ -51,7 +51,7 @@ Deploy the broker as a CF app:
 
 ### Configuring the service broker catalog
 
-Use `CATALOG_YML` environment variable to set catalog config in a YAML format. See [catalog.yml](cf-ops-automation-sample-broker/catalog.yml) for a sample YML file which corresponds to the [Catalog bean](https://github.com/spring-cloud/spring-cloud-open-service-broker/blob/v1.0.2.RELEASE/src/main/java/org/springframework/cloud/servicebroker/model/Catalog.java).
+Use `spring.cloud.openservicebroker.catalog` environment variable to set catalog config in a YAML format. See [spring-cloud-open-service-broker] for a sample YML and raw properties configuration
 
 ## Authoring a new COAB-based service
 

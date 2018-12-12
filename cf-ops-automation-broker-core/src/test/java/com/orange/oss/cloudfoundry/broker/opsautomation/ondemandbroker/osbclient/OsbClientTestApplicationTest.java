@@ -22,9 +22,7 @@ import org.springframework.cloud.servicebroker.model.binding.CreateServiceInstan
 import org.springframework.cloud.servicebroker.model.catalog.Catalog;
 import org.springframework.cloud.servicebroker.model.catalog.Plan;
 import org.springframework.cloud.servicebroker.model.catalog.ServiceDefinition;
-import org.springframework.cloud.servicebroker.model.instance.CreateServiceInstanceRequest;
-import org.springframework.cloud.servicebroker.model.instance.CreateServiceInstanceResponse;
-import org.springframework.cloud.servicebroker.model.instance.GetLastServiceOperationResponse;
+import org.springframework.cloud.servicebroker.model.instance.*;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 import org.springframework.test.context.junit4.SpringRunner;
@@ -279,16 +277,28 @@ public class OsbClientTestApplicationTest {
         ServiceInstanceBindingServiceClient serviceInstanceBindingServiceClient = clientFactory.getClient(url, user, password, ServiceInstanceBindingServiceClient.class);
 
         //then
-        Map<String, Object> routeBindingParams = new HashMap<>();
-        Map<String, Object> serviceBindingParams = new HashMap<>();
-        BindResource bindResource = new BindResource("app_guid", "aRoute", routeBindingParams);
-        CreateServiceInstanceBindingRequest createServiceInstanceBindingRequest = new CreateServiceInstanceBindingRequest(
-                serviceDefinition.getId(),
-                defaultPlan.getId(),
-                bindResource,
-                cfContext,
-                serviceBindingParams
-        );
+        /////
+
+        Context cfContext = CloudFoundryContext.builder()
+            .organizationGuid("org_guid")
+            .spaceGuid("space_guid")
+            .build();
+
+        CreateServiceInstanceBindingRequest createServiceInstanceBindingRequest = CreateServiceInstanceBindingRequest.builder()
+                .serviceDefinitionId(serviceDefinition.getId())
+                .planId(defaultPlan.getId())
+                .bindResource(BindResource.builder()
+                        .appGuid("app_guid")
+                        .route("aRoute")
+                        .build())
+                .context(cfContext)
+                .bindingId("service-instance-binding-id")
+                .serviceInstanceId(serviceInstanceGuid)
+                .apiInfoLocation("api-info")
+                .originatingIdentity(OsbBuilderHelper.aCfUserContext())
+                .platformInstanceId("cf-instance-id")
+                .build();
+
         ResponseEntity<CreateServiceInstanceAppBindingResponse> bindResponse = serviceInstanceBindingServiceClient.createServiceInstanceBinding(
                 serviceInstanceGuid,
                 "service_binding_guid",
@@ -305,13 +315,15 @@ public class OsbClientTestApplicationTest {
 
         Map<String, Object> updateServiceInstanceParams = new HashMap<>();
 
-        UpdateServiceInstanceRequest updateServiceInstanceRequest = new UpdateServiceInstanceRequest(
-                serviceDefinition.getId(),
-                defaultPlan.getId(),
-                updateServiceInstanceParams,
-                new UpdateServiceInstanceRequest.PreviousValues(defaultPlan.getId()),
-                cfContext
-        );
+        ////
+        // Given an incoming delete request
+        UpdateServiceInstanceRequest updateServiceInstanceRequest = UpdateServiceInstanceRequest.builder()
+                .serviceDefinitionId(serviceDefinition.getId())
+                .planId(defaultPlan.getId())
+                .serviceInstanceId(serviceInstanceGuid)
+                .build();
+
+
         ResponseEntity<UpdateServiceInstanceResponse> updateResponse = serviceInstanceServiceClient.updateServiceInstance(
                 serviceInstanceGuid,
                 false,
@@ -384,21 +396,16 @@ public class OsbClientTestApplicationTest {
         ServiceInstanceServiceClient serviceInstanceServiceClient = clientFactory.getClient(url, user, password, ServiceInstanceServiceClient.class);
 
         //when
-        Map<String, Object> cfContextProps = new HashMap<>();
-        cfContextProps.put("user_id", "a_user_guid");
-        cfContextProps.put("organization_guid", "org_guid");
-        cfContextProps.put("space_guid", "space_guid");
-        Map<String, Object> serviceInstanceParams = new HashMap<>();
-
-        Context cfContext = new Context(CLOUD_FOUNDRY_PLATFORM, cfContextProps);
-        CreateServiceInstanceRequest createServiceInstanceRequest = new CreateServiceInstanceRequest(
-                "cassandra-service-broker",
-                "cassandra-plan",
-                "org_id",
-                "space_id",
-                cfContext,
-                serviceInstanceParams
-        );
+        CreateServiceInstanceRequest createServiceInstanceRequest = CreateServiceInstanceRequest.builder()
+                .serviceDefinitionId("cassandra-service-broker")
+                .planId("cassandra-plan")
+                .serviceInstanceId("222")
+                .context(CloudFoundryContext.builder()
+                        .organizationGuid("org_id")
+                        .spaceGuid("space_id")
+                        .build()
+                )
+                .build();
 
         //Then expect
         thrown.expect(FeignException.class);

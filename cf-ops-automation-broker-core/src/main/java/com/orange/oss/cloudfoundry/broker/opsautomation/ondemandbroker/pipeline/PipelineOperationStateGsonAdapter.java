@@ -1,9 +1,9 @@
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline;
 
 import com.google.gson.*;
-import org.springframework.cloud.servicebroker.model.CreateServiceInstanceRequest;
-import org.springframework.cloud.servicebroker.model.DeleteServiceInstanceRequest;
 import org.springframework.cloud.servicebroker.model.ServiceBrokerRequest;
+import org.springframework.cloud.servicebroker.model.instance.CreateServiceInstanceRequest;
+import org.springframework.cloud.servicebroker.model.instance.DeleteServiceInstanceRequest;
 
 import java.lang.reflect.Type;
 import java.util.Map;

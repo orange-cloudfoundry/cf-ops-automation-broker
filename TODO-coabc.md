@@ -29,6 +29,179 @@ https://github.com/spring-cloud/spring-cloud-open-service-broker/wiki/2.0-Migrat
 https://spring.io/blog/2018/02/27/spring-cloud-finchley-m7-has-been-released All of the code releated to Feign has been moved to a separate project, Spring Cloud OpenFeign.
 
 
+Spring app does not start:
+
+sun.reflect.annotation.TypeNotPresentExceptionProxy.TypeNotPresentExceptionProxy(String, Throwable). 
+
+java.lang.ClassNotFoundException: org.springframework.boot.autoconfigure.web.WebMvcAutoConfiguration
+
+=> upgrade springboot service broker
+
+https://spring.io/projects/spring-cloud-open-service-broker#learn
+2.0.1 is GA
+
+https://github.com/spring-cloud/spring-cloud-open-service-broker/wiki/2.0-Migration-Guide
+
+
+CATALOG_YML is deprecated.
+
+Use `spring.cloud.openservicebroker.catalog` environment variable to set catalog config in a YAML format. See [spring-cloud-open-service-broker] for a sample YML and raw properties configuration
+
+
+
+```yaml
+CATALOG_YML: |
+  servicebroker:
+    catalog:
+      services:
+      - id: cassandra-ondemand-service
+        name: cassandra-ondemand
+        description: "On demand cassandra dedicated cluster"
+        bindable: true
+        plans:
+          - id: cassandra-ondemand-plan
+            name: default
+            description: Default plan (beta).
+        tags:
+          - cassandra
+          - document
+        metadata:
+          displayName: ondemand
+          imageUrl: http://cassandra.apache.org/img/cassandra_logo.png
+          longDescription: "A dedicated on-demand cassandra cluster with a single keyspace. This is beta: Not yet monitored and backed up. Default sizing can't yet be changed at creation or update."
+          providerDisplayName: Orange
+          documentationUrl: https://github.com/orange-cloudfoundry/cassandra-cf-service-boshrelease
+          supportUrl: https://github.com/orange-cloudfoundry/cassandra-cf-service-boshrelease
+```
+
+```yaml
+spring:
+  cloud:
+    openservicebroker:
+      catalog:
+        services:
+        - id: example-service
+          name: example
+          description: A simple example
+          bindable: true
+          tags:
+          - example
+          - tags
+          plans:
+          - id: simple-plan
+            name: standard
+            description: A simple plan
+```
+
+
+- update ServiceInstanceServiceClient REST API duplicated code + associated test OsbClientTestApplicationTest 
+- review in detail assert of BoshProcessorTest: with/without context test cases
+- BoshServiceProvisionningTest: may need to inject/define the expected catalog in application.properties
+    
+
+
+Caused by: org.springframework.http.converter.HttpMessageConversionException: Type definition error: [simple type, class org.springframework.cloud.servicebroker.model.catalog.Catalog]; nested exception is com.fasterxml.jackson.databind.exc.InvalidDefinitionException: Cannot construct instance of `org.springframework.cloud.servicebroker.model.catalog.Catalog` (no Creators, like default construct, exist): cannot deserialize from Object value (no delegate- or property-based Creator)
+ at [Source: (PushbackInputStream); line: 1, column: 2]
+	at org.springframework.http.converter.json.AbstractJackson2HttpMessageConverter.readJavaType(AbstractJackson2HttpMessageConverter.java:240)
+	at org.springframework.http.converter.json.AbstractJackson2HttpMessageConverter.read(AbstractJackson2HttpMessageConverter.java:225)
+	at org.springframework.web.client.HttpMessageConverterExtractor.extractData(HttpMessageConverterExtractor.java:100)
+	at org.springframework.cloud.openfeign.support.SpringDecoder.decode(SpringDecoder.java:60)
+	at org.springframework.cloud.openfeign.support.ResponseEntityDecoder.decode(ResponseEntityDecoder.java:45)
+	at feign.optionals.OptionalDecoder.decode(OptionalDecoder.java:36)
+	at feign.SynchronousMethodHandler.decode(SynchronousMethodHandler.java:170)
+	... 38 more
+Caused by: com.fasterxml.jackson.databind.exc.InvalidDefinitionException: Cannot construct instance of `org.springframework.cloud.servicebroker.model.catalog.Catalog` (no Creators, like default construct, exist): cannot deserialize from Object value (no delegate- or property-based Creator)
+ at [Source: (PushbackInputStream); line: 1, column: 2]
+	at com.fasterxml.jackson.databind.exc.InvalidDefinitionException.from(InvalidDefinitionException.java:67)
+	at com.fasterxml.jackson.databind.DeserializationContext.reportBadDefinition(DeserializationContext.java:1452)
+	at com.fasterxml.jackson.databind.DeserializationContext.handleMissingInstantiator(DeserializationContext.java:1028)
+	at com.fasterxml.jackson.databind.deser.BeanDeserializerBase.deserializeFromObjectUsingNonDefault(BeanDeserializerBase.java:1297)
+	at com.fasterxml.jackson.databind.deser.BeanDeserializer.deserializeFromObject(BeanDeserializer.java:326)
+	at com.fasterxml.jackson.databind.deser.BeanDeserializer.deserialize(BeanDeserializer.java:159)
+	at com.fasterxml.jackson.databind.ObjectMapper._readMapAndClose(ObjectMapper.java:4013)
+	at com.fasterxml.jackson.databind.ObjectMapper.readValue(ObjectMapper.java:3084)
+	at org.springframework.http.converter.json.AbstractJackson2HttpMessageConverter.readJavaType(AbstractJackson2HttpMessageConverter.java:237)
+	... 44 more
+
+Solutions:
+- Modify springboot-service-broker POJOs with jackson annotations to expose constructor or use builder 
+- Configure Jackson/Feign to use a different message converter than Jackson default, and use builder to construct objects
+https://stackoverflow.com/questions/46903678/jackson-deserialize-using-builder-without-annotation
+
+https://github.com/FasterXML/jackson-docs/wiki/JacksonMixInAnnotations
+
+@JsonDeserialize(builder = ...)
+
+https://www.baeldung.com/jackson-advanced-annotations
+@JsonPOJOBuilder
+
+Pb: the builder constructor apparently needs to be available 
+
+    /**
+     * Annotation for specifying if an external Builder class is to
+     * be used for building up deserialized instances of annotated
+     * class. If so, an instance of referenced class is first constructed
+     * (possibly using a Creator method; or if none defined, using default
+     * constructor), and its "with-methods" are used for populating fields;
+     * and finally "build-method" is invoked to complete deserialization.
+     */
+    public Class<?> builder() default Void.class;
+
+Related unit tests available at https://github.com/FasterXML/jackson-databind/tree/f40b4a82e854893539e012c6a11c95d8ba5e5406/src/test/java/com/fasterxml/jackson/databind/deser/builder
+
+Missing examples of the creator method config
+
+Looking up sources at https://github.com/FasterXML/jackson-databind/blob/f6cf1817509dc5ed61b9730c17abe492cc62b074/src/main/java/com/fasterxml/jackson/databind/deser/BasicDeserializerFactory.java#L239 invoked from https://github.com/FasterXML/jackson-databind/blob/f6cf1817509dc5ed61b9730c17abe492cc62b074/src/main/java/com/fasterxml/jackson/databind/deser/BeanDeserializerFactory.java#L273
+
+=> JsonValueInstantiator
+
+https://stackoverflow.com/questions/41194522/jackson-builder-with-method-to-create-builder without answer
+
+pb: How to set the @JsonPOJOBuilder without modifying the builder class ?
+- through injecting a class ?
+- through a mixin ? would it apply to non beans ?
+   - does not work with mixing
+- by setting a global config changing JsonPOJOBuilder.DEFAULT_WITH_PREFIX ?
+   - might break other builders
+
+
+    Alternatives:
+    - Create a builder class with public constructor which delegates all calls to original builder. How to reduce maintenance ?
+        - Use code generation framework to delegate to builder 
+        - Use reflection
+    - Modify the Builder class to support a noop constructor  
+
+
+- Configure Jackson/Feign to use a different message converter than Jackson default, and generate/create a constructor for private fields. 
+
+    https://stackoverflow.com/a/49124922/1484823 Using lombok ? 
+
+    https://stackoverflow.com/questions/46903678/jackson-deserialize-using-builder-without-annotation
+    
+    final class Sample {
+    
+        final int id;
+    
+        Sample(int id) {
+            this.id = id;
+        }
+    }
+    
+    MixIn (provide non-args constructor with same args):
+    
+    @JsonAutoDetect(fieldVisibility = Visibility.ANY, getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
+    abstract class SampleMixin {
+        @JsonCreator
+        public SampleMixin(@JsonProperty("id") int id) {
+        }
+    }
+    
+    Deserialization:
+    
+    ObjectMapper mapper = new ObjectMapper();
+    mapper.addMixIn(Sample.class, SampleMixin.class);
+    Sample sample = mapper.readValue(json, Sample.class);
+
 ------------------------------
 
 Git clone optimizations: 

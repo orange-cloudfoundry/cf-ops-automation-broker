@@ -79,7 +79,7 @@
 		
         <dependency>
             <groupId>org.springframework.cloud</groupId>
-            <artifactId>spring-cloud-cloudfoundry-service-broker</artifactId>
+            <artifactId>spring-cloud-starter-open-service-broker-webmvc</artifactId>
         </dependency>
         
 		<!-- for bosh manifest yml parsing -->

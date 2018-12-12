@@ -7,7 +7,11 @@ import com.orange.oss.ondemandbroker.ProcessorChainServiceInstanceBindingService
 import com.orange.oss.ondemandbroker.ProcessorChainServiceInstanceService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.cloud.servicebroker.model.*;
+import org.springframework.cloud.servicebroker.model.CloudFoundryContext;
+import org.springframework.cloud.servicebroker.model.binding.CreateServiceInstanceBindingRequest;
+import org.springframework.cloud.servicebroker.model.binding.CreateServiceInstanceBindingResponse;
+import org.springframework.cloud.servicebroker.model.binding.DeleteServiceInstanceBindingRequest;
+import org.springframework.cloud.servicebroker.model.instance.*;
 
 import java.nio.file.Path;
 
@@ -55,9 +59,9 @@ public class BoshProcessor extends DefaultBrokerProcessor {
 		this.secretsGenerator.generate(secretsWorkDir, serviceInstanceId, null);
 
 		//Create response and put it into context
-		CreateServiceInstanceResponse creationResponse = new CreateServiceInstanceResponse();
-		creationResponse.withAsync(true);
-		creationResponse.withOperation(this.tracker.getPipelineOperationStateAsJson(creationRequest));
+		CreateServiceInstanceResponse creationResponse = CreateServiceInstanceResponse.builder().
+		async(true).
+		operation(this.tracker.getPipelineOperationStateAsJson(creationRequest)).build();
 		ctx.contextKeys.put(ProcessorChainServiceInstanceService.CREATE_SERVICE_INSTANCE_RESPONSE, creationResponse);
 
 		//Generate commit message and put it into context
@@ -121,9 +125,9 @@ public class BoshProcessor extends DefaultBrokerProcessor {
 		this.secretsGenerator.remove(secretsWorkDir, serviceInstanceId);
 
 		//Create response and put it into context
-		DeleteServiceInstanceResponse deletionResponse = new DeleteServiceInstanceResponse();
-		deletionResponse.withAsync(true);
-		deletionResponse.withOperation(this.tracker.getPipelineOperationStateAsJson(request));
+		DeleteServiceInstanceResponse deletionResponse = DeleteServiceInstanceResponse.builder()
+				.async(true)
+				.operation(this.tracker.getPipelineOperationStateAsJson(request)).build();
 
 		ctx.contextKeys.put(ProcessorChainServiceInstanceService.DELETE_SERVICE_INSTANCE_RESPONSE, deletionResponse);
 

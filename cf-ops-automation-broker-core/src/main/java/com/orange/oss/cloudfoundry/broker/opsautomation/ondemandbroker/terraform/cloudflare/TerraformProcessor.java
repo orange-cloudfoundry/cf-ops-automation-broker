@@ -1,14 +1,15 @@
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.terraform.cloudflare;
 
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.UserFacingRuntimeException;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.GitProcessorContext;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.Context;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.DefaultBrokerProcessor;
-import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.UserFacingRuntimeException;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.terraform.*;
 import com.orange.oss.ondemandbroker.ProcessorChainServiceInstanceService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.cloud.servicebroker.model.*;
+import org.springframework.cloud.servicebroker.model.CloudFoundryContext;
+import org.springframework.cloud.servicebroker.model.instance.*;
 
 import java.nio.file.Path;
 import java.util.HashMap;
@@ -63,9 +64,10 @@ public class TerraformProcessor extends DefaultBrokerProcessor {
 
         repository.save(terraformModule);
 
-        CreateServiceInstanceResponse response = new CreateServiceInstanceResponse();
-        response.withAsync(true);
-        response.withOperation(completionTracker.getOperationStateAsJson(TerraformCompletionTracker.CREATE));
+        CreateServiceInstanceResponse response = CreateServiceInstanceResponse.builder()
+            .async(true)
+            .operation(completionTracker.getOperationStateAsJson(TerraformCompletionTracker.CREATE))
+                .build();
         context.contextKeys.put(ProcessorChainServiceInstanceService.CREATE_SERVICE_INSTANCE_RESPONSE, response);
         insertCommitMsg(context, "create", request.getServiceInstanceId(), terraformModule);
     }
@@ -123,9 +125,10 @@ public class TerraformProcessor extends DefaultBrokerProcessor {
             repository.delete(terraformModule);
         }
 
-        DeleteServiceInstanceResponse response = new DeleteServiceInstanceResponse();
-        response.withAsync(true);
-        response.withOperation(completionTracker.getOperationStateAsJson(TerraformCompletionTracker.DELETE));
+        DeleteServiceInstanceResponse response = DeleteServiceInstanceResponse.builder()
+            .async(true)
+            .operation(completionTracker.getOperationStateAsJson(TerraformCompletionTracker.DELETE))
+                .build();
         context.contextKeys.put(ProcessorChainServiceInstanceService.DELETE_SERVICE_INSTANCE_RESPONSE, response);
         insertCommitMsg(context, "delete", serviceInstanceId, terraformModule);
     }

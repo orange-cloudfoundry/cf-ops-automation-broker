@@ -17,15 +17,15 @@
 
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.osbclient;
 
-import org.springframework.cloud.servicebroker.model.*;
+import org.springframework.cloud.servicebroker.model.instance.*;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
 
-import static org.springframework.cloud.servicebroker.model.AsyncServiceInstanceRequest.ASYNC_REQUEST_PARAMETER;
 import static org.springframework.cloud.servicebroker.model.ServiceBrokerRequest.API_INFO_LOCATION_HEADER;
 import static org.springframework.cloud.servicebroker.model.ServiceBrokerRequest.ORIGINATING_IDENTITY_HEADER;
+import static org.springframework.cloud.servicebroker.model.instance.AsyncServiceInstanceRequest.ASYNC_REQUEST_PARAMETER;
 
 /**
  * SpringMVC annotations for the OSB client.

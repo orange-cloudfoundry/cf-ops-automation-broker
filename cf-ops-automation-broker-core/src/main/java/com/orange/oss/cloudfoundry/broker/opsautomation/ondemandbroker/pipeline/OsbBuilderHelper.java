@@ -1,65 +1,95 @@
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline;
 
-import org.springframework.cloud.servicebroker.model.*;
+import org.springframework.cloud.servicebroker.model.CloudFoundryContext;
+import org.springframework.cloud.servicebroker.model.Context;
+import org.springframework.cloud.servicebroker.model.binding.BindResource;
+import org.springframework.cloud.servicebroker.model.binding.CreateServiceInstanceAppBindingResponse;
+import org.springframework.cloud.servicebroker.model.binding.CreateServiceInstanceBindingRequest;
+import org.springframework.cloud.servicebroker.model.binding.DeleteServiceInstanceBindingRequest;
+import org.springframework.cloud.servicebroker.model.catalog.Catalog;
+import org.springframework.cloud.servicebroker.model.catalog.Plan;
+import org.springframework.cloud.servicebroker.model.catalog.ServiceDefinition;
+import org.springframework.cloud.servicebroker.model.instance.CreateServiceInstanceRequest;
+import org.springframework.cloud.servicebroker.model.instance.DeleteServiceInstanceRequest;
+import org.springframework.cloud.servicebroker.model.instance.UpdateServiceInstanceRequest;
 
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.OsbConstants.*;
+import static com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.OsbConstants.ORIGINATING_EMAIL_KEY;
+import static com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.OsbConstants.ORIGINATING_USER_KEY;
 import static java.util.Arrays.asList;
-import static org.springframework.cloud.servicebroker.model.CloudFoundryContext.CLOUD_FOUNDRY_PLATFORM;
 
 public class OsbBuilderHelper {
     @SuppressWarnings("WeakerAccess")
     public static DeleteServiceInstanceBindingRequest anUnbindRequest(String serviceInstanceId, String bindingId) {
         ServiceDefinition serviceDefinition = aCatalog().getServiceDefinitions().get(0);
-        DeleteServiceInstanceBindingRequest request = new DeleteServiceInstanceBindingRequest(serviceInstanceId, bindingId,"coab-serviceid", "coab-planid", serviceDefinition);
-        request.withApiInfoLocation("api-info");
-        request.withOriginatingIdentity(aCfUserContext());
-        request.withCfInstanceId("cf-instance-id");
+        DeleteServiceInstanceBindingRequest request = DeleteServiceInstanceBindingRequest.builder()
+            .serviceDefinition(serviceDefinition)
+                .bindingId(bindingId)
+                .serviceDefinitionId("coab-serviceid")
+                .planId("coab-planid")
+                .serviceDefinition(serviceDefinition)
+                .apiInfoLocation("api-info")
+                .originatingIdentity(aCfUserContext())
+                .platformInstanceId("cf-instance-id").build();
         return request;
     }
 
-    private static Catalog aCatalog() {
-        Plan plan = new Plan("plan_id", "plan_name", "plan_description", new HashMap<>());
-        Plan plan2 = new Plan("plan_id2", "plan_name2", "plan_description2", new HashMap<>());
-        ServiceDefinition serviceDefinition = new ServiceDefinition("service_id", "service_name", "service_description", true, asList(plan, plan2));
-        Plan plan3 = new Plan("plan_id3", "plan_name3", "plan_description3", new HashMap<>());
-        ServiceDefinition serviceDefinition2 = new ServiceDefinition("service_id2", "service_name2", "service_description3", true, Collections.singletonList(plan3));
-        return new Catalog(Collections.singletonList(serviceDefinition));
+    public static Catalog aCatalog() {
+        Plan plan  = Plan.builder().id("plan_id").name("plan_name").description("plan_description").metadata(new HashMap<>()).build();
+        Plan plan2 = Plan.builder().id("plan_id2").name("plan_name2").description("plan_description2").metadata(new HashMap<>()).build();
+        Plan plan3 = Plan.builder().id("plan_id3").name("plan_name3").description("plan_description3").metadata(new HashMap<>()).build();
+        ServiceDefinition serviceDefinition =  ServiceDefinition.builder()
+                .id("service_id")
+                .name("service_name")
+                .description("service_description")
+                .bindable(true)
+                .plans(asList(plan, plan2)).build();
+
+        ServiceDefinition serviceDefinition2 = ServiceDefinition.builder()
+                .id("service_id2")
+                .name("service_name2")
+                .description("service_description3")
+                .bindable(true)
+                .plans(Collections.singletonList(plan3)).build();
+        return Catalog.builder().serviceDefinitions(serviceDefinition
+//                , serviceDefinition2 //not yet used
+        ).build();
     }
 
     public static CreateServiceInstanceBindingRequest aBindingRequest(String serviceInstanceId) {
         Map<String, Object> routeBindingParams= new HashMap<>();
         Map<String, Object> serviceBindingParams= new HashMap<>();
         serviceBindingParams.put("user-name", "myname");
-        BindResource bindResource = new BindResource("app_guid", null, routeBindingParams);
+        BindResource bindResource = BindResource.builder()
+                .appGuid("app_guid")
+                .route(null)
+                .properties(routeBindingParams)
+                .build();
 
-        Map<String, Object> cfContextProps = new HashMap<>();
-        cfContextProps.put("user_id", "a_user_guid");
-        cfContextProps.put("organization_guid", "org_guid");
-        cfContextProps.put("space_guid", "space_guid");
+        Context cfContext = CloudFoundryContext.builder()
+            .organizationGuid("org_guid")
+            .spaceGuid("space_guid")
+            .build();
 
-        Context cfContext = new Context(CLOUD_FOUNDRY_PLATFORM, cfContextProps);
-
-        CreateServiceInstanceBindingRequest request = new CreateServiceInstanceBindingRequest(
-                "coab-serviceid",
-                "coab-planid",
-                bindResource,
-                cfContext,
-                serviceBindingParams
-        );
-        request.withBindingId("service-instance-binding-id");
-        request.withServiceInstanceId(serviceInstanceId);
-        request.withApiInfoLocation("api-info");
-        request.withOriginatingIdentity(aCfUserContext());
-        request.withCfInstanceId("cf-instance-id");
+        CreateServiceInstanceBindingRequest request = CreateServiceInstanceBindingRequest.builder()
+                .serviceDefinitionId("coab-serviceid")
+                .planId("coab-planid")
+                .bindResource(bindResource)
+                .context(cfContext)
+                .parameters(serviceBindingParams)
+                .bindingId("service-instance-binding-id")
+                .serviceInstanceId(serviceInstanceId)
+                .apiInfoLocation("api-info")
+                .originatingIdentity(aCfUserContext())
+                .platformInstanceId("cf-instance-id")
+                .build();
         return request;
     }
 
     static CreateServiceInstanceAppBindingResponse aBindingResponse() {
-        CreateServiceInstanceAppBindingResponse expectedResponse = new CreateServiceInstanceAppBindingResponse();
         Map<String, Object> credentials = new HashMap<>();
         credentials.put("keyspaceName", "ks055d0899_018d_4841_ba66_2e4d4ce91f47");
         credentials.put("contact-points", "127.0.0.1");
@@ -67,16 +97,19 @@ public class OsbBuilderHelper {
         credentials.put("port", "9142");
         credentials.put("jdbcUrl", "jdbc:cassandra://127.0.0.1:9142/ks055d0899_018d_4841_ba66_2e4d4ce91f47");
         credentials.put("login", "rbbbbbbbb_ba66_4841_018d_2e4d4ce91f47");
-        expectedResponse.withCredentials(credentials);
-        expectedResponse.withBindingExisted(false);
-        return expectedResponse;
+        return CreateServiceInstanceAppBindingResponse.builder()
+                .credentials(credentials)
+                .bindingExisted(false)
+                .build();
     }
 
     public static Context aCfUserContext() {
         Map<String, Object> properties = new HashMap<>();
         properties.put(ORIGINATING_USER_KEY, "user_guid");
         properties.put(ORIGINATING_EMAIL_KEY, "user_email");
-        return new Context(ORIGINATING_CLOUDFOUNDRY_PLATFORM, properties);
+
+        return CloudFoundryContext.builder()
+                .properties(properties).build();
     }
 
     @SuppressWarnings("WeakerAccess")
@@ -85,31 +118,37 @@ public class OsbBuilderHelper {
         Map<String, Object> parameters = new HashMap<>();
         parameters.put("parameterName", "parameterValue");
 
-        CreateServiceInstanceRequest request = new CreateServiceInstanceRequest("service_definition_id",
-                "plan_id",
-                "org_id",
-                "space_id",
-                parameters
-        );
-        request.withServiceInstanceId("service-instance-guid");
-        return request;
+        return CreateServiceInstanceRequest.builder()
+                .serviceDefinitionId("service_definition_id")
+                .planId("plan_id")
+                .parameters(parameters)
+                .serviceInstanceId("service-instance-guid")
+                .context(CloudFoundryContext.builder()
+                    .organizationGuid("org_id")
+                    .spaceGuid("space_id")
+                    .build()
+                )
+                .build();
     }
 
-    static DeleteServiceInstanceRequest aDeleteServiceInstanceRequest() {
+    public static DeleteServiceInstanceRequest aDeleteServiceInstanceRequest() {
         // Given an incoming delete request
-        return new DeleteServiceInstanceRequest("instance_id",
-                "service_id",
-                "plan_id",
-                new ServiceDefinition(),
-                true);
+        return DeleteServiceInstanceRequest.builder()
+                .serviceInstanceId("instance_id")
+                .serviceDefinitionId("service_id")
+                .planId("plan_id")
+                .serviceDefinition(ServiceDefinition.builder().build())
+                .asyncAccepted(true)
+                .build();
     }
 
     public static UpdateServiceInstanceRequest anUpdateServiceInstanceRequest() {
         // Given an incoming delete request
-        return new UpdateServiceInstanceRequest(
-                "service_id",
-                "plan_id",
-                new HashMap<>())
-                .withServiceInstanceId("instance_id");
+        return UpdateServiceInstanceRequest.builder()
+                .serviceDefinitionId("service_id")
+                .planId("plan_id")
+                .parameters(new HashMap<>())
+                .serviceInstanceId("instance_id")
+                .build();
     }
 }

@@ -3,37 +3,121 @@ package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.osbclien
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.OsbBuilderHelper;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.jackson.JacksonAutoConfiguration;
 import org.springframework.cloud.servicebroker.model.catalog.Catalog;
+import org.springframework.cloud.servicebroker.model.catalog.Plan;
+import org.springframework.cloud.servicebroker.model.catalog.ServiceDefinition;
 import org.springframework.cloud.servicebroker.model.instance.CreateServiceInstanceRequest;
 import org.springframework.cloud.servicebroker.model.instance.CreateServiceInstanceResponse;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import java.io.IOException;
 import java.io.StringWriter;
+import java.util.Collections;
+import java.util.HashMap;
 
+import static java.util.Arrays.asList;
 import static org.fest.assertions.Assertions.assertThat;
 
-@RunWith(SpringJUnit4ClassRunner.class)
-@ContextConfiguration(classes = {
-        OsbClientFeignConfig.class,
-        JacksonAutoConfiguration.class, OkHttpClientConfig.class // explicitly import those as this test does not pull in springboot mechanics in order to execute faster
-})
-public class OsbClientFeignConfigTest {
 
-    @Autowired
-    ObjectMapper objectMapper;
+public class JacksonConfigTest {
+
+    OsbClientFeignConfig osbClientFeignConfig = new OsbClientFeignConfig();
+    ObjectMapper objectMapper = new ObjectMapper();
+
+    String openBrokerReferenceJson = "{\n" +
+            "  \"services\": [\n" +
+            "    {\n" +
+            "      \"id\": \"service-one-id\",\n" +
+            "      \"name\": \"Service One\",\n" +
+            "      \"description\": \"Description for Service One\",\n" +
+            "      \"bindable\": true,\n" +
+            "      \"dashboard_client\": {\n" +
+            "        \"id\": \"dash-id\",\n" +
+            "        \"secret\": \"dash-secret\",\n" +
+            "        \"redirect_uri\": \"https://somewhere.local\"\n" +
+            "      },\n" +
+            "      \"requires\": [\n" +
+            "        \"syslog_drain\",\n" +
+            "        \"route_forwarding\"\n" +
+            "      ],\n" +
+            "      \"plans\": [\n" +
+            "        {\n" +
+            "          \"id\": \"plan-one-id\",\n" +
+            "          \"name\": \"Plan One\",\n" +
+            "          \"description\": \"Description for Plan One\"\n" +
+            "        },\n" +
+            "        {\n" +
+            "          \"id\": \"plan-two-id\",\n" +
+            "          \"name\": \"Plan Two\",\n" +
+            "          \"description\": \"Description for Plan Two\",\n" +
+            "          \"metadata\": {\n" +
+            "            \"key1\": \"value1\",\n" +
+            "            \"key2\": \"value2\"\n" +
+            "          },\n" +
+            "          \"bindable\": false,\n" +
+            "          \"free\": true,\n" +
+            "          \"schemas\": {\n" +
+            "            \"service_instance\": {\n" +
+            "              \"create\": {\n" +
+            "                \"parameters\": {\n" +
+            "                  \"$schema\": \"http://example.com/service/create/schema\",\n" +
+            "                  \"type\": \"object\"\n" +
+            "                }\n" +
+            "              },\n" +
+            "              \"update\": {\n" +
+            "                \"parameters\": {\n" +
+            "                  \"$schema\": \"http://example.com/service/update/schema\",\n" +
+            "                  \"type\": \"object\"\n" +
+            "                }\n" +
+            "              }\n" +
+            "            },\n" +
+            "            \"service_binding\": {\n" +
+            "              \"create\": {\n" +
+            "                \"parameters\": {\n" +
+            "                  \"$schema\": \"http://example.com/binding/create/schema\",\n" +
+            "                  \"type\": \"object\"\n" +
+            "                }\n" +
+            "              }\n" +
+            "            }\n" +
+            "          }\n" +
+            "        }\n" +
+            "      ]\n" +
+            "    }\n" +
+            "  ]\n" +
+            "}";
+
+    @Test
+    public void native_spring_deserialization() throws IOException {
+        Catalog deserializedCatalog = objectMapper.readValue(openBrokerReferenceJson, Catalog.class);
+        assertThat(deserializedCatalog).isNotNull();
+    }
 
     @Test
     public void deserializes_CatalogResponse() throws IOException {
-       Catalog catalog = OsbBuilderHelper.aCatalog();
+        //given a json string to deserialize
+        Plan plan  = Plan.builder().id("plan_id").name("plan_name").description("plan_description").metadata(new HashMap<>()).build();
+        Plan plan2 = Plan.builder().id("plan_id2").name("plan_name2").description("plan_description2").metadata(new HashMap<>()).build();
+        Plan plan3 = Plan.builder().id("plan_id3").name("plan_name3").description("plan_description3").metadata(new HashMap<>()).build();
+        ServiceDefinition serviceDefinition =  ServiceDefinition.builder()
+                .id("service_id")
+                .name("service_name")
+                .description("service_description")
+                .bindable(true)
+                .plans(asList(plan, plan2)).build();
+
+        ServiceDefinition serviceDefinition2 = ServiceDefinition.builder()
+                .id("service_id2")
+                .name("service_name2")
+                .description("service_description3")
+                .bindable(true)
+                .plans(Collections.singletonList(plan3)).build();
+        Catalog catalog = Catalog.builder().serviceDefinitions(serviceDefinition
+//                , serviceDefinition2 //not yet used
+        ).build();
         StringWriter jsonWritter = new StringWriter();
         objectMapper.writerFor(Catalog.class).writeValue(jsonWritter, catalog);
         String json = jsonWritter.toString();
         System.out.println("json = " + json);
+
         //Manually extracted using debugger with expression
         // IOUtils.toString(inputMessage.getBody(), defaultCharset);
         //at stack
@@ -82,9 +166,14 @@ public class OsbClientFeignConfigTest {
         //startRunnerWithArgs:47, IdeaTestRunner$Repeater (com.intellij.rt.execution.junit)
         //prepareStreamsAndStart:242, JUnitStarter (com.intellij.rt.execution.junit)
         //main:70, JUnitStarter (com.intellij.rt.execution.junit)
-        json = "{\"services\":[{\"id\":\"ondemand-service\",\"name\":\"ondemand\",\"description\":\"A simple ondemand service broker implementation\",\"bindable\":true,\"plan_updateable\":false,\"plans\":[{\"id\":\"ondemand-plan\",\"name\":\"default\",\"description\":\"This is a default ondemand plan.  All services are created equally.\",\"metadata\":{\"costs\":[{\"amount\":{\"usd\":0.0},\"unit\":\"MONTHLY\"}],\"bullets\":[\"Dedicated ondemand server\",\"100 MB Storage (not enforced)\",\"40 concurrent connections (not enforced)\"]},\"free\":true}],\"tags\":[\"ondemand\",\"document\"],\"metadata\":{\"longDescription\":\"ondemand Service\",\"documentationUrl\":\"https://orange.com\",\"providerDisplayName\":\"Orange\",\"displayName\":\"ondemand\",\"imageUrl\":\"http://info.mongodb.com/rs/mongodb/images/MongoDB_Logo_Full.png\",\"supportUrl\":\"https://orange.com\"},\"requires\":[],\"dashboard_client\":null}]}";
+//        json = "{\"services\":[{\"id\":\"ondemand-service\",\"name\":\"ondemand\",\"description\":\"A simple ondemand service broker implementation\",\"bindable\":true,\"plan_updateable\":false,\"plans\":[{\"id\":\"ondemand-plan\",\"name\":\"default\",\"description\":\"This is a default ondemand plan.  All services are created equally.\",\"metadata\":{\"costs\":[{\"amount\":{\"usd\":0.0},\"unit\":\"MONTHLY\"}],\"bullets\":[\"Dedicated ondemand server\",\"100 MB Storage (not enforced)\",\"40 concurrent connections (not enforced)\"]},\"free\":true}],\"tags\":[\"ondemand\",\"document\"],\"metadata\":{\"longDescription\":\"ondemand Service\",\"documentationUrl\":\"https://orange.com\",\"providerDisplayName\":\"Orange\",\"displayName\":\"ondemand\",\"imageUrl\":\"http://info.mongodb.com/rs/mongodb/images/MongoDB_Logo_Full.png\",\"supportUrl\":\"https://orange.com\"},\"requires\":[],\"dashboard_client\":null}]}";
 
 //        String json = "{\"operation\":\"{\\\"org.springframework.cloud.servicebroker.model.CreateServiceInstanceRequest\\\":{\\\"serviceDefinitionId\\\":\\\"cassandra-ondemand-service\\\",\\\"planId\\\":\\\"cassandra-ondemand-plan\\\",\\\"organizationGuid\\\":\\\"org_id\\\",\\\"spaceGuid\\\":\\\"space_id\\\",\\\"serviceInstanceId\\\":\\\"111\\\",\\\"serviceDefinition\\\":{\\\"id\\\":\\\"cassandra-ondemand-service\\\",\\\"name\\\":\\\"cassandra-ondemand\\\",\\\"description\\\":\\\"On demand cassandra dedicated clusters\\\",\\\"bindable\\\":true,\\\"planUpdateable\\\":true,\\\"plans\\\":[{\\\"id\\\":\\\"cassandra-ondemand-plan\\\",\\\"name\\\":\\\"default\\\",\\\"description\\\":\\\"This is a default ondemand plan.  All services are created equally.\\\",\\\"metadata\\\":{},\\\"free\\\":true}],\\\"tags\\\":[\\\"ondemand\\\",\\\"document\\\"],\\\"metadata\\\":{\\\"displayName\\\":\\\"ondemand\\\",\\\"imageUrl\\\":\\\"https://orange.com/image.png\\\",\\\"longDescription\\\":\\\"A dedicated on-demand cassandra cluster\\\",\\\"providerDisplayName\\\":\\\"Orange\\\",\\\"documentationUrl\\\":\\\"https://orange.com/doc\\\",\\\"supportUrl\\\":\\\"https://orange.com/support\\\"}},\\\"parameters\\\":{},\\\"context\\\":{\\\"platform\\\":\\\"cloudfoundry\\\",\\\"properties\\\":{}},\\\"asyncAccepted\\\":true,\\\"apiInfoLocation\\\":\\\"api-info\\\",\\\"originatingIdentity\\\":{\\\"platform\\\":\\\"cloudfoundry\\\",\\\"properties\\\":{\\\"user_id\\\":\\\"user_guid\\\",\\\"email\\\":\\\"user_email\\\"}}},\\\"startRequestDate\\\":\\\"2018-06-07T16:55:48.121Z\\\"}\"}";
+
+        //and an object mapper
+        osbClientFeignConfig.configureJacksonOsbResponseInheritanceMapping(objectMapper);
+
+        //then
         Catalog deserializedCatalog = objectMapper.readValue(json, Catalog.class);
         assertThat(deserializedCatalog).isNotNull();
     }

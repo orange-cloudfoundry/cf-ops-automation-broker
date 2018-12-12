@@ -17,8 +17,8 @@
 
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.osbclient;
 
-import org.springframework.cloud.servicebroker.model.CreateServiceInstanceAppBindingResponse;
-import org.springframework.cloud.servicebroker.model.CreateServiceInstanceBindingRequest;
+import org.springframework.cloud.servicebroker.model.binding.CreateServiceInstanceAppBindingResponse;
+import org.springframework.cloud.servicebroker.model.binding.CreateServiceInstanceBindingRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 

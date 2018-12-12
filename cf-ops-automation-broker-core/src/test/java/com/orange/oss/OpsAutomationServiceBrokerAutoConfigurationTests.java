@@ -1,10 +1,5 @@
 package com.orange.oss;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.BrokerProcessor;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.DefaultBrokerProcessor;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.DefaultBrokerSink;
@@ -15,16 +10,22 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.cloud.servicebroker.model.Catalog;
-import org.springframework.cloud.servicebroker.model.CreateServiceInstanceBindingRequest;
-import org.springframework.cloud.servicebroker.model.CreateServiceInstanceBindingResponse;
-import org.springframework.cloud.servicebroker.model.CreateServiceInstanceRequest;
-import org.springframework.cloud.servicebroker.model.CreateServiceInstanceResponse;
-import org.springframework.cloud.servicebroker.model.ServiceDefinition;
+import org.springframework.cloud.servicebroker.model.binding.BindResource;
+import org.springframework.cloud.servicebroker.model.binding.CreateServiceInstanceBindingRequest;
+import org.springframework.cloud.servicebroker.model.binding.CreateServiceInstanceBindingResponse;
+import org.springframework.cloud.servicebroker.model.catalog.Catalog;
+import org.springframework.cloud.servicebroker.model.catalog.ServiceDefinition;
+import org.springframework.cloud.servicebroker.model.instance.CreateServiceInstanceRequest;
+import org.springframework.cloud.servicebroker.model.instance.CreateServiceInstanceResponse;
 import org.springframework.cloud.servicebroker.service.ServiceInstanceBindingService;
 import org.springframework.cloud.servicebroker.service.ServiceInstanceService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.test.context.junit4.SpringRunner;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest
@@ -50,13 +51,23 @@ public class OpsAutomationServiceBrokerAutoConfigurationTests {
 
 		String spaceId = "spaceId";
 		String orgId = "orgId";
-		CreateServiceInstanceRequest req = new CreateServiceInstanceRequest(serviceDefId, planId,
-				orgId, spaceId, new HashMap<>());
+		CreateServiceInstanceRequest req = CreateServiceInstanceRequest.builder()
+				.serviceInstanceId(serviceDefId)
+				.planId(planId)
+				//omitted context
+				.build();
+
 		CreateServiceInstanceResponse si = this.service.createServiceInstance(req);
 
 		String appGuid="appGuid";
 		Map<String, Object> bindResource = new HashMap<String, Object>();
-		CreateServiceInstanceBindingRequest breq = new CreateServiceInstanceBindingRequest(serviceDefId,planId,appGuid,bindResource);
+		CreateServiceInstanceBindingRequest breq = CreateServiceInstanceBindingRequest.builder()
+				.serviceDefinitionId(serviceDefId)
+				.planId(planId)
+				.bindResource(BindResource.builder()
+						.appGuid("app_guid")
+						.build())
+				.build();
 
 		CreateServiceInstanceBindingResponse sib = this.binding.createServiceInstanceBinding(breq);
 

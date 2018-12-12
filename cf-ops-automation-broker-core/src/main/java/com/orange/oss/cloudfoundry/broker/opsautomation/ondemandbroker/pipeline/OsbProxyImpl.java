@@ -11,7 +11,15 @@ import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.osbclient
 import feign.FeignException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.cloud.servicebroker.model.*;
+import org.springframework.cloud.servicebroker.model.Context;
+import org.springframework.cloud.servicebroker.model.binding.CreateServiceInstanceAppBindingResponse;
+import org.springframework.cloud.servicebroker.model.binding.CreateServiceInstanceBindingRequest;
+import org.springframework.cloud.servicebroker.model.binding.CreateServiceInstanceBindingResponse;
+import org.springframework.cloud.servicebroker.model.binding.DeleteServiceInstanceBindingRequest;
+import org.springframework.cloud.servicebroker.model.catalog.Catalog;
+import org.springframework.cloud.servicebroker.model.catalog.Plan;
+import org.springframework.cloud.servicebroker.model.catalog.ServiceDefinition;
+import org.springframework.cloud.servicebroker.model.instance.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
@@ -155,10 +163,11 @@ public class OsbProxyImpl implements OsbProxy {
                 description = "Internal error, please contact administrator";
             }
         }
-        return new GetLastServiceOperationResponse()
-                .withOperationState(operationState)
-                .withDescription(description)
-                .withDeleteOperation(false);
+        return GetLastServiceOperationResponse.builder()
+                .operationState(operationState)
+                .description(description)
+                .deleteOperation(false)
+                .build();
     }
 
     CreateServiceInstanceAppBindingResponse mapBindResponse(ResponseEntity<CreateServiceInstanceAppBindingResponse> delegatedResponse, FeignException bindException, Catalog catalog) {
@@ -167,11 +176,12 @@ public class OsbProxyImpl implements OsbProxy {
             throw mapClientException(bindException);
         }
         CreateServiceInstanceAppBindingResponse delegatedResponseBody = delegatedResponse.getBody();
-        return new CreateServiceInstanceAppBindingResponse()
-                .withBindingExisted(delegatedResponse.getStatusCode() == HttpStatus.OK)
-                .withCredentials(delegatedResponseBody.getCredentials())
-                .withSyslogDrainUrl(delegatedResponseBody.getSyslogDrainUrl())
-                .withVolumeMounts(delegatedResponseBody.getVolumeMounts());
+        return CreateServiceInstanceAppBindingResponse.builder()
+                .bindingExisted(delegatedResponse.getStatusCode() == HttpStatus.OK)
+                .credentials(delegatedResponseBody.getCredentials())
+                .syslogDrainUrl(delegatedResponseBody.getSyslogDrainUrl())
+                .volumeMounts(delegatedResponseBody.getVolumeMounts())
+                .build();
     }
 
     RuntimeException mapClientException(FeignException exception) {
@@ -235,10 +245,11 @@ public class OsbProxyImpl implements OsbProxy {
                 description = "Internal error, please contact administrator";
             }
         }
-        return new GetLastServiceOperationResponse()
-                .withOperationState(operationState)
-                .withDescription(description)
-                .withDeleteOperation(true);
+        return GetLastServiceOperationResponse.builder()
+                .operationState(operationState)
+                .description(description)
+                .deleteOperation(true)
+                .build();
     }
 
     ResponseEntity<CreateServiceInstanceResponse> delegateProvision(CreateServiceInstanceRequest request, ServiceInstanceServiceClient serviceInstanceServiceClient) {
@@ -319,19 +330,16 @@ public class OsbProxyImpl implements OsbProxy {
         Plan mappedPlan = mappedService.getPlans().get(0);
         Map<String, Object> mappedParameters = r.getParameters();
 
-        //noinspection deprecation
-        CreateServiceInstanceRequest createServiceInstanceRequest = new CreateServiceInstanceRequest(
-                mappedService.getId(),
-                mappedPlan.getId(),
-                r.getOrganizationGuid(),
-                r.getSpaceGuid(),
-                r.getContext(),
-                mappedParameters);
-        createServiceInstanceRequest.withServiceInstanceId(r.getServiceInstanceId());
-        createServiceInstanceRequest.withCfInstanceId(r.getCfInstanceId());
-        createServiceInstanceRequest.withApiInfoLocation(r.getApiInfoLocation());
-        createServiceInstanceRequest.withOriginatingIdentity(r.getOriginatingIdentity());
-        return createServiceInstanceRequest;
+        return CreateServiceInstanceRequest.builder()
+                .serviceDefinitionId(mappedService.getId())
+                .planId(mappedPlan.getId())
+                .context(r.getContext())
+                .originatingIdentity(r.getOriginatingIdentity())
+                .parameters(mappedParameters)
+                .serviceInstanceId(r.getServiceInstanceId())
+                .platformInstanceId(r.getPlatformInstanceId())
+                .apiInfoLocation(r.getApiInfoLocation())
+                .build();
     }
 
     CreateServiceInstanceBindingRequest mapBindRequest(CreateServiceInstanceBindingRequest r, Catalog catalog) {
@@ -339,53 +347,50 @@ public class OsbProxyImpl implements OsbProxy {
         Plan mappedPlan = mappedService.getPlans().get(0);
         Map<String, Object> mappedParameters = r.getParameters();
 
-        //noinspection deprecation
-        CreateServiceInstanceBindingRequest createServiceInstanceBindingRequest = new CreateServiceInstanceBindingRequest(
-                mappedService.getId(),
-                mappedPlan.getId(),
-                r.getBindResource(),
-                r.getContext(),
-                mappedParameters);
-        createServiceInstanceBindingRequest.withBindingId(r.getBindingId());
-        createServiceInstanceBindingRequest.withServiceInstanceId(r.getServiceInstanceId());
-        createServiceInstanceBindingRequest.withCfInstanceId(r.getCfInstanceId());
-        createServiceInstanceBindingRequest.withApiInfoLocation(r.getApiInfoLocation());
-        createServiceInstanceBindingRequest.withOriginatingIdentity(r.getOriginatingIdentity());
-        return createServiceInstanceBindingRequest;
+        return CreateServiceInstanceBindingRequest.builder()
+                .serviceDefinitionId(mappedService.getId())
+                .planId(mappedPlan.getId())
+                .bindResource(r.getBindResource())
+                .context(r.getContext())
+                .parameters(mappedParameters)
+                .bindingId(r.getBindingId())
+                .serviceInstanceId(r.getServiceInstanceId())
+                .platformInstanceId(r.getPlatformInstanceId())
+                .apiInfoLocation(r.getApiInfoLocation())
+                .originatingIdentity(r.getOriginatingIdentity())
+                .build();
     }
 
     DeleteServiceInstanceRequest mapDeprovisionRequest(DeleteServiceInstanceRequest r, Catalog catalog) {
         ServiceDefinition mappedService = catalog.getServiceDefinitions().get(0);
         Plan mappedPlan = mappedService.getPlans().get(0);
 
-        //noinspection deprecation
-        DeleteServiceInstanceRequest deleteServiceInstanceRequest = new DeleteServiceInstanceRequest(
-                r.getServiceInstanceId(),
-                mappedService.getId(),
-                mappedPlan.getId(),
-                mappedService,
-                false);
-        deleteServiceInstanceRequest.withCfInstanceId(r.getCfInstanceId());
-        deleteServiceInstanceRequest.withApiInfoLocation(r.getApiInfoLocation());
-        deleteServiceInstanceRequest.withOriginatingIdentity(r.getOriginatingIdentity());
-        return deleteServiceInstanceRequest;
+        return DeleteServiceInstanceRequest.builder()
+                .serviceInstanceId(r.getServiceInstanceId())
+                .serviceDefinitionId(mappedService.getId())
+                .planId(mappedPlan.getId())
+                .serviceDefinition(mappedService)
+                .asyncAccepted(false)
+                .platformInstanceId(r.getPlatformInstanceId())
+                .apiInfoLocation(r.getApiInfoLocation())
+                .originatingIdentity(r.getOriginatingIdentity())
+                .build();
     }
 
     DeleteServiceInstanceBindingRequest mapUnbindRequest(DeleteServiceInstanceBindingRequest r, Catalog catalog) {
         ServiceDefinition mappedService = catalog.getServiceDefinitions().get(0);
         Plan mappedPlan = mappedService.getPlans().get(0);
 
-        //noinspection deprecation
-        DeleteServiceInstanceBindingRequest deleteServiceInstanceRequest = new DeleteServiceInstanceBindingRequest(
-                r.getServiceInstanceId(),
-                r.getBindingId(),
-                mappedService.getId(),
-                mappedPlan.getId(),
-                mappedService);
-        deleteServiceInstanceRequest.withCfInstanceId(r.getCfInstanceId());
-        deleteServiceInstanceRequest.withApiInfoLocation(r.getApiInfoLocation());
-        deleteServiceInstanceRequest.withOriginatingIdentity(r.getOriginatingIdentity());
-        return deleteServiceInstanceRequest;
+        return DeleteServiceInstanceBindingRequest.builder()
+                .serviceInstanceId(r.getServiceInstanceId())
+                .bindingId(r.getBindingId())
+                .serviceDefinitionId(mappedService.getId())
+                .planId(mappedPlan.getId())
+                .serviceDefinition(mappedService)
+                .platformInstanceId(r.getPlatformInstanceId())
+                .apiInfoLocation(r.getApiInfoLocation())
+                .originatingIdentity(r.getOriginatingIdentity())
+                .build();
     }
     String getBrokerUrl(String serviceInstanceId) {
         return MessageFormat.format(this.brokerUrlPattern, serviceInstanceId);

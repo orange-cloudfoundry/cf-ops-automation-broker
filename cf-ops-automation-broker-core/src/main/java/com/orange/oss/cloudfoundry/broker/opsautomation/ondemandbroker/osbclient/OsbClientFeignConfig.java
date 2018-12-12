@@ -17,18 +17,27 @@
 
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.osbclient;
 
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.core.Version;
+import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonPOJOBuilder;
+import com.fasterxml.jackson.databind.deser.ValueInstantiator;
+import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.google.gson.Gson;
 import feign.Logger;
 import feign.okhttp.OkHttpClient;
 import feign.slf4j.Slf4jLogger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.openfeign.FeignClientsConfiguration;
-import org.springframework.cloud.servicebroker.model.CreateServiceInstanceResponse;
-import org.springframework.cloud.servicebroker.model.DeleteServiceInstanceResponse;
-import org.springframework.cloud.servicebroker.model.UpdateServiceInstanceResponse;
+import org.springframework.cloud.servicebroker.model.catalog.Catalog;
+import org.springframework.cloud.servicebroker.model.instance.CreateServiceInstanceResponse;
+import org.springframework.cloud.servicebroker.model.instance.DeleteServiceInstanceResponse;
+import org.springframework.cloud.servicebroker.model.instance.UpdateServiceInstanceResponse;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
@@ -108,6 +117,92 @@ public class OsbClientFeignConfig {
         jackson2ObjectMapper.enable(DeserializationFeature.READ_ENUMS_USING_TO_STRING);
     }
 
+    @JsonDeserialize(builder = Catalog.CatalogBuilder.class)
+    @JsonPOJOBuilder(buildMethodName = "build", withPrefix = "")
+    abstract class CatalogBuilderMixIn {
+
+
+    }
+
+    @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY, getterVisibility = JsonAutoDetect.Visibility.NONE, setterVisibility = JsonAutoDetect.Visibility.NONE)
+    abstract class CatalogMixIn{
+
+        @JsonCreator
+        public CatalogMixIn(@JsonProperty("id") int id) {
+        }
+
+    }
+
+    abstract class DirectFieldCatalogMixIn {
+
+    }
+
+
+    static class CatalogInstantiator extends ValueInstantiator.Base
+    {
+        public CatalogInstantiator() {
+            super(Object.class);
+        }
+
+        @Override
+        public boolean canCreateUsingDelegate() { return false; }
+
+        @Override
+        public String getValueTypeDesc() {
+            return Catalog.CatalogBuilder.class.getName();
+        }
+
+        @Override
+        public boolean canCreateUsingDefault() { return true; }
+
+        @Override
+        public Catalog.CatalogBuilder createUsingDefault(DeserializationContext ctxt) {
+            return Catalog.builder();
+        }
+    }
+
+//    public static class PublicConstructorCatalogBuilder {
+//
+//        public PublicConstructorCatalogBuilder() {
+//        }
+//
+//        @JsonCreator
+//        public Catalog.CatalogBuilder builder() {
+//            return Catalog.builder();
+//        }
+//
+//
+//    }
+
+    static class ValueInstanciatorModule extends SimpleModule
+    {
+        public ValueInstanciatorModule(Class<?> cls, ValueInstantiator inst)
+        {
+            super("Test", Version.unknownVersion());
+            this.addValueInstantiator(cls, inst);
+        }
+    }
+
+
+    //    @JsonPOJOBuilder(buildMethodName = "createBean", withPrefix = "construct")
+//    public class CatalogBuilder {
+//        private int idValue;
+//        private String nameValue;
+//
+//        public CatalogBuilder constructId(int id) {
+//            idValue = id;
+//            return this;
+//        }
+//
+//        public CatalogBuilder constructName(String name) {
+//            nameValue = name;
+//            return this;
+//        }
+//
+//        public POJOBuilderBean createBean() {
+//            return new POJOBuilderBean(idValue, nameValue);
+//        }
+//    }
     abstract class CreateServiceInstanceResponseMixIn {
         @JsonProperty("operation") abstract CreateServiceInstanceResponse withOperation(final String operation);
     }
@@ -123,6 +218,11 @@ public class OsbClientFeignConfig {
         jackson2ObjectMapper.addMixIn(CreateServiceInstanceResponse.class, CreateServiceInstanceResponseMixIn.class);
         jackson2ObjectMapper.addMixIn(UpdateServiceInstanceResponse.class, UpdateServiceInstanceResponseMixIn.class);
         jackson2ObjectMapper.addMixIn(DeleteServiceInstanceResponse.class, DeleteServiceInstanceResponseMixIn.class);
+        jackson2ObjectMapper.addMixIn(Catalog.class, CatalogBuilderMixIn.class);
+
+
+        jackson2ObjectMapper.registerModule(new ValueInstanciatorModule(Catalog.CatalogBuilder.class, new CatalogInstantiator()));
+//        jackson2ObjectMapper.getDeserializationConfig().
     }
 
     @Bean

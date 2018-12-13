@@ -17,15 +17,19 @@
 
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.osbclient;
 
+import org.springframework.cloud.servicebroker.model.AsyncServiceBrokerRequest;
+import org.springframework.cloud.servicebroker.model.ServiceBrokerRequest;
 import org.springframework.cloud.servicebroker.model.instance.*;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
+import java.util.Map;
 
+import static org.springframework.cloud.servicebroker.model.AsyncServiceBrokerRequest.ASYNC_REQUEST_PARAMETER;
 import static org.springframework.cloud.servicebroker.model.ServiceBrokerRequest.API_INFO_LOCATION_HEADER;
 import static org.springframework.cloud.servicebroker.model.ServiceBrokerRequest.ORIGINATING_IDENTITY_HEADER;
-import static org.springframework.cloud.servicebroker.model.instance.AsyncServiceInstanceRequest.ASYNC_REQUEST_PARAMETER;
 
 /**
  * SpringMVC annotations for the OSB client.
@@ -44,29 +48,39 @@ import static org.springframework.cloud.servicebroker.model.instance.AsyncServic
 public interface ServiceInstanceServiceClient {
 
     @RequestMapping(value = {
-//            "/{cfInstanceId}/v2/service_instances/{instanceId}",
+//            "/{platformInstanceId}/v2/service_instances/{instanceId}",
             "/v2/service_instances/{instanceId}"
     }, method = RequestMethod.PUT)
     ResponseEntity<CreateServiceInstanceResponse> createServiceInstance(
 //            @PathVariable Map<String, String> pathVariables,
-            @PathVariable("instanceId") String serviceInstanceId,
-            @RequestParam(value = ASYNC_REQUEST_PARAMETER, required = false) boolean acceptsIncomplete,
-            @RequestHeader(value = API_INFO_LOCATION_HEADER, required = false) String apiInfoLocation,
-            @RequestHeader(value = ORIGINATING_IDENTITY_HEADER, required = false) String originatingIdentityString,
+            @PathVariable(ServiceBrokerRequest.INSTANCE_ID_PATH_VARIABLE) String serviceInstanceId,
+            @RequestParam(value = AsyncServiceBrokerRequest.ASYNC_REQUEST_PARAMETER, required = false) boolean acceptsIncomplete,
+            @RequestHeader(value = ServiceBrokerRequest.API_INFO_LOCATION_HEADER, required = false) String apiInfoLocation,
+            @RequestHeader(value = ServiceBrokerRequest.ORIGINATING_IDENTITY_HEADER, required = false) String originatingIdentityString,
             @Valid @RequestBody CreateServiceInstanceRequest request);
 
     @RequestMapping(value = {
-//            "/{cfInstanceId}/v2/service_instances/{instanceId}/last_operation",
+//            "/{platformInstanceId}/v2/service_instances/{instanceId}",
+            "/v2/service_instances/{instanceId}"
+    })
+    public ResponseEntity<GetServiceInstanceResponse> getServiceInstance(
+//            @PathVariable Map<String, String> pathVariables,
+            @PathVariable(ServiceBrokerRequest.INSTANCE_ID_PATH_VARIABLE) String serviceInstanceId,
+            @RequestHeader(value = ServiceBrokerRequest.API_INFO_LOCATION_HEADER, required = false) String apiInfoLocation,
+            @RequestHeader(value = ServiceBrokerRequest.ORIGINATING_IDENTITY_HEADER, required = false) String originatingIdentityString);
+
+    @RequestMapping(value = {
+//            "/{platformInstanceId}/v2/service_instances/{instanceId}/last_operation",
             "/v2/service_instances/{instanceId}/last_operation"
     }, method = RequestMethod.GET)
     public ResponseEntity<GetLastServiceOperationResponse> getServiceInstanceLastOperation(
 //            @PathVariable Map<String, String> pathVariables,
-            @PathVariable("instanceId") String serviceInstanceId,
-            @RequestParam("service_id") String serviceDefinitionId,
-            @RequestParam("plan_id") String planId,
+            @PathVariable(ServiceBrokerRequest.INSTANCE_ID_PATH_VARIABLE) String serviceInstanceId,
+            @RequestParam(value = ServiceBrokerRequest.SERVICE_ID_PARAMETER, required = false) String serviceDefinitionId,
+            @RequestParam(value = ServiceBrokerRequest.PLAN_ID_PARAMETER, required = false) String planId,
             @RequestParam(value = "operation", required = false) String operation,
-            @RequestHeader(value = API_INFO_LOCATION_HEADER, required = false) String apiInfoLocation,
-            @RequestHeader(value = ORIGINATING_IDENTITY_HEADER, required = false) String originatingIdentityString);
+            @RequestHeader(value = ServiceBrokerRequest.API_INFO_LOCATION_HEADER, required = false) String apiInfoLocation,
+            @RequestHeader(value = ServiceBrokerRequest.ORIGINATING_IDENTITY_HEADER, required = false) String originatingIdentityString);
 
 
     @RequestMapping(value = {
@@ -84,19 +98,27 @@ public interface ServiceInstanceServiceClient {
 
 
     @RequestMapping(value = {
-//            "/{cfInstanceId}/v2/service_instances/{instanceId}",
+//            "/{platformInstanceId}/v2/service_instances/{instanceId}",
             "/v2/service_instances/{instanceId}"
     }, method = RequestMethod.PATCH)
+    public ResponseEntity<DeleteServiceInstanceResponse> deleteServiceInstance(
+            @PathVariable Map<String, String> pathVariables,
+            @PathVariable(ServiceBrokerRequest.INSTANCE_ID_PATH_VARIABLE) String serviceInstanceId,
+            @RequestParam(ServiceBrokerRequest.SERVICE_ID_PARAMETER) String serviceDefinitionId,
+            @RequestParam(ServiceBrokerRequest.PLAN_ID_PARAMETER) String planId,
+            @RequestParam(value = AsyncServiceBrokerRequest.ASYNC_REQUEST_PARAMETER, required = false) boolean acceptsIncomplete,
+            @RequestHeader(value = ServiceBrokerRequest.API_INFO_LOCATION_HEADER, required = false) String apiInfoLocation,
+            @RequestHeader(value = ServiceBrokerRequest.ORIGINATING_IDENTITY_HEADER, required = false) String originatingIdentityString);
+
+    @RequestMapping(value =
+//            "/{platformInstanceId}/v2/service_instances/{instanceId}",
+            "/v2/service_instances/{instanceId}", method = RequestMethod.PATCH, produces = {MediaType.APPLICATION_JSON_VALUE})
     public ResponseEntity<UpdateServiceInstanceResponse> updateServiceInstance(
 //            @PathVariable Map<String, String> pathVariables,
-            @PathVariable("instanceId") String serviceInstanceId,
-            @RequestParam(value = ASYNC_REQUEST_PARAMETER, required = false) boolean acceptsIncomplete,
-            @RequestHeader(value = API_INFO_LOCATION_HEADER, required = false) String apiInfoLocation,
-            @RequestHeader(value = ORIGINATING_IDENTITY_HEADER, required = false) String originatingIdentityString,
+            @PathVariable(ServiceBrokerRequest.INSTANCE_ID_PATH_VARIABLE) String serviceInstanceId,
+            @RequestParam(value = AsyncServiceBrokerRequest.ASYNC_REQUEST_PARAMETER, required = false) boolean acceptsIncomplete,
+            @RequestHeader(value = ServiceBrokerRequest.API_INFO_LOCATION_HEADER, required = false) String apiInfoLocation,
+            @RequestHeader(value = ServiceBrokerRequest.ORIGINATING_IDENTITY_HEADER, required = false) String originatingIdentityString,
             @Valid @RequestBody UpdateServiceInstanceRequest request);
 
-//    @RequestMapping(value = "/v2/service_instances/{instanceId}", method = RequestMethod.PATCH, produces = {MediaType.APPLICATION_JSON_VALUE})
-//    ResponseEntity<UpdateServiceInstanceResponse> updateServiceInstance(@PathVariable("instanceId") String serviceInstanceId,
-//                                                                        @Valid @RequestBody UpdateServiceInstanceRequest request,
-//                                                                        @RequestParam(value = "accepts_incomplete", required = false) boolean acceptsIncomplete);
 }

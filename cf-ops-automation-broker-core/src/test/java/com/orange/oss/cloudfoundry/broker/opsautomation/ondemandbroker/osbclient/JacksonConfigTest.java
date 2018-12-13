@@ -111,14 +111,12 @@ public class JacksonConfigTest {
                 .bindable(true)
                 .plans(Collections.singletonList(plan3)).build();
         Catalog catalog = Catalog.builder().serviceDefinitions(serviceDefinition
-//                , serviceDefinition2 //not yet used
         ).build();
         StringWriter jsonWritter = new StringWriter();
         objectMapper.writerFor(Catalog.class).writeValue(jsonWritter, catalog);
         String json = jsonWritter.toString();
-        System.out.println("json = " + json);
 
-        //Manually extracted using debugger with expression
+        //Alternative is to manually extract Json using debugger with expression
         // IOUtils.toString(inputMessage.getBody(), defaultCharset);
         //at stack
         // readJavaType:237, AbstractJackson2HttpMessageConverter (org.springframework.http.converter.json)
@@ -133,49 +131,30 @@ public class JacksonConfigTest {
         //invoke:102, ReflectiveFeign$FeignInvocationHandler (feign)
         //getCatalog:-1, $Proxy124 (com.sun.proxy)
         //feign_client_unmarshalls_bind_responses:93, OsbClientTestApplicationTest (com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.osbclient)
-        //invoke0:-1, NativeMethodAccessorImpl (sun.reflect)
-        //invoke:62, NativeMethodAccessorImpl (sun.reflect)
-        //invoke:43, DelegatingMethodAccessorImpl (sun.reflect)
-        //invoke:498, Method (java.lang.reflect)
-        //runReflectiveCall:50, FrameworkMethod$1 (org.junit.runners.model)
-        //run:12, ReflectiveCallable (org.junit.internal.runners.model)
-        //invokeExplosively:47, FrameworkMethod (org.junit.runners.model)
-        //evaluate:17, InvokeMethod (org.junit.internal.runners.statements)
-        //evaluate:73, RunBeforeTestExecutionCallbacks (org.springframework.test.context.junit4.statements)
-        //evaluate:83, RunAfterTestExecutionCallbacks (org.springframework.test.context.junit4.statements)
-        //evaluate:75, RunBeforeTestMethodCallbacks (org.springframework.test.context.junit4.statements)
-        //evaluate:86, RunAfterTestMethodCallbacks (org.springframework.test.context.junit4.statements)
-        //evaluate:239, ExpectedException$ExpectedExceptionStatement (org.junit.rules)
-        //evaluate:73, WireMockRule$1 (com.github.tomakehurst.wiremock.junit)
-        //evaluate:20, RunRules (org.junit.rules)
-        //evaluate:84, SpringRepeat (org.springframework.test.context.junit4.statements)
-        //runLeaf:325, ParentRunner (org.junit.runners)
-        //runChild:251, SpringJUnit4ClassRunner (org.springframework.test.context.junit4)
-        //runChild:97, SpringJUnit4ClassRunner (org.springframework.test.context.junit4)
-        //run:290, ParentRunner$3 (org.junit.runners)
-        //schedule:71, ParentRunner$1 (org.junit.runners)
-        //runChildren:288, ParentRunner (org.junit.runners)
-        //access$000:58, ParentRunner (org.junit.runners)
-        //evaluate:268, ParentRunner$2 (org.junit.runners)
-        //evaluate:61, RunBeforeTestClassCallbacks (org.springframework.test.context.junit4.statements)
-        //evaluate:70, RunAfterTestClassCallbacks (org.springframework.test.context.junit4.statements)
-        //run:363, ParentRunner (org.junit.runners)
-        //run:190, SpringJUnit4ClassRunner (org.springframework.test.context.junit4)
-        //run:137, JUnitCore (org.junit.runner)
-        //startRunnerWithArgs:68, JUnit4IdeaTestRunner (com.intellij.junit4)
-        //startRunnerWithArgs:47, IdeaTestRunner$Repeater (com.intellij.rt.execution.junit)
-        //prepareStreamsAndStart:242, JUnitStarter (com.intellij.rt.execution.junit)
-        //main:70, JUnitStarter (com.intellij.rt.execution.junit)
-//        json = "{\"services\":[{\"id\":\"ondemand-service\",\"name\":\"ondemand\",\"description\":\"A simple ondemand service broker implementation\",\"bindable\":true,\"plan_updateable\":false,\"plans\":[{\"id\":\"ondemand-plan\",\"name\":\"default\",\"description\":\"This is a default ondemand plan.  All services are created equally.\",\"metadata\":{\"costs\":[{\"amount\":{\"usd\":0.0},\"unit\":\"MONTHLY\"}],\"bullets\":[\"Dedicated ondemand server\",\"100 MB Storage (not enforced)\",\"40 concurrent connections (not enforced)\"]},\"free\":true}],\"tags\":[\"ondemand\",\"document\"],\"metadata\":{\"longDescription\":\"ondemand Service\",\"documentationUrl\":\"https://orange.com\",\"providerDisplayName\":\"Orange\",\"displayName\":\"ondemand\",\"imageUrl\":\"http://info.mongodb.com/rs/mongodb/images/MongoDB_Logo_Full.png\",\"supportUrl\":\"https://orange.com\"},\"requires\":[],\"dashboard_client\":null}]}";
-
-//        String json = "{\"operation\":\"{\\\"org.springframework.cloud.servicebroker.model.CreateServiceInstanceRequest\\\":{\\\"serviceDefinitionId\\\":\\\"cassandra-ondemand-service\\\",\\\"planId\\\":\\\"cassandra-ondemand-plan\\\",\\\"organizationGuid\\\":\\\"org_id\\\",\\\"spaceGuid\\\":\\\"space_id\\\",\\\"serviceInstanceId\\\":\\\"111\\\",\\\"serviceDefinition\\\":{\\\"id\\\":\\\"cassandra-ondemand-service\\\",\\\"name\\\":\\\"cassandra-ondemand\\\",\\\"description\\\":\\\"On demand cassandra dedicated clusters\\\",\\\"bindable\\\":true,\\\"planUpdateable\\\":true,\\\"plans\\\":[{\\\"id\\\":\\\"cassandra-ondemand-plan\\\",\\\"name\\\":\\\"default\\\",\\\"description\\\":\\\"This is a default ondemand plan.  All services are created equally.\\\",\\\"metadata\\\":{},\\\"free\\\":true}],\\\"tags\\\":[\\\"ondemand\\\",\\\"document\\\"],\\\"metadata\\\":{\\\"displayName\\\":\\\"ondemand\\\",\\\"imageUrl\\\":\\\"https://orange.com/image.png\\\",\\\"longDescription\\\":\\\"A dedicated on-demand cassandra cluster\\\",\\\"providerDisplayName\\\":\\\"Orange\\\",\\\"documentationUrl\\\":\\\"https://orange.com/doc\\\",\\\"supportUrl\\\":\\\"https://orange.com/support\\\"}},\\\"parameters\\\":{},\\\"context\\\":{\\\"platform\\\":\\\"cloudfoundry\\\",\\\"properties\\\":{}},\\\"asyncAccepted\\\":true,\\\"apiInfoLocation\\\":\\\"api-info\\\",\\\"originatingIdentity\\\":{\\\"platform\\\":\\\"cloudfoundry\\\",\\\"properties\\\":{\\\"user_id\\\":\\\"user_guid\\\",\\\"email\\\":\\\"user_email\\\"}}},\\\"startRequestDate\\\":\\\"2018-06-07T16:55:48.121Z\\\"}\"}";
-
-        //and an object mapper
-        osbClientFeignConfig.configureJacksonOsbResponseInheritanceMapping(objectMapper);
 
         //then
         Catalog deserializedCatalog = objectMapper.readValue(json, Catalog.class);
         assertThat(deserializedCatalog).isNotNull();
+        assertThat(deserializedCatalog).isEqualTo(catalog);
+    }
+
+    @Test
+    public void deserializes_Response() throws IOException {
+        //given a json string to deserialize
+        CreateServiceInstanceResponse initialObject = CreateServiceInstanceResponse.builder()
+                .async(true)
+                .dashboardUrl("https://a-inner-dashboard.com").build();
+
+        StringWriter jsonWritter = new StringWriter();
+
+        objectMapper.writerFor(CreateServiceInstanceResponse.class).writeValue(jsonWritter, initialObject);
+        String json = jsonWritter.toString();
+        System.out.println("json = " + json);
+
+
+        //then
+        CreateServiceInstanceResponse deserialized = objectMapper.readValue(json, CreateServiceInstanceResponse.class);
+        assertThat(deserialized).isEqualTo(initialObject);
     }
 
     @Test

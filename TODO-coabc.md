@@ -94,7 +94,6 @@ spring:
 ```
 
 
-- update ServiceInstanceServiceClient REST API duplicated code + associated test OsbClientTestApplicationTest 
 - review in detail assert of BoshProcessorTest: with/without context test cases
 - BoshServiceProvisionningTest: may need to inject/define the expected catalog in application.properties
     
@@ -125,6 +124,26 @@ Caused by: com.fasterxml.jackson.databind.exc.InvalidDefinitionException: Cannot
 
 Solutions:
 - Modify springboot-service-broker POJOs with jackson annotations to expose constructor or use builder 
+    https://jitpack.io/
+    
+    
+    - Actually starting with version 2.1.0M1 there are protected constructors that Jackson can use
+    - However CreateServiceInstanceResponse extends AsyncServiceBrokerResponse is lacking the async field
+       
+        - Likely excluded because there is no setter for the field 
+    
+        @JsonIgnore
+        	protected final boolean async;
+
+        - Solutions by modifying model classes: 
+           - remove the @JsonIgnore field + add a setter
+           -     
+
+        - However, this is internal data that does not go onto the wire, as this is propagated using http status code instead
+    - some default null fields are different serialization/deserialization: empty collections vs null. Should not harm.
+    - 
+
+
 - Configure Jackson/Feign to use a different message converter than Jackson default, and use builder to construct objects
 https://stackoverflow.com/questions/46903678/jackson-deserialize-using-builder-without-annotation
 
@@ -201,6 +220,31 @@ pb: How to set the @JsonPOJOBuilder without modifying the builder class ?
     ObjectMapper mapper = new ObjectMapper();
     mapper.addMixIn(Sample.class, SampleMixin.class);
     Sample sample = mapper.readValue(json, Sample.class);
+
+Issue on catalog deserialization seems to have been fixed in 2.1.0.M1
+https://github.com/spring-cloud/spring-cloud-open-service-broker/issues/110
+https://github.com/spring-cloud/spring-cloud-open-service-broker/issues/121
+
+However upgrading to 2.1.0.M2 seems not yet possible through the starter:
+https://mvnrepository.com/artifact/org.springframework.cloud/spring-cloud-starter-open-service-broker-webmvc
+
+https://github.com/spring-cloud/spring-cloud-open-service-broker/issues/79
+https://github.com/spring-cloud/spring-cloud-open-service-broker/commit/0cf3bc0cab1914f3ade8543ad155dc108afb53d0
+
+
+
+Update OSB client:
+- which version of spring cloud open service broker ?
+   - 2.1.0M2 remains with synchronous controller api
+   - 3.0.0M2 replaces synchronous controller api with async ones, and does not seem to bring more OSB compliances
+   => stick with 2.1.0M2 for now to avoid carrying reactor likely instabilities/frequent upgrades for now
+   
+     
+OsbClientTestApplicationTest fails to get catalog: 401 error
+   - Q: how is the authentication performed ?
+        - Q: where is the associated spring configuration ?     
+
+
 
 ------------------------------
 

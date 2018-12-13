@@ -277,6 +277,7 @@ public class OsbProxyImpl implements OsbProxy {
                 request.getBindingId(),
                 request.getServiceDefinitionId(),
                 request.getPlanId(),
+                false,
                 request.getApiInfoLocation(),
                 buildOriginatingIdentityHeader(request.getOriginatingIdentity()));
     }
@@ -285,6 +286,7 @@ public class OsbProxyImpl implements OsbProxy {
         return serviceInstanceBindingServiceClient.createServiceInstanceBinding(
                 request.getServiceInstanceId(),
                 request.getBindingId(),
+                false,
                 request.getApiInfoLocation(),
                 buildOriginatingIdentityHeader(request.getOriginatingIdentity()),
                 request);

@@ -81,7 +81,16 @@
             <groupId>org.springframework.cloud</groupId>
             <artifactId>spring-cloud-starter-open-service-broker-webmvc</artifactId>
         </dependency>
-        
+		<!-- necessary when spring-cloud-starter-open-service-broker-webmvc is not yet released for the milestone version we need to use -->
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-open-service-broker-autoconfigure</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-open-service-broker-core</artifactId>
+        </dependency>
+
 		<!-- for bosh manifest yml parsing -->
 		<dependency>
 		    <groupId>com.fasterxml.jackson.dataformat</groupId>

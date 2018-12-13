@@ -316,6 +316,7 @@ public class OsbProxyImplTest {
         verify(serviceInstanceBindingServiceClient).createServiceInstanceBinding(
                 "service-instance-id",
                 "service-instance-binding-id",
+                false,
                 "api-info",
                 aContextOriginatingHeader(),
                 request);
@@ -371,6 +372,7 @@ public class OsbProxyImplTest {
                 "service-binding-id",
                 "coab-serviceid",
                 "coab-planid",
+                false,
                 "api-info",
                 aContextOriginatingHeader());
     }

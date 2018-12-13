@@ -136,6 +136,7 @@ public class OsbClientTestApplicationTest {
         ResponseEntity<CreateServiceInstanceAppBindingResponse> bindResponse = serviceInstanceBindingServiceClient.createServiceInstanceBinding(
                 serviceInstanceGuid,
                 "service_binding_guid",
+                false,
                 null,
                 originatingIdentityHeader,
                 createServiceInstanceBindingRequest);
@@ -302,6 +303,7 @@ public class OsbClientTestApplicationTest {
         ResponseEntity<CreateServiceInstanceAppBindingResponse> bindResponse = serviceInstanceBindingServiceClient.createServiceInstanceBinding(
                 serviceInstanceGuid,
                 "service_binding_guid",
+                false,
                 null,
                 originatingIdentityHeader,
                 createServiceInstanceBindingRequest);
@@ -338,6 +340,7 @@ public class OsbClientTestApplicationTest {
                 "service_binding_guid",
                 serviceDefinition.getId(),
                 defaultPlan.getId(),
+                false,
                 null,
                 originatingIdentityHeader);
         assertThat(deleteBindingResponse.getStatusCode()).isEqualTo(OK);

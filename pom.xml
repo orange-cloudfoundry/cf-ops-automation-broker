@@ -35,7 +35,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <java.version>1.8</java.version>
-        <springCloudServiceBrokerVersion>2.0.1.RELEASE</springCloudServiceBrokerVersion>
+        <springCloudServiceBrokerVersion>2.1.0.M2</springCloudServiceBrokerVersion>
     </properties>
 
     <modules>
@@ -119,6 +119,16 @@
                 <version>${springCloudServiceBrokerVersion}</version>
             </dependency>
             <dependency>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-open-service-broker-autoconfigure</artifactId>
+                <version>${springCloudServiceBrokerVersion}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-open-service-broker-core</artifactId>
+                <version>${springCloudServiceBrokerVersion}</version>
+            </dependency>
+            <dependency>
                 <groupId>com.orange.oss.cloudfoundry.broker.opsautomation</groupId>
                 <artifactId>cf-ops-automation-broker-framework</artifactId>
                 <version>0.28.0-SNAPSHOT</version>
@@ -153,7 +163,7 @@
             <name>Spring Milestones</name>
             <url>https://repo.spring.io/libs-milestone</url>
             <snapshots>
-                <enabled>false</enabled>
+                <enabled>true</enabled>
             </snapshots>
         </repository>
         <repository>

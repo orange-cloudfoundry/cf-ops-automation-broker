@@ -368,6 +368,7 @@ public class BoshServiceProvisionningTest {
         ResponseEntity<CreateServiceInstanceAppBindingResponse> bindResponse = serviceInstanceBindingService.createServiceInstanceBinding(
                 SERVICE_INSTANCE_ID,
                 SERVICE_BINDING_INSTANCE_ID,
+                false,
                 "api-info",
                 osbProxy.buildOriginatingIdentityHeader(aCfUserContext()),
                 serviceInstanceBindingRequest);
@@ -383,6 +384,7 @@ public class BoshServiceProvisionningTest {
                 SERVICE_BINDING_INSTANCE_ID,
                 SERVICE_DEFINITION_ID,
                 SERVICE_PLAN_ID,
+                false,
                 "api-info",
                 osbProxy.buildOriginatingIdentityHeader(aCfUserContext()));
     }

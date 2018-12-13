@@ -25,11 +25,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
-import java.util.Map;
-
-import static org.springframework.cloud.servicebroker.model.AsyncServiceBrokerRequest.ASYNC_REQUEST_PARAMETER;
-import static org.springframework.cloud.servicebroker.model.ServiceBrokerRequest.API_INFO_LOCATION_HEADER;
-import static org.springframework.cloud.servicebroker.model.ServiceBrokerRequest.ORIGINATING_IDENTITY_HEADER;
 
 /**
  * SpringMVC annotations for the OSB client.
@@ -84,25 +79,11 @@ public interface ServiceInstanceServiceClient {
 
 
     @RequestMapping(value = {
-//            "/{cfInstanceId}/v2/service_instances/{instanceId}",
+//            "/{platformInstanceId}/v2/service_instances/{instanceId}",
             "/v2/service_instances/{instanceId}"
     }, method = RequestMethod.DELETE)
     public ResponseEntity<DeleteServiceInstanceResponse> deleteServiceInstance(
 //            @PathVariable Map<String, String> pathVariables,
-            @PathVariable("instanceId") String serviceInstanceId,
-            @RequestParam("service_id") String serviceDefinitionId,
-            @RequestParam("plan_id") String planId,
-            @RequestParam(value = ASYNC_REQUEST_PARAMETER, required = false) boolean acceptsIncomplete,
-            @RequestHeader(value = API_INFO_LOCATION_HEADER, required = false) String apiInfoLocation,
-            @RequestHeader(value = ORIGINATING_IDENTITY_HEADER, required = false) String originatingIdentityString);
-
-
-    @RequestMapping(value = {
-//            "/{platformInstanceId}/v2/service_instances/{instanceId}",
-            "/v2/service_instances/{instanceId}"
-    }, method = RequestMethod.PATCH)
-    public ResponseEntity<DeleteServiceInstanceResponse> deleteServiceInstance(
-            @PathVariable Map<String, String> pathVariables,
             @PathVariable(ServiceBrokerRequest.INSTANCE_ID_PATH_VARIABLE) String serviceInstanceId,
             @RequestParam(ServiceBrokerRequest.SERVICE_ID_PARAMETER) String serviceDefinitionId,
             @RequestParam(ServiceBrokerRequest.PLAN_ID_PARAMETER) String planId,

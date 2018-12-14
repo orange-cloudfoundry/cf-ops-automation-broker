@@ -1,11 +1,9 @@
 package com.orange.oss.bosh.deployer.manifest;
 
 
-
-import org.fest.assertions.Assertions;
-import org.junit.Test;
-
 import com.orange.oss.bosh.deployer.manifest.ManifestMapping.Manifest;
+import org.assertj.core.api.Assertions;
+import org.junit.Test;
 
 
 

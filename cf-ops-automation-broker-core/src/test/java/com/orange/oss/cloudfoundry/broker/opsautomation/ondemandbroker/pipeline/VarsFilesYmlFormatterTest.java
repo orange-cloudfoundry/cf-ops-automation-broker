@@ -15,8 +15,8 @@ import org.springframework.cloud.servicebroker.model.instance.CreateServiceInsta
 import java.io.IOException;
 import java.util.ArrayList;
 
-import static org.fest.assertions.Assertions.assertThat;
-import static org.fest.assertions.Fail.fail;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Fail.fail;
 
 public class VarsFilesYmlFormatterTest {
 

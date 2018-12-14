@@ -1,6 +1,6 @@
 package com.orange.oss.bosh.deployer.manifest;
 
-import static org.fest.assertions.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.HashMap;
 import java.util.Map;

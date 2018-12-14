@@ -589,10 +589,16 @@ java.lang.NullPointerException: null
     - Use javax bean validation 2.0 in VarsFilesYmlFormatter for validating maps  
 - Bump to spring cloud service broker 2.0
 - Upgrade to mockito 2
+    - https://asolntsev.github.io/en/2016/10/11/mockito-2.1/
+    - https://proandroiddev.com/mockito-2-x-migration-session-recording-droidcon-uk-2018-ba70619f3811
+    - https://github.com/mockito/mockito/wiki/What%27s-new-in-Mockito-2#some-useful-regular-expressions-for-migration-with-intellij-and-eclipse
 - Upgrade to junit5 to benefit from nested junit classes as well as descrptive names https://junit.org/junit5/docs/5.0.1/user-guide/
+   - https://junit.org/junit5/docs/current/user-guide/#migrating-from-junit4 
    - https://medium.com/@dSebastien/using-junit-5-with-spring-boot-2-kotlin-and-mockito-d5aea5b0c668
    - https://github.com/mockito/mockito/issues/445
    - https://github.com/mockito/mockito/issues/1348
+    
+   
 
 
 - future bind request mapping improvements

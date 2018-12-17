@@ -53,6 +53,29 @@ Deploy the broker as a CF app:
 
 Use `spring.cloud.openservicebroker.catalog` environment variable to set catalog config in a YAML format. See [spring-cloud-open-service-broker] for a sample YML and raw properties configuration
 
+### Troubleshooting COAB
+
+#### Spring boot debug mode
+
+Enable [springboot debug/trace mode](https://docs.spring.io/spring-boot/docs/current/reference/html/boot-features-logging.html#boot-features-logging-console-output) to diagnose beans configuration using
+
+
+```bash
+cf set-env my-app DEBUG true
+```
+
+and when finished
+
+```bash
+cf unset-env my-app DEBUG true
+```
+
+#### Increase logging levels
+
+Increase verbosity for COAB classes:
+- default levels are in [cf-ops-automation-bosh-broker/src/main/resources/application.yml](cf-ops-automation-bosh-broker/src/main/resources/application.yml)
+- see some frequently used levels in [cf-ops-automation-bosh-broker/src/test/resources/application.properties](cf-ops-automation-bosh-broker/src/test/resources/application.properties)  
+
 ## Authoring a new COAB-based service
 
 Prepare a standard COA bosh deployment, see [COA documentation](https://github.com/orange-cloudfoundry/cf-ops-automation#template-engine-reference-documentation)

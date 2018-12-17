@@ -1,7 +1,14 @@
 
-security:
-  user:
-    password: secret
+spring:
+  security:
+    user:
+      name: "user"
+      password: "secret"
+
+# For debug purposes only, expose all actuator endpoints which are disabled by default
+# https://docs.spring.io/spring-boot/docs/current/reference/html/production-ready-endpoints.html#production-ready-endpoints-exposing-endpoints
+management.endpoints.web.exposure.include: "*"
+# Associate API doc at https://docs.spring.io/spring-boot/docs/current/actuator-api/html/
 
 servicebroker:
   catalog:
@@ -32,4 +39,5 @@ logging:
     #supposed to trigger Feign logging, but did not see it working. Seems similar to https://github.com/spring-cloud/spring-cloud-netflix/issues/1769
     com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.osbclient.ServiceInstanceServiceClient: debug
 
-
+    #troubleshoot http security problems
+    org.springframework.security: DEBUG

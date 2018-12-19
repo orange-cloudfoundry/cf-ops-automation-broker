@@ -1,3 +1,27 @@
+--
+
+Include code coverage into ci
+
+workflow: circle runs tests and collects coverage (using ). Uploads then it to codecov.io authenticated by its token obtained CODECOV_TOKEN 
+
+Requirements: pom.xml has cobertura as a plugin + goal "cobertura:cobertura" is included into the ci 
+    cobertura:cobertura	Yes	Instrument the compiled classes, run the unit tests and generate a Cobertura report.
+
+http://www.mojohaus.org/cobertura-maven-plugin/plugin-info.html
+
+https://github.com/codecov/example-java-maven
+
+https://www.baeldung.com/cobertura
+Cobertura is a great yet simple code coverage tool, but not actively maintained, as it is currently outclassed by newer and more powerful tools like JaCoCo.
+
+approx 30 to 100% slower tests => ok to run on circle on PRs
+https://stackoverflow.com/questions/23827918/whats-the-performance-cost-of-using-cobertura-to-create-system-test-coverage-re
+https://codecov.io/site/security
+
+=> check usage on other major java projects, got inspired for now from  pr reports such as https://github.com/spring-cloud/spring-cloud-open-service-broker/pull/140
+
+
+---
 
 Spring boot update
 
@@ -42,11 +66,11 @@ https://spring.io/projects/spring-cloud-open-service-broker#learn
 
 https://github.com/spring-cloud/spring-cloud-open-service-broker/wiki/2.0-Migration-Guide
 
+# Release notes / README.md
 
 CATALOG_YML is deprecated.
 
 Use `spring.cloud.openservicebroker.catalog` environment variable to set catalog config in a YAML format. See [spring-cloud-open-service-broker] for a sample YML and raw properties configuration
-
 
 
 ```yaml
@@ -92,6 +116,9 @@ spring:
             name: standard
             description: A simple plan
 ```
+
+Spring properties are changed: https://github.com/spring-projects/spring-boot/wiki/Spring-Boot-2.0-Configuration-Changelog
+ - e.g. security.user.* now become spring.security.user.*
 
 
 - review in detail assert of BoshProcessorTest: with/without context test cases
@@ -242,10 +269,175 @@ Update OSB client:
      
 OsbClientTestApplicationTest fails to get catalog: 401 error
    - Q: how is the authentication performed ?
-        - Q: where is the associated spring configuration ?     
+        - Q: where is the associated spring configuration ?
+        - A: in the client configured within the test. However, server config was missing due to spring boot 2.0 config renamings
+   - Pb
+   
+```
+
+   v2_service_instances_222                                   |
+                                                              |
+   PUT                                                        | PUT
+   /v2/service_instances/222?accepts_incomplete=false         | /v2/service_instances/222?accepts_incomplete=false
+                                                              |
+   {                                                          | {                                                   <<<<< Body does not match
+     "asyncAccepted" : false,                                 |   "platform_instance_id" : null,
+     "parameters" : { },                                      |   "api_info_location" : null,
+     "context" : {                                            |   "originating_identity" : null,
+       "platform" : "cloudfoundry"                            |   "async_accepted" : false,
+     },                                                       |   "parameters" : { },
+     "service_id" : "cassandra-service-broker",               |   "context" : {
+     "plan_id" : "cassandra-plan",                            |     "platform" : "cloudfoundry",
+     "organization_guid" : "org_id",                          |     "organization_guid" : "org_id",
+     "space_guid" : "space_id"                                |     "space_guid" : "space_id",
+   }                                                          |     "spaceGuid" : "space_id",
+                                                              |     "organizationGuid" : "org_id"
+                                                              |   },
+                                                              |   "plan_id" : "cassandra-plan",
+                                                              |   "organization_guid" : null,
+                                                              |   "space_guid" : null,
+                                                              |   "service_instance_id" : "222",
+                                                              |   "service_definition" : null,
+                                                              |   "service_id" : "cassandra-service-broker"
+                                                              | }
+                                                              |
+   -----------------------------------------------------------------------------------------------------------------------
+```
+
+        - possible causes:
+            - feign does not take into account path params
+            - new fields on model beans need to be marked as transient and are not, so they serialize default values
+                 - How to diagnose ?
+                    - reproduce as a test in spring osb lib
+                    - debugger to check RSIR model serialization       
+
+
+```
+    PUT                                                        | PUT
+    /v2/service_instances/111/service_bindings/service_bindin  | /v2/service_instances/111/service_bindings/service_bindin
+    g_guid?accepts_incomplete=false                            | g_guid?accepts_incomplete=false
+                                                               |
+    {                                                          | {                                                   <<<<< Body does not match
+      "service_id" : "ondemand-service",                       |   "platform_instance_id" : null,
+      "plan_id" : "ondemand-plan",                             |   "api_info_location" : null,
+      "app_guid" : "app_guid",                                 |   "originating_identity" : null,
+      "bind_resource" : {                                      |   "async_accepted" : false,
+        "route" : "aRoute",                                    |   "service_instance_id" : "ondemand-service",
+        "app_guid" : "app_guid"                                |   "binding_id" : null,
+      },                                                       |   "plan_id" : "ondemand-plan",
+      "parameters" : { },                                      |   "app_guid" : "app_guid",
+      "context" : {                                            |   "bind_resource" : {
+        "platform" : "cloudfoundry"                            |     "app_guid" : "app_guid",
+      }                                                        |     "route" : "aRoute"
+    }                                                          |   },
+                                                               |   "parameters" : {
+                                                               |     "user-name" : "myname"
+                                                               |   },
+                                                               |   "context" : {
+                                                               |     "platform" : "cloudfoundry",
+                                                               |     "organization_guid" : "org_id",
+                                                               |     "space_guid" : "space_id",
+                                                               |     "user_id" : "a_user_guid"
+                                                               |   },
+                                                               |   "service_definition" : null,
+                                                               |   "service_id" : null
+                                                               | }
+```
+
+    - serialization tests in spring osb are ok
+    
+    Hypothesis:
+    - feign library regression on the interface mapping
+    - deprecated spring configurations that don't take effect anymore
+    - client is not properly constructed, using old classes/interfaces without annotations ??
+    - adaptations to the unit test set too many fields on the CSIR  
+
+
+    Diagnostics:
+    - Debugger on the Jackson serialization: check objects, check jackson config
+    - enable jackson debugging traces
+    - run the same unit test in coab project & dependencencies 
+    
+        The OSB lib unit tests fail whereas they pass in OSB project
+            Jit imported library are not working as expected
+            Jackson lib version
+            spring properties set in the test
+
+        => Root cause: Use the right Jit Pack syntax for multi module project https://jitpack.io/docs/BUILDING/#multi-module-projects
+
+-----------------------------------------------------------------------------------------------------------------------
+                                                           |
+v2_service_instances_111_service_bindings_222              |
+                                                           |
+PUT                                                        | PUT
+/v2/service_instances/111/service_bindings/service_bindin  | /v2/service_instances/111/service_bindings/service_bindin
+g_guid?accepts_incomplete=false                            | g_guid?accepts_incomplete=false
+                                                           |
+{                                                          | {                                                   <<<<< Body does not match
+  "service_id" : "ondemand-service",                       |   "plan_id" : "ondemand-plan",
+  "plan_id" : "ondemand-plan",                             |   "app_guid" : "app_guid",
+  "app_guid" : "app_guid",                                 |   "bind_resource" : {
+  "bind_resource" : {                                      |     "app_guid" : "app_guid",
+    "route" : "aRoute",                                    |     "route" : "aRoute"
+    "app_guid" : "app_guid"                                |   },
+  },                                                       |   "parameters" : {
+  "parameters" : { },                                      |     "user-name" : "myname"
+  "context" : {                                            |   },
+    "platform" : "cloudfoundry"                            |   "context" : {
+  }                                                        |     "platform" : "cloudfoundry",
+}                                                          |     "organization_guid" : "org_id",
+                                                           |     "space_guid" : "space_id",
+                                                           |     "user_id" : "a_user_guid"
+                                                           |   }
+                                                           | }
+                                                           |
+-----------------------------------------------------------------------------------------------------------------------
+
+Problem with spring boot app not loading the osb framework
+    - troubleshooting through the --debug springboot command line flag. Then outputs the following diagnostic
+    
+        ```
+           ServiceBrokerAutoConfiguration#beanCatalogService:
+              Did not match:
+                 - @ConditionalOnBean (types: org.springframework.cloud.servicebroker.model.catalog.Catalog; SearchStrategy: all) did not find any beans of type org.springframework.cloud.servicebroker.model.catalog.Catalog (OnBeanCondition)
+        
+           ServiceBrokerAutoConfiguration#catalog:
+              Did not match:
+                 - @ConditionalOnProperty (spring.cloud.openservicebroker.catalog.services[0].id) did not find property 'id' (OnPropertyCondition)
+        
+           ServiceBrokerAutoConfiguration#nonBindableServiceInstanceBindingService:
+              Did not match:
+                 - @ConditionalOnMissingBean (types: org.springframework.cloud.servicebroker.service.ServiceInstanceBindingService; SearchStrategy: all) found beans of type 'org.springframework.cloud.servicebroker.service.ServiceInstanceBindingService' processorChainServiceInstanceBindingService (OnBeanCondition)
+        
+           ServiceBrokerWebMvcAutoConfiguration:
+              Did not match:
+                 - @ConditionalOnBean (types: org.springframework.cloud.servicebroker.service.CatalogService,org.springframework.cloud.servicebroker.service.ServiceInstanceService,org.springframework.cloud.servicebroker.service.ServiceInstanceBindingService; SearchStrategy: all) did not find any beans of type org.springframework.cloud.servicebroker.service.CatalogService (OnBeanCondition)
+              Matched:
+                 - found 'session' scope (OnWebApplicationCondition)
+        ```
+     => I would prefer a fail fast with a clear error message.
 
 
 
+Pb: HTTP/1.1 401 to PUT /v2/service_instances/111?accepts_incomplete=false
+
+Cause:  
+https://docs.spring.io/spring-cloud-open-service-broker/docs/current/reference/html5/#service-broker-security
+    The Spring Cloud Open Service Broker project does not implement any security configuration. Service broker application endpoints can be secured with Spring Security and Spring Boot security configuration by applying security to application endpoints with the path-matching pattern: /v2/**.
+    
+https://docs.spring.io/spring-boot/docs/2.0.7.RELEASE/reference/htmlsingle/#boot-features-security
+    If Spring Security is on the classpath, then web applications are secured by default.    
+
+
+https://docs.spring.io/spring-boot/docs/2.0.7.RELEASE/reference/htmlsingle/#boot-features-security
+
+dXNlcjpzZWNyZXQ
+user:secret
+      
+TODO: 
+- unit tests spring security config (check actuactor env is not + update actuator spring security config
+- test actuator config: service broker user should not be able to use actuator /env to inspect git properties       
+            
 ------------------------------
 
 Git clone optimizations: 
@@ -597,8 +789,6 @@ java.lang.NullPointerException: null
    - https://medium.com/@dSebastien/using-junit-5-with-spring-boot-2-kotlin-and-mockito-d5aea5b0c668
    - https://github.com/mockito/mockito/issues/445
    - https://github.com/mockito/mockito/issues/1348
-    
-   
 
 
 - future bind request mapping improvements

@@ -39,8 +39,15 @@ import static org.springframework.http.HttpStatus.*;
 
 /**
  * Verifies our OSB client properly sends queries and parses responses:
- * Starts the COAB application, queries it using the OSB client, and asserts default responses
+ * Starts the OsbClientTestApplication application (which returns default OSB reponses), queries it using the OSB client, and asserts default responses
  * Also works against recorded mocks providing additional coverage of returned responses.
+ *
+ * Can record updated wiremocks for the locally started app.
+ *
+ * Troubleshooting steps: <br>
+ * - run the OsbClientTestApplication spring boot app using ide <br>
+ * - invoke some manual-OsbClientTestApplication-curls.bash commands to diagnose
+ * - turn on recording to update recorded mocks in resources/mappings + check diff
  */
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = RANDOM_PORT)
@@ -66,8 +73,11 @@ public class OsbClientTestApplicationTest {
         //noinspection ConstantConditions
         if (recordLocalServerResponses) {
             WireMock.startRecording("http://localhost:" + port);
-            runAsyncCrudLifeCycle(8088, false, false);
-            WireMock.stopRecording();
+            try {
+                runAsyncCrudLifeCycle(8088, false, false);
+            } finally {
+                WireMock.stopRecording();
+            }
         } else {
             runAsyncCrudLifeCycle(port, false, false);
         }
@@ -102,9 +112,8 @@ public class OsbClientTestApplicationTest {
 
         //then
         Map<String, Object> cfContextProps = new HashMap<>();
-        cfContextProps.put("user_id", "a_user_guid");
-        cfContextProps.put("organization_guid", "org_id");
-        cfContextProps.put("space_guid", "space_id");
+        cfContextProps.put("organization_guid", "org_guid");
+        cfContextProps.put("space_guid", "space_guid");
 
         Context cfContext = CloudFoundryContext.builder().properties(cfContextProps).build();
         String originatingIdentityHeader = buildOriginatingIdentityHeader("a_user_guid", CLOUD_FOUNDRY_PLATFORM);
@@ -118,7 +127,6 @@ public class OsbClientTestApplicationTest {
         //then
         Map<String, Object> routeBindingParams= new HashMap<>();
         Map<String, Object> serviceBindingParams= new HashMap<>();
-        serviceBindingParams.put("user-name", "myname");
         BindResource bindResource = BindResource.builder()
                 .appGuid("app_guid")
                 .route("aRoute")
@@ -126,7 +134,8 @@ public class OsbClientTestApplicationTest {
                 .build();
 
         CreateServiceInstanceBindingRequest createServiceInstanceBindingRequest = CreateServiceInstanceBindingRequest.builder()
-                .serviceInstanceId(serviceDefinition.getId())
+                .serviceInstanceId(serviceInstanceGuid)
+                .serviceDefinitionId(serviceDefinition.getId())
                 .planId(defaultPlan.getId())
                 .bindResource(bindResource)
                 .context(cfContext)
@@ -170,7 +179,7 @@ public class OsbClientTestApplicationTest {
 
         //Given a parameter request
         CreateServiceInstanceRequest createServiceInstanceRequest = CreateServiceInstanceRequest.builder()
-                .serviceDefinitionId("service_definition_id")
+                .serviceDefinitionId("service_id")
                 .planId("plan_id")
                 .serviceInstanceId("service-instance-guid")
                 .context(CloudFoundryContext.builder()
@@ -226,16 +235,10 @@ public class OsbClientTestApplicationTest {
         ServiceInstanceServiceClient serviceInstanceServiceClient = clientFactory.getClient(url, user, password, ServiceInstanceServiceClient.class);
 
         //then
-        Map<String, Object> cfContextProps = new HashMap<>();
-        cfContextProps.put("user_id", "a_user_guid");
-        cfContextProps.put("organization_guid", "org_id");
-        cfContextProps.put("space_guid", "space_id");
-        Map<String, Object> serviceInstanceParams = new HashMap<>();
 
         //Given a parameter request
-        Map<String, Object> parameters = new HashMap<>();
-        parameters.put("parameterName", "parameterValue");
 
+        CloudFoundryContext originatingIdentity = CloudFoundryContext.builder().property("user_id", "user-id").build();
         CreateServiceInstanceRequest createServiceInstanceRequest = CreateServiceInstanceRequest.builder()
                 .serviceDefinitionId(serviceDefinition.getId())
                 .planId(defaultPlan.getId())
@@ -243,8 +246,8 @@ public class OsbClientTestApplicationTest {
                 .context(CloudFoundryContext.builder()
                         .organizationGuid("org_id")
                         .spaceGuid("space_id")
-                        .build()
-                )
+                        .build())
+                .originatingIdentity(originatingIdentity)
                 .build();
         String originatingIdentityHeader = buildOriginatingIdentityHeader("a_user_guid", CLOUD_FOUNDRY_PLATFORM);
         String serviceInstanceGuid = "111";
@@ -323,6 +326,7 @@ public class OsbClientTestApplicationTest {
                 .serviceDefinitionId(serviceDefinition.getId())
                 .planId(defaultPlan.getId())
                 .serviceInstanceId(serviceInstanceGuid)
+                .context(cfContext)
                 .build();
 
 
@@ -400,8 +404,8 @@ public class OsbClientTestApplicationTest {
 
         //when
         CreateServiceInstanceRequest createServiceInstanceRequest = CreateServiceInstanceRequest.builder()
-                .serviceDefinitionId("cassandra-service-broker")
-                .planId("cassandra-plan")
+                .serviceDefinitionId("service_id")
+                .planId("plan_id")
                 .serviceInstanceId("222")
                 .context(CloudFoundryContext.builder()
                         .organizationGuid("org_id")

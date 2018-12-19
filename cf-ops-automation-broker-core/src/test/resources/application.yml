@@ -8,7 +8,7 @@ spring:
 # For debug purposes only, expose all actuator endpoints which are disabled by default
 # https://docs.spring.io/spring-boot/docs/current/reference/html/production-ready-endpoints.html#production-ready-endpoints-exposing-endpoints
 management.endpoints.web.exposure.include: "*"
-# Associate API doc at https://docs.spring.io/spring-boot/docs/current/actuator-api/html/
+# Associated API doc at https://docs.spring.io/spring-boot/docs/current/actuator-api/html/
 
 servicebroker:
   catalog:

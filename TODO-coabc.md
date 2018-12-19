@@ -1,27 +1,4 @@
---
 
-Include code coverage into ci
-
-workflow: circle runs tests and collects coverage (using ). Uploads then it to codecov.io authenticated by its token obtained CODECOV_TOKEN 
-
-Requirements: pom.xml has cobertura as a plugin + goal "cobertura:cobertura" is included into the ci 
-    cobertura:cobertura	Yes	Instrument the compiled classes, run the unit tests and generate a Cobertura report.
-
-http://www.mojohaus.org/cobertura-maven-plugin/plugin-info.html
-
-https://github.com/codecov/example-java-maven
-
-https://www.baeldung.com/cobertura
-Cobertura is a great yet simple code coverage tool, but not actively maintained, as it is currently outclassed by newer and more powerful tools like JaCoCo.
-
-approx 30 to 100% slower tests => ok to run on circle on PRs
-https://stackoverflow.com/questions/23827918/whats-the-performance-cost-of-using-cobertura-to-create-system-test-coverage-re
-https://codecov.io/site/security
-
-=> check usage on other major java projects, got inspired for now from  pr reports such as https://github.com/spring-cloud/spring-cloud-open-service-broker/pull/140
-
-
----
 
 Spring boot update
 
@@ -68,57 +45,6 @@ https://github.com/spring-cloud/spring-cloud-open-service-broker/wiki/2.0-Migrat
 
 # Release notes / README.md
 
-CATALOG_YML is deprecated.
-
-Use `spring.cloud.openservicebroker.catalog` environment variable to set catalog config in a YAML format. See [spring-cloud-open-service-broker] for a sample YML and raw properties configuration
-
-
-```yaml
-CATALOG_YML: |
-  servicebroker:
-    catalog:
-      services:
-      - id: cassandra-ondemand-service
-        name: cassandra-ondemand
-        description: "On demand cassandra dedicated cluster"
-        bindable: true
-        plans:
-          - id: cassandra-ondemand-plan
-            name: default
-            description: Default plan (beta).
-        tags:
-          - cassandra
-          - document
-        metadata:
-          displayName: ondemand
-          imageUrl: http://cassandra.apache.org/img/cassandra_logo.png
-          longDescription: "A dedicated on-demand cassandra cluster with a single keyspace. This is beta: Not yet monitored and backed up. Default sizing can't yet be changed at creation or update."
-          providerDisplayName: Orange
-          documentationUrl: https://github.com/orange-cloudfoundry/cassandra-cf-service-boshrelease
-          supportUrl: https://github.com/orange-cloudfoundry/cassandra-cf-service-boshrelease
-```
-
-```yaml
-spring:
-  cloud:
-    openservicebroker:
-      catalog:
-        services:
-        - id: example-service
-          name: example
-          description: A simple example
-          bindable: true
-          tags:
-          - example
-          - tags
-          plans:
-          - id: simple-plan
-            name: standard
-            description: A simple plan
-```
-
-Spring properties are changed: https://github.com/spring-projects/spring-boot/wiki/Spring-Boot-2.0-Configuration-Changelog
- - e.g. security.user.* now become spring.security.user.*
 
 
 - review in detail assert of BoshProcessorTest: with/without context test cases
@@ -149,108 +75,6 @@ Caused by: com.fasterxml.jackson.databind.exc.InvalidDefinitionException: Cannot
 	at org.springframework.http.converter.json.AbstractJackson2HttpMessageConverter.readJavaType(AbstractJackson2HttpMessageConverter.java:237)
 	... 44 more
 
-Solutions:
-- Modify springboot-service-broker POJOs with jackson annotations to expose constructor or use builder 
-    https://jitpack.io/
-    
-    
-    - Actually starting with version 2.1.0M1 there are protected constructors that Jackson can use
-    - However CreateServiceInstanceResponse extends AsyncServiceBrokerResponse is lacking the async field
-       
-        - Likely excluded because there is no setter for the field 
-    
-        @JsonIgnore
-        	protected final boolean async;
-
-        - Solutions by modifying model classes: 
-           - remove the @JsonIgnore field + add a setter
-           -     
-
-        - However, this is internal data that does not go onto the wire, as this is propagated using http status code instead
-    - some default null fields are different serialization/deserialization: empty collections vs null. Should not harm.
-    - 
-
-
-- Configure Jackson/Feign to use a different message converter than Jackson default, and use builder to construct objects
-https://stackoverflow.com/questions/46903678/jackson-deserialize-using-builder-without-annotation
-
-https://github.com/FasterXML/jackson-docs/wiki/JacksonMixInAnnotations
-
-@JsonDeserialize(builder = ...)
-
-https://www.baeldung.com/jackson-advanced-annotations
-@JsonPOJOBuilder
-
-Pb: the builder constructor apparently needs to be available 
-
-    /**
-     * Annotation for specifying if an external Builder class is to
-     * be used for building up deserialized instances of annotated
-     * class. If so, an instance of referenced class is first constructed
-     * (possibly using a Creator method; or if none defined, using default
-     * constructor), and its "with-methods" are used for populating fields;
-     * and finally "build-method" is invoked to complete deserialization.
-     */
-    public Class<?> builder() default Void.class;
-
-Related unit tests available at https://github.com/FasterXML/jackson-databind/tree/f40b4a82e854893539e012c6a11c95d8ba5e5406/src/test/java/com/fasterxml/jackson/databind/deser/builder
-
-Missing examples of the creator method config
-
-Looking up sources at https://github.com/FasterXML/jackson-databind/blob/f6cf1817509dc5ed61b9730c17abe492cc62b074/src/main/java/com/fasterxml/jackson/databind/deser/BasicDeserializerFactory.java#L239 invoked from https://github.com/FasterXML/jackson-databind/blob/f6cf1817509dc5ed61b9730c17abe492cc62b074/src/main/java/com/fasterxml/jackson/databind/deser/BeanDeserializerFactory.java#L273
-
-=> JsonValueInstantiator
-
-https://stackoverflow.com/questions/41194522/jackson-builder-with-method-to-create-builder without answer
-
-pb: How to set the @JsonPOJOBuilder without modifying the builder class ?
-- through injecting a class ?
-- through a mixin ? would it apply to non beans ?
-   - does not work with mixing
-- by setting a global config changing JsonPOJOBuilder.DEFAULT_WITH_PREFIX ?
-   - might break other builders
-
-
-    Alternatives:
-    - Create a builder class with public constructor which delegates all calls to original builder. How to reduce maintenance ?
-        - Use code generation framework to delegate to builder 
-        - Use reflection
-    - Modify the Builder class to support a noop constructor  
-
-
-- Configure Jackson/Feign to use a different message converter than Jackson default, and generate/create a constructor for private fields. 
-
-    https://stackoverflow.com/a/49124922/1484823 Using lombok ? 
-
-    https://stackoverflow.com/questions/46903678/jackson-deserialize-using-builder-without-annotation
-    
-    final class Sample {
-    
-        final int id;
-    
-        Sample(int id) {
-            this.id = id;
-        }
-    }
-    
-    MixIn (provide non-args constructor with same args):
-    
-    @JsonAutoDetect(fieldVisibility = Visibility.ANY, getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
-    abstract class SampleMixin {
-        @JsonCreator
-        public SampleMixin(@JsonProperty("id") int id) {
-        }
-    }
-    
-    Deserialization:
-    
-    ObjectMapper mapper = new ObjectMapper();
-    mapper.addMixIn(Sample.class, SampleMixin.class);
-    Sample sample = mapper.readValue(json, Sample.class);
-
-Issue on catalog deserialization seems to have been fixed in 2.1.0.M1
-https://github.com/spring-cloud/spring-cloud-open-service-broker/issues/110
-https://github.com/spring-cloud/spring-cloud-open-service-broker/issues/121
 
 However upgrading to 2.1.0.M2 seems not yet possible through the starter:
 https://mvnrepository.com/artifact/org.springframework.cloud/spring-cloud-starter-open-service-broker-webmvc
@@ -267,157 +91,6 @@ Update OSB client:
    => stick with 2.1.0M2 for now to avoid carrying reactor likely instabilities/frequent upgrades for now
    
      
-OsbClientTestApplicationTest fails to get catalog: 401 error
-   - Q: how is the authentication performed ?
-        - Q: where is the associated spring configuration ?
-        - A: in the client configured within the test. However, server config was missing due to spring boot 2.0 config renamings
-   - Pb
-   
-```
-
-   v2_service_instances_222                                   |
-                                                              |
-   PUT                                                        | PUT
-   /v2/service_instances/222?accepts_incomplete=false         | /v2/service_instances/222?accepts_incomplete=false
-                                                              |
-   {                                                          | {                                                   <<<<< Body does not match
-     "asyncAccepted" : false,                                 |   "platform_instance_id" : null,
-     "parameters" : { },                                      |   "api_info_location" : null,
-     "context" : {                                            |   "originating_identity" : null,
-       "platform" : "cloudfoundry"                            |   "async_accepted" : false,
-     },                                                       |   "parameters" : { },
-     "service_id" : "cassandra-service-broker",               |   "context" : {
-     "plan_id" : "cassandra-plan",                            |     "platform" : "cloudfoundry",
-     "organization_guid" : "org_id",                          |     "organization_guid" : "org_id",
-     "space_guid" : "space_id"                                |     "space_guid" : "space_id",
-   }                                                          |     "spaceGuid" : "space_id",
-                                                              |     "organizationGuid" : "org_id"
-                                                              |   },
-                                                              |   "plan_id" : "cassandra-plan",
-                                                              |   "organization_guid" : null,
-                                                              |   "space_guid" : null,
-                                                              |   "service_instance_id" : "222",
-                                                              |   "service_definition" : null,
-                                                              |   "service_id" : "cassandra-service-broker"
-                                                              | }
-                                                              |
-   -----------------------------------------------------------------------------------------------------------------------
-```
-
-        - possible causes:
-            - feign does not take into account path params
-            - new fields on model beans need to be marked as transient and are not, so they serialize default values
-                 - How to diagnose ?
-                    - reproduce as a test in spring osb lib
-                    - debugger to check RSIR model serialization       
-
-
-```
-    PUT                                                        | PUT
-    /v2/service_instances/111/service_bindings/service_bindin  | /v2/service_instances/111/service_bindings/service_bindin
-    g_guid?accepts_incomplete=false                            | g_guid?accepts_incomplete=false
-                                                               |
-    {                                                          | {                                                   <<<<< Body does not match
-      "service_id" : "ondemand-service",                       |   "platform_instance_id" : null,
-      "plan_id" : "ondemand-plan",                             |   "api_info_location" : null,
-      "app_guid" : "app_guid",                                 |   "originating_identity" : null,
-      "bind_resource" : {                                      |   "async_accepted" : false,
-        "route" : "aRoute",                                    |   "service_instance_id" : "ondemand-service",
-        "app_guid" : "app_guid"                                |   "binding_id" : null,
-      },                                                       |   "plan_id" : "ondemand-plan",
-      "parameters" : { },                                      |   "app_guid" : "app_guid",
-      "context" : {                                            |   "bind_resource" : {
-        "platform" : "cloudfoundry"                            |     "app_guid" : "app_guid",
-      }                                                        |     "route" : "aRoute"
-    }                                                          |   },
-                                                               |   "parameters" : {
-                                                               |     "user-name" : "myname"
-                                                               |   },
-                                                               |   "context" : {
-                                                               |     "platform" : "cloudfoundry",
-                                                               |     "organization_guid" : "org_id",
-                                                               |     "space_guid" : "space_id",
-                                                               |     "user_id" : "a_user_guid"
-                                                               |   },
-                                                               |   "service_definition" : null,
-                                                               |   "service_id" : null
-                                                               | }
-```
-
-    - serialization tests in spring osb are ok
-    
-    Hypothesis:
-    - feign library regression on the interface mapping
-    - deprecated spring configurations that don't take effect anymore
-    - client is not properly constructed, using old classes/interfaces without annotations ??
-    - adaptations to the unit test set too many fields on the CSIR  
-
-
-    Diagnostics:
-    - Debugger on the Jackson serialization: check objects, check jackson config
-    - enable jackson debugging traces
-    - run the same unit test in coab project & dependencencies 
-    
-        The OSB lib unit tests fail whereas they pass in OSB project
-            Jit imported library are not working as expected
-            Jackson lib version
-            spring properties set in the test
-
-        => Root cause: Use the right Jit Pack syntax for multi module project https://jitpack.io/docs/BUILDING/#multi-module-projects
-
------------------------------------------------------------------------------------------------------------------------
-                                                           |
-v2_service_instances_111_service_bindings_222              |
-                                                           |
-PUT                                                        | PUT
-/v2/service_instances/111/service_bindings/service_bindin  | /v2/service_instances/111/service_bindings/service_bindin
-g_guid?accepts_incomplete=false                            | g_guid?accepts_incomplete=false
-                                                           |
-{                                                          | {                                                   <<<<< Body does not match
-  "service_id" : "ondemand-service",                       |   "plan_id" : "ondemand-plan",
-  "plan_id" : "ondemand-plan",                             |   "app_guid" : "app_guid",
-  "app_guid" : "app_guid",                                 |   "bind_resource" : {
-  "bind_resource" : {                                      |     "app_guid" : "app_guid",
-    "route" : "aRoute",                                    |     "route" : "aRoute"
-    "app_guid" : "app_guid"                                |   },
-  },                                                       |   "parameters" : {
-  "parameters" : { },                                      |     "user-name" : "myname"
-  "context" : {                                            |   },
-    "platform" : "cloudfoundry"                            |   "context" : {
-  }                                                        |     "platform" : "cloudfoundry",
-}                                                          |     "organization_guid" : "org_id",
-                                                           |     "space_guid" : "space_id",
-                                                           |     "user_id" : "a_user_guid"
-                                                           |   }
-                                                           | }
-                                                           |
------------------------------------------------------------------------------------------------------------------------
-
-Problem with spring boot app not loading the osb framework
-    - troubleshooting through the --debug springboot command line flag. Then outputs the following diagnostic
-    
-        ```
-           ServiceBrokerAutoConfiguration#beanCatalogService:
-              Did not match:
-                 - @ConditionalOnBean (types: org.springframework.cloud.servicebroker.model.catalog.Catalog; SearchStrategy: all) did not find any beans of type org.springframework.cloud.servicebroker.model.catalog.Catalog (OnBeanCondition)
-        
-           ServiceBrokerAutoConfiguration#catalog:
-              Did not match:
-                 - @ConditionalOnProperty (spring.cloud.openservicebroker.catalog.services[0].id) did not find property 'id' (OnPropertyCondition)
-        
-           ServiceBrokerAutoConfiguration#nonBindableServiceInstanceBindingService:
-              Did not match:
-                 - @ConditionalOnMissingBean (types: org.springframework.cloud.servicebroker.service.ServiceInstanceBindingService; SearchStrategy: all) found beans of type 'org.springframework.cloud.servicebroker.service.ServiceInstanceBindingService' processorChainServiceInstanceBindingService (OnBeanCondition)
-        
-           ServiceBrokerWebMvcAutoConfiguration:
-              Did not match:
-                 - @ConditionalOnBean (types: org.springframework.cloud.servicebroker.service.CatalogService,org.springframework.cloud.servicebroker.service.ServiceInstanceService,org.springframework.cloud.servicebroker.service.ServiceInstanceBindingService; SearchStrategy: all) did not find any beans of type org.springframework.cloud.servicebroker.service.CatalogService (OnBeanCondition)
-              Matched:
-                 - found 'session' scope (OnWebApplicationCondition)
-        ```
-     => I would prefer a fail fast with a clear error message.
-
-
 
 Pb: HTTP/1.1 401 to PUT /v2/service_instances/111?accepts_incomplete=false
 
@@ -790,6 +463,31 @@ java.lang.NullPointerException: null
    - https://github.com/mockito/mockito/issues/445
    - https://github.com/mockito/mockito/issues/1348
 
+
+--
+
+Include code coverage into ci
+
+workflow: circle runs tests and collects coverage (using ). Uploads then it to codecov.io authenticated by its token obtained CODECOV_TOKEN 
+
+Requirements: pom.xml has cobertura as a plugin + goal "cobertura:cobertura" is included into the ci 
+    cobertura:cobertura	Yes	Instrument the compiled classes, run the unit tests and generate a Cobertura report.
+
+http://www.mojohaus.org/cobertura-maven-plugin/plugin-info.html
+
+https://github.com/codecov/example-java-maven
+
+https://www.baeldung.com/cobertura
+Cobertura is a great yet simple code coverage tool, but not actively maintained, as it is currently outclassed by newer and more powerful tools like JaCoCo.
+
+approx 30 to 100% slower tests => ok to run on circle on PRs
+https://stackoverflow.com/questions/23827918/whats-the-performance-cost-of-using-cobertura-to-create-system-test-coverage-re
+https://codecov.io/site/security
+
+=> check usage on other major java projects, got inspired for now from  pr reports such as https://github.com/spring-cloud/spring-cloud-open-service-broker/pull/140
+
+
+---
 
 - future bind request mapping improvements
    - factor out plan mapping into a method and then a bean 

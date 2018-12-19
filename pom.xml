@@ -35,7 +35,6 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <java.version>1.8</java.version>
-        <springCloudServiceBrokerVersion>2.1.0.M2</springCloudServiceBrokerVersion>
     </properties>
 
     <modules>
@@ -106,21 +105,6 @@
                 <scope>import</scope>
             </dependency>
             <dependency>
-                <groupId>org.springframework.cloud</groupId>
-                <artifactId>spring-cloud-starter-open-service-broker-webmvc</artifactId>
-                <version>${springCloudServiceBrokerVersion}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.springframework.cloud</groupId>
-                <artifactId>spring-cloud-open-service-broker-autoconfigure</artifactId>
-                <version>${springCloudServiceBrokerVersion}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.springframework.cloud</groupId>
-                <artifactId>spring-cloud-open-service-broker-core</artifactId>
-                <version>${springCloudServiceBrokerVersion}</version>
-            </dependency>
-            <dependency>
                 <groupId>com.orange.oss.cloudfoundry.broker.opsautomation</groupId>
                 <artifactId>cf-ops-automation-broker-framework</artifactId>
                 <version>0.28.0-SNAPSHOT</version>
@@ -157,6 +141,11 @@
             <snapshots>
                 <enabled>true</enabled>
             </snapshots>
+        </repository>
+        <!-- enables our temporary forks of upstream libs -->
+        <repository>
+            <id>jitpack.io</id>
+            <url>https://jitpack.io</url>
         </repository>
         <repository>
             <id>jcenter</id>

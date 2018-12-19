@@ -1,8 +1,10 @@
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.osbclient;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.OsbBuilderHelper;
 import org.junit.Test;
+import org.springframework.cloud.servicebroker.model.CloudFoundryContext;
 import org.springframework.cloud.servicebroker.model.catalog.Catalog;
 import org.springframework.cloud.servicebroker.model.catalog.Plan;
 import org.springframework.cloud.servicebroker.model.catalog.ServiceDefinition;
@@ -13,6 +15,7 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Map;
 
 import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -22,6 +25,36 @@ public class JacksonConfigTest {
 
     OsbClientFeignConfig osbClientFeignConfig = new OsbClientFeignConfig();
     ObjectMapper objectMapper = new ObjectMapper();
+
+    public static void main(String[] args) {
+        //Given a parameter request
+        Map<String, Object> parameters = new HashMap<>();
+        parameters.put("parameterName", "parameterValue");
+
+        CreateServiceInstanceRequest request = CreateServiceInstanceRequest.builder()
+                .serviceDefinitionId("service_definition_id")
+                .planId("plan_id")
+                .parameters(parameters)
+                .serviceInstanceId("service-instance-guid")
+                .context(CloudFoundryContext.builder()
+                        .organizationGuid("org_id")
+                        .spaceGuid("space_id")
+                        .build()
+                )
+                .build();
+        ObjectMapper objectMapper = new ObjectMapper();
+        try {
+            System.out.println(objectMapper.writeValueAsString(request));
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Test
+    public void serializesBindingRequest() throws JsonProcessingException {
+        CreateServiceInstanceRequest request = OsbBuilderHelper.aCreateServiceInstanceRequest();
+        assertThat(objectMapper.writeValueAsString(request)).isEqualTo("");
+    }
 
     String openBrokerReferenceJson = "{\n" +
             "  \"services\": [\n" +

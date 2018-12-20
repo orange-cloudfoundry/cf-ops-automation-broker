@@ -2,114 +2,19 @@
 
 Spring boot update
 
-```
-18:07:38.901 [main] ERROR org.springframework.boot.SpringApplication - Application run failed
-java.lang.NoSuchMethodError: org.springframework.boot.builder.SpringApplicationBuilder.<init>([Ljava/lang/Object;)V
-	at org.springframework.cloud.bootstrap.BootstrapApplicationListener.bootstrapServiceContext(BootstrapApplicationListener.java:161)
-	at org.springframework.cloud.bootstrap.BootstrapApplicationListener.onApplicationEvent(BootstrapApplicationListener.java:102)
-	at org.springframework.cloud.bootstrap.BootstrapApplicationListener.onApplicationEvent(BootstrapApplicationListener.java:68)
-```
 
-https://github.com/spring-projects/spring-boot/issues/12403
- a NoSuchMethodError very often indicates a broken setup with incompatible libraries. This is the case here as well with incompatible versions of Spring Boot and Spring Cloud. Check start.spring.io/info for more info.
- 
- https://spring.io/projects/spring-cloud
-
-SpringCloud Release Train 	Boot Version
-Finchley SR2     Finchley        2.0.x
-Greenwich M3     Greenwich       2.1.x
-
-Finchley.SR2	"Spring Boot >=2.0.3.RELEASE and <2.0.8.BUILD-SNAPSHOT"
- 
-https://github.com/spring-cloud/spring-cloud-open-service-broker/wiki/2.0-Migration-Guide
-
-
-/home/guillaume/code/workspaceElPaasov14/cf-ops-automation-broker/cf-ops-automation-broker-core/src/main/java/com/orange/oss/cloudfoundry/broker/opsautomation/ondemandbroker/osbclient/OsbClientFeignConfig.java:[28,47] package org.springframework.cloud.netflix.feign does not exist
-
-
-https://spring.io/blog/2018/02/27/spring-cloud-finchley-m7-has-been-released All of the code releated to Feign has been moved to a separate project, Spring Cloud OpenFeign.
-
-
-Spring app does not start:
-
-sun.reflect.annotation.TypeNotPresentExceptionProxy.TypeNotPresentExceptionProxy(String, Throwable). 
-
-java.lang.ClassNotFoundException: org.springframework.boot.autoconfigure.web.WebMvcAutoConfiguration
-
-=> upgrade springboot service broker
-
-https://spring.io/projects/spring-cloud-open-service-broker#learn
-2.0.1 is GA
-
-https://github.com/spring-cloud/spring-cloud-open-service-broker/wiki/2.0-Migration-Guide
-
-# Release notes / README.md
-
-
-
+- refactor more unit tests to use OsbBuildHelper
 - review in detail assert of BoshProcessorTest: with/without context test cases
 - BoshServiceProvisionningTest: may need to inject/define the expected catalog in application.properties
-    
 
-
-Caused by: org.springframework.http.converter.HttpMessageConversionException: Type definition error: [simple type, class org.springframework.cloud.servicebroker.model.catalog.Catalog]; nested exception is com.fasterxml.jackson.databind.exc.InvalidDefinitionException: Cannot construct instance of `org.springframework.cloud.servicebroker.model.catalog.Catalog` (no Creators, like default construct, exist): cannot deserialize from Object value (no delegate- or property-based Creator)
- at [Source: (PushbackInputStream); line: 1, column: 2]
-	at org.springframework.http.converter.json.AbstractJackson2HttpMessageConverter.readJavaType(AbstractJackson2HttpMessageConverter.java:240)
-	at org.springframework.http.converter.json.AbstractJackson2HttpMessageConverter.read(AbstractJackson2HttpMessageConverter.java:225)
-	at org.springframework.web.client.HttpMessageConverterExtractor.extractData(HttpMessageConverterExtractor.java:100)
-	at org.springframework.cloud.openfeign.support.SpringDecoder.decode(SpringDecoder.java:60)
-	at org.springframework.cloud.openfeign.support.ResponseEntityDecoder.decode(ResponseEntityDecoder.java:45)
-	at feign.optionals.OptionalDecoder.decode(OptionalDecoder.java:36)
-	at feign.SynchronousMethodHandler.decode(SynchronousMethodHandler.java:170)
-	... 38 more
-Caused by: com.fasterxml.jackson.databind.exc.InvalidDefinitionException: Cannot construct instance of `org.springframework.cloud.servicebroker.model.catalog.Catalog` (no Creators, like default construct, exist): cannot deserialize from Object value (no delegate- or property-based Creator)
- at [Source: (PushbackInputStream); line: 1, column: 2]
-	at com.fasterxml.jackson.databind.exc.InvalidDefinitionException.from(InvalidDefinitionException.java:67)
-	at com.fasterxml.jackson.databind.DeserializationContext.reportBadDefinition(DeserializationContext.java:1452)
-	at com.fasterxml.jackson.databind.DeserializationContext.handleMissingInstantiator(DeserializationContext.java:1028)
-	at com.fasterxml.jackson.databind.deser.BeanDeserializerBase.deserializeFromObjectUsingNonDefault(BeanDeserializerBase.java:1297)
-	at com.fasterxml.jackson.databind.deser.BeanDeserializer.deserializeFromObject(BeanDeserializer.java:326)
-	at com.fasterxml.jackson.databind.deser.BeanDeserializer.deserialize(BeanDeserializer.java:159)
-	at com.fasterxml.jackson.databind.ObjectMapper._readMapAndClose(ObjectMapper.java:4013)
-	at com.fasterxml.jackson.databind.ObjectMapper.readValue(ObjectMapper.java:3084)
-	at org.springframework.http.converter.json.AbstractJackson2HttpMessageConverter.readJavaType(AbstractJackson2HttpMessageConverter.java:237)
-	... 44 more
-
-
-However upgrading to 2.1.0.M2 seems not yet possible through the starter:
-https://mvnrepository.com/artifact/org.springframework.cloud/spring-cloud-starter-open-service-broker-webmvc
-
-https://github.com/spring-cloud/spring-cloud-open-service-broker/issues/79
-https://github.com/spring-cloud/spring-cloud-open-service-broker/commit/0cf3bc0cab1914f3ade8543ad155dc108afb53d0
-
-
-
-Update OSB client:
-- which version of spring cloud open service broker ?
-   - 2.1.0M2 remains with synchronous controller api
-   - 3.0.0M2 replaces synchronous controller api with async ones, and does not seem to bring more OSB compliances
-   => stick with 2.1.0M2 for now to avoid carrying reactor likely instabilities/frequent upgrades for now
-   
-     
-
-Pb: HTTP/1.1 401 to PUT /v2/service_instances/111?accepts_incomplete=false
-
-Cause:  
-https://docs.spring.io/spring-cloud-open-service-broker/docs/current/reference/html5/#service-broker-security
-    The Spring Cloud Open Service Broker project does not implement any security configuration. Service broker application endpoints can be secured with Spring Security and Spring Boot security configuration by applying security to application endpoints with the path-matching pattern: /v2/**.
-    
-https://docs.spring.io/spring-boot/docs/2.0.7.RELEASE/reference/htmlsingle/#boot-features-security
-    If Spring Security is on the classpath, then web applications are secured by default.    
-
-
-https://docs.spring.io/spring-boot/docs/2.0.7.RELEASE/reference/htmlsingle/#boot-features-security
-
-dXNlcjpzZWNyZXQ
-user:secret
-      
-TODO: 
 - unit tests spring security config (check actuactor env is not + update actuator spring security config
 - test actuator config: service broker user should not be able to use actuator /env to inspect git properties       
+    
+
+
+
+
+      
             
 ------------------------------
 

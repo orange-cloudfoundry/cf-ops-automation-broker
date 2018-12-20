@@ -45,6 +45,52 @@ mvn release:prepare --batch-mode -Dtag=0.25.1 -DreleaseVersion=0.25.1 -Ddevelopm
 Then follow the same steps as for a normal release, picking up circle-ci remaining release part.
 
 
-### Modification/fix to upstream libraries
+### Modification/fix to spring-cloud-open-service-broker upstream library
 
 We use https://jitpack.io/ for building forked version of the upstream libraries and serving them as a maven repository. 
+
+Use of the starter is however not always possible with latest milestones. So temporary inline dependencies 
+
+However upgrading to 2.1.0.M2 seems not yet possible through the starter:
+https://mvnrepository.com/artifact/org.springframework.cloud/spring-cloud-starter-open-service-broker-webmvc
+
+https://github.com/spring-cloud/spring-cloud-open-service-broker/issues/79
+https://github.com/spring-cloud/spring-cloud-open-service-broker/commit/0cf3bc0cab1914f3ade8543ad155dc108afb53d0
+
+
+
+
+### Bumping springboot and spring-cloud-open-service-broker
+
+SpringBoot version is driven by supported version in spring cloud:  
+https://spring.io/projects/spring-cloud
+
+SpringCloud Release Train 	Boot Version
+Finchley SR2     Finchley        2.0.x
+Greenwich M3     Greenwich       2.1.x
+
+Finchley.SR2	"Spring Boot >=2.0.3.RELEASE and <2.0.8.BUILD-SNAPSHOT"
+
+Therefore, the bump procedure is to bump spring-cloud-open-service-broker and inherit from its compatibility constraints (spring-cloud, spring-boot, and spring core)
+ 
+https://github.com/spring-cloud/spring-cloud-open-service-broker/wiki/2.0-Migration-Guide
+
+
+- which version of spring cloud open service broker ?
+   - 2.1.0M2 remains with synchronous controller api
+   - 3.0.0M2 replaces synchronous controller api with async ones, and does not seem to bring more OSB compliances
+   => sticking with 2.x for now to avoid carrying reactor likely instabilities/frequent upgrades for now
+
+
+#### symptoms with incompatible spring stack 
+
+```
+18:07:38.901 [main] ERROR org.springframework.boot.SpringApplication - Application run failed
+java.lang.NoSuchMethodError: org.springframework.boot.builder.SpringApplicationBuilder.<init>([Ljava/lang/Object;)V
+	at org.springframework.cloud.bootstrap.BootstrapApplicationListener.bootstrapServiceContext(BootstrapApplicationListener.java:161)
+	at org.springframework.cloud.bootstrap.BootstrapApplicationListener.onApplicationEvent(BootstrapApplicationListener.java:102)
+	at org.springframework.cloud.bootstrap.BootstrapApplicationListener.onApplicationEvent(BootstrapApplicationListener.java:68)
+```
+
+https://github.com/spring-projects/spring-boot/issues/12403
+ a NoSuchMethodError very often indicates a broken setup with incompatible libraries. This is the case here as well with incompatible versions of Spring Boot and Spring Cloud. Check start.spring.io/info for more info.

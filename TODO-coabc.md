@@ -1,11 +1,13 @@
 
 
-Spring boot update
+Spring bump TODOs:
 
 
+- Review last operation serialization tests using GSON.
+- BoshServiceProvisionningTest: may need to inject/define the expected catalog in application.properties
 - refactor more unit tests to use OsbBuildHelper
 - review in detail assert of BoshProcessorTest: with/without context test cases
-- BoshServiceProvisionningTest: may need to inject/define the expected catalog in application.properties
+- contribute full-catalog.yml to osb tests: become reference documentation for all supported catalog fields in yml format
 
 - unit tests spring security config (check actuactor env is not + update actuator spring security config
 - test actuator config: service broker user should not be able to use actuator /env to inspect git properties       

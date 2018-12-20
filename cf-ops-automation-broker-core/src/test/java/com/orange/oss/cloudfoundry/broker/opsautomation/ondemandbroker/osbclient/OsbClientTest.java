@@ -15,7 +15,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.web.server.LocalServerPort;
 import org.springframework.cloud.servicebroker.model.CloudFoundryContext;
-import org.springframework.cloud.servicebroker.model.Context;
 import org.springframework.cloud.servicebroker.model.binding.BindResource;
 import org.springframework.cloud.servicebroker.model.binding.CreateServiceInstanceAppBindingResponse;
 import org.springframework.cloud.servicebroker.model.binding.CreateServiceInstanceBindingRequest;
@@ -39,10 +38,16 @@ import static org.springframework.http.HttpStatus.*;
 
 /**
  * Verifies our OSB client properly sends queries and parses responses:
- * Starts the OsbClientTestApplication application (which returns default OSB reponses), queries it using the OSB client, and asserts default responses
- * Also works against recorded mocks providing additional coverage of returned responses.
  *
- * Can record updated wiremocks for the locally started app.
+ * Live mode:
+ * - Starts the OsbClientTestApplication application (which returns default OSB reponses),
+ *    queries it using the OSB client, and asserts default (mostly empty) responses
+ *
+ * Mocked response mode:
+ * - queries are asserted using wiremock expectation in resources/mappings files
+ * - responses are returned by wiremock, the parsed response asserts are done in each tests
+ * - mocked responses and be updated by turning on the recording. Manual diff/edition is then
+ * required to preserve non default responses.
  *
  * Troubleshooting steps: <br>
  * - run the OsbClientTestApplication spring boot app using ide <br>
@@ -50,9 +55,11 @@ import static org.springframework.http.HttpStatus.*;
  * - turn on recording to update recorded mocks in resources/mappings + check diff
  */
 @RunWith(SpringRunner.class)
-@SpringBootTest(webEnvironment = RANDOM_PORT)
-public class OsbClientTestApplicationTest {
+@SpringBootTest(webEnvironment = RANDOM_PORT, classes = {OsbClientTestApplication.class})
+public class OsbClientTest {
 
+    public static final String SERVICE_INSTANCE_GUID = "111";
+    public static final String SERVICE_BINDING_GUID = "service_binding_guid";
     @Autowired
     OsbClientFactory clientFactory;
 
@@ -68,7 +75,7 @@ public class OsbClientTestApplicationTest {
     );
 
     @Test
-    public void feign_client_is_compatible_with_our_spring_cloud_service_broker_library() throws JsonProcessingException {
+    public void feign_client_is_compatible_with_our_current_osb_library() throws JsonProcessingException {
         boolean recordLocalServerResponses = false;
         //noinspection ConstantConditions
         if (recordLocalServerResponses) {
@@ -89,128 +96,7 @@ public class OsbClientTestApplicationTest {
         );
     }
 
-    @Test
-    public void feign_client_unmarshalls_bind_responses() throws JsonProcessingException {
-        //given
-        String url = "https://127.0.0.1:" + 8089;
-        String user = "user";
-        String password = "secret";
 
-        //when
-        CatalogServiceClient catalogServiceClient = clientFactory.getClient(url, user, password, CatalogServiceClient.class);
-
-        //then
-        Catalog catalog = catalogServiceClient.getCatalog();
-        assertThat(catalog).isNotNull();
-        ServiceDefinition serviceDefinition = catalog.getServiceDefinitions().get(0);
-        assertThat(serviceDefinition).isNotNull();
-        Plan defaultPlan = serviceDefinition.getPlans().get(0);
-        assertThat(defaultPlan).isNotNull();
-
-
-        //when
-
-        //then
-        Map<String, Object> cfContextProps = new HashMap<>();
-        cfContextProps.put("organization_guid", "org_guid");
-        cfContextProps.put("space_guid", "space_guid");
-
-        Context cfContext = CloudFoundryContext.builder().properties(cfContextProps).build();
-        String originatingIdentityHeader = buildOriginatingIdentityHeader("a_user_guid", CLOUD_FOUNDRY_PLATFORM);
-        String serviceInstanceGuid = "111";
-
-
-
-        //when
-        ServiceInstanceBindingServiceClient serviceInstanceBindingServiceClient = clientFactory.getClient(url, user, password, ServiceInstanceBindingServiceClient.class);
-
-        //then
-        Map<String, Object> routeBindingParams= new HashMap<>();
-        Map<String, Object> serviceBindingParams= new HashMap<>();
-        BindResource bindResource = BindResource.builder()
-                .appGuid("app_guid")
-                .route("aRoute")
-                .properties(routeBindingParams)
-                .build();
-
-        CreateServiceInstanceBindingRequest createServiceInstanceBindingRequest = CreateServiceInstanceBindingRequest.builder()
-                .serviceInstanceId(serviceInstanceGuid)
-                .serviceDefinitionId(serviceDefinition.getId())
-                .planId(defaultPlan.getId())
-                .bindResource(bindResource)
-                .context(cfContext)
-                .parameters(serviceBindingParams)
-                .build();
-
-        ResponseEntity<CreateServiceInstanceAppBindingResponse> bindResponse = serviceInstanceBindingServiceClient.createServiceInstanceBinding(
-                serviceInstanceGuid,
-                "service_binding_guid",
-                false,
-                null,
-                originatingIdentityHeader,
-                createServiceInstanceBindingRequest);
-        assertThat(bindResponse.getStatusCode()).isEqualTo(CREATED);
-        assertThat(bindResponse.getBody()).isNotNull();
-
-        CreateServiceInstanceAppBindingResponse bindingResponse = bindResponse.getBody();
-        Map<String, Object> credentials = bindingResponse.getCredentials();
-        assertThat(credentials).isNotNull().isNotEmpty();
-
-    }
-
-    @Test
-    // Note this is also covered by OsbClientFeignConfigTest
-    public void feign_client_unmarshalls_last_operation_responses() throws JsonProcessingException {
-        //given
-        String url = "https://127.0.0.1:" + 8089;
-        String user = "user";
-        String password = "secret";
-
-        //and a catalog is fetched (as a prereq)
-        CatalogServiceClient catalogServiceClient = clientFactory.getClient(url, user, password, CatalogServiceClient.class);
-        Catalog catalog = catalogServiceClient.getCatalog();
-        ServiceDefinition serviceDefinition = catalog.getServiceDefinitions().get(0);
-        Plan defaultPlan = serviceDefinition.getPlans().get(0);
-
-        //when querying against recorded mock response
-        ServiceInstanceServiceClient serviceInstanceServiceClient = clientFactory.getClient(url, user, password, ServiceInstanceServiceClient.class);
-
-        //then
-
-        //Given a parameter request
-        CreateServiceInstanceRequest createServiceInstanceRequest = CreateServiceInstanceRequest.builder()
-                .serviceDefinitionId("service_id")
-                .planId("plan_id")
-                .serviceInstanceId("service-instance-guid")
-                .context(CloudFoundryContext.builder()
-                        .organizationGuid("org_id")
-                        .spaceGuid("space_id")
-                        .build()
-                )
-                .originatingIdentity(OsbBuilderHelper.aCfUserContext())
-                .build();
-
-        CloudFoundryContext cfContext = CloudFoundryContext.builder()
-                .organizationGuid("org_id")
-                .spaceGuid("space_id")
-                .build();
-
-        String originatingIdentityHeader = buildOriginatingIdentityHeader("a_user_guid", CLOUD_FOUNDRY_PLATFORM);
-        String serviceInstanceGuid = "111";
-
-        //Then response is properly parsed out
-        ResponseEntity<CreateServiceInstanceResponse> createResponse = serviceInstanceServiceClient.createServiceInstance(
-                serviceInstanceGuid,
-                false,
-                null,
-                originatingIdentityHeader,
-                createServiceInstanceRequest
-        );
-        assertThat(createResponse.getStatusCode()).isEqualTo(CREATED);
-        assertThat(createResponse.getBody()).isNotNull();
-        CreateServiceInstanceResponse createServiceInstanceResponse = createResponse.getBody();
-        assertThat(createServiceInstanceResponse.getOperation()).isEqualTo("a manually crafted opaque string");
-    }
 
     public void runAsyncCrudLifeCycle(int port, boolean useTls, boolean expectNonEmptyResponseBodies) throws JsonProcessingException {
         //given
@@ -218,75 +104,22 @@ public class OsbClientTestApplicationTest {
         String url = protocol + "://127.0.0.1:" + port;
         String user = "user";
         String password = "secret";
+        ServiceDefinition serviceDefinition = assertCatalogIsReturned(url, user, password);
 
-        //when
-        CatalogServiceClient catalogServiceClient = clientFactory.getClient(url, user, password, CatalogServiceClient.class);
-
-        //then
-        Catalog catalog = catalogServiceClient.getCatalog();
-        assertThat(catalog).isNotNull();
-        ServiceDefinition serviceDefinition = catalog.getServiceDefinitions().get(0);
-        assertThat(serviceDefinition).isNotNull();
         Plan defaultPlan = serviceDefinition.getPlans().get(0);
-        assertThat(defaultPlan).isNotNull();
 
+        assertServiceInstanceRequests(expectNonEmptyResponseBodies, url, user, password, serviceDefinition, defaultPlan);
 
-        //when
-        ServiceInstanceServiceClient serviceInstanceServiceClient = clientFactory.getClient(url, user, password, ServiceInstanceServiceClient.class);
+        assertServiceBindingRequests(expectNonEmptyResponseBodies, url, user, password, serviceDefinition, defaultPlan);
+    }
 
-        //then
-
-        //Given a parameter request
-
-        CloudFoundryContext originatingIdentity = CloudFoundryContext.builder().property("user_id", "user-id").build();
-        CreateServiceInstanceRequest createServiceInstanceRequest = CreateServiceInstanceRequest.builder()
-                .serviceDefinitionId(serviceDefinition.getId())
-                .planId(defaultPlan.getId())
-                .serviceInstanceId("service-instance-guid")
-                .context(CloudFoundryContext.builder()
-                        .organizationGuid("org_id")
-                        .spaceGuid("space_id")
-                        .build())
-                .originatingIdentity(originatingIdentity)
-                .build();
-        String originatingIdentityHeader = buildOriginatingIdentityHeader("a_user_guid", CLOUD_FOUNDRY_PLATFORM);
-        String serviceInstanceGuid = "111";
-
-        ResponseEntity<CreateServiceInstanceResponse> createResponse = serviceInstanceServiceClient.createServiceInstance(
-                serviceInstanceGuid,
-                false,
-                null,
-                originatingIdentityHeader,
-                createServiceInstanceRequest
-        );
-        assertThat(createResponse.getStatusCode()).isEqualTo(CREATED);
-        assertThat(createResponse.getBody()).isNotNull();
-        if (expectNonEmptyResponseBodies) {
-            CreateServiceInstanceResponse createServiceInstanceResponse = createResponse.getBody();
-            assertThat(createServiceInstanceResponse.getOperation()).isNotEmpty();
-        }
-
-        ResponseEntity<GetLastServiceOperationResponse> lastOperationResponse = serviceInstanceServiceClient.getServiceInstanceLastOperation(
-                serviceInstanceGuid,
-                serviceDefinition.getId(),
-                defaultPlan.getId(),
-                "an opaque operation string",
-                null,
-                originatingIdentityHeader
-        );
-        assertThat(lastOperationResponse.getStatusCode()).isEqualTo(OK);
-        assertThat(lastOperationResponse.getBody()).isNotNull();
-
+    private void assertServiceBindingRequests(boolean expectNonEmptyResponseBodies, String url, String user, String password, ServiceDefinition serviceDefinition, Plan defaultPlan) throws JsonProcessingException {
+        String originatingIdentityHeader = buildOriginatingIdentityHeader();
         //when
         ServiceInstanceBindingServiceClient serviceInstanceBindingServiceClient = clientFactory.getClient(url, user, password, ServiceInstanceBindingServiceClient.class);
 
         //then
         /////
-
-        Context cfContext = CloudFoundryContext.builder()
-            .organizationGuid("org_guid")
-            .spaceGuid("space_guid")
-            .build();
 
         CreateServiceInstanceBindingRequest createServiceInstanceBindingRequest = CreateServiceInstanceBindingRequest.builder()
                 .serviceDefinitionId(serviceDefinition.getId())
@@ -295,17 +128,17 @@ public class OsbClientTestApplicationTest {
                         .appGuid("app_guid")
                         .route("aRoute")
                         .build())
-                .context(cfContext)
-                .bindingId("service-instance-binding-id")
-                .serviceInstanceId(serviceInstanceGuid)
+                .context(OsbBuilderHelper.aCfContext())
+                .bindingId(SERVICE_BINDING_GUID)
+                .serviceInstanceId(SERVICE_INSTANCE_GUID)
                 .apiInfoLocation("api-info")
                 .originatingIdentity(OsbBuilderHelper.aCfUserContext())
                 .platformInstanceId("cf-instance-id")
                 .build();
 
         ResponseEntity<CreateServiceInstanceAppBindingResponse> bindResponse = serviceInstanceBindingServiceClient.createServiceInstanceBinding(
-                serviceInstanceGuid,
-                "service_binding_guid",
+                SERVICE_INSTANCE_GUID,
+                SERVICE_BINDING_GUID,
                 false,
                 null,
                 originatingIdentityHeader,
@@ -318,30 +151,10 @@ public class OsbClientTestApplicationTest {
             assertThat(credentials).isNotNull().isNotEmpty();
         }
 
-        Map<String, Object> updateServiceInstanceParams = new HashMap<>();
-
-        ////
-        // Given an incoming delete request
-        UpdateServiceInstanceRequest updateServiceInstanceRequest = UpdateServiceInstanceRequest.builder()
-                .serviceDefinitionId(serviceDefinition.getId())
-                .planId(defaultPlan.getId())
-                .serviceInstanceId(serviceInstanceGuid)
-                .context(cfContext)
-                .build();
-
-
-        ResponseEntity<UpdateServiceInstanceResponse> updateResponse = serviceInstanceServiceClient.updateServiceInstance(
-                serviceInstanceGuid,
-                false,
-                null,
-                originatingIdentityHeader,
-                updateServiceInstanceRequest);
-        assertThat(updateResponse.getStatusCode()).isEqualTo(OK);
-        assertThat(updateResponse.getBody()).isNotNull();
 
         ResponseEntity<String> deleteBindingResponse = serviceInstanceBindingServiceClient.deleteServiceInstanceBinding(
-                serviceInstanceGuid,
-                "service_binding_guid",
+                SERVICE_INSTANCE_GUID,
+                SERVICE_BINDING_GUID,
                 serviceDefinition.getId(),
                 defaultPlan.getId(),
                 false,
@@ -349,9 +162,88 @@ public class OsbClientTestApplicationTest {
                 originatingIdentityHeader);
         assertThat(deleteBindingResponse.getStatusCode()).isEqualTo(OK);
         assertThat(deleteBindingResponse.getBody()).isNotNull();
+    }
 
+    private String buildOriginatingIdentityHeader() throws JsonProcessingException {
+        Map<String, Object> propMap = new HashMap<>();
+        propMap.put(ORIGINATING_USER_KEY, "a_user_guid");
+        ObjectMapper mapper = Jackson2ObjectMapperBuilder.json().build();
+        String properties = mapper.writeValueAsString(propMap);
+        String encodedProperties = new String(Base64Utils.encode(properties.getBytes()));
+        return CLOUD_FOUNDRY_PLATFORM + " " + encodedProperties;
+    }
+
+    private void assertServiceInstanceRequests(boolean expectNonEmptyResponseBodies, String url, String user, String password, ServiceDefinition serviceDefinition, Plan defaultPlan) throws JsonProcessingException {
+        //when
+        ServiceInstanceServiceClient serviceInstanceServiceClient = clientFactory.getClient(url, user, password, ServiceInstanceServiceClient.class);
+
+        //then
+
+        //Given a parameter request
+
+        CreateServiceInstanceRequest createServiceInstanceRequest = CreateServiceInstanceRequest.builder()
+                .serviceInstanceId(SERVICE_INSTANCE_GUID)
+                .serviceDefinitionId(serviceDefinition.getId())
+                .planId(defaultPlan.getId())
+                .context(CloudFoundryContext.builder()
+                        .organizationGuid("org_id")
+                        .spaceGuid("space_id")
+                        .build())
+                .originatingIdentity(OsbBuilderHelper.aCfUserContext())
+                .build();
+        String originatingIdentityHeader = buildOriginatingIdentityHeader();
+
+        ResponseEntity<CreateServiceInstanceResponse> createResponse = serviceInstanceServiceClient.createServiceInstance(
+                SERVICE_INSTANCE_GUID,
+                false,
+                null,
+                originatingIdentityHeader,
+                createServiceInstanceRequest
+        );
+        assertThat(createResponse.getStatusCode()).isEqualTo(CREATED);
+        assertThat(createResponse.getBody()).isNotNull();
+        if (expectNonEmptyResponseBodies) {
+            CreateServiceInstanceResponse createServiceInstanceResponse = createResponse.getBody();
+            assertThat(createServiceInstanceResponse.getOperation()).isNotEmpty();
+            assertThat(createServiceInstanceResponse.getOperation()).isEqualTo("a manually crafted opaque string");
+        }
+
+        ResponseEntity<GetLastServiceOperationResponse> lastOperationResponse = serviceInstanceServiceClient.getServiceInstanceLastOperation(
+                SERVICE_INSTANCE_GUID,
+                serviceDefinition.getId(),
+                defaultPlan.getId(),
+                "an opaque operation string",
+                null,
+                originatingIdentityHeader
+        );
+        assertThat(lastOperationResponse.getStatusCode()).isEqualTo(OK);
+        assertThat(lastOperationResponse.getBody()).isNotNull();
+
+
+
+        ////
+        // Given an incoming update request
+        UpdateServiceInstanceRequest updateServiceInstanceRequest = UpdateServiceInstanceRequest.builder()
+                .serviceDefinitionId(serviceDefinition.getId())
+                .planId(defaultPlan.getId())
+                .serviceInstanceId(SERVICE_INSTANCE_GUID)
+                .context(OsbBuilderHelper.aCfContext())
+                .build();
+
+        ResponseEntity<UpdateServiceInstanceResponse> updateResponse = serviceInstanceServiceClient.updateServiceInstance(
+                SERVICE_INSTANCE_GUID,
+                false,
+                null,
+                originatingIdentityHeader,
+                updateServiceInstanceRequest);
+        assertThat(updateResponse.getStatusCode()).isEqualTo(OK);
+        assertThat(updateResponse.getBody()).isNotNull();
+
+
+        ////
+        // Given an incoming delete request
         ResponseEntity<DeleteServiceInstanceResponse> deleteInstanceResponse = serviceInstanceServiceClient.deleteServiceInstance(
-                serviceInstanceGuid,
+                SERVICE_INSTANCE_GUID,
                 serviceDefinition.getId(),
                 defaultPlan.getId(),
                 false,
@@ -361,9 +253,23 @@ public class OsbClientTestApplicationTest {
         assertThat(deleteInstanceResponse.getBody()).isNotNull();
     }
 
+    private ServiceDefinition assertCatalogIsReturned(String url, String user, String password) {
+        //when
+        CatalogServiceClient catalogServiceClient = clientFactory.getClient(url, user, password, CatalogServiceClient.class);
+
+        //then
+        Catalog catalog = catalogServiceClient.getCatalog();
+        assertThat(catalog).isNotNull();
+        ServiceDefinition serviceDefinition = catalog.getServiceDefinitions().get(0);
+        assertThat(serviceDefinition).isNotNull();
+        assertThat(serviceDefinition.getPlans().get(0)).isNotNull();
+        return serviceDefinition;
+    }
+
 
     @Test
-    public void feign_client_is_compatible_with_previous_spring_cloud_service_broker_library() throws JsonProcessingException {
+    public void feign_client_supports_text_plain_responses() throws JsonProcessingException {
+
         //given
         String url = "https://127.0.0.1:" + 8089;
         String user = "user";
@@ -376,12 +282,12 @@ public class OsbClientTestApplicationTest {
 
         //when
         ResponseEntity<DeleteServiceInstanceResponse> deleteInstanceResponse = serviceInstanceServiceClient.deleteServiceInstance(
-                "111",
+                "text-plain-testcase-service-id",
                 "cassandra-service-broker",
                 "cassandra-plan",
                 false,
                 null,
-                buildOriginatingIdentityHeader("a_user_guid", CLOUD_FOUNDRY_PLATFORM));
+                buildOriginatingIdentityHeader());
 
         //then
         assertThat(deleteInstanceResponse.getStatusCode()).isEqualTo(OK);
@@ -423,7 +329,7 @@ public class OsbClientTestApplicationTest {
                 "222",
                 false,
                 null,
-                buildOriginatingIdentityHeader("a_user_guid", CLOUD_FOUNDRY_PLATFORM),
+                buildOriginatingIdentityHeader(),
                 createServiceInstanceRequest);
 
         //then

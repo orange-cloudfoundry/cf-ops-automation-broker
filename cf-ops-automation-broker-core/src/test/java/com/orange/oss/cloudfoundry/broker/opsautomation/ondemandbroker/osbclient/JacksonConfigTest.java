@@ -163,7 +163,7 @@ public class JacksonConfigTest {
         //invoke:77, SynchronousMethodHandler (feign)
         //invoke:102, ReflectiveFeign$FeignInvocationHandler (feign)
         //getCatalog:-1, $Proxy124 (com.sun.proxy)
-        //feign_client_unmarshalls_bind_responses:93, OsbClientTestApplicationTest (com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.osbclient)
+        //feign_client_unmarshalls_bind_responses:93, OsbClientTest (com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.osbclient)
 
         //then
         Catalog deserializedCatalog = objectMapper.readValue(json, Catalog.class);
@@ -211,7 +211,7 @@ public class JacksonConfigTest {
         //invoke:77, SynchronousMethodHandler (feign)
         //invoke:102, ReflectiveFeign$FeignInvocationHandler (feign)
         //getCatalog:-1, $Proxy124 (com.sun.proxy)
-        //feign_client_unmarshalls_bind_responses:93, OsbClientTestApplicationTest (com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.osbclient)
+        //feign_client_unmarshalls_bind_responses:93, OsbClientTest (com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.osbclient)
         //invoke0:-1, NativeMethodAccessorImpl (sun.reflect)
         //invoke:62, NativeMethodAccessorImpl (sun.reflect)
         //invoke:43, DelegatingMethodAccessorImpl (sun.reflect)

@@ -22,6 +22,9 @@ import static com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pi
 import static java.util.Arrays.asList;
 
 public class OsbBuilderHelper {
+
+
+
     @SuppressWarnings("WeakerAccess")
     public static DeleteServiceInstanceBindingRequest anUnbindRequest(String serviceInstanceId, String bindingId) {
         ServiceDefinition serviceDefinition = aCatalog().getServiceDefinitions().get(0);
@@ -69,10 +72,7 @@ public class OsbBuilderHelper {
                 .properties(routeBindingParams)
                 .build();
 
-        Context cfContext = CloudFoundryContext.builder()
-            .organizationGuid("org_guid")
-            .spaceGuid("space_guid")
-            .build();
+        Context cfContext = aCfContext();
 
         CreateServiceInstanceBindingRequest request = CreateServiceInstanceBindingRequest.builder()
                 .serviceDefinitionId("coab-serviceid")
@@ -87,6 +87,13 @@ public class OsbBuilderHelper {
                 .platformInstanceId("cf-instance-id")
                 .build();
         return request;
+    }
+
+    public static Context aCfContext() {
+        return CloudFoundryContext.builder()
+                .organizationGuid("org_guid")
+                .spaceGuid("space_guid")
+                .build();
     }
 
     static CreateServiceInstanceAppBindingResponse aBindingResponse() {

@@ -42,4 +42,7 @@ logging:
     com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.osbclient.ServiceInstanceServiceClient: debug
 
     #troubleshoot http security problems
-    #org.springframework.security: DEBUG
+    # org.springframework.security: DEBUG
+
+#turn on spring boot debugging to troubleshoot application context.
+#debug: true

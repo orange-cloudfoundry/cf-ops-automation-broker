@@ -5,7 +5,7 @@
     "url" : "/v2/service_instances/111?accepts_incomplete=false",
     "method" : "PUT",
     "bodyPatterns" : [ {
-      "equalToJson" : "{\"context\":{\"platform\":\"cloudfoundry\",\"platform\":\"cloudfoundry\",\"organization_guid\":\"org_id\",\"space_guid\":\"space_id\"},\"service_id\":\"service_id\",\"plan_id\":\"plan_id\"}",
+      "equalToJson" : "{\"context\":{\"platform\":\"cloudfoundry\",\"platform\":\"cloudfoundry\",\"organization_guid\":\"org_id\",\"space_guid\":\"space_id\"},\"service_id\":\"service_id\",\"plan_id\":\"plan_id\",\"organization_guid\":\"org_id\",\"space_guid\":\"space_id\"}",
       "ignoreArrayOrder" : true,
       "ignoreExtraElements" : true
     } ]

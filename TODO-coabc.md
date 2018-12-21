@@ -2,7 +2,15 @@
 
 Spring bump TODOs:
 
+- Fix BoshServiceProvisionningTest: wiremock recorded files are inconsistent with configured
+ catalog properties and OsbBuilderHelper
+    - align these + symlink recorded mocks from osb client
+    - use wire mock rule instead of recorded mock file:
+       - osb client test already maintains recorded mock to assert wire changes
+       - avoid double maintenance of wiremock recordings that are tedious to manually update
+       - Pb: also tedious to maintain in Java syntax. 
 
+- FIX mis behaving OsbServiceConfiguration.failFastOnMissingCatalogWithConditional()
 - Review last operation serialization tests using GSON.
 - BoshServiceProvisionningTest: may need to inject/define the expected catalog in application.properties
 - refactor more unit tests to use OsbBuildHelper
@@ -12,10 +20,19 @@ Spring bump TODOs:
 - unit tests spring security config (check actuactor env is not + update actuator spring security config
 - test actuator config: service broker user should not be able to use actuator /env to inspect git properties       
     
+Pb: Need to debug BoshBrokerApplication for tests. Requires git properties to start up
+ Solutions: 
+    - transiently copy git properties into test as application.properties or application-{profile].properties
+    - pass as command line arguments
+            https://docs.spring.io/spring-boot/docs/2.0.7.RELEASE/reference/htmlsingle/#boot-features-external-config-application-property-files 
+         pb: properties miss prefix, and could not find a way to insert this prefix.
 
 
+java -jar myproject.jar --spring.config.name=myproject
 
+The following example shows how to specify two locations:
 
+$ java -jar myproject.jar --spring.config.location=classpath:/default.properties,classpath:/override.properties
       
             
 ------------------------------

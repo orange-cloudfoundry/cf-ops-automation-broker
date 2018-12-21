@@ -24,6 +24,8 @@ import static java.util.Arrays.asList;
 public class OsbBuilderHelper {
 
 
+    public static final String SERVICE_DEFINITION_ID = "service_definition_id";
+    public static final String SERVICE_PLAN_ID = "plan_id";
 
     @SuppressWarnings("WeakerAccess")
     public static DeleteServiceInstanceBindingRequest anUnbindRequest(String serviceInstanceId, String bindingId) {
@@ -31,8 +33,8 @@ public class OsbBuilderHelper {
         DeleteServiceInstanceBindingRequest request = DeleteServiceInstanceBindingRequest.builder()
             .serviceDefinition(serviceDefinition)
                 .bindingId(bindingId)
-                .serviceDefinitionId("coab-serviceid")
-                .planId("coab-planid")
+                .serviceDefinitionId(SERVICE_DEFINITION_ID)
+                .planId(SERVICE_PLAN_ID)
                 .serviceDefinition(serviceDefinition)
                 .apiInfoLocation("api-info")
                 .originatingIdentity(aCfUserContext())
@@ -41,7 +43,7 @@ public class OsbBuilderHelper {
     }
 
     public static Catalog aCatalog() {
-        Plan plan  = Plan.builder().id("plan_id").name("plan_name").description("plan_description").metadata(new HashMap<>()).build();
+        Plan plan  = Plan.builder().id(SERVICE_PLAN_ID).name("plan_name").description("plan_description").metadata(new HashMap<>()).build();
         Plan plan2 = Plan.builder().id("plan_id2").name("plan_name2").description("plan_description2").metadata(new HashMap<>()).build();
         Plan plan3 = Plan.builder().id("plan_id3").name("plan_name3").description("plan_description3").metadata(new HashMap<>()).build();
         ServiceDefinition serviceDefinition =  ServiceDefinition.builder()
@@ -75,8 +77,8 @@ public class OsbBuilderHelper {
         Context cfContext = aCfContext();
 
         CreateServiceInstanceBindingRequest request = CreateServiceInstanceBindingRequest.builder()
-                .serviceDefinitionId("coab-serviceid")
-                .planId("coab-planid")
+                .serviceDefinitionId(SERVICE_DEFINITION_ID)
+                .planId(SERVICE_PLAN_ID)
                 .bindResource(bindResource)
                 .context(cfContext)
                 .parameters(serviceBindingParams)
@@ -126,8 +128,8 @@ public class OsbBuilderHelper {
         parameters.put("parameterName", "parameterValue");
 
         return CreateServiceInstanceRequest.builder()
-                .serviceDefinitionId("service_definition_id")
-                .planId("plan_id")
+                .serviceDefinitionId(SERVICE_DEFINITION_ID)
+                .planId(SERVICE_PLAN_ID)
                 .parameters(parameters)
                 .serviceInstanceId("service-instance-guid")
                 .context(CloudFoundryContext.builder()
@@ -143,7 +145,7 @@ public class OsbBuilderHelper {
         return DeleteServiceInstanceRequest.builder()
                 .serviceInstanceId("instance_id")
                 .serviceDefinitionId("service_id")
-                .planId("plan_id")
+                .planId(SERVICE_PLAN_ID)
                 .serviceDefinition(ServiceDefinition.builder().build())
                 .asyncAccepted(true)
                 .build();
@@ -153,7 +155,7 @@ public class OsbBuilderHelper {
         // Given an incoming delete request
         return UpdateServiceInstanceRequest.builder()
                 .serviceDefinitionId("service_id")
-                .planId("plan_id")
+                .planId(SERVICE_PLAN_ID)
                 .parameters(new HashMap<>())
                 .serviceInstanceId("instance_id")
                 .build();

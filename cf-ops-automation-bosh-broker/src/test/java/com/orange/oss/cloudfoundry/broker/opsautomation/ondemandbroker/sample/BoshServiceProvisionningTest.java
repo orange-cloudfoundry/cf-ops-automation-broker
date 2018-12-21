@@ -56,8 +56,7 @@ import java.util.Map;
 
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
 import static com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.GitServer.NO_OP_INITIALIZER;
-import static com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.OsbBuilderHelper.aBindingRequest;
-import static com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.OsbBuilderHelper.aCfUserContext;
+import static com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.OsbBuilderHelper.*;
 import static com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.sample.BoshBrokerApplication.SECRETS_REPOSITORY_ALIAS_NAME;
 import static io.restassured.RestAssured.basic;
 import static io.restassured.RestAssured.given;
@@ -76,8 +75,6 @@ import static org.springframework.http.HttpStatus.CREATED;
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 public class BoshServiceProvisionningTest {
 
-    private static final String SERVICE_DEFINITION_ID = "cassandra-ondemand-service";
-    private static final String SERVICE_PLAN_ID = "cassandra-ondemand-plan";
     /**
      * Define an environment variable to turn on wiremock recording.
      * Set the url of the broker forward requests to (e.g. "https://cassandra-broker.mydomain.com"
@@ -361,6 +358,13 @@ public class BoshServiceProvisionningTest {
     }
 
     private void create_service_binding() {
+
+// Consider alternatives to wire mock recordings:
+//        wireMockRule.stubFor(get(urlEqualTo("/v2/service_instances/" + SERVICE_INSTANCE_ID + "/service_bindings/" + SERVICE_BINDING_INSTANCE_ID))
+//                .willReturn(aResponse()
+//                .withBody("")
+//                .withStatus(200)));
+
         CreateServiceInstanceBindingRequest serviceInstanceBindingRequest = aBindingRequest(SERVICE_INSTANCE_ID);
         serviceInstanceBindingRequest.setBindingId(SERVICE_BINDING_INSTANCE_ID);
 

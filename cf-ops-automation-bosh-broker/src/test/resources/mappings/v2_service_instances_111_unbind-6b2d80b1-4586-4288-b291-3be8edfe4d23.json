@@ -2,7 +2,7 @@
   "id" : "6b2d80b1-4586-4288-b291-3be8edfe4d23",
   "name" : "v2_service_instances_111_service_bindings_222",
   "request" : {
-    "url" : "/v2/service_instances/111/service_bindings/222?service_id=cassandra-service-broker&plan_id=cassandra-plan",
+    "url" : "/v2/service_instances/111/service_bindings/222?service_id=cassandra-service-broker&plan_id=cassandra-plan&accepts_incomplete=false",
     "method" : "DELETE"
   },
   "response" : {

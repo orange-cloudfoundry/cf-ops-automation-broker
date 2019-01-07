@@ -2,15 +2,21 @@
 
 Spring bump TODOs:
 
-- Fix BoshServiceProvisionningTest: wiremock recorded files are inconsistent with configured
- catalog properties and OsbBuilderHelper
-    - align these + symlink recorded mocks from osb client
-    - use wire mock rule instead of recorded mock file:
-       - osb client test already maintains recorded mock to assert wire changes
-       - avoid double maintenance of wiremock recordings that are tedious to manually update
-       - Pb: also tedious to maintain in Java syntax. 
-
-- FIX mis behaving OsbServiceConfiguration.failFastOnMissingCatalogWithConditional()
+- FIX mis behaving OsbServiceConfiguration.failFastOnMissingCatalogWithConditional() and its usage into BoshServiceProvisionningTest and OsbClientTest. Alternatives:
+   - require a bean of type catalog: 
+      - org.springframework.beans.factory.BeanCurrentlyInCreationException: Error creating bean with name 'failFastOnMissingCatalogInConfiguration': Requested bean is currently in creation: Is there an unresolvable circular reference?    
+          - conflicts with OSB lib ?
+          
+```
+          	@Bean
+          	@ConditionalOnMissingBean(Catalog.class)
+          	@ConditionalOnProperty(prefix = "spring.cloud.openservicebroker.catalog.services[0]", name = "id")
+          	public Catalog catalog() {
+          		return this.serviceBrokerProperties.getCatalog().toModel();
+          	}
+```
+   - 
+   
 - Review last operation serialization tests using GSON.
 - BoshServiceProvisionningTest: may need to inject/define the expected catalog in application.properties
 - refactor more unit tests to use OsbBuildHelper

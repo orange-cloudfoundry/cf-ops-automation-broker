@@ -381,6 +381,7 @@ public class PipelineCompletionTrackerTest {
 
         //then
         assertEquals(actualPipelineOperationState, pipelineOperationState);
+        assertEquals(actualServiceBrokerRequest, originalRequest);
         //CreateServiceInstanceRequest.equals ignores transient fields that we need to preserve in our context
         assertEquals(actualServiceBrokerRequest.getServiceInstanceId(), originalRequest.getServiceInstanceId());
         assertEquals(actualServiceBrokerRequest.getServiceDefinitionId(), originalRequest.getServiceDefinitionId());

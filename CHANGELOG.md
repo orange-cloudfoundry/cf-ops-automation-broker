@@ -42,22 +42,23 @@ CATALOG_YML: |
 becomes:
 
 ```yaml
-spring:
-  cloud:
-    openservicebroker:
-      catalog:
-        services:
-        - id: example-service
-          name: example
-          description: A simple example
-          bindable: true
-          tags:
-          - example
-          - tags
-          plans:
-          - id: simple-plan
-            name: standard
-            description: A simple plan
+CATALOG_YML: |
+      spring:
+        cloud:
+          openservicebroker:
+        catalog:
+          services:
+          - id: example-service
+            name: example
+            description: A simple example
+            bindable: true
+            tags:
+            - example
+            - tags
+            plans:
+            - id: simple-plan
+              name: standard
+              description: A simple plan
 ```
 
 #### Springboot auth properties changed

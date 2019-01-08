@@ -42,6 +42,7 @@
         <module>cf-ops-automation-broker-framework</module>
         <module>cf-ops-automation-terraform-broker</module>
         <module>cf-ops-automation-bosh-broker</module>
+        <module>spring-boot-starter-servicebroker-catalog</module>
     </modules>
 
     <dependencies>

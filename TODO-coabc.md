@@ -2,6 +2,21 @@
 
 Spring bump TODOs:
 
+- Update broker configurations (following release notes) + check smoke tests become green
+   - provide yml with catalog config
+      - Q: how ? https://docs.spring.io/spring-boot/docs/2.0.7.RELEASE/reference/htmlsingle/#boot-features-external-config 
+         - in classpath ?
+            - in jar ? application.yml
+            - in well known location ?  https://docs.spring.io/spring-boot/docs/2.0.7.RELEASE/reference/htmlsingle/#boot-features-external-config-application-property-files 
+               - current dir, /config, classpath root, custom dir spring.config.additional-location
+            - as environment variable ?
+            => check springboot documentation + java buildpack documentation
+         - by adapting/restoring Sebastien's code into COAB (while leveraging OSB lib)
+             - benefits: less changes to paas-templates
+               
+- contribute full-catalog.yml to osb tests: become reference documentation for all supported catalog fields in yml format
+   - Issue with json schema, submitted https://github.com/spring-cloud/spring-cloud-open-service-broker/issues/147
+
 - FIX mis behaving OsbServiceConfiguration.failFastOnMissingCatalogWithConditional() and its usage into BoshServiceProvisionningTest and OsbClientTest. Alternatives:
    - require a bean of type catalog: 
       - org.springframework.beans.factory.BeanCurrentlyInCreationException: Error creating bean with name 'failFastOnMissingCatalogInConfiguration': Requested bean is currently in creation: Is there an unresolvable circular reference?    
@@ -15,13 +30,9 @@ Spring bump TODOs:
           		return this.serviceBrokerProperties.getCatalog().toModel();
           	}
 ```
-   - 
    
-- Review last operation serialization tests using GSON.
-- BoshServiceProvisionningTest: may need to inject/define the expected catalog in application.properties
 - refactor more unit tests to use OsbBuildHelper
 - review in detail assert of BoshProcessorTest: with/without context test cases
-- contribute full-catalog.yml to osb tests: become reference documentation for all supported catalog fields in yml format
 
 - unit tests spring security config (check actuactor env is not + update actuator spring security config
 - test actuator config: service broker user should not be able to use actuator /env to inspect git properties       
@@ -33,13 +44,13 @@ Pb: Need to debug BoshBrokerApplication for tests. Requires git properties to st
             https://docs.spring.io/spring-boot/docs/2.0.7.RELEASE/reference/htmlsingle/#boot-features-external-config-application-property-files 
          pb: properties miss prefix, and could not find a way to insert this prefix.
 
-
+```
 java -jar myproject.jar --spring.config.name=myproject
 
 The following example shows how to specify two locations:
 
 $ java -jar myproject.jar --spring.config.location=classpath:/default.properties,classpath:/override.properties
-      
+```      
             
 ------------------------------
 

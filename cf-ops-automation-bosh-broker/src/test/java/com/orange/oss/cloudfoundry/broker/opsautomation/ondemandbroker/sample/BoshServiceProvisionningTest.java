@@ -18,13 +18,11 @@ import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.Context;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.terraform.TerraformModuleHelper;
 import io.restassured.RestAssured;
+import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpStatus;
 import org.eclipse.jgit.api.AddCommand;
 import org.eclipse.jgit.api.Git;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.*;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -43,10 +41,7 @@ import org.springframework.cloud.servicebroker.model.instance.DeleteServiceInsta
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.Writer;
+import java.io.*;
 import java.nio.file.FileVisitOption;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -74,6 +69,29 @@ import static org.springframework.http.HttpStatus.CREATED;
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 public class BoshServiceProvisionningTest {
+
+
+    @BeforeClass
+    public static void prepare_CONFIG_YML_env_var() throws Exception {
+
+        InputStream resourceAsStream = BoshServiceProvisionningTest.class.getResourceAsStream("/catalog.yml");
+        assertThat(resourceAsStream)
+                .describedAs("expecting catalog.yml in classpath")
+                .isNotNull();
+        try (Reader dataFileReader = new InputStreamReader(resourceAsStream)) {
+            String CATALOG_YML = IOUtils.toString(dataFileReader);
+            System.setProperty("CATALOG_YML", CATALOG_YML);
+            assertThat(System.getProperty("CATALOG_YML")).isNotEmpty();
+        }
+    }
+
+    @After
+    public void after() {
+        System.clearProperty("CATALOG_YML");
+        assertThat(System.getProperty("CATALOG_YML")).isNull();
+    }
+
+
 
     /**
      * Define an environment variable to turn on wiremock recording.

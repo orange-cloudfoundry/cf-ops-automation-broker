@@ -20,7 +20,7 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 		<java.version>1.8</java.version>
-		<orangeSpringCloudServiceBrokerVersion>75cd487c93674ddfb2159b85feef64039862aa59</orangeSpringCloudServiceBrokerVersion>
+		<orangeSpringCloudServiceBrokerVersion>4fabd1ebe70c7335b2169aa238c9b31ef6f8d6cc</orangeSpringCloudServiceBrokerVersion>
 	</properties>
 
 	<dependencies>

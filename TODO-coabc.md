@@ -1,4 +1,24 @@
 
+Fix for https://github.com/orange-cloudfoundry/cf-ops-automation-broker/issues/45 Optimize size of state object returned to OSB API
+
+Problem: 
+
+* We do need the service instance id which is set as transient in CSIR (because mapped as path)
+* We want to exclude some other transient fields (service definition)
+
+Alternatives:
+* opt-in serialization of transient field outside of the CRSI
+   * custom json serializer / deserializer
+   * new additional string serialized as top level entry
+* custom exclusion strategy to pick only what we need in CRSI
+
+Selected `custom exclusion strategy to pick only what we need in CRSI`.
+
+Q: should we refactor PipelineCompletionTracker that gets too large ?
+* pull out collaborator for Gson builder construction + formatAsJson ?
+A: does not save much duplication/complexity for now. Wait a bit more.
+
+
 
 Spring bump TODOs:
 

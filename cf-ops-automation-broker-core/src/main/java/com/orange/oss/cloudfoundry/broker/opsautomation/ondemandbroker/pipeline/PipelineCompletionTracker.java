@@ -1,5 +1,7 @@
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline;
 
+import com.google.gson.ExclusionStrategy;
+import com.google.gson.FieldAttributes;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.slf4j.Logger;
@@ -10,6 +12,7 @@ import org.springframework.cloud.servicebroker.model.ServiceBrokerRequest;
 import org.springframework.cloud.servicebroker.model.binding.CreateServiceInstanceBindingRequest;
 import org.springframework.cloud.servicebroker.model.binding.CreateServiceInstanceBindingResponse;
 import org.springframework.cloud.servicebroker.model.binding.DeleteServiceInstanceBindingRequest;
+import org.springframework.cloud.servicebroker.model.catalog.ServiceDefinition;
 import org.springframework.cloud.servicebroker.model.instance.*;
 
 import java.lang.reflect.Modifier;
@@ -42,10 +45,25 @@ public class PipelineCompletionTracker {
 
     private Gson buildCustomGson(GsonBuilder gsonBuilder) {
         // By default both static and transient fields are not serialized.
-        // We need transient fields from CreateServiceInstanceRequest to be serialized so we override this default
+        // We need transient some fields from CreateServiceInstanceRequest to be serialized so we override this default
         // to only exclude static fields (such as constants)
         return gsonBuilder
                 .excludeFieldsWithModifiers(Modifier.STATIC)
+                .addSerializationExclusionStrategy(new ExclusionStrategy() {
+                    @Override
+                    public boolean shouldSkipField(FieldAttributes f) {
+                        //Using class type to fail fast on SCOSB refactorings
+                        if (ServiceDefinition.class.equals(f.getDeclaredClass())) {
+                            return true;
+                        }
+                        return false;
+                    }
+
+                    @Override
+                    public boolean shouldSkipClass(Class<?> clazz) {
+                        return false;
+                    }
+                })
                 .create();
     }
 

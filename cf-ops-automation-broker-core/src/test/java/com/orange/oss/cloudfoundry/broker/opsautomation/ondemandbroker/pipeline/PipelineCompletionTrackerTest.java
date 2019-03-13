@@ -14,6 +14,7 @@ import org.springframework.cloud.servicebroker.model.ServiceBrokerRequest;
 import org.springframework.cloud.servicebroker.model.binding.CreateServiceInstanceBindingRequest;
 import org.springframework.cloud.servicebroker.model.binding.CreateServiceInstanceBindingResponse;
 import org.springframework.cloud.servicebroker.model.binding.DeleteServiceInstanceBindingRequest;
+import org.springframework.cloud.servicebroker.model.catalog.ServiceDefinition;
 import org.springframework.cloud.servicebroker.model.instance.*;
 import org.springframework.http.HttpStatus;
 
@@ -26,8 +27,7 @@ import java.time.Instant;
 import java.time.ZoneId;
 import java.util.HashMap;
 
-import static com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.OsbBuilderHelper.aBindingRequest;
-import static com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.OsbBuilderHelper.aBindingResponse;
+import static com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.OsbBuilderHelper.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.junit.Assert.assertEquals;
@@ -371,9 +371,7 @@ public class PipelineCompletionTrackerTest {
         PipelineCompletionTracker.PipelineOperationState pipelineOperationState = new PipelineCompletionTracker.PipelineOperationState(originalRequest, "2018-01-22T14:00:00.000Z");
 
         //when
-        @SuppressWarnings("unchecked") PipelineCompletionTracker tracker = new PipelineCompletionTracker(Clock.systemUTC(), 1200L, mock(OsbProxy.class), Mockito.mock(SecretsReader.class));
         String json = tracker.formatAsJson(pipelineOperationState);
-        System.out.println(json);
 
         //then
         PipelineCompletionTracker.PipelineOperationState actualPipelineOperationState= tracker.parseFromJson(json);
@@ -385,6 +383,25 @@ public class PipelineCompletionTrackerTest {
         //CreateServiceInstanceRequest.equals ignores transient fields that we need to preserve in our context
         assertEquals(actualServiceBrokerRequest.getServiceInstanceId(), originalRequest.getServiceInstanceId());
         assertEquals(actualServiceBrokerRequest.getServiceDefinitionId(), originalRequest.getServiceDefinitionId());
+    }
+
+    @Test
+    public void operation_state_POJO_serializes_excluding_heavy_catalog_details() {
+        //given a request with service definition set by the SCOSB framework when receiving it
+        CreateServiceInstanceRequest originalRequest = OsbBuilderHelper.aCreateServiceInstanceRequest();
+        ServiceDefinition serviceDefinition = aCatalog().getServiceDefinitions().get(0);
+        originalRequest.setServiceDefinition(serviceDefinition);
+
+
+        PipelineCompletionTracker.PipelineOperationState pipelineOperationState = new PipelineCompletionTracker.PipelineOperationState(originalRequest, "2018-01-22T14:00:00.000Z");
+
+        //when
+        String json = tracker.formatAsJson(pipelineOperationState);
+
+        //then the resulting json does not contain catalog details about the service definition,
+        // in particular metadata which can contain heaby inline image data
+        assertThat(json).doesNotContain("description");
+        assertThat(json).doesNotContain("metadata");
     }
 
 

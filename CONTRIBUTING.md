@@ -57,8 +57,13 @@ https://mvnrepository.com/artifact/org.springframework.cloud/spring-cloud-starte
 https://github.com/spring-cloud/spring-cloud-open-service-broker/issues/79
 https://github.com/spring-cloud/spring-cloud-open-service-broker/commit/0cf3bc0cab1914f3ade8543ad155dc108afb53d0
 
+In case of jitpack build issues (such as repo.spring.io being down), then discard the cached failing jitpack build by connecting on https://jitpack.io/#orange-cloudfoundry/spring-cloud-open-service-broker/   authenticating with github, and deleting the failed build by clicking on the red cross, then relaunch a build, jitpack should then trigger a new build. See also https://jitpack.io/docs/BUILDING/#rebuilding
 
+![image](https://user-images.githubusercontent.com/4748380/54263459-25d75200-4571-11e9-91b7-83a4b5e19fa4.png)
 
+https://status.jitpack.io/
+https://twitter.com/springops
+https://status.bintray.com/
 
 ### Bumping springboot and spring-cloud-open-service-broker
 

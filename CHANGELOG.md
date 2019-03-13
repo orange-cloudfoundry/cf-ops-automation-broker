@@ -3,7 +3,7 @@
 
 ### IMPROVEMENTS
 
-- Part of Osb client are contributed upstream in  
+- Part of Osb client are contributed upstream in https://github.com/spring-cloud/spring-cloud-open-service-broker 
 
 ### BUG FIXES
  

@@ -1,45 +1,4 @@
-
-Fix for https://github.com/orange-cloudfoundry/cf-ops-automation-broker/issues/45 Optimize size of state object returned to OSB API
-
-Problem: 
-
-* We do need the service instance id which is set as transient in CSIR (because mapped as path)
-* We want to exclude some other transient fields (service definition)
-
-Alternatives:
-* opt-in serialization of transient field outside of the CRSI
-   * custom json serializer / deserializer
-   * new additional string serialized as top level entry
-* custom exclusion strategy to pick only what we need in CRSI
-
-Selected `custom exclusion strategy to pick only what we need in CRSI`.
-
-Q: should we refactor PipelineCompletionTracker that gets too large ?
-* pull out collaborator for Gson builder construction + formatAsJson ?
-A: does not save much duplication/complexity for now. Wait a bit more.
-
-
-
 Spring bump TODOs:
-
-
-NPE during service key creation
-
- java.lang.NullPointerException: 
- 	at java.util.HashMap.putMapEntries(HashMap.java:501) ~[na:1.8.0_192]
- 	at java.util.HashMap.putAll(HashMap.java:785) ~[na:1.8.0_192]
- 	at org.springframework.cloud.servicebroker.model.binding.CreateServiceInstanceBindingRequest$CreateServiceInstanceBindingRequestBuilder.parameters(CreateServiceInstanceBindingRequest.java:448) ~[spring-cloud-open-service-broker-core-b88ffcfc3f39f36fb81ad0ec42334bf78330bf08.jar!/:na]
- 	at com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.OsbProxyImpl.mapBindRequest(OsbProxyImpl.java:357) ~[cf-ops-automation-broker-core-0.28.0-SNAPSHOT.jar!/:0.28.0-SNAPSHOT]
- 	at com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.OsbProxyImpl.delegateBind(OsbProxyImpl.java:95) ~[cf-ops-automation-broker-core-0.28.0-SNAPSHOT.jar!/:0.28.0-SNAPSHOT]
- 	at com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.PipelineCompletionTracker.delegateBindRequest(PipelineCompletionTracker.java:154) ~[cf-ops-automation-broker-core-0.28.0-SNAPSHOT.jar!/:0.28.0-SNAPSHOT]
- 	at com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.BoshProcessor.preBind(BoshProcessor.java:96) ~[cf-ops-automation-broker-core-0.28.0-SNAPSHOT.jar!/:0.28.0-SNAPSHOT]
- 	at com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.ProcessorChain.bind(ProcessorChain.java:63) ~[cf-ops-automation-broker-framework-0.28.0-SNAPSHOT.jar!/:0.28.0-SNAPSHOT]
- 	at com.orange.oss.ondemandbroker.ProcessorChainServiceInstanceBindingService.createServiceInstanceBinding(ProcessorChainServiceInstanceBindingService.java:41) ~[cf-ops-automation-broker-core-0.28.0-SNAPSHOT.jar!/:0.28.0-SNAPSHOT]
-
-Binding params are null instead of being empty. Coming from OSB lib (i.e. Json deserialization) and null passed to Builder
-and fail through NPE.
-
-
 
 - Update broker configurations (following release notes) + check smoke tests become green
    - provide yml with catalog config
@@ -53,8 +12,6 @@ and fail through NPE.
          - by adapting/restoring Sebastien's code into COAB (while leveraging OSB lib)
              - benefits: less changes to paas-templates
                
-- contribute full-catalog.yml to osb tests: become reference documentation for all supported catalog fields in yml format
-   - Issue with json schema, submitted https://github.com/spring-cloud/spring-cloud-open-service-broker/issues/147
 
 - FIX mis behaving OsbServiceConfiguration.failFastOnMissingCatalogWithConditional() and its usage into BoshServiceProvisionningTest and OsbClientTest. Alternatives:
    - require a bean of type catalog: 

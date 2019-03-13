@@ -1,6 +1,20 @@
 Spring bump TODOs:
 
 - Update broker configurations (following release notes) + check smoke tests become green
+   - Q: how can we avoid changes to the CONFIG_YML env var format (i.e. changed prefix) ?
+      - support both existing CONFIG_YML and SCOSB_CONFIG_YML env vars
+         - replace 
+         ```yml
+             servicebroker:
+         ```
+         with
+         ```yml
+           spring:
+             cloud:
+               openservicebroker:
+         ```
+         
+         - SCOSB_CONFIG_YML can  
    - provide yml with catalog config
       - Q: how ? https://docs.spring.io/spring-boot/docs/2.0.7.RELEASE/reference/htmlsingle/#boot-features-external-config 
          - in classpath ?

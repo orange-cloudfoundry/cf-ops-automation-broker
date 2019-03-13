@@ -9,9 +9,16 @@
  
 ### CONFIGURATION CHANGES
 
-#### `CATALOG_YML` environment variable content change.
+#### Springboot auth properties changed
 
-The `CATALOG_YML` environment variable content has changed (as this is now fully leveraging [spring cloud open service broker library support](https://github.com/spring-cloud/spring-cloud-open-service-broker), and the yaml content
+`security.user.name` and `security.user.password` * now become `spring.security.user.name` and `spring.security.user.password`
+
+See https://github.com/spring-projects/spring-boot/wiki/Spring-Boot-2.0-Configuration-Changelog
+ 
+
+#### Optional `CATALOG_YML` environment variable content change.
+
+The `CATALOG_YML` environment variable content has changed (as this is now fully leveraging [spring cloud open service broker (SCOSB) library support](https://github.com/spring-cloud/spring-cloud-open-service-broker), and the yaml content
 now needs to start at `spring.cloud.openservicebroker`. 
 
 The previous format 
@@ -41,7 +48,7 @@ CATALOG_YML: |
           supportUrl: https://github.com/orange-cloudfoundry/cassandra-cf-service-boshrelease
 ```
 
-now becomes:
+can optionally be specified as following native SCOSB format. However, previous format is still supported.
 
 ```yaml
 CATALOG_YML: |
@@ -76,9 +83,3 @@ Note that an alternative to use of Use `CATALOG_YML` environment variable, is to
 
 
 
-#### Springboot auth properties changed
-
-`security.user.name` and `security.user.password` * now become `spring.security.user.name` and `spring.security.user.password`
-
-See https://github.com/spring-projects/spring-boot/wiki/Spring-Boot-2.0-Configuration-Changelog
- 

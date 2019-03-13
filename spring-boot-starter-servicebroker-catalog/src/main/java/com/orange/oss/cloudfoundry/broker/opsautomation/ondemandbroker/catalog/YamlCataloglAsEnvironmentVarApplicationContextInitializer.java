@@ -9,6 +9,9 @@ import org.springframework.core.io.Resource;
 import org.springframework.security.util.InMemoryResource;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 
 import static org.springframework.util.StringUtils.isEmpty;
 
@@ -35,10 +38,30 @@ public class YamlCataloglAsEnvironmentVarApplicationContextInitializer implement
             Resource resource = new InMemoryResource(yml);
             LOGGER.info("Using CATALOG_YML environment variable to set service broker catalog.");
             PropertySource<?> propertySource = CatalogYamlPropertySourceMapper.toPropertySource(resource);
+            convertPropertySourceToScOsbKeyPrefix((Map<String, String>) propertySource.getSource());
             configurableApplicationContext.getEnvironment().getPropertySources().addFirst(propertySource);
         } catch (IOException e) {
             throw new IllegalStateException("Unable to read CATALOG_YML environment variable.",e);
         }
+    }
+
+    void convertPropertySourceToScOsbKeyPrefix(Map<String, String> source) {
+        Iterator<Map.Entry<String, String>> iterator = source.entrySet().iterator();
+        Map<String, String> convertedEntries = new HashMap<>(source.size());
+        while (iterator.hasNext()) {
+            Map.Entry<String, String> entry = iterator.next();
+            String key = entry.getKey();
+            String convertedKey = convertToScOsbFormat(key);
+            if (!key.equals(convertedKey)) {
+                iterator.remove();
+                convertedEntries.put(convertedKey, entry.getValue());
+            }
+        }
+        source.putAll(convertedEntries);
+    }
+    
+    private String convertToScOsbFormat(String key) {
+        return key.replaceFirst("^servicebroker\\.catalog\\.", "spring.cloud.openservicebroker.catalog.");
     }
 
 

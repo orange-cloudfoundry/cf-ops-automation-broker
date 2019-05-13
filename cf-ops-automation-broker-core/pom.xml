@@ -21,6 +21,7 @@
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 		<java.version>1.8</java.version>
 		<orangeSpringCloudServiceBrokerVersion>a13e8c6fb811f0c8bd4c4916edff6405db3cdfd0</orangeSpringCloudServiceBrokerVersion>
+		<upstreamSpringCloudServiceBrokerVersion>2.1.2.RELEASE</upstreamSpringCloudServiceBrokerVersion>
 	</properties>
 
 	<dependencies>
@@ -78,42 +79,46 @@
 		</dependency>
 		-->
 
-		<!-- transiently until our PR gets merged -->
+		<!-- transiently when we have pending PR that need to get merged -->
+<!--		<dependency>-->
+<!--			<groupId>com.github.orange-cloudfoundry.spring-cloud-open-service-broker</groupId>-->
+<!--			<artifactId>spring-cloud-open-service-broker-autoconfigure</artifactId>-->
+<!--			<version>${orangeSpringCloudServiceBrokerVersion}</version>-->
+<!--		</dependency>-->
+<!--		<dependency>-->
+<!--			<groupId>com.github.orange-cloudfoundry.spring-cloud-open-service-broker</groupId>-->
+<!--			<artifactId>spring-cloud-starter-open-service-broker-webmvc</artifactId>-->
+<!--			<version>${orangeSpringCloudServiceBrokerVersion}</version>-->
+<!--		</dependency>-->
+<!--		<dependency>-->
+<!--			<groupId>com.github.orange-cloudfoundry.spring-cloud-open-service-broker</groupId>-->
+<!--			<artifactId>spring-cloud-open-service-broker-core</artifactId>-->
+<!--			<version>${orangeSpringCloudServiceBrokerVersion}</version>-->
+<!--		</dependency>-->
+
+		<!-- When 2.x upstream is released with our patches  -->
 		<dependency>
-			<groupId>com.github.orange-cloudfoundry.spring-cloud-open-service-broker</groupId>
+			<groupId>org.springframework.cloud</groupId>
 			<artifactId>spring-cloud-open-service-broker-autoconfigure</artifactId>
-			<version>${orangeSpringCloudServiceBrokerVersion}</version>
+			<version>${upstreamSpringCloudServiceBrokerVersion}</version>
 		</dependency>
 		<dependency>
-			<groupId>com.github.orange-cloudfoundry.spring-cloud-open-service-broker</groupId>
+			<groupId>org.springframework.cloud</groupId>
 			<artifactId>spring-cloud-starter-open-service-broker-webmvc</artifactId>
-			<version>${orangeSpringCloudServiceBrokerVersion}</version>
+			<version>${upstreamSpringCloudServiceBrokerVersion}</version>
 		</dependency>
 		<dependency>
-			<groupId>com.github.orange-cloudfoundry.spring-cloud-open-service-broker</groupId>
+			<groupId>org.springframework.cloud</groupId>
 			<artifactId>spring-cloud-open-service-broker-core</artifactId>
-			<version>${orangeSpringCloudServiceBrokerVersion}</version>
+			<version>${upstreamSpringCloudServiceBrokerVersion}</version>
 		</dependency>
 
-		<!-- Restore once upstream gets released  -->
-
-        <!--<dependency>-->
-            <!--<groupId>org.springframework.cloud</groupId>-->
-            <!--<artifactId>spring-cloud-starter-open-service-broker-webmvc</artifactId>-->
-        <!--</dependency>-->
-		<!--&lt;!&ndash; necessary when spring-cloud-starter-open-service-broker-webmvc is not yet released for the milestone version we need to use &ndash;&gt;-->
-        <!--<dependency>-->
-            <!--<groupId>org.springframework.cloud</groupId>-->
-            <!--<artifactId>spring-cloud-open-service-broker-autoconfigure</artifactId>-->
-        <!--</dependency>-->
-		<!-- transient fork until our PR gets merged upstream
-        <dependency>
-            <groupId>org.springframework.cloud</groupId>
-            <artifactId>spring-cloud-open-service-broker-core</artifactId>
-        </dependency>
-        -->
-
-
+		<!-- When we choose to upgrade to 3.x upstream is released  -->
+<!--		<dependency>-->
+<!--			<groupId>org.springframework.cloud</groupId>-->
+<!--			<artifactId>spring-cloud-starter-open-service-broker</artifactId>-->
+<!--			<version>3.0.0.RELEASE</version>-->
+<!--		</dependency>-->
 
 		<!-- for bosh manifest yml parsing -->
 		<dependency>

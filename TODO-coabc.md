@@ -1,31 +1,8 @@
 Spring bump TODOs:
 
 - Update broker configurations (following release notes) + check smoke tests become green
-   - Q: how can we avoid changes to the CONFIG_YML env var format (i.e. changed prefix) ?
-      - support both existing CONFIG_YML and SCOSB_CONFIG_YML env vars
-         - replace 
-         ```yml
-             servicebroker:
-         ```
-         with
-         ```yml
-           spring:
-             cloud:
-               openservicebroker:
-         ```
-         
-         - SCOSB_CONFIG_YML can  
-   - provide yml with catalog config
-      - Q: how ? https://docs.spring.io/spring-boot/docs/2.0.7.RELEASE/reference/htmlsingle/#boot-features-external-config 
-         - in classpath ?
-            - in jar ? application.yml
-            - in well known location ?  https://docs.spring.io/spring-boot/docs/2.0.7.RELEASE/reference/htmlsingle/#boot-features-external-config-application-property-files 
-               - current dir, /config, classpath root, custom dir spring.config.additional-location
-            - as environment variable ?
-            => check springboot documentation + java buildpack documentation
-         - by adapting/restoring Sebastien's code into COAB (while leveraging OSB lib)
-             - benefits: less changes to paas-templates
-               
+   - Q: what's the impact for operators ?
+   - Q: what's the impact for service authors ?
 
 - FIX mis behaving OsbServiceConfiguration.failFastOnMissingCatalogWithConditional() and its usage into BoshServiceProvisionningTest and OsbClientTest. Alternatives:
    - require a bean of type catalog: 

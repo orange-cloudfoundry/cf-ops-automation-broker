@@ -4,7 +4,7 @@ import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processor
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.ProcessorChain;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.cloud.servicebroker.model.*;
+import org.springframework.cloud.servicebroker.model.instance.*;
 import org.springframework.cloud.servicebroker.service.ServiceInstanceService;
 import org.springframework.stereotype.Service;
 
@@ -53,7 +53,7 @@ public class ProcessorChainServiceInstanceService implements ServiceInstanceServ
             if (ctx.contextKeys.get(CREATE_SERVICE_INSTANCE_RESPONSE) instanceof CreateServiceInstanceResponse) {
                 response = (CreateServiceInstanceResponse) ctx.contextKeys.get(CREATE_SERVICE_INSTANCE_RESPONSE);
             } else {
-                response = new CreateServiceInstanceResponse();
+                response = CreateServiceInstanceResponse.builder().build();
             }
             return response;
         } catch (RuntimeException e) {
@@ -73,7 +73,7 @@ public class ProcessorChainServiceInstanceService implements ServiceInstanceServ
             if (ctx.contextKeys.get(UPDATE_SERVICE_INSTANCE_RESPONSE) instanceof UpdateServiceInstanceResponse) {
                 response = (UpdateServiceInstanceResponse) ctx.contextKeys.get(UPDATE_SERVICE_INSTANCE_RESPONSE);
             } else {
-                response = new UpdateServiceInstanceResponse();
+                response = UpdateServiceInstanceResponse.builder().build();
             }
             return response;
         } catch (RuntimeException e) {
@@ -93,7 +93,7 @@ public class ProcessorChainServiceInstanceService implements ServiceInstanceServ
             if (ctx.contextKeys.get(DELETE_SERVICE_INSTANCE_RESPONSE) instanceof DeleteServiceInstanceResponse) {
                 response = (DeleteServiceInstanceResponse) ctx.contextKeys.get(DELETE_SERVICE_INSTANCE_RESPONSE);
             } else {
-                response = new DeleteServiceInstanceResponse();
+                response = DeleteServiceInstanceResponse.builder().build();
             }
             return response;
         } catch (RuntimeException e) {
@@ -113,8 +113,7 @@ public class ProcessorChainServiceInstanceService implements ServiceInstanceServ
             if (ctx.contextKeys.get(GET_LAST_SERVICE_OPERATION_RESPONSE) instanceof GetLastServiceOperationResponse) {
                 response = (GetLastServiceOperationResponse) ctx.contextKeys.get(GET_LAST_SERVICE_OPERATION_RESPONSE);
             } else {
-                response = new GetLastServiceOperationResponse();
-                response.withOperationState(OperationState.SUCCEEDED);
+                response = GetLastServiceOperationResponse.builder().operationState(OperationState.SUCCEEDED).build();
             }
             return response;
         } catch (RuntimeException e) {

@@ -5,7 +5,7 @@
     "url" : "/v2/service_instances/111?accepts_incomplete=false",
     "method" : "PUT",
     "bodyPatterns" : [ {
-      "equalToJson" : "{\"asyncAccepted\":false,\"parameters\":{},\"context\":{\"platform\":\"Context\",\"platform\":\"cloudfoundry\"},\"service_id\":\"cassandra-service-broker\",\"plan_id\":\"cassandra-plan\",\"organization_guid\":\"org_id\",\"space_guid\":\"space_id\"}",
+      "equalToJson" : "{\"context\":{\"platform\":\"cloudfoundry\"},\"service_id\":\"cassandra-service-broker\",\"plan_id\":\"cassandra-plan\"}",
       "ignoreArrayOrder" : true,
       "ignoreExtraElements" : true
     } ]

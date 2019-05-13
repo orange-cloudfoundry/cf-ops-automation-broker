@@ -9,18 +9,14 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.cloud.servicebroker.model.CreateServiceInstanceRequest;
+import org.springframework.cloud.servicebroker.model.CloudFoundryContext;
+import org.springframework.cloud.servicebroker.model.instance.CreateServiceInstanceRequest;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
 
-import static com.orange.oss.ondemandbroker.ProcessorChainServiceInstanceService.OSB_PROFILE_ORGANIZATION_GUID;
-import static com.orange.oss.ondemandbroker.ProcessorChainServiceInstanceService.OSB_PROFILE_SPACE_GUID;
-import static org.fest.assertions.Assertions.assertThat;
-import static org.fest.assertions.Fail.fail;
-import static org.springframework.cloud.servicebroker.model.CloudFoundryContext.CLOUD_FOUNDRY_PLATFORM;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Fail.fail;
 
 public class VarsFilesYmlFormatterTest {
 
@@ -291,27 +287,25 @@ public class VarsFilesYmlFormatterTest {
     private static final String SERVICE_BINDING_INSTANCE_ID = "222";
 
 
-    public static CreateServiceInstanceRequest aCreateServiceInstanceRequest() {
+    public static CreateServiceInstanceRequest aCreateServiceInstanceRequest(){
 
-        CreateServiceInstanceRequest request = new CreateServiceInstanceRequest(SERVICE_DEFINITION_ID,
-                SERVICE_PLAN_ID,
-                "org_id",
-                "space_id",
-                aCfOsbContext(),
-                new HashMap<>()
-        );
-        request.withServiceInstanceId(SERVICE_INSTANCE_ID);
-        return request;
+        return CreateServiceInstanceRequest.builder()
+                .serviceDefinitionId(SERVICE_DEFINITION_ID)
+                .planId(SERVICE_PLAN_ID)
+                .serviceInstanceId(SERVICE_INSTANCE_ID)
+                .context(CloudFoundryContext.builder()
+                        .organizationGuid("org_id")
+                        .spaceGuid("space_id")
+                        .build()
+                )
+                .build();
     }
 
     public static org.springframework.cloud.servicebroker.model.Context aCfOsbContext() {
-        Map<String, Object> contextProperties = new HashMap<>();
-        contextProperties.put(OSB_PROFILE_ORGANIZATION_GUID, "org_id");
-        contextProperties.put(OSB_PROFILE_SPACE_GUID, "space_id");
-        return new org.springframework.cloud.servicebroker.model.Context(
-                CLOUD_FOUNDRY_PLATFORM,
-                contextProperties
-        );
+        return CloudFoundryContext.builder()
+                .organizationGuid("org_id")
+                .spaceGuid("space_id")
+                .build();
     }
 
 

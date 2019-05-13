@@ -7,12 +7,13 @@ import com.orange.oss.ondemandbroker.ProcessorChainServiceInstanceBindingService
 import com.orange.oss.ondemandbroker.ProcessorChainServiceInstanceService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.cloud.servicebroker.model.*;
+import org.springframework.cloud.servicebroker.model.CloudFoundryContext;
+import org.springframework.cloud.servicebroker.model.binding.CreateServiceInstanceBindingRequest;
+import org.springframework.cloud.servicebroker.model.binding.CreateServiceInstanceBindingResponse;
+import org.springframework.cloud.servicebroker.model.binding.DeleteServiceInstanceBindingRequest;
+import org.springframework.cloud.servicebroker.model.instance.*;
 
 import java.nio.file.Path;
-
-import static com.orange.oss.ondemandbroker.ProcessorChainServiceInstanceService.OSB_PROFILE_ORGANIZATION_GUID;
-import static com.orange.oss.ondemandbroker.ProcessorChainServiceInstanceService.OSB_PROFILE_SPACE_GUID;
 
 public class BoshProcessor extends DefaultBrokerProcessor {
 
@@ -58,9 +59,9 @@ public class BoshProcessor extends DefaultBrokerProcessor {
 		this.secretsGenerator.generate(secretsWorkDir, serviceInstanceId, null);
 
 		//Create response and put it into context
-		CreateServiceInstanceResponse creationResponse = new CreateServiceInstanceResponse();
-		creationResponse.withAsync(true);
-		creationResponse.withOperation(this.tracker.getPipelineOperationStateAsJson(creationRequest));
+		CreateServiceInstanceResponse creationResponse = CreateServiceInstanceResponse.builder().
+		async(true).
+		operation(this.tracker.getPipelineOperationStateAsJson(creationRequest)).build();
 		ctx.contextKeys.put(ProcessorChainServiceInstanceService.CREATE_SERVICE_INSTANCE_RESPONSE, creationResponse);
 
 		//Generate commit message and put it into context
@@ -124,9 +125,9 @@ public class BoshProcessor extends DefaultBrokerProcessor {
 		this.secretsGenerator.remove(secretsWorkDir, serviceInstanceId);
 
 		//Create response and put it into context
-		DeleteServiceInstanceResponse deletionResponse = new DeleteServiceInstanceResponse();
-		deletionResponse.withAsync(true);
-		deletionResponse.withOperation(this.tracker.getPipelineOperationStateAsJson(request));
+		DeleteServiceInstanceResponse deletionResponse = DeleteServiceInstanceResponse.builder()
+				.async(true)
+				.operation(this.tracker.getPipelineOperationStateAsJson(request)).build();
 
 		ctx.contextKeys.put(ProcessorChainServiceInstanceService.DELETE_SERVICE_INSTANCE_RESPONSE, deletionResponse);
 
@@ -148,25 +149,21 @@ public class BoshProcessor extends DefaultBrokerProcessor {
     }
 
 	private String extractCfSpaceGuid(CreateServiceInstanceRequest request) {
-		org.springframework.cloud.servicebroker.model.Context context = request.getContext();
-		String spaceGuid = null;
-		if ((context != null) && OsbConstants.ORIGINATING_CLOUDFOUNDRY_PLATFORM.equals(context.getPlatform())) {
-			spaceGuid = (String) context.getProperty(OSB_PROFILE_SPACE_GUID);
-		}
-        //noinspection deprecation
-        spaceGuid = (spaceGuid == null) ? request.getSpaceGuid() : spaceGuid;
-		return spaceGuid;
+        org.springframework.cloud.servicebroker.model.Context context = request.getContext();
+        if (context instanceof CloudFoundryContext) {
+            CloudFoundryContext cloudFoundryContext = (CloudFoundryContext) context;
+            return cloudFoundryContext.getSpaceGuid();
+        }
+        return null;
 	}
 
 	private String extractCfOrgGuid(CreateServiceInstanceRequest request) {
 		org.springframework.cloud.servicebroker.model.Context context = request.getContext();
-		String organizationGuid = null;
-		if ((context != null) && OsbConstants.ORIGINATING_CLOUDFOUNDRY_PLATFORM.equals(context.getPlatform())) {
-			organizationGuid = (String) context.getProperty(OSB_PROFILE_ORGANIZATION_GUID);
+		if (context instanceof CloudFoundryContext) {
+			CloudFoundryContext cloudFoundryContext = (CloudFoundryContext) context;
+			return cloudFoundryContext.getOrganizationGuid();
 		}
-        //noinspection deprecation
-        organizationGuid = (organizationGuid == null) ? request.getOrganizationGuid() : organizationGuid;
-		return organizationGuid;
+		return null;
 	}
 
 	protected String formatUnprovisionCommitMsg(DeleteServiceInstanceRequest request) {
@@ -177,14 +174,11 @@ public class BoshProcessor extends DefaultBrokerProcessor {
 	}
 
     private String extractUserKeyFromOsbContext(org.springframework.cloud.servicebroker.model.Context context) {
-        String userKey = null;
-        if (context != null) {
-			String platform = context.getPlatform();
-			if (OsbConstants.ORIGINATING_CLOUDFOUNDRY_PLATFORM.equals(platform)) {
-				userKey = (String) context.getProperty(OsbConstants.ORIGINATING_USER_KEY);
-			}
-		}
-        return userKey;
+        if (context instanceof CloudFoundryContext) {
+            CloudFoundryContext cloudFoundryContext = (CloudFoundryContext) context;
+            return (String) cloudFoundryContext.getProperty(OsbConstants.ORIGINATING_USER_KEY);
+        }
+        return null;
     }
 
 	private Path getPaasSecret(Context ctx) {

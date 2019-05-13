@@ -19,7 +19,7 @@ import java.util.List;
 
 import static java.nio.file.FileVisitOption.FOLLOW_LINKS;
 import static java.util.Arrays.asList;
-import static org.fest.assertions.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.CoreMatchers.containsString;
 
 /**
@@ -173,7 +173,7 @@ public class FileTerraformRepositoryTest {
                 .build();
         repository.save(module1);
         repository.save(module2);
-        List<ImmutableTerraformModule> potentials = asList(module1, module2);
+        List<TerraformModule> potentials = asList(module1, module2);
 
         //when
         TerraformModule module = repository.getByModuleProperty("prop1", "value1");

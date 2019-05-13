@@ -4,8 +4,8 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.cloud.servicebroker.model.GetLastServiceOperationResponse;
-import org.springframework.cloud.servicebroker.model.OperationState;
+import org.springframework.cloud.servicebroker.model.instance.GetLastServiceOperationResponse;
+import org.springframework.cloud.servicebroker.model.instance.OperationState;
 
 import java.io.*;
 import java.nio.file.Path;
@@ -70,54 +70,54 @@ public class TerraformCompletionTracker {
     }
 
     GetLastServiceOperationResponse mapOutputToCreationStatus(TerraformState.Output started, TerraformState.Output completed, long elapsedTimeSecsSinceLastOperation) {
-        GetLastServiceOperationResponse response = new GetLastServiceOperationResponse();
+        GetLastServiceOperationResponse.GetLastServiceOperationResponseBuilder builder = GetLastServiceOperationResponse.builder();
         if (started == null) {
             //terraform module invocation not yet received
             if (elapsedTimeSecsSinceLastOperation < maxExecutionDurationSeconds) {
-                response.withOperationState(OperationState.IN_PROGRESS);
+                builder.operationState(OperationState.IN_PROGRESS);
             } else {
-                response.withOperationState(OperationState.FAILED);
-                response.withDescription("execution timeout after " + elapsedTimeSecsSinceLastOperation + "s max is " + maxExecutionDurationSeconds);
+                builder.operationState(OperationState.FAILED);
+                builder.description("execution timeout after " + elapsedTimeSecsSinceLastOperation + "s max is " + maxExecutionDurationSeconds);
             }
         } else if (completed == null) {
             //module invocation received, but module failed
-            response.withOperationState(OperationState.FAILED);
+            builder.operationState(OperationState.FAILED);
         } else {
             //module completed
-            response.withOperationState(OperationState.SUCCEEDED);
+            builder.operationState(OperationState.SUCCEEDED);
         }
         logger.info("Mapping started=" + started
                 + " completed=" + completed
                 + " elapsedTimeSecsSinceLastOperation=" + elapsedTimeSecsSinceLastOperation
                 + " within maxExecutionDurationSeconds=" + maxExecutionDurationSeconds
-                + " into:" + response);
-        return response;
+                + " into:" + builder);
+        return builder.build();
     }
 
     GetLastServiceOperationResponse mapOutputToDeletionStatus(TerraformState.Output started, TerraformState.Output completed, long elapsedTimeSecsSinceLastOperation) {
-        GetLastServiceOperationResponse response = new GetLastServiceOperationResponse();
-        response.withDeleteOperation(true);
+        GetLastServiceOperationResponse.GetLastServiceOperationResponseBuilder builder = GetLastServiceOperationResponse.builder();
+        builder.deleteOperation(true);
         if (started != null) {
             //module invocation pending
             if (elapsedTimeSecsSinceLastOperation < maxExecutionDurationSeconds) {
-                response.withOperationState(OperationState.IN_PROGRESS);
+                builder.operationState(OperationState.IN_PROGRESS);
             } else {
-                response.withOperationState(OperationState.FAILED);
-                response.withDescription("execution timeout after " + elapsedTimeSecsSinceLastOperation + "s max is " + maxExecutionDurationSeconds);
+                builder.operationState(OperationState.FAILED);
+                builder.description("execution timeout after " + elapsedTimeSecsSinceLastOperation + "s max is " + maxExecutionDurationSeconds);
             }
         } else {
             if (completed != null) {
-                response.withOperationState(OperationState.FAILED);
+                builder.operationState(OperationState.FAILED);
             } else {
-                response.withOperationState(OperationState.SUCCEEDED);
+                builder.operationState(OperationState.SUCCEEDED);
             }
         }
         logger.info("Mapping started=" + started
                 + " completed=" + completed
                 + " elapsedTimeSecsSinceLastOperation=" + elapsedTimeSecsSinceLastOperation
                 + " within maxExecutionDurationSeconds=" + maxExecutionDurationSeconds
-                + " into:" + response);
-        return response;
+                + " into:" + builder);
+        return builder.build();
     }
 
     public String getCurrentDate() {

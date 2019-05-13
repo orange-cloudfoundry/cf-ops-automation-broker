@@ -1,11 +1,11 @@
 package com.orange.oss;
 
+import com.orange.oss.ondemandbroker.ProcessorChainServiceInstanceService;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
-@ComponentScan(basePackages = {
-        "com.orange.oss.ondemandbroker"})
+@ComponentScan(basePackageClasses = { ProcessorChainServiceInstanceService.class})
 public class OpsAutomationServiceBrokerAutoConfiguration {
 
 }

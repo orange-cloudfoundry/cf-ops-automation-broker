@@ -1,8 +1,9 @@
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.terraform.cloudflare;
 
-import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.GitProcessorContext;
-import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.Context;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.UserFacingRuntimeException;
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.GitProcessorContext;
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.OsbBuilderHelper;
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.Context;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.terraform.*;
 import com.orange.oss.ondemandbroker.ProcessorChainServiceInstanceService;
 import org.junit.Assert;
@@ -12,8 +13,10 @@ import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.runners.MockitoJUnitRunner;
-import org.springframework.cloud.servicebroker.model.*;
+import org.mockito.junit.MockitoJUnitRunner;
+import org.springframework.cloud.servicebroker.model.CloudFoundryContext;
+import org.springframework.cloud.servicebroker.model.catalog.ServiceDefinition;
+import org.springframework.cloud.servicebroker.model.instance.*;
 
 import java.io.IOException;
 import java.nio.file.FileSystems;
@@ -25,17 +28,13 @@ import java.time.ZoneId;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.orange.oss.ondemandbroker.ProcessorChainServiceInstanceService.OSB_PROFILE_ORGANIZATION_GUID;
-import static com.orange.oss.ondemandbroker.ProcessorChainServiceInstanceService.OSB_PROFILE_SPACE_GUID;
-import static org.fest.assertions.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.CoreMatchers.containsString;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.eq;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.springframework.cloud.servicebroker.model.CloudFoundryContext.CLOUD_FOUNDRY_PLATFORM;
-import static org.springframework.cloud.servicebroker.model.OperationState.IN_PROGRESS;
+import static org.springframework.cloud.servicebroker.model.instance.OperationState.IN_PROGRESS;
 
 /**
  *
@@ -47,7 +46,8 @@ public class TerraformProcessorTest {
     private
     TerraformRepository terraformRepository;
 
-    private TerraformProcessor terraformProcessor = new TerraformProcessor(aConfig(), aSuffixValidator(), getRepositoryFactory(), aTracker());
+    private final TerraformCompletionTracker completionTracker = Mockito.mock(TerraformCompletionTracker.class);
+    private TerraformProcessor terraformProcessor = new TerraformProcessor(aConfig(), aSuffixValidator(), getRepositoryFactory(), completionTracker);
 
 
     @Test(expected = UserFacingRuntimeException.class)
@@ -94,13 +94,12 @@ public class TerraformProcessorTest {
     public void hints_users_when_missing_param() {
         //given a user performing
         //cf cs cloudflare
-        CreateServiceInstanceRequest request = new CreateServiceInstanceRequest("service_definition_id",
-                "plan_id",
-                "org_id",
-                "space_id",
-                null
-        );
-        request.withServiceInstanceId("service-instance-guid");
+        CreateServiceInstanceRequest request = CreateServiceInstanceRequest.builder()
+                .serviceDefinitionId("service_definition_id")
+                .planId("plan_id")
+                .context(OsbBuilderHelper.aCfUserContext())
+                .serviceInstanceId("service-instance-guid")
+                .build();
 
         //and the context being injected to a cloudflare processor
         Context context = new Context();
@@ -120,7 +119,7 @@ public class TerraformProcessorTest {
         TerraformRepository terraformRepository = Mockito.mock(TerraformRepository.class);
         when(terraformRepository.getByModuleProperty(TerraformProcessor.ROUTE_PREFIX, "avalidroute")).thenReturn(aTfModule());
 
-        terraformProcessor = new TerraformProcessor(aConfig(), aSuffixValidator(), getRepositoryFactory(), aTracker());
+        terraformProcessor = new TerraformProcessor(aConfig(), aSuffixValidator(), getRepositoryFactory(), completionTracker);
 
         //When a new module is requested to be added
         TerraformModule requestedModule = ImmutableTerraformModule.builder().from(aTfModule())
@@ -205,28 +204,27 @@ public class TerraformProcessorTest {
         ImmutableTerraformConfig cloudFlareConfig = ImmutableTerraformConfig.builder()
                 .routeSuffix("-cdn-cw-vdr-pprod-apps.redacted-domain.org")
                 .template(deserialized).build();
-        terraformProcessor = new TerraformProcessor(cloudFlareConfig, aSuffixValidator(), getRepositoryFactory(), aTracker());
+        terraformProcessor = new TerraformProcessor(cloudFlareConfig, aSuffixValidator(), getRepositoryFactory(), completionTracker);
 
         //given a user request with a route
         Map<String, Object> parameters = new HashMap<>();
         parameters.put(TerraformProcessor.ROUTE_PREFIX, "avalidroute");
 
-        Map<String, Object> contextProperties = new HashMap<>();
-        contextProperties.put(OSB_PROFILE_ORGANIZATION_GUID, "org_id");
-        contextProperties.put(OSB_PROFILE_SPACE_GUID, "space_id");
-        org.springframework.cloud.servicebroker.model.Context createServiceInstanceContext = new org.springframework.cloud.servicebroker.model.Context(
-                CLOUD_FOUNDRY_PLATFORM,
-                contextProperties
-        );
-        CreateServiceInstanceRequest request = new CreateServiceInstanceRequest(
-                "service_definition_id",
-                "plan_id",
-                "org_id",
-                "space_id",
-                createServiceInstanceContext,
-                parameters
-        );
-        request.withServiceInstanceId("serviceinstance_guid");
+        org.springframework.cloud.servicebroker.model.Context createServiceInstanceContext = OsbBuilderHelper.aCfUserContext();
+
+        CreateServiceInstanceRequest request = CreateServiceInstanceRequest.builder()
+                .serviceDefinitionId("service_definition_id")
+                .planId("plan_id")
+                .context(OsbBuilderHelper.aCfUserContext())
+                .serviceInstanceId("serviceinstance_guid")
+                .parameters(parameters)
+                .context(createServiceInstanceContext)
+                .context(CloudFoundryContext.builder()
+                        .organizationGuid("org_id")
+                        .spaceGuid("space_id")
+                        .build()
+                )
+                .build();
 
         //when
         ImmutableTerraformModule terraformModule = terraformProcessor.constructModule(request);
@@ -271,13 +269,20 @@ public class TerraformProcessorTest {
         //given a user request with a route
         Map<String, Object> parameters = new HashMap<>();
         parameters.put(TerraformProcessor.ROUTE_PREFIX, "avalidroute");
-        CreateServiceInstanceRequest request = new CreateServiceInstanceRequest("service_definition_id",
-                "plan_id",
-                "org_id",
-                "space_id",
-                parameters
-        );
-        request.withServiceInstanceId("serviceinstance_guid");
+
+
+        CreateServiceInstanceRequest request = CreateServiceInstanceRequest.builder()
+                .planId("plan_id")
+                .context(OsbBuilderHelper.aCfUserContext())
+                .parameters(parameters)
+                .serviceDefinitionId("service_definition_id")
+                .serviceInstanceId("serviceinstance_guid")
+                .context(CloudFoundryContext.builder()
+                        .organizationGuid("org_id")
+                        .spaceGuid("space_id")
+                        .build()
+                )
+                .build();
 
         //and the context being injected to a cloudflare processor
         Context context = new Context();
@@ -306,17 +311,20 @@ public class TerraformProcessorTest {
     public void responds_to_get_last_service_operation() {
         //Given a tf state without completed module outputs
         TerraformCompletionTracker tracker = Mockito.mock(TerraformCompletionTracker.class);
-        GetLastServiceOperationResponse expectedResponse = new GetLastServiceOperationResponse();
-        expectedResponse.withDescription("module exec in progress");
-        expectedResponse.withOperationState(IN_PROGRESS);
+        GetLastServiceOperationResponse expectedResponse = GetLastServiceOperationResponse.builder()
+                .description("module exec in progress")
+                .operationState(IN_PROGRESS)
+                .build();
         when(tracker.getModuleExecStatus(any(Path.class), eq("serviceinstance_guid"), eq("{\"lastOperationDate\":\"2017-11-14T17:24:08.007Z\",\"operation\":\"create\"}"))).thenReturn(expectedResponse);
 
         terraformProcessor = new TerraformProcessor(aConfig(), aSuffixValidator(), getRepositoryFactory(), tracker);
         //given an async polling from CC
-        GetLastServiceOperationRequest operationRequest = new GetLastServiceOperationRequest("serviceinstance_guid",
-                "service_definition_id",
-                "plan_id",
-                "{\"lastOperationDate\":\"2017-11-14T17:24:08.007Z\",\"operation\":\"create\"}");
+        GetLastServiceOperationRequest operationRequest = GetLastServiceOperationRequest.builder()
+            .serviceInstanceId("serviceinstance_guid")
+            .serviceDefinitionId("service_definition_id")
+            .planId("plan_id")
+            .operation("{\"lastOperationDate\":\"2017-11-14T17:24:08.007Z\",\"operation\":\"create\"}")
+            .build();
 
         //and the context being injected to a cloudflare processor
         Context context = new Context();
@@ -350,11 +358,13 @@ public class TerraformProcessorTest {
 
 
         //given an incoming delete request
-        DeleteServiceInstanceRequest request = new DeleteServiceInstanceRequest("instance_id",
-                "service_id",
-                "plan_id",
-                new ServiceDefinition(),
-                true);
+        DeleteServiceInstanceRequest request = DeleteServiceInstanceRequest.builder()
+                .serviceInstanceId("instance_id")
+                .serviceDefinitionId("service_id")
+                .planId("plan_id")
+                .serviceDefinition(ServiceDefinition.builder().build())
+                .build();
+
         Context context = new Context();
         context.contextKeys.put(ProcessorChainServiceInstanceService.DELETE_SERVICE_INSTANCE_REQUEST, request);
         context.contextKeys.put(GitProcessorContext.workDir.toString(), aGitRepoWorkDir());
@@ -381,13 +391,7 @@ public class TerraformProcessorTest {
     }
 
     private TerraformCompletionTracker aTracker() {
-        GetLastServiceOperationResponse expectedResponse = new GetLastServiceOperationResponse();
-        expectedResponse.withDescription("module exec in progress");
-        expectedResponse.withOperationState(IN_PROGRESS);
-        TerraformCompletionTracker tracker = Mockito.mock(TerraformCompletionTracker.class);
-        when(tracker.getModuleExecStatus(any(Path.class), anyString(), anyString())).thenReturn(expectedResponse);
-        when(tracker.getOperationStateAsJson(TerraformCompletionTracker.CREATE)).thenReturn("{\"lastOperationDate\":\"2017-11-14T17:24:08.007Z\",\"operation\":\"create\"}");
-        return tracker;
+        return Mockito.mock(TerraformCompletionTracker.class);
     }
 
     private CloudFlareRouteSuffixValidator aSuffixValidator() {
@@ -398,13 +402,13 @@ public class TerraformProcessorTest {
     private Context aContextWithCreateRequest(String key, String value) {
         Map<String, Object> parameters = new HashMap<>();
         parameters.put(key, value);
-        CreateServiceInstanceRequest request = new CreateServiceInstanceRequest("service_definition_id",
-                "plan_id",
-                "org_id",
-                "space_id",
-                parameters
-        );
-        request.withServiceInstanceId("service-instance-guid");
+        CreateServiceInstanceRequest request = CreateServiceInstanceRequest.builder()
+                .planId("plan_id")
+                .context(OsbBuilderHelper.aCfUserContext())
+                .parameters(parameters)
+                .serviceDefinitionId("service_definition_id")
+                .serviceInstanceId("service-instance-guid")
+                .build();
 
         //and the context being injected to a cloudflare processor
         Context context = new Context();

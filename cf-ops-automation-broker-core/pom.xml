@@ -20,6 +20,8 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 		<java.version>1.8</java.version>
+		<orangeSpringCloudServiceBrokerVersion>a13e8c6fb811f0c8bd4c4916edff6405db3cdfd0</orangeSpringCloudServiceBrokerVersion>
+		<upstreamSpringCloudServiceBrokerVersion>2.1.2.RELEASE</upstreamSpringCloudServiceBrokerVersion>
 	</properties>
 
 	<dependencies>
@@ -76,12 +78,48 @@
 			<scope>test</scope>
 		</dependency>
 		-->
-		
-        <dependency>
-            <groupId>org.springframework.cloud</groupId>
-            <artifactId>spring-cloud-cloudfoundry-service-broker</artifactId>
-        </dependency>
-        
+
+		<!-- transiently when we have pending PR that need to get merged -->
+<!--		<dependency>-->
+<!--			<groupId>com.github.orange-cloudfoundry.spring-cloud-open-service-broker</groupId>-->
+<!--			<artifactId>spring-cloud-open-service-broker-autoconfigure</artifactId>-->
+<!--			<version>${orangeSpringCloudServiceBrokerVersion}</version>-->
+<!--		</dependency>-->
+<!--		<dependency>-->
+<!--			<groupId>com.github.orange-cloudfoundry.spring-cloud-open-service-broker</groupId>-->
+<!--			<artifactId>spring-cloud-starter-open-service-broker-webmvc</artifactId>-->
+<!--			<version>${orangeSpringCloudServiceBrokerVersion}</version>-->
+<!--		</dependency>-->
+<!--		<dependency>-->
+<!--			<groupId>com.github.orange-cloudfoundry.spring-cloud-open-service-broker</groupId>-->
+<!--			<artifactId>spring-cloud-open-service-broker-core</artifactId>-->
+<!--			<version>${orangeSpringCloudServiceBrokerVersion}</version>-->
+<!--		</dependency>-->
+
+		<!-- When 2.x upstream is released with our patches  -->
+		<dependency>
+			<groupId>org.springframework.cloud</groupId>
+			<artifactId>spring-cloud-open-service-broker-autoconfigure</artifactId>
+			<version>${upstreamSpringCloudServiceBrokerVersion}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.cloud</groupId>
+			<artifactId>spring-cloud-starter-open-service-broker-webmvc</artifactId>
+			<version>${upstreamSpringCloudServiceBrokerVersion}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.cloud</groupId>
+			<artifactId>spring-cloud-open-service-broker-core</artifactId>
+			<version>${upstreamSpringCloudServiceBrokerVersion}</version>
+		</dependency>
+
+		<!-- When we choose to upgrade to 3.x upstream is released  -->
+<!--		<dependency>-->
+<!--			<groupId>org.springframework.cloud</groupId>-->
+<!--			<artifactId>spring-cloud-starter-open-service-broker</artifactId>-->
+<!--			<version>3.0.0.RELEASE</version>-->
+<!--		</dependency>-->
+
 		<!-- for bosh manifest yml parsing -->
 		<dependency>
 		    <groupId>com.fasterxml.jackson.dataformat</groupId>
@@ -116,20 +154,6 @@
 
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-test</artifactId>
-			<scope>test</scope>
-		</dependency>
-
-		<dependency>
-		    <groupId>org.easytesting</groupId>
-		    <artifactId>fest-assert</artifactId>
-		    <version>1.4</version>
-		    <scope>test</scope>
-		</dependency>
-		
-
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-configuration-processor</artifactId>
 			<optional>true</optional>
 		</dependency>
@@ -152,7 +176,7 @@
 		<dependency>
 			<groupId>io.github.openfeign</groupId>
 			<artifactId>feign-okhttp</artifactId>
-			<version>9.6.0</version>
+			<version>9.7.0</version>
 		</dependency>
 
 		<dependency>
@@ -172,7 +196,7 @@
 		<dependency>
 			<groupId>com.github.tomakehurst</groupId>
 			<artifactId>wiremock-standalone</artifactId>
-			<version>2.15.0</version>
+			<version>2.19.0</version>
 			<scope>test</scope>
 		</dependency>
 

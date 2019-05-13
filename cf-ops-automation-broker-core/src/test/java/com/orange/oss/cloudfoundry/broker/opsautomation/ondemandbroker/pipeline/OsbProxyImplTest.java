@@ -10,23 +10,28 @@ import feign.codec.DecodeException;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
-import org.springframework.cloud.servicebroker.model.*;
+import org.springframework.cloud.servicebroker.model.CloudFoundryContext;
+import org.springframework.cloud.servicebroker.model.Context;
+import org.springframework.cloud.servicebroker.model.binding.BindResource;
+import org.springframework.cloud.servicebroker.model.binding.CreateServiceInstanceAppBindingResponse;
+import org.springframework.cloud.servicebroker.model.binding.CreateServiceInstanceBindingRequest;
+import org.springframework.cloud.servicebroker.model.binding.DeleteServiceInstanceBindingRequest;
+import org.springframework.cloud.servicebroker.model.catalog.Catalog;
+import org.springframework.cloud.servicebroker.model.catalog.Plan;
+import org.springframework.cloud.servicebroker.model.catalog.ServiceDefinition;
+import org.springframework.cloud.servicebroker.model.instance.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
 import java.nio.charset.Charset;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
 import static java.util.Arrays.asList;
-import static org.fest.assertions.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.CoreMatchers.containsString;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.*;
-import static org.springframework.cloud.servicebroker.model.CloudFoundryContext.CLOUD_FOUNDRY_PLATFORM;
 
 /**
  * - construct OSB client: construct url from serviceInstanceId, and configured static pwd
@@ -78,123 +83,156 @@ public class OsbProxyImplTest {
 
     @Test
     public void maps_provision_request_to_1st_service_and_1st_plan() {
-        Plan plan = new Plan("plan_id", "plan_name", "plan_description", new HashMap<>());
-        Plan plan2 = new Plan("plan_id2", "plan_name2", "plan_description2", new HashMap<>());
-        ServiceDefinition serviceDefinition = new ServiceDefinition("service_id", "service_name", "service_description", true, asList(plan, plan2));
-        Plan plan3 = new Plan("plan_id3", "plan_name3", "plan_description3", new HashMap<>());
-        ServiceDefinition serviceDefinition2 = new ServiceDefinition("service_id2", "service_name2", "service_description3", true, Collections.singletonList(plan3));
-        Catalog catalog = new Catalog(Collections.singletonList(serviceDefinition));
+        Plan plan1 = Plan.builder().id("plan_id").name("plan_name").description("plan_description").metadata(new HashMap<>()).build();
+        Plan plan21 = Plan.builder().id("plan_id2").name("plan_name2").description("plan_description2").metadata(new HashMap<>()).build();
+        ServiceDefinition serviceDefinition1 =  ServiceDefinition.builder()
+                .id("service_id")
+                .name("service_name")
+                .description("service_description")
+                .bindable(true)
+                .plans(asList(plan1, plan21)).build();
+        Catalog catalog = Catalog.builder().serviceDefinitions(serviceDefinition1).build();
 
         HashMap<String, Object> parameters = new HashMap<>();
         parameters.put("keyspace_name", "foo");
-        CreateServiceInstanceRequest request = new CreateServiceInstanceRequest("coab-serviceid", "coab-planid", "orgguid", "spaceguid", parameters);
-        request.withServiceInstanceId("service-instance-id");
-        request.withApiInfoLocation("api-location");
-        request.withCfInstanceId("cf-instance-id");
-        request.withOriginatingIdentity(aContext());
+        CreateServiceInstanceRequest request = CreateServiceInstanceRequest.builder()
+                .serviceDefinitionId("service_id")
+                .planId("plan_id")
+                .parameters(parameters)
+                .serviceInstanceId("service-instance-id")
+                .context(CloudFoundryContext.builder()
+                        .organizationGuid("org_id")
+                        .spaceGuid("space_id")
+                        .build()
+                )
+                .parameters(parameters)
+                .apiInfoLocation("api-location")
+                .platformInstanceId("cf-instance-id")
+                .originatingIdentity(aContext())
+                .build();
         CreateServiceInstanceRequest mappedRequest = osbProxy.mapProvisionRequest(request, catalog);
 
-        assertThat(mappedRequest.getServiceDefinitionId()).isEqualTo("service_id");
-        assertThat(mappedRequest.getPlanId()).isEqualTo("plan_id");
-        assertThat(mappedRequest.getServiceInstanceId()).isEqualTo("service-instance-id");
         assertThat(mappedRequest.getApiInfoLocation()).isEqualTo("api-location");
-        assertThat(mappedRequest.getCfInstanceId()).isEqualTo("cf-instance-id");
+        assertThat(mappedRequest.getPlatformInstanceId()).isEqualTo("cf-instance-id");
         assertThat(mappedRequest.getOriginatingIdentity()).isEqualTo(aContext());
         assertThat(mappedRequest.getParameters()).isEqualTo(parameters);
     }
 
     @Test
     public void maps_bind_request_to_1st_service_and_1st_plan() {
-        Plan plan = new Plan("plan_id", "plan_name", "plan_description", new HashMap<>());
-        Plan plan2 = new Plan("plan_id2", "plan_name2", "plan_description2", new HashMap<>());
-        ServiceDefinition serviceDefinition = new ServiceDefinition("service_id", "service_name", "service_description", true, asList(plan, plan2));
-        Plan plan3 = new Plan("plan_id3", "plan_name3", "plan_description3", new HashMap<>());
-        ServiceDefinition serviceDefinition2 = new ServiceDefinition("service_id2", "service_name2", "service_description3", true, Collections.singletonList(plan3));
-        Catalog catalog = new Catalog(Collections.singletonList(serviceDefinition));
+        Plan plan1 = Plan.builder().id("plan_id").name("plan_name").description("plan_description").metadata(new HashMap<>()).build();
+        Plan plan21 = Plan.builder().id("plan_id2").name("plan_name2").description("plan_description2").metadata(new HashMap<>()).build();
+        ServiceDefinition serviceDefinition1 =  ServiceDefinition.builder()
+                .id("service_id")
+                .name("service_name")
+                .description("service_description")
+                .bindable(true)
+                .plans(asList(plan1, plan21)).build();
+        Catalog catalog = Catalog.builder().serviceDefinitions(serviceDefinition1).build();
+
 
         Map<String, Object> routeBindingParams= new HashMap<>();
         Map<String, Object> serviceBindingParams= new HashMap<>();
         serviceBindingParams.put("user-name", "myname");
-        BindResource bindResource = new BindResource("app_guid", null, routeBindingParams);
+        BindResource bindResource = BindResource.builder()
+                .appGuid("app_guid")
+                .route(null)
+                .properties(routeBindingParams)
+                .build();
 
-        Map<String, Object> cfContextProps = new HashMap<>();
-        cfContextProps.put("user_id", "a_user_guid");
-        cfContextProps.put("organization_guid", "org_guid");
-        cfContextProps.put("space_guid", "space_guid");
+        Context cfContext = CloudFoundryContext.builder()
+                .organizationGuid("org_guid")
+                .spaceGuid("space_guid")
+                .build();
 
-        Context cfContext = new Context(CLOUD_FOUNDRY_PLATFORM, cfContextProps);
-
-        CreateServiceInstanceBindingRequest request = new CreateServiceInstanceBindingRequest(
-                "coab-serviceid",
-                "coab-planid",
-                bindResource,
-                cfContext,
-                serviceBindingParams
-        );
-        request.withBindingId("service-instance-binding-id");
-        request.withServiceInstanceId("service-instance-id");
-        request.withApiInfoLocation("api-info");
-        request.withOriginatingIdentity(aContext());
-        request.withCfInstanceId("cf-instance-id");
+        CreateServiceInstanceBindingRequest request = CreateServiceInstanceBindingRequest.builder()
+                .serviceDefinitionId("coab-serviceid")
+                .planId("plan_id")
+                .bindResource(bindResource)
+                .context(cfContext)
+                .parameters(serviceBindingParams)
+                .bindingId("service-instance-binding-id")
+                .serviceInstanceId("service-instance-id")
+                .apiInfoLocation("api-info")
+                .originatingIdentity(aContext())
+                .platformInstanceId("cf-instance-id")
+                .serviceInstanceId("service-instance-id")
+                .build();
 
         CreateServiceInstanceBindingRequest mappedRequest = osbProxy.mapBindRequest(request, catalog);
 
         assertThat(mappedRequest.getBindingId()).isEqualTo("service-instance-binding-id");
         assertThat(mappedRequest.getServiceDefinitionId()).isEqualTo("service_id");
-        assertThat(mappedRequest.getPlanId()).isEqualTo("plan_id");
-        assertThat(mappedRequest.getServiceInstanceId()).isEqualTo("service-instance-id");
-        assertThat(mappedRequest.getApiInfoLocation()).isEqualTo("api-info");
-        assertThat(mappedRequest.getCfInstanceId()).isEqualTo("cf-instance-id");
         assertThat(mappedRequest.getOriginatingIdentity()).isEqualTo(aContext());
         assertThat(mappedRequest.getParameters()).isEqualTo(serviceBindingParams);
     }
 
     @Test
     public void maps_deprovision_request_to_1st_service_and_1st_plan() {
-        Plan plan = new Plan("plan_id", "plan_name", "plan_description", new HashMap<>());
-        Plan plan2 = new Plan("plan_id2", "plan_name2", "plan_description2", new HashMap<>());
-        ServiceDefinition serviceDefinition = new ServiceDefinition("service_id", "service_name", "service_description", true, asList(plan, plan2));
-        Plan plan3 = new Plan("plan_id3", "plan_name3", "plan_description3", new HashMap<>());
-        ServiceDefinition serviceDefinition2 = new ServiceDefinition("service_id2", "service_name2", "service_description3", true, Collections.singletonList(plan3));
-        Catalog catalog = new Catalog(Collections.singletonList(serviceDefinition));
+        Plan plan1 = Plan.builder().id("plan_id").name("plan_name").description("plan_description").metadata(new HashMap<>()).build();
+        Plan plan21 = Plan.builder().id("plan_id2").name("plan_name2").description("plan_description2").metadata(new HashMap<>()).build();
+        ServiceDefinition serviceDefinition1 =  ServiceDefinition.builder()
+                .id("service_id")
+                .name("service_name")
+                .description("service_description")
+                .bindable(true)
+                .plans(asList(plan1, plan21)).build();
+        Catalog catalog = Catalog.builder().serviceDefinitions(serviceDefinition1).build();
 
-        DeleteServiceInstanceRequest request = new DeleteServiceInstanceRequest("service-instance-id", "coab-serviceid", "coab-planid", serviceDefinition, true);
-        request.withApiInfoLocation("api-location");
-        request.withOriginatingIdentity(aContext());
-        request.withCfInstanceId("cf-instance-id");
+        // Given an incoming delete request
+        DeleteServiceInstanceRequest request = DeleteServiceInstanceRequest.builder()
+                .serviceInstanceId("instance_id")
+                .serviceDefinitionId("service_id")
+                .planId("plan_id")
+                .serviceDefinition(ServiceDefinition.builder().build())
+                .asyncAccepted(true)
+                .apiInfoLocation("api-location")
+                .platformInstanceId("cf-instance-id")
+                .originatingIdentity(aContext())
+                .build();
 
         DeleteServiceInstanceRequest mappedRequest = osbProxy.mapDeprovisionRequest(request, catalog);
 
         assertThat(mappedRequest.getServiceDefinitionId()).isEqualTo("service_id");
         assertThat(mappedRequest.getPlanId()).isEqualTo("plan_id");
-        assertThat(mappedRequest.getServiceInstanceId()).isEqualTo("service-instance-id");
+        assertThat(mappedRequest.getServiceInstanceId()).isEqualTo("instance_id");
         assertThat(mappedRequest.getApiInfoLocation()).isEqualTo("api-location");
-        assertThat(mappedRequest.getCfInstanceId()).isEqualTo("cf-instance-id");
+        assertThat(mappedRequest.getPlatformInstanceId()).isEqualTo("cf-instance-id");
         assertThat(mappedRequest.getOriginatingIdentity()).isEqualTo(aContext());
     }
 
     @Test
     public void maps_unbind_request_to_1st_service_and_1st_plan() {
-        Plan plan = new Plan("plan_id", "plan_name", "plan_description", new HashMap<>());
-        Plan plan2 = new Plan("plan_id2", "plan_name2", "plan_description2", new HashMap<>());
-        ServiceDefinition serviceDefinition = new ServiceDefinition("service_id", "service_name", "service_description", true, asList(plan, plan2));
-        Plan plan3 = new Plan("plan_id3", "plan_name3", "plan_description3", new HashMap<>());
-        ServiceDefinition serviceDefinition2 = new ServiceDefinition("service_id2", "service_name2", "service_description3", true, Collections.singletonList(plan3));
-        Catalog catalog = new Catalog(Collections.singletonList(serviceDefinition));
+        Plan plan1 = Plan.builder().id("plan_id").name("plan_name").description("plan_description").metadata(new HashMap<>()).build();
+        Plan plan21 = Plan.builder().id("plan_id2").name("plan_name2").description("plan_description2").metadata(new HashMap<>()).build();
+        ServiceDefinition serviceDefinition1 =  ServiceDefinition.builder()
+                .id("service_id")
+                .name("service_name")
+                .description("service_description")
+                .bindable(true)
+                .plans(asList(plan1, plan21)).build();
+        Catalog catalog = Catalog.builder().serviceDefinitions(serviceDefinition1).build();
 
-        DeleteServiceInstanceBindingRequest request = new DeleteServiceInstanceBindingRequest("service-instance-id", "service-binding-id","coab-serviceid", "coab-planid", serviceDefinition);
-        request.withApiInfoLocation("api-location");
-        request.withOriginatingIdentity(aContext());
-        request.withCfInstanceId("cf-instance-id");
+        // Given an incoming delete request
+        DeleteServiceInstanceBindingRequest request = DeleteServiceInstanceBindingRequest.builder()
+                .serviceInstanceId("instance_id")
+                .bindingId("service-binding-id")
+                .serviceDefinitionId("service_id")
+                .planId("plan_id")
+                .serviceDefinition(ServiceDefinition.builder().build())
+                .apiInfoLocation("api-location")
+                .platformInstanceId("cf-instance-id")
+                .originatingIdentity(aContext())
+                .build();
 
         DeleteServiceInstanceBindingRequest mappedRequest = osbProxy.mapUnbindRequest(request, catalog);
 
         assertThat(mappedRequest.getBindingId()).isEqualTo("service-binding-id");
         assertThat(mappedRequest.getServiceDefinitionId()).isEqualTo("service_id");
         assertThat(mappedRequest.getPlanId()).isEqualTo("plan_id");
-        assertThat(mappedRequest.getServiceInstanceId()).isEqualTo("service-instance-id");
+        assertThat(mappedRequest.getServiceInstanceId()).isEqualTo("instance_id");
         assertThat(mappedRequest.getApiInfoLocation()).isEqualTo("api-location");
-        assertThat(mappedRequest.getCfInstanceId()).isEqualTo("cf-instance-id");
+        assertThat(mappedRequest.getPlatformInstanceId()).isEqualTo("cf-instance-id");
         assertThat(mappedRequest.getOriginatingIdentity()).isEqualTo(aContext());
     }
 
@@ -215,16 +253,26 @@ public class OsbProxyImplTest {
 
     @Test
     public void delegates_provision_call() {
-        CreateServiceInstanceRequest request = new CreateServiceInstanceRequest("coab-serviceid", "coab-planid", "orgguid", "spaceguid", new HashMap<>());
-        request.withServiceInstanceId("service-instance-id");
-        request.withAsyncAccepted(true);
-        request.withApiInfoLocation("api-info");
-        request.withOriginatingIdentity(aContext());
+        //Given a parameter request
+        CreateServiceInstanceRequest request = CreateServiceInstanceRequest.builder()
+                .serviceDefinitionId("service_definition_id")
+                .planId("plan_id")
+                .serviceInstanceId("service-instance-guid")
+                .context(CloudFoundryContext.builder()
+                        .organizationGuid("org_id")
+                        .spaceGuid("space_id")
+                        .build()
+                )
+                .asyncAccepted(true)
+                .apiInfoLocation("api-info")
+                .originatingIdentity(aContext())
+                .build();
+
         ServiceInstanceServiceClient serviceInstanceServiceClient = mock(ServiceInstanceServiceClient.class);
         osbProxy.delegateProvision(request, serviceInstanceServiceClient);
 
         verify(serviceInstanceServiceClient).createServiceInstance(
-                "service-instance-id",
+                "service-instance-guid",
                 false, //for now OsbProxyImpl expects sync broker response
                 "api-info",
                 aContextOriginatingHeader(),
@@ -236,26 +284,30 @@ public class OsbProxyImplTest {
         Map<String, Object> routeBindingParams= new HashMap<>();
         Map<String, Object> serviceBindingParams= new HashMap<>();
         serviceBindingParams.put("user-name", "myname");
-        BindResource bindResource = new BindResource("app_guid", null, routeBindingParams);
+        BindResource bindResource = BindResource.builder()
+                .appGuid("app_guid")
+                .route(null)
+                .properties(routeBindingParams)
+                .build();
 
-        Map<String, Object> cfContextProps = new HashMap<>();
-        cfContextProps.put("user_id", "a_user_guid");
-        cfContextProps.put("organization_guid", "org_guid");
-        cfContextProps.put("space_guid", "space_guid");
+        Context cfContext = CloudFoundryContext.builder()
+                .organizationGuid("org_guid")
+                .spaceGuid("space_guid")
+                .build();
 
-        Context cfContext = new Context(CLOUD_FOUNDRY_PLATFORM, cfContextProps);
-
-        CreateServiceInstanceBindingRequest request = new CreateServiceInstanceBindingRequest(
-                "coab-serviceid",
-                "coab-planid",
-                bindResource,
-                cfContext,
-                serviceBindingParams
-        );
-        request.withBindingId("service-instance-binding-id");
-        request.withServiceInstanceId("service-instance-id");
-        request.withApiInfoLocation("api-info");
-        request.withOriginatingIdentity(aContext());
+        CreateServiceInstanceBindingRequest request = CreateServiceInstanceBindingRequest.builder()
+                .serviceDefinitionId("coab-serviceid")
+                .planId("coab-planid")
+                .bindResource(bindResource)
+                .context(cfContext)
+                .parameters(serviceBindingParams)
+                .bindingId("service-instance-binding-id")
+                .serviceInstanceId("service-instance-id")
+                .apiInfoLocation("api-info")
+                .originatingIdentity(aContext())
+                .platformInstanceId("cf-instance-id")
+                .serviceInstanceId("service-instance-id")
+                .build();
 
         ServiceInstanceBindingServiceClient serviceInstanceBindingServiceClient = mock(ServiceInstanceBindingServiceClient.class);
         //noinspection unchecked
@@ -264,6 +316,7 @@ public class OsbProxyImplTest {
         verify(serviceInstanceBindingServiceClient).createServiceInstanceBinding(
                 "service-instance-id",
                 "service-instance-binding-id",
+                false,
                 "api-info",
                 aContextOriginatingHeader(),
                 request);
@@ -273,9 +326,18 @@ public class OsbProxyImplTest {
     @Test
     public void delegates_deprovision_call() {
         ServiceDefinition serviceDefinition = aCatalog().getServiceDefinitions().get(0);
-        DeleteServiceInstanceRequest request = new DeleteServiceInstanceRequest("service-instance-id", "coab-serviceid", "coab-planid", serviceDefinition, true);
-        request.withApiInfoLocation("api-info");
-        request.withOriginatingIdentity(aContext());
+
+        DeleteServiceInstanceRequest request = DeleteServiceInstanceRequest.builder()
+                .serviceInstanceId("service-instance-id")
+                .serviceDefinitionId("coab-serviceid")
+                .planId("coab-planid")
+                .serviceDefinition(ServiceDefinition.builder().build())
+                .asyncAccepted(true)
+                .apiInfoLocation("api-info")
+                .platformInstanceId("cf-instance-id")
+                .originatingIdentity(aContext())
+                .build();
+
         ServiceInstanceServiceClient serviceInstanceServiceClient = mock(ServiceInstanceServiceClient.class);
         @SuppressWarnings("unused") ResponseEntity<DeleteServiceInstanceResponse> responseEntity = osbProxy.delegateDeprovision(request, serviceInstanceServiceClient);
 
@@ -291,11 +353,17 @@ public class OsbProxyImplTest {
     @Test
     public void delegates_unbind_call() {
         ServiceDefinition serviceDefinition = aCatalog().getServiceDefinitions().get(0);
-        DeleteServiceInstanceBindingRequest request = new DeleteServiceInstanceBindingRequest("service-instance-id", "service-binding-id","coab-serviceid", "coab-planid", serviceDefinition);
-        request.withApiInfoLocation("api-info");
-        request.withOriginatingIdentity(aContext());
-        request.withCfInstanceId("cf-instance-id");
-        
+        DeleteServiceInstanceBindingRequest request = DeleteServiceInstanceBindingRequest.builder()
+                .serviceInstanceId("service-instance-id")
+                .bindingId("service-binding-id")
+                .serviceDefinitionId("coab-serviceid")
+                .planId("coab-planid")
+                .serviceDefinition(ServiceDefinition.builder().build())
+                .apiInfoLocation("api-info")
+                .platformInstanceId("cf-instance-id")
+                .originatingIdentity(aContext())
+                .build();
+
         ServiceInstanceBindingServiceClient serviceInstanceBindingServiceClient = mock(ServiceInstanceBindingServiceClient.class);
         osbProxy.delegateUnbind(request, serviceInstanceBindingServiceClient);
 
@@ -304,6 +372,7 @@ public class OsbProxyImplTest {
                 "service-binding-id",
                 "coab-serviceid",
                 "coab-planid",
+                false,
                 "api-info",
                 aContextOriginatingHeader());
     }
@@ -314,10 +383,10 @@ public class OsbProxyImplTest {
     public void maps_successull_deprovision_response() {
         //Given
         GetLastServiceOperationResponse originalResponse = aPreviousOnGoingOperation();
-        DeleteServiceInstanceResponse deleteServiceInstanceResponse = new DeleteServiceInstanceResponse()
-                .withAsync(false);
-        DeleteServiceInstanceResponse delegatedResponse = new DeleteServiceInstanceResponse()
-                .withAsync(false);
+        DeleteServiceInstanceResponse deleteServiceInstanceResponse = DeleteServiceInstanceResponse.builder()
+                .async(false).build();
+        DeleteServiceInstanceResponse delegatedResponse = DeleteServiceInstanceResponse.builder()
+                .async(false).build();
         ResponseEntity<DeleteServiceInstanceResponse > delegatedResponseEnveloppe
                 = new ResponseEntity<>(delegatedResponse, HttpStatus.OK);
         FeignException provisionException = null;
@@ -379,9 +448,9 @@ public class OsbProxyImplTest {
     public void maps_successull_provision_response() {
         //Given
         GetLastServiceOperationResponse originalResponse = aPreviousOnGoingOperation();
-        CreateServiceInstanceResponse delegatedResponse = new CreateServiceInstanceResponse()
-                .withAsync(false)
-                .withDashboardUrl("https://a-inner-dashboard.com");
+        CreateServiceInstanceResponse delegatedResponse = CreateServiceInstanceResponse.builder()
+                .async(false)
+                .dashboardUrl("https://a-inner-dashboard.com").build();
         ResponseEntity<CreateServiceInstanceResponse> delegatedResponseEnveloppe
                 = new ResponseEntity<>(delegatedResponse, HttpStatus.CREATED);
         FeignException provisionException = null;
@@ -397,7 +466,6 @@ public class OsbProxyImplTest {
     @Test
     public void maps_successull_bind_response() {
         //Given
-        CreateServiceInstanceAppBindingResponse delegatedResponse = new CreateServiceInstanceAppBindingResponse();
         Map<String, Object> credentials = new HashMap<>();
         credentials.put("keyspaceName", "ks055d0899_018d_4841_ba66_2e4d4ce91f47");
         credentials.put("contact-points", "127.0.0.1");
@@ -405,8 +473,10 @@ public class OsbProxyImplTest {
         credentials.put("port", "9142");
         credentials.put("jdbcUrl", "jdbc:cassandra://127.0.0.1:9142/ks055d0899_018d_4841_ba66_2e4d4ce91f47");
         credentials.put("login", "rbbbbbbbb_ba66_4841_018d_2e4d4ce91f47");
-        delegatedResponse.withCredentials(credentials);
-        delegatedResponse.withBindingExisted(false);
+        CreateServiceInstanceAppBindingResponse delegatedResponse = CreateServiceInstanceAppBindingResponse.builder()
+                .credentials(credentials)
+                .bindingExisted(false)
+                .build();
 
         ResponseEntity<CreateServiceInstanceAppBindingResponse> delegatedResponseEnveloppe
                 = new ResponseEntity<>(delegatedResponse, HttpStatus.CREATED);
@@ -422,11 +492,12 @@ public class OsbProxyImplTest {
     @Test
     public void maps_already_existing_bind_response() {
         //Given
-        CreateServiceInstanceAppBindingResponse delegatedResponse = new CreateServiceInstanceAppBindingResponse();
         Map<String, Object> credentials = new HashMap<>();
         credentials.put("keyspaceName", "ks055d0899_018d_4841_ba66_2e4d4ce91f47");
-        delegatedResponse.withCredentials(credentials);
-        delegatedResponse.withBindingExisted(true);
+        CreateServiceInstanceAppBindingResponse delegatedResponse = CreateServiceInstanceAppBindingResponse.builder()
+                .credentials(credentials)
+                .bindingExisted(true)
+                .build();
 
         ResponseEntity<CreateServiceInstanceAppBindingResponse> delegatedResponseEnveloppe
                 = new ResponseEntity<>(delegatedResponse, HttpStatus.OK);
@@ -550,9 +621,9 @@ public class OsbProxyImplTest {
     public void maps_async_creation_response() {
         //Given
         GetLastServiceOperationResponse originalResponse = aPreviousOnGoingOperation();
-        CreateServiceInstanceResponse delegatedResponse = new CreateServiceInstanceResponse()
-                .withAsync(false)
-                .withDashboardUrl("https://a-inner-dashboard.com");
+        CreateServiceInstanceResponse delegatedResponse = CreateServiceInstanceResponse.builder()
+                .async(false)
+                .dashboardUrl("https://a-inner-dashboard.com").build();
         ResponseEntity<CreateServiceInstanceResponse> delegatedResponseEnveloppe
                 = new ResponseEntity<>(delegatedResponse, HttpStatus.ACCEPTED);
 
@@ -568,31 +639,27 @@ public class OsbProxyImplTest {
     }
 
     private Catalog aCatalog() {
-        Plan plan = new Plan("plan_id", "plan_name", "plan_description", new HashMap<>());
-        Plan plan2 = new Plan("plan_id2", "plan_name2", "plan_description2", new HashMap<>());
-        ServiceDefinition serviceDefinition = new ServiceDefinition("service_id", "service_name", "service_description", true, asList(plan, plan2));
-        Plan plan3 = new Plan("plan_id3", "plan_name3", "plan_description3", new HashMap<>());
-        ServiceDefinition serviceDefinition2 = new ServiceDefinition("service_id2", "service_name2", "service_description3", true, Collections.singletonList(plan3));
-        return new Catalog(Collections.singletonList(serviceDefinition));
+        return OsbBuilderHelper.aCatalog();
     }
 
     private Context aContext() {
-        Map<String, Object> properties = new HashMap<>();
-        properties.put(OsbConstants.ORIGINATING_USER_KEY, "user_guid");
-        properties.put(OsbConstants.ORIGINATING_EMAIL_KEY, "user_email");
-        return new Context(OsbConstants.ORIGINATING_CLOUDFOUNDRY_PLATFORM, properties);
+        return OsbBuilderHelper.aCfUserContext();
     }
 
     private GetLastServiceOperationResponse aPreviousOnGoingOperation() {
-        return new GetLastServiceOperationResponse()
-                    .withOperationState(OperationState.IN_PROGRESS)
-                    .withDescription(null);
+        return GetLastServiceOperationResponse.builder()
+                    .operationState(OperationState.IN_PROGRESS)
+                    .description(null)
+                .build();
     }
 
     private CreateServiceInstanceRequest aCreateServiceInstanceRequest() {
-        CreateServiceInstanceRequest request = new CreateServiceInstanceRequest("coab-serviceid", "coab-planid", "orgguid", "spaceguid", new HashMap<>());
-        request.withServiceInstanceId("service-instance-id");
-        return request;
+        return CreateServiceInstanceRequest.builder()
+        .serviceDefinitionId("coab-serviceid")
+                .planId("coab-planid")
+                .context(OsbBuilderHelper.aCfUserContext())
+                .serviceInstanceId("service-instance-id")
+                .build();
     }
 
 }

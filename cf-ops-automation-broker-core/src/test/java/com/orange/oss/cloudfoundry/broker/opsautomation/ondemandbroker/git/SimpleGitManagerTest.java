@@ -23,7 +23,7 @@ import java.util.Optional;
 import java.util.stream.StreamSupport;
 
 import static com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.GitIT.createDir;
-import static org.fest.assertions.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class SimpleGitManagerTest {
 

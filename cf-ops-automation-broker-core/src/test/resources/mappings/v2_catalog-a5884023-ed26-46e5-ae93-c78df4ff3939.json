@@ -1,5 +1,5 @@
 {
-  "id" : "a5884023-ed26-46e5-ae93-c78df4ff3939",
+  "id" : "95f21ddb-e1ab-4dd7-b426-ae64cc779dbc",
   "name" : "v2_catalog",
   "request" : {
     "url" : "/v2/catalog",
@@ -7,21 +7,20 @@
   },
   "response" : {
     "status" : 200,
-    "body" : "{\"services\":[{\"id\":\"ondemand-service\",\"name\":\"ondemand\",\"description\":\"A simple ondemand service broker implementation\",\"bindable\":true,\"plan_updateable\":false,\"plans\":[{\"id\":\"ondemand-plan\",\"name\":\"default\",\"description\":\"This is a default ondemand plan.  All services are created equally.\",\"metadata\":{\"costs\":[{\"amount\":{\"usd\":0.0},\"unit\":\"MONTHLY\"}],\"bullets\":[\"Dedicated ondemand server\",\"100 MB Storage (not enforced)\",\"40 concurrent connections (not enforced)\"]},\"free\":true}],\"tags\":[\"ondemand\",\"document\"],\"metadata\":{\"longDescription\":\"ondemand Service\",\"documentationUrl\":\"https://orange.com\",\"providerDisplayName\":\"Orange\",\"displayName\":\"ondemand\",\"imageUrl\":\"http://info.mongodb.com/rs/mongodb/images/MongoDB_Logo_Full.png\",\"supportUrl\":\"https://orange.com\"},\"requires\":[],\"dashboard_client\":null}]}",
+    "body" : "{\"services\":[{\"id\":\"service_id\",\"name\":\"service_name\",\"description\":\"service_description\",\"bindable\":true,\"plans\":[{\"id\":\"plan_id\",\"name\":\"plan_name\",\"description\":\"plan_description\",\"metadata\":{},\"free\":true},{\"id\":\"plan_id2\",\"name\":\"plan_name2\",\"description\":\"plan_description2\",\"metadata\":{},\"free\":true}]}]}",
     "headers" : {
+      "Set-Cookie" : "JSESSIONID=1D284F9ED3C083F89CAF4FBBC5F3ACBE; Path=/; HttpOnly",
       "X-Content-Type-Options" : "nosniff",
       "X-XSS-Protection" : "1; mode=block",
       "Cache-Control" : "no-cache, no-store, max-age=0, must-revalidate",
       "Pragma" : "no-cache",
       "Expires" : "0",
       "X-Frame-Options" : "DENY",
-      "Strict-Transport-Security" : "max-age=31536000 ; includeSubDomains",
-      "X-Application-Context" : "application:0",
       "Content-Type" : "application/json;charset=UTF-8",
-      "Date" : "Thu, 22 Mar 2018 16:55:41 GMT"
+      "Date" : "Wed, 19 Dec 2018 09:30:20 GMT"
     }
   },
-  "uuid" : "a5884023-ed26-46e5-ae93-c78df4ff3939",
+  "uuid" : "95f21ddb-e1ab-4dd7-b426-ae64cc779dbc",
   "persistent" : true,
-  "insertionIndex" : 7
+  "insertionIndex" : 12
 }

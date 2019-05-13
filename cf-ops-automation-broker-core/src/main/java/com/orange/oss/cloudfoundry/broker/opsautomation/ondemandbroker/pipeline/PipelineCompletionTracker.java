@@ -1,12 +1,19 @@
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline;
 
+import com.google.gson.ExclusionStrategy;
+import com.google.gson.FieldAttributes;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cloud.servicebroker.exception.ServiceBrokerException;
 import org.springframework.cloud.servicebroker.exception.ServiceInstanceDoesNotExistException;
-import org.springframework.cloud.servicebroker.model.*;
+import org.springframework.cloud.servicebroker.model.ServiceBrokerRequest;
+import org.springframework.cloud.servicebroker.model.binding.CreateServiceInstanceBindingRequest;
+import org.springframework.cloud.servicebroker.model.binding.CreateServiceInstanceBindingResponse;
+import org.springframework.cloud.servicebroker.model.binding.DeleteServiceInstanceBindingRequest;
+import org.springframework.cloud.servicebroker.model.catalog.ServiceDefinition;
+import org.springframework.cloud.servicebroker.model.instance.*;
 
 import java.lang.reflect.Modifier;
 import java.nio.file.Path;
@@ -38,10 +45,25 @@ public class PipelineCompletionTracker {
 
     private Gson buildCustomGson(GsonBuilder gsonBuilder) {
         // By default both static and transient fields are not serialized.
-        // We need transient fields from CreateServiceInstanceRequest to be serialized so we override this default
+        // We need transient some fields from CreateServiceInstanceRequest to be serialized so we override this default
         // to only exclude static fields (such as constants)
         return gsonBuilder
                 .excludeFieldsWithModifiers(Modifier.STATIC)
+                .addSerializationExclusionStrategy(new ExclusionStrategy() {
+                    @Override
+                    public boolean shouldSkipField(FieldAttributes f) {
+                        //Using class type to fail fast on SCOSB refactorings
+                        if (ServiceDefinition.class.equals(f.getDeclaredClass())) {
+                            return true;
+                        }
+                        return false;
+                    }
+
+                    @Override
+                    public boolean shouldSkipClass(Class<?> clazz) {
+                        return false;
+                    }
+                })
                 .create();
     }
 
@@ -63,44 +85,48 @@ public class PipelineCompletionTracker {
 
 
     GetLastServiceOperationResponse buildResponse(String classFullyQualifiedName, boolean isManifestFilePresent, boolean isRequestTimedOut, long displayedElapsedTimeSecs, GetLastServiceOperationRequest pollingRequest, ServiceBrokerRequest storedRequest) {
-        GetLastServiceOperationResponse response = new GetLastServiceOperationResponse();
+        GetLastServiceOperationResponse.GetLastServiceOperationResponseBuilder responseBuilder = GetLastServiceOperationResponse.builder();
+        GetLastServiceOperationResponse response = null;
             switch (classFullyQualifiedName) {
                 case DeploymentConstants.OSB_CREATE_REQUEST_CLASS_NAME:
                     if (isManifestFilePresent) {
-                        response.withOperationState(OperationState.SUCCEEDED);
-                        response.withDescription("Creation succeeded");
+                        responseBuilder.operationState(OperationState.SUCCEEDED);
+                        responseBuilder.description("Creation succeeded");
                         if (osbProxy != null) {
                             try {
-                                response = osbProxy.delegateProvision(pollingRequest, (CreateServiceInstanceRequest) storedRequest, response);
+                                response = osbProxy.delegateProvision(pollingRequest, (CreateServiceInstanceRequest) storedRequest, responseBuilder.build());
                             } catch (Exception e) {
                                 logger.warn("Caught during provision delegation. Hint: if meeting 404 broker endpoint, check configuration mismatch between broker url endpoint property, and deployment bosh template", e);
-                                response.withOperationState(OperationState.FAILED);
-                                response.withDescription(null);
+                                responseBuilder.operationState(OperationState.FAILED);
+                                responseBuilder.description(null);
                             }
                         }
                     } else {
                         if (isRequestTimedOut) {
-                            response.withOperationState(OperationState.FAILED);
-                            response.withDescription("Execution timeout after " + displayedElapsedTimeSecs + "s max is " + maxExecutionDurationSeconds);
+                            responseBuilder.operationState(OperationState.FAILED);
+                            responseBuilder.description("Execution timeout after " + displayedElapsedTimeSecs + "s max is " + maxExecutionDurationSeconds);
                         } else {
-                            response.withOperationState(OperationState.IN_PROGRESS);
+                            responseBuilder.operationState(OperationState.IN_PROGRESS);
                         }
                     }
                     break;
 
                 case DeploymentConstants.OSB_DELETE_REQUEST_CLASS_NAME:
-                    response.withDeleteOperation(true);
+                    responseBuilder.deleteOperation(true);
                     if (osbProxy != null) {
                         try {
-                            response = osbProxy.delegateDeprovision(pollingRequest, (DeleteServiceInstanceRequest) storedRequest, response);
+                            response = osbProxy.delegateDeprovision(pollingRequest, (DeleteServiceInstanceRequest) storedRequest, responseBuilder.build());
                         } catch (Exception e) {
                             logger.info("Unable to delegate delete to enclosed broker, maybe absent/down. Reporting as GONE. Caught:" + e, e);
-                            response.withOperationState(OperationState.SUCCEEDED);
+                            responseBuilder.operationState(OperationState.SUCCEEDED);
                         }
                     }
                     break;
                 default:
                     throw new RuntimeException("Get Deployment Execution status fails (unhandled request class)");
+            }
+            if (response == null) {
+                response = responseBuilder.build();
             }
         return response;
     }

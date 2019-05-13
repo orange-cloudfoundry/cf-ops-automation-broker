@@ -1,3 +1,46 @@
+Spring bump TODOs:
+
+- Update broker configurations (following release notes) + check smoke tests become green
+   - Q: what's the impact for operators ?
+   - Q: what's the impact for service authors ?
+
+- FIX mis behaving OsbServiceConfiguration.failFastOnMissingCatalogWithConditional() and its usage into BoshServiceProvisionningTest and OsbClientTest. Alternatives:
+   - require a bean of type catalog: 
+      - org.springframework.beans.factory.BeanCurrentlyInCreationException: Error creating bean with name 'failFastOnMissingCatalogInConfiguration': Requested bean is currently in creation: Is there an unresolvable circular reference?    
+          - conflicts with OSB lib ?
+          
+```
+          	@Bean
+          	@ConditionalOnMissingBean(Catalog.class)
+          	@ConditionalOnProperty(prefix = "spring.cloud.openservicebroker.catalog.services[0]", name = "id")
+          	public Catalog catalog() {
+          		return this.serviceBrokerProperties.getCatalog().toModel();
+          	}
+```
+   
+- refactor more unit tests to use OsbBuildHelper
+- review in detail assert of BoshProcessorTest: with/without context test cases
+
+- unit tests spring security config (check actuactor env is not + update actuator spring security config
+- test actuator config: service broker user should not be able to use actuator /env to inspect git properties       
+    
+Pb: Need to debug BoshBrokerApplication for tests. Requires git properties to start up
+ Solutions: 
+    - transiently copy git properties into test as application.properties or application-{profile].properties
+    - pass as command line arguments
+            https://docs.spring.io/spring-boot/docs/2.0.7.RELEASE/reference/htmlsingle/#boot-features-external-config-application-property-files 
+         pb: properties miss prefix, and could not find a way to insert this prefix.
+
+```
+java -jar myproject.jar --spring.config.name=myproject
+
+The following example shows how to specify two locations:
+
+$ java -jar myproject.jar --spring.config.location=classpath:/default.properties,classpath:/override.properties
+```      
+            
+------------------------------
+
 Git clone optimizations: 
 - avoid two checkouts during clone, by using the --branch argument 
 
@@ -340,11 +383,40 @@ java.lang.NullPointerException: null
     - Use javax bean validation 2.0 in VarsFilesYmlFormatter for validating maps  
 - Bump to spring cloud service broker 2.0
 - Upgrade to mockito 2
+    - https://asolntsev.github.io/en/2016/10/11/mockito-2.1/
+    - https://proandroiddev.com/mockito-2-x-migration-session-recording-droidcon-uk-2018-ba70619f3811
+    - https://github.com/mockito/mockito/wiki/What%27s-new-in-Mockito-2#some-useful-regular-expressions-for-migration-with-intellij-and-eclipse
 - Upgrade to junit5 to benefit from nested junit classes as well as descrptive names https://junit.org/junit5/docs/5.0.1/user-guide/
+   - https://junit.org/junit5/docs/current/user-guide/#migrating-from-junit4 
    - https://medium.com/@dSebastien/using-junit-5-with-spring-boot-2-kotlin-and-mockito-d5aea5b0c668
    - https://github.com/mockito/mockito/issues/445
    - https://github.com/mockito/mockito/issues/1348
 
+
+--
+
+Include code coverage into ci
+
+workflow: circle runs tests and collects coverage (using ). Uploads then it to codecov.io authenticated by its token obtained CODECOV_TOKEN 
+
+Requirements: pom.xml has cobertura as a plugin + goal "cobertura:cobertura" is included into the ci 
+    cobertura:cobertura	Yes	Instrument the compiled classes, run the unit tests and generate a Cobertura report.
+
+http://www.mojohaus.org/cobertura-maven-plugin/plugin-info.html
+
+https://github.com/codecov/example-java-maven
+
+https://www.baeldung.com/cobertura
+Cobertura is a great yet simple code coverage tool, but not actively maintained, as it is currently outclassed by newer and more powerful tools like JaCoCo.
+
+approx 30 to 100% slower tests => ok to run on circle on PRs
+https://stackoverflow.com/questions/23827918/whats-the-performance-cost-of-using-cobertura-to-create-system-test-coverage-re
+https://codecov.io/site/security
+
+=> check usage on other major java projects, got inspired for now from  pr reports such as https://github.com/spring-cloud/spring-cloud-open-service-broker/pull/140
+
+
+---
 
 - future bind request mapping improvements
    - factor out plan mapping into a method and then a bean 

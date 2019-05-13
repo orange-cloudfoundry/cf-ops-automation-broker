@@ -1,0 +1,35 @@
+# Sample catalofg yml configuration file.
+# Refer to OSB lib for full sample
+#
+# Used by BoshServiceProvisionningTest
+#
+#Note: this catalog currently needs to be in sync with service definition id and plan id used in OsbBuilderHelper and its clients.
+
+spring:
+  cloud:
+    openservicebroker:
+      catalog:
+        services:
+          - id: service_definition_id
+            name: cassandra-ondemand
+            description: On demand cassandra dedicated clusters
+            bindable: true
+            metadata:
+              displayName: ondemand
+              imageUrl: "https://orange.com/image.png"
+              longDescription: "A dedicated on-demand cassandra cluster"
+              providerDisplayName: "Orange"
+              documentationUrl: "https://orange.com/doc"
+              supportUrl: "https://orange.com/support"
+            requires:
+              - syslog_drain
+              - route_forwarding
+            tags:
+              - ondemand
+              - document
+            plans:
+                - id: plan_id # mandatory field
+                  name: default # mandatory field; defaults to default
+                  description: "This is a default ondemand plan.  All services are created equally." # mandatory field
+
+

@@ -4,9 +4,7 @@ import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processor
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.ProcessorChain;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.cloud.servicebroker.model.CreateServiceInstanceBindingRequest;
-import org.springframework.cloud.servicebroker.model.CreateServiceInstanceBindingResponse;
-import org.springframework.cloud.servicebroker.model.DeleteServiceInstanceBindingRequest;
+import org.springframework.cloud.servicebroker.model.binding.*;
 import org.springframework.cloud.servicebroker.service.ServiceInstanceBindingService;
 import org.springframework.stereotype.Service;
 
@@ -46,7 +44,7 @@ public class ProcessorChainServiceInstanceBindingService implements ServiceInsta
             if (ctx.contextKeys.get(CREATE_SERVICE_INSTANCE_BINDING_RESPONSE) instanceof CreateServiceInstanceBindingResponse) {
                 response = (CreateServiceInstanceBindingResponse) ctx.contextKeys.get(CREATE_SERVICE_INSTANCE_BINDING_RESPONSE);
             } else {
-                response = new CreateServiceInstanceBindingResponse();
+                response = CreateServiceInstanceAppBindingResponse.builder().build();
             }
             return response;
         } catch (RuntimeException e) {
@@ -57,7 +55,7 @@ public class ProcessorChainServiceInstanceBindingService implements ServiceInsta
     }
 
     @Override
-    public void deleteServiceInstanceBinding(DeleteServiceInstanceBindingRequest request) {
+    public DeleteServiceInstanceBindingResponse deleteServiceInstanceBinding(DeleteServiceInstanceBindingRequest request) {
         try {
             Context ctx= new Context();
             ctx.contextKeys.put(DELETE_SERVICE_INSTANCE_BINDING_REQUEST, request);
@@ -66,6 +64,7 @@ public class ProcessorChainServiceInstanceBindingService implements ServiceInsta
             logger.info("Unable to delete service binding with request " + request + ", caught " + e, e);
             throw processInternalException(e);
         }
+        return DeleteServiceInstanceBindingResponse.builder().async(false).build();
     }
 
 

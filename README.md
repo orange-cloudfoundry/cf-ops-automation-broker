@@ -51,7 +51,44 @@ Deploy the broker as a CF app:
 
 ### Configuring the service broker catalog
 
-Use `CATALOG_YML` environment variable to set catalog config in a YAML format. See [catalog.yml](cf-ops-automation-sample-broker/catalog.yml) for a sample YML file which corresponds to the [Catalog bean](https://github.com/spring-cloud/spring-cloud-open-service-broker/blob/v1.0.2.RELEASE/src/main/java/org/springframework/cloud/servicebroker/model/Catalog.java).
+Use `spring.cloud.openservicebroker.catalog` environment variable to set catalog config in a YAML format. See [spring-cloud-open-service-broker](https://docs.spring.io/spring-cloud-open-service-broker/docs/current/reference/html5/#_providing_a_catalog_using_properties) for a sample YML and raw properties configuration
+
+### Troubleshooting COAB
+
+#### Spring boot debug mode
+
+Enable [springboot debug/trace mode](https://docs.spring.io/spring-boot/docs/current/reference/html/boot-features-logging.html#boot-features-logging-console-output) to diagnose beans configuration. When running COAB as a cf app, use the 
+commands below to turn on spring boot debug mode. 
+
+
+```bash
+cf set-env my-app DEBUG true
+```
+
+and when finished
+
+```bash
+cf unset-env my-app DEBUG true
+```
+
+#### Increase logging levels
+
+Increase verbosity for COAB classes:
+- default levels are in [cf-ops-automation-bosh-broker/src/main/resources/application.yml](cf-ops-automation-bosh-broker/src/main/resources/application.yml)
+- see some frequently used levels in [cf-ops-automation-bosh-broker/src/test/resources/application.properties](cf-ops-automation-bosh-broker/src/test/resources/application.properties) and [cf-ops-automation-broker-core/src/test/resources/application.yml](cf-ops-automation-broker-core/src/test/resources/application.yml) 
+
+#### Expose more spring actuator endpoints
+
+By default, COAB only exposed the health and info endpoints and make them accessible without authentication.
+
+For debug purposes only, expose all actuator endpoints which are disabled by default, see related [spring manual](https://docs.spring.io/spring-boot/docs/current/reference/html/production-ready-endpoints.html#production-ready-endpoints-exposing-endpoints) They currently require broker basic auth.
+
+```yml
+management.endpoints.web.exposure.include: "*"
+```
+
+See also, associated [actuator endpoints API doc](https://docs.spring.io/spring-boot/docs/current/actuator-api/html/)
+
 
 ## Authoring a new COAB-based service
 
@@ -129,48 +166,4 @@ Note: for security reasons, input validation is applied on the name and value of
 
 ## Contributing
 
- ### Releasing
-
-Prereqs: checkout the branch to release, and make sure it is up-to-date w.r.t. the github remote.
- 
-Releasing is made using [maven release plugin](http://maven.apache.org/maven-release/maven-release-plugin/) as follows :
- 
- ```shell
- 
- $ mvn release:prepare --batch-mode -Dtag={your git tag} -DreleaseVersion={release version to be set} -DdevelopmentVersion={next snapshot version to be set}
- 
- # ex : mvn release:prepare --batch-mode -Dtag=v0.21.0 -DreleaseVersion=0.21.0 -DdevelopmentVersion=0.22.0-SNAPSHOT
- 
- ```
- 
- Circle CI build will proceed, and will trigger the execution of `mvn release:perform`, and upload artifacts to github. For further details, see [release:prepare goals](http://maven.apache.org/maven-release/maven-release-plugin/prepare-mojo.html)
-
-Following the release:
-- edit the release notes in github
-- clean up your local workspace using `mvn release:clean`
-
-In case of issues, try:
-* `mvn release:rollback` (which creates a new commit reverting changes)
-    * possibly revert the commits in git (`git reset --hard commitid`), 
-* clean up the git tag `git tag -d vXX && git push --delete origin vXX`, 
-* `mvn release:clean`
-* fix the root cause and retry.
-   * possibly resume circle ci workflow from failed step (from the workflow page)
- 
-### Releasing a bug fix version
-
-Say you have a bug in production against version 0.25.0 and need to create a bug fix version 0.25.1 without waiting for the next major(0.27.0), i.e. you need to create a 0.25.1 version out of 0.25.0
-
-```sh
-git checkout 0.25.0
-git checkout -b 0.25.x
-mvn release:update-versions --batch-mode -DdevelopmentVersion=0.25.1-SNAPSHOT 
-git commit -am "prepare for poms 0.25.1-SNAPSHOT"
-#add your fix or cherry pick it
-#commit & push
-mvn release:prepare --batch-mode -Dtag=0.25.1 -DreleaseVersion=0.25.1 -DdevelopmentVersion=0.25.2-SNAPSHOT
-```
-
-Then follow the same steps as for a normal release, picking up circle-ci remaining release part.
-
-
+See [CONTRIBUTING.md](CONTRIBUTING.md) document

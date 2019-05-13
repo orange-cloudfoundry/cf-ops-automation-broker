@@ -17,18 +17,27 @@
 
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.osbclient;
 
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.core.Version;
+import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonPOJOBuilder;
+import com.fasterxml.jackson.databind.deser.ValueInstantiator;
+import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.google.gson.Gson;
 import feign.Logger;
 import feign.okhttp.OkHttpClient;
 import feign.slf4j.Slf4jLogger;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cloud.netflix.feign.FeignClientsConfiguration;
-import org.springframework.cloud.servicebroker.model.CreateServiceInstanceResponse;
-import org.springframework.cloud.servicebroker.model.DeleteServiceInstanceResponse;
-import org.springframework.cloud.servicebroker.model.UpdateServiceInstanceResponse;
+import org.springframework.cloud.openfeign.FeignClientsConfiguration;
+import org.springframework.cloud.servicebroker.model.catalog.Catalog;
+import org.springframework.cloud.servicebroker.model.instance.CreateServiceInstanceResponse;
+import org.springframework.cloud.servicebroker.model.instance.DeleteServiceInstanceResponse;
+import org.springframework.cloud.servicebroker.model.instance.UpdateServiceInstanceResponse;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
@@ -100,30 +109,6 @@ public class OsbClientFeignConfig {
         return converter;
     }
 
-    /**
-     * Turn on reading enums from string to deserialize OSB Pojo enums
-     */
-    @Autowired
-    public void configureJacksonEnumDeserialization(ObjectMapper jackson2ObjectMapper) {
-        jackson2ObjectMapper.enable(DeserializationFeature.READ_ENUMS_USING_TO_STRING);
-    }
-
-    abstract class CreateServiceInstanceResponseMixIn {
-        @JsonProperty("operation") abstract CreateServiceInstanceResponse withOperation(final String operation);
-    }
-    abstract class DeleteServiceInstanceResponseMixIn {
-        @JsonProperty("operation") abstract DeleteServiceInstanceResponse withOperation(final String operation);
-    }
-    abstract class UpdateServiceInstanceResponseMixIn {
-        @JsonProperty("operation") abstract UpdateServiceInstanceResponse withOperation(final String operation);
-    }
-
-    @Autowired
-    public void configureJacksonOsbResponseInheritanceMapping(ObjectMapper jackson2ObjectMapper) {
-        jackson2ObjectMapper.addMixIn(CreateServiceInstanceResponse.class, CreateServiceInstanceResponseMixIn.class);
-        jackson2ObjectMapper.addMixIn(UpdateServiceInstanceResponse.class, UpdateServiceInstanceResponseMixIn.class);
-        jackson2ObjectMapper.addMixIn(DeleteServiceInstanceResponse.class, DeleteServiceInstanceResponseMixIn.class);
-    }
 
     @Bean
     OkHttpClient customFeignOkHttpClient(okhttp3.OkHttpClient customOkHttpClient) {

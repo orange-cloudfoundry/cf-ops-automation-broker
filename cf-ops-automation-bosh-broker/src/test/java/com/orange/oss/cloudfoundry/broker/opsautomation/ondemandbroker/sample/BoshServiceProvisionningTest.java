@@ -18,52 +18,49 @@ import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.Context;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.terraform.TerraformModuleHelper;
 import io.restassured.RestAssured;
+import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpStatus;
 import org.eclipse.jgit.api.AddCommand;
 import org.eclipse.jgit.api.Git;
-import org.fest.assertions.Assertions;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.*;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.context.embedded.LocalServerPort;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.cloud.servicebroker.model.*;
+import org.springframework.boot.web.server.LocalServerPort;
+import org.springframework.cloud.servicebroker.model.CloudFoundryContext;
+import org.springframework.cloud.servicebroker.model.binding.CreateServiceInstanceAppBindingResponse;
+import org.springframework.cloud.servicebroker.model.binding.CreateServiceInstanceBindingRequest;
+import org.springframework.cloud.servicebroker.model.catalog.Catalog;
+import org.springframework.cloud.servicebroker.model.catalog.Plan;
+import org.springframework.cloud.servicebroker.model.catalog.ServiceDefinition;
+import org.springframework.cloud.servicebroker.model.instance.CreateServiceInstanceRequest;
+import org.springframework.cloud.servicebroker.model.instance.CreateServiceInstanceResponse;
+import org.springframework.cloud.servicebroker.model.instance.DeleteServiceInstanceResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.Writer;
+import java.io.*;
 import java.nio.file.FileVisitOption;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.EnumSet;
-import java.util.HashMap;
 import java.util.Map;
 
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
 import static com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.GitServer.NO_OP_INITIALIZER;
-import static com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.OsbBuilderHelper.aBindingRequest;
-import static com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.OsbBuilderHelper.aCfUserContext;
+import static com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.OsbBuilderHelper.*;
 import static com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.sample.BoshBrokerApplication.SECRETS_REPOSITORY_ALIAS_NAME;
-import static com.orange.oss.ondemandbroker.ProcessorChainServiceInstanceService.OSB_PROFILE_ORGANIZATION_GUID;
-import static com.orange.oss.ondemandbroker.ProcessorChainServiceInstanceService.OSB_PROFILE_SPACE_GUID;
 import static io.restassured.RestAssured.basic;
 import static io.restassured.RestAssured.given;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.Matchers.containsString;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
-import static org.springframework.cloud.servicebroker.model.CloudFoundryContext.CLOUD_FOUNDRY_PLATFORM;
 import static org.springframework.http.HttpStatus.ACCEPTED;
 import static org.springframework.http.HttpStatus.CREATED;
+
 
 
 /**
@@ -73,8 +70,29 @@ import static org.springframework.http.HttpStatus.CREATED;
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 public class BoshServiceProvisionningTest {
 
-    private static final String SERVICE_DEFINITION_ID = "cassandra-ondemand-service";
-    private static final String SERVICE_PLAN_ID = "cassandra-ondemand-plan";
+
+    @BeforeClass
+    public static void prepare_CONFIG_YML_env_var() throws Exception {
+
+        InputStream resourceAsStream = BoshServiceProvisionningTest.class.getResourceAsStream("/catalog.yml");
+        assertThat(resourceAsStream)
+                .describedAs("expecting catalog.yml in classpath")
+                .isNotNull();
+        try (Reader dataFileReader = new InputStreamReader(resourceAsStream)) {
+            String CATALOG_YML = IOUtils.toString(dataFileReader);
+            System.setProperty("CATALOG_YML", CATALOG_YML);
+            assertThat(System.getProperty("CATALOG_YML")).isNotEmpty();
+        }
+    }
+
+    @After
+    public void after() {
+        System.clearProperty("CATALOG_YML");
+        assertThat(System.getProperty("CATALOG_YML")).isNull();
+    }
+
+
+
     /**
      * Define an environment variable to turn on wiremock recording.
      * Set the url of the broker forward requests to (e.g. "https://cassandra-broker.mydomain.com"
@@ -358,12 +376,20 @@ public class BoshServiceProvisionningTest {
     }
 
     private void create_service_binding() {
-        CreateServiceInstanceBindingRequest serviceInstanceBindingRequest = aBindingRequest(SERVICE_INSTANCE_ID)
-                .withBindingId(SERVICE_BINDING_INSTANCE_ID);
+
+// Consider alternatives to wire mock recordings:
+//        wireMockRule.stubFor(get(urlEqualTo("/v2/service_instances/" + SERVICE_INSTANCE_ID + "/service_bindings/" + SERVICE_BINDING_INSTANCE_ID))
+//                .willReturn(aResponse()
+//                .withBody("")
+//                .withStatus(200)));
+
+        CreateServiceInstanceBindingRequest serviceInstanceBindingRequest = aBindingRequest(SERVICE_INSTANCE_ID);
+        serviceInstanceBindingRequest.setBindingId(SERVICE_BINDING_INSTANCE_ID);
 
         ResponseEntity<CreateServiceInstanceAppBindingResponse> bindResponse = serviceInstanceBindingService.createServiceInstanceBinding(
                 SERVICE_INSTANCE_ID,
                 SERVICE_BINDING_INSTANCE_ID,
+                false,
                 "api-info",
                 osbProxy.buildOriginatingIdentityHeader(aCfUserContext()),
                 serviceInstanceBindingRequest);
@@ -379,14 +405,15 @@ public class BoshServiceProvisionningTest {
                 SERVICE_BINDING_INSTANCE_ID,
                 SERVICE_DEFINITION_ID,
                 SERVICE_PLAN_ID,
+                false,
                 "api-info",
                 osbProxy.buildOriginatingIdentityHeader(aCfUserContext()));
     }
 
     private String create_async_service_instance_using_osb_client() {
 
-        CreateServiceInstanceRequest createServiceInstanceRequest = aCreateServiceInstanceRequest()
-                .withServiceInstanceId(SERVICE_INSTANCE_ID);
+        CreateServiceInstanceRequest createServiceInstanceRequest = aCreateServiceInstanceRequest();
+                createServiceInstanceRequest.setServiceInstanceId(SERVICE_INSTANCE_ID);
         ResponseEntity<CreateServiceInstanceResponse> createResponse = serviceInstanceService.createServiceInstance(
                 SERVICE_INSTANCE_ID,
                 true,
@@ -401,11 +428,11 @@ public class BoshServiceProvisionningTest {
     public void exposes_catalog() {
         Catalog catalog = catalogServiceClient.getCatalog();
         assertThat(catalog.getServiceDefinitions()).isNotEmpty();
-        Assertions.assertThat(catalog).isNotNull();
+        assertThat(catalog).isNotNull();
         ServiceDefinition serviceDefinition = catalog.getServiceDefinitions().get(0);
-        Assertions.assertThat(serviceDefinition).isNotNull();
+        assertThat(serviceDefinition).isNotNull();
         Plan defaultPlan = serviceDefinition.getPlans().get(0);
-        Assertions.assertThat(defaultPlan).isNotNull();
+        assertThat(defaultPlan).isNotNull();
     }
 
     public void polls_last_operation(final String operation, int expectedStatusCode, String firstExpectedKeyword, String secondExpectedKeyword) {
@@ -448,26 +475,16 @@ public class BoshServiceProvisionningTest {
     }
 
     private CreateServiceInstanceRequest aCreateServiceInstanceRequest() {
-
-        CreateServiceInstanceRequest request = new CreateServiceInstanceRequest(SERVICE_DEFINITION_ID,
-                SERVICE_PLAN_ID,
-                "org_id",
-                "space_id",
-                aCfOsbContext(),
-                new HashMap<>()
-        );
-        request.withServiceInstanceId(SERVICE_INSTANCE_ID);
-        return request;
-    }
-
-    private org.springframework.cloud.servicebroker.model.Context aCfOsbContext() {
-        Map<String, Object> contextProperties = new HashMap<>();
-        contextProperties.put(OSB_PROFILE_ORGANIZATION_GUID, "org_id");
-        contextProperties.put(OSB_PROFILE_SPACE_GUID, "space_id");
-        return new org.springframework.cloud.servicebroker.model.Context(
-                CLOUD_FOUNDRY_PLATFORM,
-                contextProperties
-        );
+        return CreateServiceInstanceRequest.builder()
+                .serviceDefinitionId(SERVICE_DEFINITION_ID)
+                .planId(SERVICE_PLAN_ID)
+                .serviceInstanceId(SERVICE_INSTANCE_ID)
+                .context(CloudFoundryContext.builder()
+                        .organizationGuid("org_id")
+                        .spaceGuid("space_id")
+                        .build()
+                )
+                .build();
     }
 
 }

@@ -36,6 +36,9 @@ jobs:
           path: ./artefacts
       - store_test_results:
           path: ~/junit
+      # run whitesource security scans on the built artefacts
+      - run: ./whitesource-scan.sh -apiKey $WHITESOURCE_API_KEY -c whitesource_config.properties -project circle-ci_test -d ~/
+      #- run: bash <(curl -s -L https://github.com/whitesource/unified-agent-distribution/raw/master/standAlone/wss_agent.sh) -apiKey $WHITESOURCE_API_KEY -c whitesource_config.properties -project circle-ci_test -d ~/
   build_n_deploy:
     working_directory: ~/cf-ops-automation-broker
     docker:

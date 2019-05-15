@@ -4,9 +4,7 @@ import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processor
 import org.apache.commons.lang.builder.ToStringBuilder;
 import org.eclipse.jgit.api.*;
 import org.eclipse.jgit.api.errors.GitAPIException;
-import org.eclipse.jgit.lib.Config;
-import org.eclipse.jgit.lib.Ref;
-import org.eclipse.jgit.lib.StoredConfig;
+import org.eclipse.jgit.lib.*;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.submodule.SubmoduleStatus;
 import org.eclipse.jgit.transport.PushResult;
@@ -326,9 +324,14 @@ public class SimpleGitManager implements GitManager {
                 RevCommit revCommit = commitC.call();
                 logger.info(prefixLog("commited files in " + revCommit.toString()));
 
+            } else {
+                logger.info(prefixLog("No changes to commit."));
+            }
+
+            if (hasPendingCommits(git, ctx)) {
                 pushCommits(git, ctx);
             } else {
-                logger.info(prefixLog("No changes to commit, skipping push"));
+                logger.info(prefixLog("No pending commit, skipping push."));
             }
         } catch (Exception e) {
             logger.warn(prefixLog("caught ") + e, e);
@@ -341,7 +344,7 @@ public class SimpleGitManager implements GitManager {
 
     }
 
-    private void stageMissingFilesExcludingSubModules(Context ctx, Git git, Set<String> missing) throws GitAPIException {
+     private void stageMissingFilesExcludingSubModules(Context ctx, Git git, Set<String> missing) throws GitAPIException {
         @SuppressWarnings("unchecked")
         List<String> subModulesList = (List<String>) ctx.contextKeys.get(repoAliasName + PRIVATE_SUBMODULES_LIST);
         for (String missingFilePath : missing) {
@@ -359,6 +362,13 @@ public class SimpleGitManager implements GitManager {
                 git.rm().addFilepattern(missingFilePath).call();
             }
         }
+    }
+
+    boolean hasPendingCommits(Git git, Context ctx) throws IOException {
+        Repository repository = git.getRepository();
+        BranchTrackingStatus trackingStatus = BranchTrackingStatus.of(repository, getImplicitRemoteBranchToDisplay(ctx));
+        logger.info(prefixLog("Preparing to push: behind commits={} ahead_commits={}"), trackingStatus.getBehindCount(), trackingStatus.getBehindCount());
+        return trackingStatus.getAheadCount() >0;
     }
 
     private void pushCommits(Git git, Context ctx) throws GitAPIException {

@@ -63,6 +63,12 @@
 		  <version>4.9.0.201710071750-r</version>
 		</dependency>
 
+		<dependency>
+			<groupId>net.jodah</groupId>
+			<artifactId>failsafe</artifactId>
+			<version>2.0.1</version>
+		</dependency>
+
         <!-- https://mvnrepository.com/artifact/org.apache.commons/commons-pool2 -->
 		<dependency>
 			<groupId>org.apache.commons</groupId>

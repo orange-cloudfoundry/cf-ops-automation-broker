@@ -76,6 +76,11 @@ public class PooledGitManager implements GitManager {
         logger.debug("Pool with alias {} asked to release repo with keys {}", repoAliasName, ctx.contextKeys);
         Context pooledContext = getPooledContext(ctx);
         GitPoolKey localContext = getLocalContext(ctx);
+
+        if (localContext == null) {
+            logger.debug("Pool with alias {} and keys {} did not propertly clone, skipping cleanup", repoAliasName, ctx.contextKeys);
+            return;
+        }
         try {
             pool.returnObject(localContext, pooledContext);
         } catch (Exception e) {

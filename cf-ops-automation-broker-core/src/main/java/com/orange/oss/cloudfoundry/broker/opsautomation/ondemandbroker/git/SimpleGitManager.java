@@ -93,7 +93,7 @@ public class SimpleGitManager implements GitManager {
             setWorkDir(workDir, ctx);
         } catch (Exception e) {
             String msgContext = (workDir == null) ? "" : (" while cloning into dir: " + workDir);
-            logger.warn(prefixLog("caught ") + e + msgContext, e);
+            logger.warn(prefixLog("caught ") + e + msgContext + " Cleaning up local clone.", e);
             deleteWorkingDir(workDir);
             throw new IllegalArgumentException(e);
         }

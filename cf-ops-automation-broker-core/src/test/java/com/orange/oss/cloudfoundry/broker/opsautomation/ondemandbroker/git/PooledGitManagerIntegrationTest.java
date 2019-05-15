@@ -9,8 +9,7 @@ import static com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.gi
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 
 public class PooledGitManagerIntegrationTest {
     private String repoAlias = "paas-templates.";
@@ -19,6 +18,20 @@ public class PooledGitManagerIntegrationTest {
     @Test
     public void pools_a_git_repo_across_invocations() {
         pools_a_git_repo_across_invocations("");
+    }
+
+    @Test
+    public void cleanup_request_ignored_when_no_previous_clone_completed() {
+        //Given clone previously failed, and did not register mapped context
+        Context ctx1 = new Context();
+        PooledGitManager pooledGitManager = new PooledGitManager(new PooledGitRepoFactory(gitManager), "", gitManager);
+
+        //When the clone is asked for clean up
+        pooledGitManager.deleteWorkingDir(ctx1);
+
+        //Then clean up is not asked, to avoid NPE
+        verify(gitManager, never()).deleteWorkingDir(any(Context.class));
+
     }
 
     private PooledGitManager pools_a_git_repo_across_invocations(String repoAliasName) {

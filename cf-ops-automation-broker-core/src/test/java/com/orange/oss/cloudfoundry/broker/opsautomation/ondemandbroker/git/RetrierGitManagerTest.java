@@ -59,6 +59,30 @@ public class RetrierGitManagerTest {
         }
 
     }
+   @Test
+    public void cleans_up_after_push_when_asked() {
+        //Given a retrier is configured with a retry policy
+        RetryPolicy<Object> retryPolicy = new RetryPolicy<>().withMaxAttempts(3);
+        GitManager retrier = new RetrierGitManager(gitManager, retryPolicy);
+
+        //Given no network problems when trying to push
+       doNothing().           //1st attempt
+               when(gitManager).commitPushRepo(any(),anyBoolean());
+
+        //when asked to clean up after push
+        retrier.commitPushRepo(new Context(), true);
+
+        //then it does not cleanup
+        verify(gitManager, times(1)).commitPushRepo(any(),anyBoolean());
+        verify(gitManager, times(1)).deleteWorkingDir(any());
+
+       //when NOT asked to clean up after push
+       retrier.commitPushRepo(new Context(), false);
+
+       //then it does NOT cleanup
+       verify(gitManager, times(2)).commitPushRepo(any(),anyBoolean());
+       verify(gitManager, times(1)).deleteWorkingDir(any());
+    }
 
     @Test
     public void retries_fetches() {

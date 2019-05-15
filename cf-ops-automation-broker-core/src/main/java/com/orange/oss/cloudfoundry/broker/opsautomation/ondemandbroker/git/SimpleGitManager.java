@@ -367,7 +367,7 @@ public class SimpleGitManager implements GitManager {
     boolean hasPendingCommits(Git git, Context ctx) throws IOException {
         Repository repository = git.getRepository();
         BranchTrackingStatus trackingStatus = BranchTrackingStatus.of(repository, getImplicitRemoteBranchToDisplay(ctx));
-        logger.info(prefixLog("Preparing to push: behind commits={} ahead_commits={}"), trackingStatus.getBehindCount(), trackingStatus.getBehindCount());
+        logger.info(prefixLog("Preparing to push: behind commits={} ahead_commits={}"), trackingStatus.getBehindCount(), trackingStatus.getAheadCount());
         return trackingStatus.getAheadCount() >0;
     }
 

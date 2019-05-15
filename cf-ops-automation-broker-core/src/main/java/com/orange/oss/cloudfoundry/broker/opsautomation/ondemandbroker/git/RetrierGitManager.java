@@ -37,7 +37,9 @@ public class RetrierGitManager implements GitManager {
                 gitManager.commitPushRepo(ctx, false);
             });
         } finally {
-            gitManager.deleteWorkingDir(ctx);
+            if (deleteRepo) {
+                gitManager.deleteWorkingDir(ctx);
+            }
         }
     }
 

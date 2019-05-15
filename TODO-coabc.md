@@ -51,7 +51,9 @@ Steps:
            - stop the git server
                 - verify push did not fail with exceptions
               
-
+- add gitmanager retrier
+- instanciate in application with hardcoded retry policy
+- make retry policy configureable: wait between retries with random
 
 
 ----------------------------------

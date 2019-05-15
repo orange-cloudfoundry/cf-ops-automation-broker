@@ -1,12 +1,15 @@
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.context.properties.NestedConfigurationProperty;
+import org.springframework.validation.annotation.Validated;
 
 /**
  * This class is typically imported by SpringBoot apps or Tests by referencing it into
  * EnableConfigurationProperties
  */
 @ConfigurationProperties(prefix = "git")
+@Validated
 public class GitProperties {
 
 	private String user;
@@ -15,6 +18,8 @@ public class GitProperties {
 	private String committerName = "coab";
 	private String committerEmail = "coab@orange.com";
 	private boolean usePooling = true;
+	@NestedConfigurationProperty
+	private RetryProperties retry = new RetryProperties();
 
 	/**
 	 * Where submodules are replicated by default (e.g. "https://gitlab.internal.paas/"
@@ -61,5 +66,8 @@ public class GitProperties {
 
 	public boolean isUsePooling() { return usePooling; }
 	public void setUsePooling(boolean usePooling) { this.usePooling = usePooling; }
+
+	public RetryProperties getRetry() { return retry; }
+	public void setRetry(RetryProperties retry) { this.retry = retry; }
 }
 

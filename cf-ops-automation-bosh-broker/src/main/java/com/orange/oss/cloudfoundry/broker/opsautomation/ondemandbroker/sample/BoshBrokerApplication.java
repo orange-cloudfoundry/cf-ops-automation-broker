@@ -110,8 +110,13 @@ public class BoshBrokerApplication {
     }
 
     @Bean
-    public RetryPolicy<Object> gitRetryPolicy() {
-        return new RetryPolicy<>().withMaxAttempts(3);
+    public RetryPolicy<Object> gitSecretsRetryPolicy(GitProperties secretsGitProperties) {
+        return secretsGitProperties.getRetry().toRetryPolicy();
+    }
+
+    @Bean
+    public RetryPolicy<Object> gitTemplateRetryPolicy(GitProperties templateGitProperties) {
+        return templateGitProperties.getRetry().toRetryPolicy();
     }
 
     @Bean
@@ -125,13 +130,13 @@ public class BoshBrokerApplication {
     }
 
     @Bean
-    public GitManager retrierSecretsManager(GitManager simpleSecretsGitManager, RetryPolicy<Object> gitRetryPolicy) {
-        return new RetrierGitManager(simpleSecretsGitManager, gitRetryPolicy);
+    public GitManager retrierSecretsManager(GitManager simpleSecretsGitManager, RetryPolicy<Object> gitSecretsRetryPolicy) {
+        return new RetrierGitManager(SECRETS_REPOSITORY_ALIAS_NAME, simpleSecretsGitManager, gitSecretsRetryPolicy);
     }
 
     @Bean
-    public GitManager retrierTemplatesManager(GitManager simpleTemplatesGitManager, RetryPolicy<Object> gitRetryPolicy) {
-        return new RetrierGitManager(simpleTemplatesGitManager, gitRetryPolicy);
+    public GitManager retrierTemplatesManager(GitManager simpleTemplatesGitManager, RetryPolicy<Object> gitTemplateRetryPolicy) {
+        return new RetrierGitManager(TEMPLATES_REPOSITORY_ALIAS_NAME, simpleTemplatesGitManager, gitTemplateRetryPolicy);
     }
 
     @Bean

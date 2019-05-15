@@ -24,7 +24,7 @@ public class RetrierGitManagerTest {
     public void retries_clones() {
         //Given a retrier is configured with a retry policy
         RetryPolicy<Object> retryPolicy = new RetryPolicy<>().withMaxAttempts(3);
-        GitManager retrier = new RetrierGitManager(gitManager, retryPolicy);
+        GitManager retrier = new RetrierGitManager("repoAlias", gitManager, retryPolicy);
 
         //Given 2 network problems when trying to clone
         TransportException gitException = new TransportException("https://elpaaso-gitlab.mycompany.com/paas-templates.git: 502 Bad Gateway");
@@ -63,7 +63,7 @@ public class RetrierGitManagerTest {
     public void cleans_up_after_push_when_asked() {
         //Given a retrier is configured with a retry policy
         RetryPolicy<Object> retryPolicy = new RetryPolicy<>().withMaxAttempts(3);
-        GitManager retrier = new RetrierGitManager(gitManager, retryPolicy);
+        GitManager retrier = new RetrierGitManager("repoAlias", gitManager, retryPolicy);
 
         //Given no network problems when trying to push
        doNothing().           //1st attempt
@@ -88,7 +88,7 @@ public class RetrierGitManagerTest {
     public void retries_fetches() {
         //Given a retrier is configured with a retry policy
         RetryPolicy<Object> retryPolicy = new RetryPolicy<>().withMaxAttempts(3);
-        GitManager retrier = new RetrierGitManager(gitManager, retryPolicy);
+        GitManager retrier = new RetrierGitManager("repoAlias", gitManager, retryPolicy);
 
         //Given 2 network problems when trying to clone
         TransportException gitException = new TransportException("https://elpaaso-gitlab.mycompany.com/paas-templates.git: 502 Bad Gateway");
@@ -134,7 +134,7 @@ public class RetrierGitManagerTest {
 
         //Given a retrier is configured with a retry policy
         RetryPolicy<Object> retryPolicy = new RetryPolicy<>().withMaxAttempts(3);
-        GitManager retrier = new RetrierGitManager(gitManager, retryPolicy);
+        GitManager retrier = new RetrierGitManager("repoAlias", gitManager, retryPolicy);
 
         //Given 2 network problems when trying to push
         TransportException gitException = new TransportException("https://elpaaso-gitlab.mycompany.com/paas-templates.git: 502 Bad Gateway");

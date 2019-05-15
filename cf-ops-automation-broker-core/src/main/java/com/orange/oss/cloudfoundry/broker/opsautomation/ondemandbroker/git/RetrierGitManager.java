@@ -3,6 +3,7 @@ package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.Context;
 import net.jodah.failsafe.Failsafe;
 import net.jodah.failsafe.RetryPolicy;
+import org.apache.commons.lang.builder.ToStringBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -12,12 +13,13 @@ public class RetrierGitManager implements GitManager {
     private GitManager gitManager;
     private RetryPolicy<Object> retryPolicy;
 
-    public RetrierGitManager(GitManager gitManager, RetryPolicy<Object> retryPolicy) {
+    public RetrierGitManager(String repositoryAliasName, GitManager gitManager, RetryPolicy<Object> retryPolicy) {
         this.gitManager = gitManager;
         this.retryPolicy = retryPolicy;
         this.retryPolicy.
                 onRetry(e -> logger.warn("Failure, retrying. Cause: " + e.getLastFailure())).
                 onRetriesExceeded(e -> logger.warn("Aborting. Max retries exceeded:" + this.retryPolicy.getMaxAttempts() + " Rethrowing:" + e.getFailure()));
+        logger.debug("Configured for {} with retry policy {}", repositoryAliasName, ToStringBuilder.reflectionToString(retryPolicy));
     }
 
     @Override

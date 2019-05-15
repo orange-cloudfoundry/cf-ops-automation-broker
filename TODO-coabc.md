@@ -55,6 +55,9 @@ Steps:
 - instanciate in application with hardcoded retry policy
 - make retry policy configureable: wait between retries with random
 
+RetryProperties
+- toModel() contructs the RetryPolicy
+
 
 ----------------------------------
 

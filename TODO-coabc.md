@@ -1,3 +1,19 @@
+
+Retry logic for unavailable gitlab during integration:
+- for clone, retry the whole logic if part of the clone fails
+- for push commit, need to refine the logic to be idempotent and robust to intermediate failures:
+    - commit is done but push failed and is missing:
+       - push systematically when only when retrying (avoid pushing when no changes to avoid collapsing gitlab remote)
+       - detect commits that need push
+       
+    
+
+
+
+
+
+----------------------------------
+
 Spring bump TODOs:
 
 - Update broker configurations (following release notes) + check smoke tests become green

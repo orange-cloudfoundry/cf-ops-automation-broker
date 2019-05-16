@@ -12,6 +12,7 @@ import org.springframework.cloud.servicebroker.model.ServiceBrokerRequest;
 import org.springframework.cloud.servicebroker.model.binding.CreateServiceInstanceBindingRequest;
 import org.springframework.cloud.servicebroker.model.binding.CreateServiceInstanceBindingResponse;
 import org.springframework.cloud.servicebroker.model.binding.DeleteServiceInstanceBindingRequest;
+import org.springframework.cloud.servicebroker.model.catalog.Plan;
 import org.springframework.cloud.servicebroker.model.catalog.ServiceDefinition;
 import org.springframework.cloud.servicebroker.model.instance.*;
 
@@ -54,6 +55,9 @@ public class PipelineCompletionTracker {
                     public boolean shouldSkipField(FieldAttributes f) {
                         //Using class type to fail fast on SCOSB refactorings
                         if (ServiceDefinition.class.equals(f.getDeclaredClass())) {
+                            return true;
+                        }
+                        if (Plan.class.equals(f.getDeclaredClass())) {
                             return true;
                         }
                         return false;

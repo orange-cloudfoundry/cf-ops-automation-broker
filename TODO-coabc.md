@@ -23,41 +23,19 @@ core-0.28.0-SNAPSHOT.jar!/:0.28.0-SNAPSHOT]
 :
 
 
-Retry logic for unavailable gitlab during integration:
-- for clone, retry the whole logic if part of the clone fails
-- for push commit, need to refine the logic to be idempotent and robust to intermediate failures:
-    - commit is done but push failed and is missing:
-       - push systematically only when retrying (avoid pushing when no changes to avoid collapsing gitlab remote)
-       - detect commits that need push
-          - when the remote branch exists
-            - https://stackoverflow.com/questions/2016901/viewing-unpushed-git-commits
-            - git log origin/branch..branch
-          - when the remote branch does not exist:it always exists because we create it during clone
-       
-Possible implementations:
-- https://stackoverflow.com/questions/11692595/design-pattern-for-retrying-logic-that-failed
+R
+  
+  
+-------------------------------
 
-   - https://github.com/spring-projects/spring-retry 
-      - depends on spring framework 4.3.22-release whereas we're already on 5.0.13
-      - not very active
-      - nice RetryContext to modify behavior during retries    
+Check whether operation status is sufficiently optimized
 
-Steps:
-- make commit push idempotent
-   - split commitPushRepo() into two idempotent methods: 
-   - add a test
-        - pushes_pending_commits_when_invoked_during_retry
-        - does_not_try_to_push_when_no_pending_commit: how to assert no push was made ?
-           - stop the git server
-                - verify push did not fail with exceptions
-              
-- add gitmanager retrier
-- instanciate in application with hardcoded retry policy
-- make retry policy configureable: wait between retries with random
+   2019-05-16T00:41:12.05+0200 [APP/PROC/WEB/0] OUT 2019-05-15 22:41:12.051 DEBUG 12 --- [nio-8080-exec-8] o.s.c.s.c.ServiceInstanceController      : Getting service instance last operation succeeded: serviceInstanceId=7334d589-adc6-4df6-b523-5d3351216216, response=GetLastServiceOperationResponse{state=in progress, description='null', deleteOperation=false}
+   2019-05-16T00:41:12.06+0200 [RTR/1] OUT coa-mongodb-broker.redacted-domain.org%2Fv2%2Finfo%22%2C%22originatingIdentity%22%3A%7B%22platform%22%3A%22cloudfoundry%22%2C%22properties%22%3A%7B%22user_id%22%3A%220d02117b-aa21-43e2-b35e-8ad6f8223519%22%7D%7D%7D%2C%22startRequestDate%22%3A%222019-05-15T22%3A41%3A08.439Z%22%7D&plan_id=plan-coab-mongodb-small&service_id=mongodb-ondemand-service HTTP/1.1" 200 0 23 "-" "HTTPClient/1.0 (2.8.3, ruby 2.4.5 (2018-10-18))" "192.168.35.72:38134" "192.168.35.82:61024" x_forwarded_for:"192.168.35.72" x_forwarded_proto:"https" vcap_request_id:"aef55c34-4bb2-4cca-78ba-5d4787dff78f" response_time:0.842949689 app_id:"b7952693-bfc8-4982-b827-9e5cb2242ede" app_index:"0" x_b3_traceid:"f00fb9431f726174" x_b3_spanid:"f00fb9431f726174" x_b3_parentspanid:"-" b3:"f00fb9431f726174-f00fb9431f726174"
+   2019-05-16T00:41:12.06+0200 [RTR/1] OUT 
 
-RetryProperties
-- toModel() contructs the RetryPolicy
 
+  
 
 ----------------------------------
 

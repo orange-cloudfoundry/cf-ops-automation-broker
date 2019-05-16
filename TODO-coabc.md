@@ -1,3 +1,44 @@
+
+
+  2019-05-15T12:29:00.07+0000 [APP/PROC/WEB/0] OUT org.eclipse.jgit.api.errors.TransportException: https://redacted/skc-ops-int/paas-templates.git: 502 Bad Gateway
+   2019-05-15T12:29:00.07+0000 [APP/PROC/WEB/0] OUT 	at org.eclipse.jgit.api.FetchCommand.call(FetchCommand.java:250) ~[org.eclipse.jgit-4.9.0.201710071750-r.jar!/:4.9.0.201710071750-r]
+   2019-05-15T12:29:00.07+0000 [APP/PROC/WEB/0] OUT 	at org.eclipse.jgit.api.CloneCommand.fetch(CloneCommand.java:304) ~[org.eclipse.jgit-4.9.0.201710071750-r.jar!/:4.9.0.201710071750-r]
+   2019-05-15T12:29:00.07+0000 [APP/PROC/WEB/0] OUT 	at org.eclipse.jgit.api.CloneCommand.call(CloneCommand.java:201) ~[org.eclipse.jgit-4.9.0.201710071750-r.jar!/:4.9.0.201710071750-r]
+   2019-05-15T12:29:00.07+0000 [APP/PROC/WEB/0] OUT 	at com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.SimpleGitManager.cloneRepo(SimpleGitManager.java:78) ~[cf-ops-automation-broker
+-core-0.28.0-SNAPSHOT.jar!/:0.28.0-SNAPSHOT]
+   2019-05-15T12:29:00.07+0000 [APP/PROC/WEB/0] OUT 	at com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.PooledGitRepoFactory.makeObject(PooledGitRepoFactory.java:22) [cf-ops-automatio
+n-broker-core-0.28.0-SNAPSHOT.jar!/:0.28.0-SNAPSHOT]
+   2019-05-15T12:29:00.07+0000 [APP/PROC/WEB/0] OUT 	at com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.PooledGitRepoFactory.makeObject(PooledGitRepoFactory.java:10) [cf-ops-automatio
+n-broker-core-0.28.0-SNAPSHOT.jar!/:0.28.0-SNAPSHOT]
+   2019-05-15T12:29:00.07+0000 [APP/PROC/WEB/0] OUT 	at org.apache.commons.pool2.impl.GenericKeyedObjectPool.create(GenericKeyedObjectPool.java:1064) [commons-pool2-2.5.0.jar!/:2.5.0]
+   2019-05-15T12:29:00.07+0000 [APP/PROC/WEB/0] OUT 	at org.apache.commons.pool2.impl.GenericKeyedObjectPool.borrowObject(GenericKeyedObjectPool.java:358) [commons-pool2-2.5.0.jar!/:2.5.0]
+   2019-05-15T12:29:00.07+0000 [APP/PROC/WEB/0] OUT 	at org.apache.commons.pool2.impl.GenericKeyedObjectPool.borrowObject(GenericKeyedObjectPool.java:281) [commons-pool2-2.5.0.jar!/:2.5.0]
+   2019-05-15T12:29:00.07+0000 [APP/PROC/WEB/0] OUT 	at com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.PooledGitManager.cloneRepo(PooledGitManager.java:57) [cf-ops-automation-broker-
+core-0.28.0-SNAPSHOT.jar!/:0.28.0-SNAPSHOT]
+   2019-05-15T12:29:00.07+0000 [APP/PROC/WEB/0] OUT 	at com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.GitProcessor.cloneRepo(GitProcessor.java:56) [cf-ops-automation-broker-core-0.2
+8.0-SNAPSHOT.jar!/:0.28.0-SNAPSHOT]
+   2019-05-15T12:29:00.07+0000 [APP/PROC/WEB/0] OUT 	at com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.GitProcessor.preCreate(GitProcessor.java:21) [cf-ops-automation-broker-core-0.2
+8.0-SNAPSHOT.jar!/:0.28.0-SNAPSHOT]
+   2019-05-15T12:29:00.07+0000 [APP/PROC/WEB/0] OUT 	at com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.ProcessorChain.create(ProcessorChain.java:25) [cf-ops-automation-broker-
+:
+
+
+R
+  
+  
+-------------------------------
+
+Check whether operation status is sufficiently optimized
+
+   2019-05-16T00:41:12.05+0200 [APP/PROC/WEB/0] OUT 2019-05-15 22:41:12.051 DEBUG 12 --- [nio-8080-exec-8] o.s.c.s.c.ServiceInstanceController      : Getting service instance last operation succeeded: serviceInstanceId=7334d589-adc6-4df6-b523-5d3351216216, response=GetLastServiceOperationResponse{state=in progress, description='null', deleteOperation=false}
+   2019-05-16T00:41:12.06+0200 [RTR/1] OUT coa-mongodb-broker.redacted-domain.org%2Fv2%2Finfo%22%2C%22originatingIdentity%22%3A%7B%22platform%22%3A%22cloudfoundry%22%2C%22properties%22%3A%7B%22user_id%22%3A%220d02117b-aa21-43e2-b35e-8ad6f8223519%22%7D%7D%7D%2C%22startRequestDate%22%3A%222019-05-15T22%3A41%3A08.439Z%22%7D&plan_id=plan-coab-mongodb-small&service_id=mongodb-ondemand-service HTTP/1.1" 200 0 23 "-" "HTTPClient/1.0 (2.8.3, ruby 2.4.5 (2018-10-18))" "192.168.35.72:38134" "192.168.35.82:61024" x_forwarded_for:"192.168.35.72" x_forwarded_proto:"https" vcap_request_id:"aef55c34-4bb2-4cca-78ba-5d4787dff78f" response_time:0.842949689 app_id:"b7952693-bfc8-4982-b827-9e5cb2242ede" app_index:"0" x_b3_traceid:"f00fb9431f726174" x_b3_spanid:"f00fb9431f726174" x_b3_parentspanid:"-" b3:"f00fb9431f726174-f00fb9431f726174"
+   2019-05-16T00:41:12.06+0200 [RTR/1] OUT 
+
+
+  
+
+----------------------------------
+
 Spring bump TODOs:
 
 - Update broker configurations (following release notes) + check smoke tests become green

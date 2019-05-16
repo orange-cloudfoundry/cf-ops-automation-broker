@@ -70,6 +70,64 @@ public class SimpleGitManagerTest {
     }
 
     @Test
+    public void pushes_pending_commits_when_invoked_during_retries() throws Exception {
+        //given a clone of an empty repo
+        gitManager.cloneRepo(ctx);
+
+        //given a commit is pending and not pushed
+        addAFile(ctx, "hello world", "afile.txt", "");
+        gitManager.getGit(ctx).add().addFilepattern(".").call();
+        gitManager.getGit(ctx).commit().setMessage("a previously added commit, that we expect to be pushed").call();
+
+        //when asking to push in a retry loop
+        gitManager.commitPushRepo(ctx, false);
+
+        //then a new clone should have the file
+        Context ctx1 = new Context();
+
+        gitManager.cloneRepo(ctx1);
+        Path cloneCtxt1 = getWorkDir(ctx1, "");
+        File secondCloneSameFile = cloneCtxt1.resolve("afile.txt").toFile();
+        assertThat(secondCloneSameFile).exists();
+    }
+
+    @Test
+    public void detects_pending_commits_during_retries() throws Exception {
+        //given a clone of an empty repo
+        gitManager.cloneRepo(ctx);
+
+        //given no pending commit
+        //then it reports no pending commit
+        assertThat(gitManager.hasPendingCommits(gitManager.getGit(ctx), ctx)).isFalse();
+
+        //given a commit is pending and not pushed
+        addAFile(ctx, "hello world", "afile.txt", "");
+        gitManager.getGit(ctx).add().addFilepattern(".").call();
+        gitManager.getGit(ctx).commit().setMessage("a previously added commit, that we expect to be pushed").call();
+
+        //then it reports pending commits
+        assertThat(gitManager.hasPendingCommits(gitManager.getGit(ctx), ctx)).isTrue();
+    }
+
+    @Test
+    public void does_not_try_to_push_when_no_pending_commit_during_retries() throws Exception {
+        //given a clone of an empty repo
+        gitManager.cloneRepo(ctx);
+
+        //given no commit is pending to push
+        //given the git server is stopped
+        gitServer.stopServer();
+
+        //when asking to push in a retry loop
+        gitManager.commitPushRepo(ctx, false);
+
+        //then it should not have thrown exception trying to push
+
+        //lets restart the server
+        gitServer.startServer();
+    }
+
+    @Test
     public void configures_user_name_and_email_in_commits() throws GitAPIException, IOException {
         //given explicit user config
         gitManager = new SimpleGitManager("gituser", "gitsecret", GIT_URL, "committerName", "committer@address.org", null);

@@ -13,6 +13,7 @@ public interface GitManager {
 
     /**
      * commit, rebase the push the modification
+     * @param deleteRepo Delete the repo systematically before returning.
      */
     void commitPushRepo(Context ctx, boolean deleteRepo);
 

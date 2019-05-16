@@ -4,6 +4,7 @@ import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.*;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.osbclient.OsbClientFactory;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.*;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.*;
+import net.jodah.failsafe.RetryPolicy;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -109,13 +110,67 @@ public class BoshBrokerApplication {
     }
 
     @Bean
-    public GitManager secretsGitManager(GitProperties secretsGitProperties) {
+    public RetryPolicy<Object> gitSecretsRetryPolicy(GitProperties secretsGitProperties) {
+        return secretsGitProperties.getRetry().toRetryPolicy();
+    }
+
+    @Bean
+    public RetryPolicy<Object> gitTemplateRetryPolicy(GitProperties templateGitProperties) {
+        return templateGitProperties.getRetry().toRetryPolicy();
+    }
+
+    @Bean
+    public GitManager simpleSecretsGitManager(GitProperties secretsGitProperties) {
         return gitManager(secretsGitProperties, SECRETS_REPOSITORY_ALIAS_NAME);
     }
 
     @Bean
-    public GitManager templatesGitManager(GitProperties templateGitProperties) {
+    public GitManager simpleTemplatesGitManager(GitProperties templateGitProperties) {
         return gitManager(templateGitProperties, TEMPLATES_REPOSITORY_ALIAS_NAME);
+    }
+
+    @Bean
+    public GitManager retrierSecretsManager(GitManager simpleSecretsGitManager, RetryPolicy<Object> gitSecretsRetryPolicy) {
+        return new RetrierGitManager(SECRETS_REPOSITORY_ALIAS_NAME, simpleSecretsGitManager, gitSecretsRetryPolicy);
+    }
+
+    @Bean
+    public GitManager retrierTemplatesManager(GitManager simpleTemplatesGitManager, RetryPolicy<Object> gitTemplateRetryPolicy) {
+        return new RetrierGitManager(TEMPLATES_REPOSITORY_ALIAS_NAME, simpleTemplatesGitManager, gitTemplateRetryPolicy);
+    }
+
+    @Bean
+    public GitManager poolingSecretsGitManager(GitManager retrierSecretsManager) {
+        PooledGitRepoFactory factory = new PooledGitRepoFactory(retrierSecretsManager);
+        return new PooledGitManager(factory, SECRETS_REPOSITORY_ALIAS_NAME, retrierSecretsManager);
+    }
+
+    @Bean
+    public GitManager poolingTemplatesGitManager(GitManager retrierTemplatesManager) {
+        PooledGitRepoFactory factory = new PooledGitRepoFactory(retrierTemplatesManager);
+        return new PooledGitManager(factory, TEMPLATES_REPOSITORY_ALIAS_NAME, retrierTemplatesManager);
+    }
+
+    @Bean
+    public GitManager secretsGitManager(GitProperties secretsGitProperties, GitManager retrierSecretsManager, GitManager poolingSecretsGitManager) {
+        GitManager gitManager;
+        if (secretsGitProperties.isUsePooling()) {
+            gitManager= poolingSecretsGitManager;
+        } else {
+            gitManager = retrierSecretsManager;
+        }
+        return gitManager;
+    }
+
+    @Bean
+    public GitManager templatesGitManager(GitProperties templateGitProperties, GitManager retrierTemplatesManager, GitManager poolingTemplatesGitManager) {
+        GitManager gitManager;
+        if (templateGitProperties.isUsePooling()) {
+            gitManager= poolingTemplatesGitManager;
+        } else {
+            gitManager = retrierTemplatesManager;
+        }
+        return gitManager;
     }
 
     @Bean
@@ -128,22 +183,14 @@ public class BoshBrokerApplication {
         return new GitProcessor(secretsGitManager, SECRETS_REPOSITORY_ALIAS_NAME);
     }
 
-    private GitManager gitManager(GitProperties secretsGitProperties, String repoAliasName) {
-        GitManager gitManager;
-        GitManager simpleGitManager = new SimpleGitManager(
-                secretsGitProperties.getUser(),
-                secretsGitProperties.getPassword(),
-                secretsGitProperties.getUrl(),
-                secretsGitProperties.committerName(),
-                secretsGitProperties.committerEmail(),
+    private GitManager gitManager(GitProperties gitProperties, String repoAliasName) {
+        return new SimpleGitManager(
+                gitProperties.getUser(),
+                gitProperties.getPassword(),
+                gitProperties.getUrl(),
+                gitProperties.committerName(),
+                gitProperties.committerEmail(),
                 repoAliasName);
-        if (!secretsGitProperties.isUsePooling()) {
-            gitManager = simpleGitManager;
-        } else {
-            PooledGitRepoFactory factory = new PooledGitRepoFactory(simpleGitManager);
-            gitManager= new PooledGitManager(factory, repoAliasName, simpleGitManager);
-        }
-        return gitManager;
     }
 
 

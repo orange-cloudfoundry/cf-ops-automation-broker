@@ -7,6 +7,8 @@ import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.eclipse.jgit.transport.Daemon;
 import org.eclipse.jgit.transport.DaemonClient;
 import org.eclipse.jgit.transport.resolver.RepositoryResolver;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.util.FileSystemUtils;
 
 import java.io.File;
@@ -30,6 +32,7 @@ import java.util.function.Consumer;
  * This is shipped in production code to be shared with other submodules in a cheap way.
  */
 public class GitServer {
+    private static final Logger logger = LoggerFactory.getLogger(GitServer.class.getName());
     public static final Consumer<Git> NO_OP_INITIALIZER = git -> { };
     private Map<String, Repository> repositories = new HashMap<>();
     private Daemon server;
@@ -79,6 +82,16 @@ public class GitServer {
     public void stopAndCleanupReposServer() throws InterruptedException {
         cleanUpRepos();
         this.server.stopAndWait();
+    }
+
+    public void stopServer() throws InterruptedException {
+        this.server.stopAndWait();
+        logger.info("Stopped git server.");
+    }
+
+    public void startServer() throws Exception {
+        this.server.start();
+        logger.info("Started git server.");
     }
 
     public void cleanUpRepos() {

@@ -16,10 +16,18 @@ public class RetrierGitManager implements GitManager {
     public RetrierGitManager(String repositoryAliasName, GitManager gitManager, RetryPolicy<Object> retryPolicy) {
         this.gitManager = gitManager;
         this.retryPolicy = retryPolicy;
-        this.retryPolicy.
-                onRetry(e -> logger.warn("Failure, retrying. Cause: " + e.getLastFailure())).
-                onRetriesExceeded(e -> logger.warn("Aborting. Max retries exceeded:" + this.retryPolicy.getMaxAttempts() + " Rethrowing:" + e.getFailure()));
+        this.retryPolicy
+                .onRetry(e -> logger.warn("Failure, retrying. Cause: " + e.getLastFailure()))
+                .onRetriesExceeded(e -> logger.warn("Aborting. Max retries exceeded:" + this.retryPolicy.getMaxAttempts() + " Rethrowing:" + e.getFailure()))
+                .handleIf(e -> isCauseSubclassOf(e, org.eclipse.jgit.api.errors.TransportException.class))
+        ;
         logger.debug("Configured for {} with retry policy {}", repositoryAliasName, ToStringBuilder.reflectionToString(retryPolicy));
+    }
+
+    protected boolean isCauseSubclassOf(Throwable e, Class superClassToCheck) {
+        Throwable cause = e.getCause();
+        //noinspection unchecked
+        return superClassToCheck.isAssignableFrom(cause.getClass());
     }
 
     @Override

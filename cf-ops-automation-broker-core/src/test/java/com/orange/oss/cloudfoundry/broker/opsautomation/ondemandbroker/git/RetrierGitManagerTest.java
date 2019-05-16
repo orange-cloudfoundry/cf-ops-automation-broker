@@ -59,6 +59,31 @@ public class RetrierGitManagerTest {
         }
 
     }
+
+    @Test
+    public void fails_fast_on_non_recoverable_exceptions() {
+        //Given a retrier is configured with a retry policy
+        RetryPolicy<Object> retryPolicy = new RetryPolicy<>().withMaxAttempts(3);
+        GitManager retrier = new RetrierGitManager("repoAlias", gitManager, retryPolicy);
+
+        //Given 2 network problems when trying to clone
+        Exception nonRecoverableException = new org.eclipse.jgit.api.errors.RefNotFoundException("Ref origin/feature-mongodb-xlarge-plan can not be resolved");
+        IllegalArgumentException wrappedException = new IllegalArgumentException(nonRecoverableException);
+        doThrow(wrappedException). //1st attempt
+                doNothing(). //2nd attempt
+                doNothing().           //3rd attempt
+                when(gitManager).cloneRepo(any());
+
+        try {
+            //when trying to clone
+            retrier.cloneRepo(new Context());
+            //then it rethrows the exception
+            Assertions.fail("expected non recoverable exception to not trigger retry");
+        } catch (IllegalArgumentException e) {
+            verify(gitManager, times(1)).cloneRepo(any());
+            //success
+        }
+    }
    @Test
     public void cleans_up_after_push_when_asked() {
         //Given a retrier is configured with a retry policy

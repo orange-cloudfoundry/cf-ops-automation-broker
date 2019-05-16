@@ -391,7 +391,7 @@ public class PipelineCompletionTrackerTest {
         CreateServiceInstanceRequest originalRequest = OsbBuilderHelper.aCreateServiceInstanceRequest();
         ServiceDefinition serviceDefinition = aCatalog().getServiceDefinitions().get(0);
         originalRequest.setServiceDefinition(serviceDefinition);
-
+        originalRequest.setPlan(serviceDefinition.getPlans().get(0));
 
         PipelineCompletionTracker.PipelineOperationState pipelineOperationState = new PipelineCompletionTracker.PipelineOperationState(originalRequest, "2018-01-22T14:00:00.000Z");
 

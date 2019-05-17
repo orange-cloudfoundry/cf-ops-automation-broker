@@ -2,7 +2,9 @@
 
 ### Releasing
 
-Prereqs: checkout the branch to release, and make sure it is up-to-date w.r.t. the github remote. Make sure your IDE & git environment have the git credentials cached (as git login/password prompts might hang within intellij IDE).
+Prereqs: *
+checkout the branch to release, and make sure it is up-to-date w.r.t. the github remote. 
+* Make sure your IDE & git environment have the git credentials cached (as git login/password prompts might hang within intellij IDE).
  
 Releasing is made using [maven release plugin](http://maven.apache.org/maven-release/maven-release-plugin/) as follows :
  
@@ -13,6 +15,9 @@ Releasing is made using [maven release plugin](http://maven.apache.org/maven-rel
  # ex : mvn release:prepare --batch-mode -Dtag=v0.21.0 -DreleaseVersion=0.21.0 -DdevelopmentVersion=0.22.0-SNAPSHOT
  
  ```
+ 
+ **Hint: mind the v prefix in the tag name** to be consistent with github release naming, and URL that paas-templates deploy script expects.
+ 
  
  Circle CI build will proceed, and will trigger the execution of `mvn release:perform`, and upload artifacts to github. For further details, see [release:prepare goals](http://maven.apache.org/maven-release/maven-release-plugin/prepare-mojo.html)
 

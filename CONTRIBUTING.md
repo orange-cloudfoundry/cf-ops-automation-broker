@@ -2,7 +2,7 @@
 
 ### Releasing
 
-Prereqs: checkout the branch to release, and make sure it is up-to-date w.r.t. the github remote.
+Prereqs: checkout the branch to release, and make sure it is up-to-date w.r.t. the github remote. Make sure your IDE & git environment have the git credentials cached (as git login/password prompts might hang within intellij IDE).
  
 Releasing is made using [maven release plugin](http://maven.apache.org/maven-release/maven-release-plugin/) as follows :
  

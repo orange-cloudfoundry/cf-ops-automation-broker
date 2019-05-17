@@ -1,7 +1,7 @@
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.credhub;
 
-import java.util.List;
-
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.Context;
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.DefaultBrokerProcessor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.credhub.core.CredHubTemplate;
@@ -13,9 +13,6 @@ import org.springframework.credhub.support.password.PasswordParameters;
 import org.springframework.credhub.support.password.PasswordParametersRequest;
 import org.springframework.http.client.ClientHttpRequestFactory;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
-
-import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.Context;
-import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.DefaultBrokerProcessor;
 
 public class PasswordGenProcessor extends DefaultBrokerProcessor {
 
@@ -50,11 +47,11 @@ public class PasswordGenProcessor extends DefaultBrokerProcessor {
 				.name(credentialParam)
 				.parameters(parameters)
 				.overwrite(true).build();
-		this.template().generate(parametersRequest);
+		this.template().credentials().generate(parametersRequest);
 
 
 		SimpleCredentialName credentialName = new SimpleCredentialName("director", "deployment", ",instance-group-property");
-		CredentialDetails<PasswordCredential> passwords=this.template().getByName(credentialName, PasswordCredential.class);
+		CredentialDetails<PasswordCredential> passwords=this.template().credentials().getByName(credentialName, PasswordCredential.class);
 		String password= passwords.getValue().getPassword();
 		logger.debug("generated password {}",password);
 		
@@ -68,19 +65,20 @@ public class PasswordGenProcessor extends DefaultBrokerProcessor {
 
 	}
 
+
 	/**
 	 * generates crehub template
 	 * @return
 	 */
 	private CredHubTemplate template() {
-		
-		ClientHttpRequestFactory clientHttpRequestFactory=new SimpleClientHttpRequestFactory();
 
-		CredHubTemplate template=new CredHubTemplate(this.apiUriBase, clientHttpRequestFactory);
+		ClientHttpRequestFactory clientHttpRequestFactory=new SimpleClientHttpRequestFactory();
+		org.springframework.credhub.core.CredHubProperties credHubProperties = new org.springframework.credhub.core.CredHubProperties();
+		credHubProperties.setUrl(this.apiUriBase);
+		CredHubTemplate template=new CredHubTemplate(credHubProperties, clientHttpRequestFactory);
 		return template;
 	}
-	
-	
+
 	
 }
 

@@ -7,6 +7,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.credhub.core.CredHubTemplate;
+import org.springframework.credhub.core.credential.CredHubCredentialOperations;
 import org.springframework.credhub.support.*;
 import org.springframework.credhub.support.password.PasswordCredential;
 import org.springframework.credhub.support.value.ValueCredential;
@@ -33,6 +34,9 @@ public class CredHubConnectorTest {
     @Mock
     private
     CredHubTemplate credHubTemplate;
+    @Mock
+    private
+    CredHubCredentialOperations credentials;
 
     @Test
     public void testGetAllDeploymentTree(){
@@ -56,9 +60,10 @@ public class CredHubConnectorTest {
         //Given behaviour
         when (credHubConnector.template()).thenReturn(credHubTemplate);
         when (credHubConnector.getAllDeploymentTree(path)).thenCallRealMethod();
-        when (credHubTemplate.findByPath(path)).thenReturn(csList);
-        when (credHubTemplate.getByName(isA(CredentialName.class), eq(PasswordCredential.class))).thenReturn(cdp);
-        when (credHubTemplate.getByName(isA(CredentialName.class), eq(ValueCredential.class))).thenReturn(cdv);
+        when (credHubTemplate.credentials()).thenReturn(credentials);
+        when (credentials.findByPath(path)).thenReturn(csList);
+        when (credentials.getByName(isA(CredentialName.class), eq(PasswordCredential.class))).thenReturn(cdp);
+        when (credentials.getByName(isA(CredentialName.class), eq(ValueCredential.class))).thenReturn(cdv);
 
         //When
         Map actual = credHubConnector.getAllDeploymentTree(path);

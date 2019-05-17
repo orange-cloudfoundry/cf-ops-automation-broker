@@ -2,6 +2,7 @@ package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.credhub;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.credhub.core.CredHubProperties;
 import org.springframework.credhub.core.CredHubTemplate;
 import org.springframework.credhub.support.CredentialDetails;
 import org.springframework.credhub.support.CredentialName;
@@ -36,16 +37,16 @@ public class CredHubConnector {
         //Only broker password, no ?
         //----------------------------------------
         Map<String, String> hm = new HashMap<String, String>();
-        List<CredentialSummary> csList=this.template().findByPath(path);
+        List<CredentialSummary> csList=this.template().credentials().findByPath(path);
         for (CredentialSummary cs : csList) {
             CredentialName credentialName = cs.getName();
             //Password credentials
-            CredentialDetails<PasswordCredential> cdp=this.template().getByName(credentialName, PasswordCredential.class);
+            CredentialDetails<PasswordCredential> cdp=this.template().credentials().getByName(credentialName, PasswordCredential.class);
             String credentialValue =  cdp.getValue().getPassword();
             hm.put(credentialName.getName(), credentialValue);
 
             //Value credentials
-            CredentialDetails<ValueCredential> cdv=this.template().getByName(credentialName, ValueCredential.class);
+            CredentialDetails<ValueCredential> cdv=this.template().credentials().getByName(credentialName, ValueCredential.class);
             credentialValue =  cdv.getValue().getValue();
             hm.put(credentialName.getName(), credentialValue);
         }
@@ -58,7 +59,9 @@ public class CredHubConnector {
 
     public CredHubTemplate template() {
         ClientHttpRequestFactory clientHttpRequestFactory=new SimpleClientHttpRequestFactory();
-        CredHubTemplate credHubTemplate = new CredHubTemplate(this.apiUriBase, clientHttpRequestFactory);
+        CredHubProperties credHubProperties = new CredHubProperties();
+        credHubProperties.setUrl(this.apiUriBase);
+        CredHubTemplate credHubTemplate = new CredHubTemplate(credHubProperties, clientHttpRequestFactory);
         return credHubTemplate;
     }
 

@@ -1,5 +1,68 @@
 
 
+
+
+   2019-05-21T17:11:03.63+0200 [APP/PROC/WEB/0] OUT 2019-05-21 15:11:03.629 DEBUG 6 --- [nio-8080-exec-8] o.s.c.s.c.ServiceBrokerExceptionHandler  : Service instance does not exist: id=c7d1a632-fedd-4896-9b8d-5182410bff24
+   2019-05-21T17:11:03.63+0200 [APP/PROC/WEB/0] OUT org.springframework.cloud.servicebroker.exception.ServiceInstanceDoesNotExistException: Service instance does not exist: id=c7d1a632-fedd-4896-9b8d-5182410bff24
+   2019-05-21T17:11:03.63+0200 [APP/PROC/WEB/0] OUT 	at com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.PipelineCompletionTracker.checkBindingRequestsPrereqs(PipelineCompletionTracker.java:189) ~[cf-ops-automation-broker-core-0.28.0.jar!/:0.28.0]
+   2019-05-21T17:11:03.63+0200 [APP/PROC/WEB/0] OUT 	at com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.PipelineCompletionTracker.delegateUnbindRequest(PipelineCompletionTracker.java:180) ~[cf-ops-automation-broker-core-0.28.0.jar!/:0.28.0]
+   2019-05-21T17:11:03.63+0200 [APP/PROC/WEB/0] OUT 	at com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.BoshProcessor.preUnBind(BoshProcessor.java:110) ~[cf-ops-automation-broker-core-0.28.0.jar!/:0.28.0]
+   2019-05-21T17:11:03.63+0200 [APP/PROC/WEB/0] OUT 	at com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.ProcessorChain.unBind(ProcessorChain.java:84) ~[cf-ops-automation-broker-framework-0.28.0.jar!/:0.28.0]
+   2019-05-21T17:11:03.63+0200 [APP/PROC/WEB/0] OUT 	at com.orange.oss.ondemandbroker.ProcessorChainServiceInstanceBindingService.deleteServiceInstanceBinding(ProcessorChainServiceInstanceBindingService.java:62) ~[cf-ops-automation-broker-core-0.28.0.jar!/:0.28.0]
+   2019-05-21T17:11:03.63+0200 [APP/PROC/WEB/0] OUT 	at org.springframework.cloud.servicebroker.controller.ServiceInstanceBindingController.deleteServiceInstanceBinding(ServiceInstanceBindingController.java:213) ~[spring-cloud-open-service-broker-core-2.1.2.RELEASE.jar!/:na]
+
+
+
+
+
+
+
+ Caused by: org.eclipse.jgit.api.errors.RefNotFoundException: Ref origin/feature-coab-v41 can not be resolved
+	at org.eclipse.jgit.api.CreateBranchCommand.getStartPointObjectId(CreateBranchCommand.java:283) ~[org.eclipse.jgit-4.9.0.201710071750-r.jar!/:4.9.0.201710071750-r]
+	at org.eclipse.jgit.api.CreateBranchCommand.call(CreateBranchCommand.java:136) ~[org.eclipse.jgit-4.9.0.201710071750-r.jar!/:4.9.0.201710071750-r]
+	at org.eclipse.jgit.api.CheckoutCommand.call(CheckoutCommand.java:228) ~[org.eclipse.jgit-4.9.0.201710071750-r.jar!/:4.9.0.201710071750-r]
+	at com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.SimpleGitManager.checkoutRemoteBranchIfNeeded(SimpleGitManager.java:275) ~[cf-ops-automation-broker-core-0.28.0.jar!/:0.28.0]
+	at com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.SimpleGitManager.cloneRepo(SimpleGitManager.java:83) ~[cf-ops-automation-broker-core-0.28.0.jar!/:0.28.0]
+
+
+
+
+
+   2019-05-17T15:24:04.48+0000 [APP/PROC/WEB/0] OUT 2019-05-17 15:24:04.486  INFO 13 --- [nio-8080-exec-9] c.o.o.c.b.o.o.git.SimpleGitManager       : [paas-templates.] commited files in commit 8b6126211e51a
+d60613afb775de319a4459a4665 1558106644 -----p
+   2019-05-17T15:24:04.48+0000 [APP/PROC/WEB/0] OUT 2019-05-17 15:24:04.487  INFO 13 --- [nio-8080-exec-9] c.o.o.c.b.o.o.git.SimpleGitManager       : [paas-templates.] Preparing to push: behind commits=0 ah
+ead_commits=1
+   2019-05-17T15:24:04.48+0000 [APP/PROC/WEB/0] OUT 2019-05-17 15:24:04.487  INFO 13 --- [nio-8080-exec-9] c.o.o.c.b.o.o.git.SimpleGitManager       : [paas-templates.] pushing to feature-coabdepls-mongodb-s
+erviceinstances ...
+   2019-05-17T15:24:17.88+0000 [RTR/1] OUT coa-mongodb-broker.redacted-domain.org - [2019-05-17T15:23:17.880+0000] "PUT /v2/service_instances/8c3de80b-3090-4a68-9dec-d09dca1c307c?accepts_incomplete
+=true HTTP/1.1" 499 521 22 "-" "HTTPClient/1.0 (2.8.3, ruby 2.4.5 (2018-10-18))" "192.168.35.69:39020" "192.168.35.84:61056" x_forwarded_for:"192.168.35.69" x_forwarded_proto:"https" vcap_request_id:"0e5dd0
+1c-9178-4e23-4781-631487e05e87" response_time:60.001513051 app_id:"b7952693-bfc8-4982-b827-9e5cb2242ede" app_index:"0" x_b3_traceid:"09a7036ef744eea0" x_b3_spanid:"09a7036ef744eea0" x_b3_parentspanid:"-" b3
+:"09a7036ef744eea0-09a7036ef744eea0"
+   2019-05-17T15:24:17.88+0000 [RTR/1] OUT 
+   2019-05-17T15:24:19.29+0000 [APP/PROC/WEB/0] OUT 2019-05-17 15:24:19.290 DEBUG 13 --- [nio-8080-exec-2] o.s.c.s.c.ServiceInstanceController      : Deleting a service instance: request=ServiceBrokerReques
+t{platformInstanceId='null', apiInfoLocation='api.redacted-domain.org/v2/info', originatingIdentity=null}AsyncServiceBrokerRequest{asyncAccepted=true}DeleteServiceInstanceRequest{serviceInstanceId=
+'8c3de80b-3090-4a68-9dec-d09dca1c307c', serviceDefinitionId='mongodb-ondemand-service', planId='plan-coab-mongodb-small'}
+
+
+
+-----------------------------------------------------
+	
+ service provision
+	
+-----------------------------------------------------
+	
+Creating service instance mongodb-smoketest-1558106561 in org service-sandbox / space coa-mongodb-smoke-tests as admin...
+	
+FAILED
+	
+Server error, status code: 504, error code: 10001, message: The request to the service broker timed out: https://coa-mongodb-broker.redacted-domain.org/v2/service_instances/8c3de80b-3090-4a68-9dec-d09dca1c307c?accepts_incomplete=true
+	
+Trapped error with exit_code=1 from command=
+
+
+
+
+
   2019-05-15T12:29:00.07+0000 [APP/PROC/WEB/0] OUT org.eclipse.jgit.api.errors.TransportException: https://redacted/skc-ops-int/paas-templates.git: 502 Bad Gateway
    2019-05-15T12:29:00.07+0000 [APP/PROC/WEB/0] OUT 	at org.eclipse.jgit.api.FetchCommand.call(FetchCommand.java:250) ~[org.eclipse.jgit-4.9.0.201710071750-r.jar!/:4.9.0.201710071750-r]
    2019-05-15T12:29:00.07+0000 [APP/PROC/WEB/0] OUT 	at org.eclipse.jgit.api.CloneCommand.fetch(CloneCommand.java:304) ~[org.eclipse.jgit-4.9.0.201710071750-r.jar!/:4.9.0.201710071750-r]

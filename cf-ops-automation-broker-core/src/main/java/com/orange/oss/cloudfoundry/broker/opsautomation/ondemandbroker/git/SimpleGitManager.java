@@ -65,7 +65,7 @@ public class SimpleGitManager implements GitManager {
 
             workDir = Files.createTempDirectory(getRepoWorkDirPrefix(repoAliasName));
 
-            int timeoutSeconds = 60; //git timeout
+            int timeoutSeconds = 55; //git timeout
             CloneCommand clone = new CloneCommand()
                     .setCredentialsProvider(cred)
                     .setDirectory(workDir.toFile())

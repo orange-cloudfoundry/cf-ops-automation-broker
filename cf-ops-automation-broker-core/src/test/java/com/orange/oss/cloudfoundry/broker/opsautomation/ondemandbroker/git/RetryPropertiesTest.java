@@ -43,8 +43,7 @@ public class RetryPropertiesTest {
         assertThat(retryPolicy.getMaxAttempts()).isEqualTo(4);
         assertThat(retryPolicy.getDelay()).isEqualTo(Duration.ofMillis(5000));
         assertThat(retryPolicy.getDelayFactor()).isEqualTo(2d);
-        assertThat(retryPolicy.getMaxDuration()).isEqualTo(Duration.ofSeconds(60));
-        assertThat(retryPolicy.getMaxDuration()).isEqualTo(Duration.ofSeconds(60));
+        assertThat(retryPolicy.getMaxDuration()).isEqualTo(Duration.ofSeconds(50));
     }
     @Test
     public void builds_simple_delay_retry_policy() {
@@ -55,7 +54,7 @@ public class RetryPropertiesTest {
         RetryPolicy<Object> retryPolicy = properties.toRetryPolicy();
         assertThat(retryPolicy.getMaxAttempts()).isEqualTo(10);
         assertThat(retryPolicy.getDelay()).isEqualTo(Duration.ofMillis(5000));
-        assertThat(retryPolicy.getMaxDuration()).isEqualTo(Duration.ofMillis(60000));
+        assertThat(retryPolicy.getMaxDuration()).isEqualTo(Duration.ofMillis(50000));
         assertThat(retryPolicy.getDelayFactor()).isEqualTo(0d);
     }
 

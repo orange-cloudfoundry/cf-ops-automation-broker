@@ -106,7 +106,8 @@ public class BoshBrokerApplication {
                 secretsGenerator,
                 pipelineCompletionTracker,
                 deploymentProperties.getBrokerDisplayName(),
-                deploymentProperties.getModelDeploymentShortAlias());
+                deploymentProperties.getModelDeploymentShortAlias(),
+                deploymentProperties.getDashboardUrlTemplate());
     }
 
     @Bean

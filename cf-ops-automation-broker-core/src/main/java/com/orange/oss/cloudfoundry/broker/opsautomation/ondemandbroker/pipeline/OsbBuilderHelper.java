@@ -11,6 +11,7 @@ import org.springframework.cloud.servicebroker.model.catalog.Plan;
 import org.springframework.cloud.servicebroker.model.catalog.ServiceDefinition;
 import org.springframework.cloud.servicebroker.model.instance.CreateServiceInstanceRequest;
 import org.springframework.cloud.servicebroker.model.instance.DeleteServiceInstanceRequest;
+import org.springframework.cloud.servicebroker.model.instance.GetServiceInstanceRequest;
 import org.springframework.cloud.servicebroker.model.instance.UpdateServiceInstanceRequest;
 
 import java.util.Collections;
@@ -30,7 +31,7 @@ public class OsbBuilderHelper {
     @SuppressWarnings("WeakerAccess")
     public static DeleteServiceInstanceBindingRequest anUnbindRequest(String serviceInstanceId, String bindingId) {
         ServiceDefinition serviceDefinition = aCatalog().getServiceDefinitions().get(0);
-        DeleteServiceInstanceBindingRequest request = DeleteServiceInstanceBindingRequest.builder()
+        return DeleteServiceInstanceBindingRequest.builder()
             .serviceDefinition(serviceDefinition)
                 .bindingId(bindingId)
                 .serviceDefinitionId(SERVICE_DEFINITION_ID)
@@ -39,7 +40,6 @@ public class OsbBuilderHelper {
                 .apiInfoLocation("api-info")
                 .originatingIdentity(aCfUserContext())
                 .platformInstanceId("cf-instance-id").build();
-        return request;
     }
 
     public static Catalog aCatalog() {
@@ -76,7 +76,7 @@ public class OsbBuilderHelper {
 
         Context cfContext = aCfContext();
 
-        CreateServiceInstanceBindingRequest request = CreateServiceInstanceBindingRequest.builder()
+        return CreateServiceInstanceBindingRequest.builder()
                 .serviceDefinitionId(SERVICE_DEFINITION_ID)
                 .planId(SERVICE_PLAN_ID)
                 .bindResource(bindResource)
@@ -88,7 +88,6 @@ public class OsbBuilderHelper {
                 .originatingIdentity(aCfUserContext())
                 .platformInstanceId("cf-instance-id")
                 .build();
-        return request;
     }
 
     public static Context aCfContext() {
@@ -157,6 +156,12 @@ public class OsbBuilderHelper {
                 .serviceDefinitionId("service_id")
                 .planId(SERVICE_PLAN_ID)
                 .parameters(new HashMap<>())
+                .serviceInstanceId("instance_id")
+                .build();
+    }
+
+    public static GetServiceInstanceRequest aGetServiceInstanceRequest() {
+        return GetServiceInstanceRequest.builder()
                 .serviceInstanceId("instance_id")
                 .build();
     }

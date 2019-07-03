@@ -19,6 +19,7 @@ public class ProcessorChainServiceInstanceService implements ServiceInstanceServ
     private static Logger logger = LoggerFactory.getLogger(ProcessorChainServiceInstanceService.class.getName());
 
 
+    public static final String GET_SERVICE_INSTANCE_REQUEST = "GetServiceInstanceRequest";
     public static final String CREATE_SERVICE_INSTANCE_REQUEST = "CreateServiceInstanceRequest";
     public static final String CREATE_SERVICE_INSTANCE_RESPONSE = "CreateServiceInstanceResponse";
     public static final String GET_LAST_SERVICE_OPERATION_REQUEST = "GetLastServiceOperationRequest";
@@ -58,6 +59,26 @@ public class ProcessorChainServiceInstanceService implements ServiceInstanceServ
             return response;
         } catch (RuntimeException e) {
             logger.info("Unable to create service with request " + request + ", caught " + e, e);
+            throw ProcessorChainServiceHelper.processInternalException(e);
+        }
+    }
+
+    @Override
+    public GetServiceInstanceResponse getServiceInstance(GetServiceInstanceRequest request) {
+        try {
+            Context ctx=new Context();
+            ctx.contextKeys.put(GET_SERVICE_INSTANCE_REQUEST, request);
+            processorChain.create(ctx);
+
+            GetServiceInstanceResponse response;
+            if (ctx.contextKeys.get(GET_SERVICE_INSTANCE_REQUEST) instanceof GetServiceInstanceRequest) {
+                response = (GetServiceInstanceResponse) ctx.contextKeys.get(GET_SERVICE_INSTANCE_REQUEST);
+            } else {
+                response = GetServiceInstanceResponse.builder().build();
+            }
+            return response;
+        } catch (RuntimeException e) {
+            logger.info("Unable to fetch service with request " + request + ", caught " + e, e);
             throw ProcessorChainServiceHelper.processInternalException(e);
         }
     }

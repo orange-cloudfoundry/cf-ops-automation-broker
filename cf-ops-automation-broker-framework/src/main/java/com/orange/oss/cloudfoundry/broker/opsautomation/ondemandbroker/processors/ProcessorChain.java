@@ -1,9 +1,9 @@
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors;
 
-import java.util.List;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.List;
 
 
 
@@ -29,6 +29,24 @@ public class ProcessorChain {
 			for (int i = processors.size() - 1; i >= 0; i--) {
 				BrokerProcessor m = processors.get(i);
 				m.postCreate(ctx);
+			}
+		} finally {
+			for (int i = processors.size() - 1; i >= 0; i--) {
+				BrokerProcessor m = processors.get(i);
+				m.cleanUp(ctx);
+			}
+		}
+	}
+	public void getInstance(Context ctx) {
+		try {
+			for (BrokerProcessor m : processors) {
+				m.preGetInstance(ctx);
+			}
+			sink.getInstance(ctx);
+
+			for (int i = processors.size() - 1; i >= 0; i--) {
+				BrokerProcessor m = processors.get(i);
+				m.postGetInstance(ctx);
 			}
 		} finally {
 			for (int i = processors.size() - 1; i >= 0; i--) {

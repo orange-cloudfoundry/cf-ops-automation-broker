@@ -222,6 +222,23 @@ public class ProcessorChainServiceInstanceServiceTest {
         assertThat(ctx.contextKeys.get(ProcessorChainServiceInstanceService.UPDATE_SERVICE_INSTANCE_REQUEST)).isEqualTo(request);
 
     }
+    @Test
+    public void chains_get_processors_on_service_instance_get() {
+        //given
+        GetServiceInstanceRequest request = OsbBuilderHelper.aGetServiceInstanceRequest();
+        //when
+        GetServiceInstanceResponse response = service.getServiceInstance(request);
+
+        //then call is properly chained
+        ArgumentCaptor<Context> argument = ArgumentCaptor.forClass(Context.class);
+        Assertions.assertThat(response).isEqualTo(GetServiceInstanceResponse.builder().build());
+        Mockito.verify(processorChain).getInstance(argument.capture());
+
+        //and context is populated with the request
+        Context ctx=argument.getValue();
+        assertThat(ctx.contextKeys.get(ProcessorChainServiceInstanceService.GET_SERVICE_INSTANCE_REQUEST)).isEqualTo(request);
+
+    }
 
     @Test
     public void uses_update_response_from_context_when_set() {
@@ -246,6 +263,33 @@ public class ProcessorChainServiceInstanceServiceTest {
 
         //when
         UpdateServiceInstanceResponse response = service.updateServiceInstance(request);
+
+        //then
+        Assertions.assertThat(response).isEqualTo(customResponse);
+    }
+
+    @Test
+    public void uses_getinstance_response_from_context_when_set() {
+        //given
+        GetServiceInstanceRequest request = OsbBuilderHelper.aGetServiceInstanceRequest();
+
+        //given a processor that generates a response into the context
+        final GetServiceInstanceResponse customResponse = GetServiceInstanceResponse.builder()
+                .dashboardUrl("dashboard")
+                .build();
+
+        BrokerProcessor processor = new DefaultBrokerProcessor() {
+            @Override
+            public void preGetInstance(Context ctx) {
+                ctx.contextKeys.put(ProcessorChainServiceInstanceService.GET_SERVICE_INSTANCE_REQUEST, customResponse);
+            }
+        };
+        processorChain = aProcessorChain(processor);
+        service = new ProcessorChainServiceInstanceService(processorChain);
+
+
+        //when
+        GetServiceInstanceResponse response = service.getServiceInstance(request);
 
         //then
         Assertions.assertThat(response).isEqualTo(customResponse);

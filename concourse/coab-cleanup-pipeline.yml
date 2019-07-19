@@ -75,3 +75,4 @@ jobs:
       ATC_EXTERNAL_URL: ((concourse-target))
       FLY_USERNAME: ((concourse-username))
       FLY_PASSWORD:  ((concourse-password))
+      FLY_TEAM: ((concourse-team))

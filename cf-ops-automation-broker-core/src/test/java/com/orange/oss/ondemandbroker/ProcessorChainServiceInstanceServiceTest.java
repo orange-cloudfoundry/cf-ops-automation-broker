@@ -281,7 +281,7 @@ public class ProcessorChainServiceInstanceServiceTest {
         BrokerProcessor processor = new DefaultBrokerProcessor() {
             @Override
             public void preGetInstance(Context ctx) {
-                ctx.contextKeys.put(ProcessorChainServiceInstanceService.GET_SERVICE_INSTANCE_REQUEST, customResponse);
+                ctx.contextKeys.put(ProcessorChainServiceInstanceService.GET_SERVICE_INSTANCE_RESPONSE, customResponse);
             }
         };
         processorChain = aProcessorChain(processor);

@@ -4,7 +4,8 @@ Implement static dashboard url (#47 step 2)
    - DefaultBrokerProcessor.preGetServiceInstance() +  
    - BoshProcessor.preGetServiceInstance() + BoshProcessorTest : 
       - Return dashboard previously recorded in `coab-vars.yml`
-         - Extract existing code login into Repository 
+         - Extract existing code into Repository/interface
+            - read coab-depls/c_0a9018b8-7cb2-47c1-9542-0aceb8ca740a/template/coab-vars.yml into CoabVarsDto 
    - BoshBrokerApplication.paasTemplateContextFilter: 
        - check whether other steps could skip paas-secrets clone
     

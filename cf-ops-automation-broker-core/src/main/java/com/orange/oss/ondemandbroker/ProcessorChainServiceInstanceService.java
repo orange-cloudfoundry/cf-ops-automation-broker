@@ -20,6 +20,7 @@ public class ProcessorChainServiceInstanceService implements ServiceInstanceServ
 
 
     public static final String GET_SERVICE_INSTANCE_REQUEST = "GetServiceInstanceRequest";
+    public static final String GET_SERVICE_INSTANCE_RESPONSE = "GetServiceInstanceResponse";
     public static final String CREATE_SERVICE_INSTANCE_REQUEST = "CreateServiceInstanceRequest";
     public static final String CREATE_SERVICE_INSTANCE_RESPONSE = "CreateServiceInstanceResponse";
     public static final String GET_LAST_SERVICE_OPERATION_REQUEST = "GetLastServiceOperationRequest";
@@ -68,11 +69,11 @@ public class ProcessorChainServiceInstanceService implements ServiceInstanceServ
         try {
             Context ctx=new Context();
             ctx.contextKeys.put(GET_SERVICE_INSTANCE_REQUEST, request);
-            processorChain.create(ctx);
+            processorChain.getInstance(ctx);
 
             GetServiceInstanceResponse response;
-            if (ctx.contextKeys.get(GET_SERVICE_INSTANCE_REQUEST) instanceof GetServiceInstanceRequest) {
-                response = (GetServiceInstanceResponse) ctx.contextKeys.get(GET_SERVICE_INSTANCE_REQUEST);
+            if (ctx.contextKeys.get(GET_SERVICE_INSTANCE_RESPONSE) instanceof GetServiceInstanceResponse) {
+                response = (GetServiceInstanceResponse) ctx.contextKeys.get(GET_SERVICE_INSTANCE_RESPONSE);
             } else {
                 response = GetServiceInstanceResponse.builder().build();
             }

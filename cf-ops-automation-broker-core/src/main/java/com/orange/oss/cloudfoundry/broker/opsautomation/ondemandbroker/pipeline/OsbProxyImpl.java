@@ -71,7 +71,7 @@ public class OsbProxyImpl implements OsbProxy {
     public GetLastServiceOperationResponse delegateProvision(GetLastServiceOperationRequest pollingRequest, CreateServiceInstanceRequest request, GetLastServiceOperationResponse response) {
         String brokerUrl = getBrokerUrl(pollingRequest.getServiceInstanceId());
         CatalogServiceClient catalogServiceClient = constructCatalogClient(brokerUrl);
-        Catalog catalog = catalogServiceClient.getCatalog();
+        Catalog catalog = catalogServiceClient.getCatalog(OsbConstants.X_Broker_API_Version_Value);
         CreateServiceInstanceRequest mappedRequest = mapProvisionRequest(request, catalog);
         ServiceInstanceServiceClient serviceInstanceServiceClient = constructServiceInstanceServiceClient(brokerUrl);
         
@@ -91,7 +91,7 @@ public class OsbProxyImpl implements OsbProxy {
     public CreateServiceInstanceBindingResponse delegateBind(CreateServiceInstanceBindingRequest request) {
         String brokerUrl = getBrokerUrl(request.getServiceInstanceId());
         CatalogServiceClient catalogServiceClient = constructCatalogClient(brokerUrl);
-        Catalog catalog = catalogServiceClient.getCatalog();
+        Catalog catalog = catalogServiceClient.getCatalog(OsbConstants.X_Broker_API_Version_Value);
         CreateServiceInstanceBindingRequest mappedRequest = mapBindRequest(request, catalog);
         ServiceInstanceBindingServiceClient serviceInstanceBindingServiceClient = constructServiceInstanceBindingServiceClient(brokerUrl);
 
@@ -114,7 +114,7 @@ public class OsbProxyImpl implements OsbProxy {
     public GetLastServiceOperationResponse delegateDeprovision(GetLastServiceOperationRequest pollingRequest, DeleteServiceInstanceRequest request, GetLastServiceOperationResponse response) {
         String brokerUrl = getBrokerUrl(pollingRequest.getServiceInstanceId());
         CatalogServiceClient catalogServiceClient = constructCatalogClient(brokerUrl);
-        Catalog catalog = catalogServiceClient.getCatalog();
+        Catalog catalog = catalogServiceClient.getCatalog(OsbConstants.X_Broker_API_Version_Value);
         DeleteServiceInstanceRequest mappedRequest = mapDeprovisionRequest(request, catalog);
         ServiceInstanceServiceClient serviceInstanceServiceClient = constructServiceInstanceServiceClient(brokerUrl);
 
@@ -134,7 +134,7 @@ public class OsbProxyImpl implements OsbProxy {
     public void delegateUnbind(DeleteServiceInstanceBindingRequest request) {
         String brokerUrl = getBrokerUrl(request.getServiceInstanceId());
         CatalogServiceClient catalogServiceClient = constructCatalogClient(brokerUrl);
-        Catalog catalog = catalogServiceClient.getCatalog();
+        Catalog catalog = catalogServiceClient.getCatalog(OsbConstants.X_Broker_API_Version_Value);
         DeleteServiceInstanceBindingRequest mappedRequest = mapUnbindRequest(request, catalog);
         ServiceInstanceBindingServiceClient serviceInstanceBindingServiceClient = constructServiceInstanceBindingServiceClient(brokerUrl);
 
@@ -258,6 +258,7 @@ public class OsbProxyImpl implements OsbProxy {
                 false,
                 request.getApiInfoLocation(),
                 buildOriginatingIdentityHeader(request.getOriginatingIdentity()),
+                OsbConstants.X_Broker_API_Version_Value,
                 request);
     }
 
@@ -268,7 +269,8 @@ public class OsbProxyImpl implements OsbProxy {
                 request.getPlanId(),
                 false,
                 request.getApiInfoLocation(),
-                buildOriginatingIdentityHeader(request.getOriginatingIdentity()));
+                buildOriginatingIdentityHeader(request.getOriginatingIdentity()),
+                OsbConstants.X_Broker_API_Version_Value);
     }
 
     void delegateUnbind(DeleteServiceInstanceBindingRequest request, ServiceInstanceBindingServiceClient serviceInstanceBindingServiceClient) {
@@ -279,7 +281,8 @@ public class OsbProxyImpl implements OsbProxy {
                 request.getPlanId(),
                 false,
                 request.getApiInfoLocation(),
-                buildOriginatingIdentityHeader(request.getOriginatingIdentity()));
+                buildOriginatingIdentityHeader(request.getOriginatingIdentity()),
+                OsbConstants.X_Broker_API_Version_Value);
     }
 
     ResponseEntity<CreateServiceInstanceAppBindingResponse> delegateBind(CreateServiceInstanceBindingRequest request, ServiceInstanceBindingServiceClient serviceInstanceBindingServiceClient) {
@@ -289,6 +292,7 @@ public class OsbProxyImpl implements OsbProxy {
                 false,
                 request.getApiInfoLocation(),
                 buildOriginatingIdentityHeader(request.getOriginatingIdentity()),
+                OsbConstants.X_Broker_API_Version_Value,
                 request);
     }
 

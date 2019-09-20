@@ -6,6 +6,7 @@ import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.common.Slf4jNotifier;
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.OsbBuilderHelper;
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.OsbConstants;
 import feign.FeignException;
 import org.junit.Rule;
 import org.junit.Test;
@@ -142,6 +143,7 @@ public class OsbClientTest {
                 false,
                 null,
                 originatingIdentityHeader,
+                OsbConstants.X_Broker_API_Version_Value,
                 createServiceInstanceBindingRequest);
         assertThat(bindResponse.getStatusCode()).isEqualTo(CREATED);
         assertThat(bindResponse.getBody()).isNotNull();
@@ -159,7 +161,8 @@ public class OsbClientTest {
                 defaultPlan.getId(),
                 false,
                 null,
-                originatingIdentityHeader);
+                originatingIdentityHeader,
+                OsbConstants.X_Broker_API_Version_Value);
         assertThat(deleteBindingResponse.getStatusCode()).isEqualTo(OK);
         assertThat(deleteBindingResponse.getBody()).isNotNull();
     }
@@ -198,6 +201,7 @@ public class OsbClientTest {
                 false,
                 null,
                 originatingIdentityHeader,
+                OsbConstants.X_Broker_API_Version_Value,
                 createServiceInstanceRequest
         );
         assertThat(createResponse.getStatusCode()).isEqualTo(CREATED);
@@ -214,7 +218,8 @@ public class OsbClientTest {
                 defaultPlan.getId(),
                 "an opaque operation string",
                 null,
-                originatingIdentityHeader
+                originatingIdentityHeader,
+                OsbConstants.X_Broker_API_Version_Value
         );
         assertThat(lastOperationResponse.getStatusCode()).isEqualTo(OK);
         assertThat(lastOperationResponse.getBody()).isNotNull();
@@ -235,6 +240,7 @@ public class OsbClientTest {
                 false,
                 null,
                 originatingIdentityHeader,
+                OsbConstants.X_Broker_API_Version_Value,
                 updateServiceInstanceRequest);
         assertThat(updateResponse.getStatusCode()).isEqualTo(OK);
         assertThat(updateResponse.getBody()).isNotNull();
@@ -248,7 +254,8 @@ public class OsbClientTest {
                 defaultPlan.getId(),
                 false,
                 null,
-                originatingIdentityHeader);
+                originatingIdentityHeader,
+                OsbConstants.X_Broker_API_Version_Value);
         assertThat(deleteInstanceResponse.getStatusCode()).isEqualTo(OK);
         assertThat(deleteInstanceResponse.getBody()).isNotNull();
     }
@@ -258,7 +265,7 @@ public class OsbClientTest {
         CatalogServiceClient catalogServiceClient = clientFactory.getClient(url, user, password, CatalogServiceClient.class);
 
         //then
-        Catalog catalog = catalogServiceClient.getCatalog();
+        Catalog catalog = catalogServiceClient.getCatalog("2.14");
         assertThat(catalog).isNotNull();
         ServiceDefinition serviceDefinition = catalog.getServiceDefinitions().get(0);
         assertThat(serviceDefinition).isNotNull();
@@ -287,7 +294,8 @@ public class OsbClientTest {
                 "cassandra-plan",
                 false,
                 null,
-                buildOriginatingIdentityHeader());
+                buildOriginatingIdentityHeader(),
+                OsbConstants.X_Broker_API_Version_Value);
 
         //then
         assertThat(deleteInstanceResponse.getStatusCode()).isEqualTo(OK);
@@ -322,7 +330,7 @@ public class OsbClientTest {
 
         //Then expect
         thrown.expect(FeignException.class);
-        thrown.expectMessage("status 500 reading ServiceInstanceServiceClient#createServiceInstance(String,boolean,String,String,CreateServiceInstanceRequest); content:\n" +
+        thrown.expectMessage("status 500 reading ServiceInstanceServiceClient#createServiceInstance(String,boolean,String,String,String,CreateServiceInstanceRequest); content:\n" +
                 "{\"description\":\"Keyspace ks111 already exists\"}");
 
         ResponseEntity<CreateServiceInstanceResponse> createResponse = serviceInstanceServiceClient.createServiceInstance(
@@ -330,6 +338,7 @@ public class OsbClientTest {
                 false,
                 null,
                 buildOriginatingIdentityHeader(),
+                OsbConstants.X_Broker_API_Version_Value,
                 createServiceInstanceRequest);
 
         //then

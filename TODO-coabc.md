@@ -1,7 +1,8 @@
 Implement static dashboard url (#47 step 2)
 
 - implement the `GET /v2/service_instances/:instance_id` 
-   - DefaultBrokerProcessor.preGetServiceInstance() +  
+   - DefaultBrokerProcessor.preGetServiceInstance() 
+   - document that operator should configure the catalog to return `instances_retrievable=true`  
    - BoshProcessor.preGetServiceInstance() + BoshProcessorTest : 
       - Return dashboard previously recorded in `coab-vars.yml`
          - Extract existing code into Repository/interface

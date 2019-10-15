@@ -14,8 +14,8 @@ import static org.hamcrest.Matchers.startsWith;
 
 //$ tree coab-depls
 //coab-depls
-//|-- cassandravarsops
-//|   |-- cassandravarsops.yml
+//|-- cassandra
+//|   |-- cassandra.yml
 //|   |-- enable-deployment.yml
 //|   `-- secrets
 //|       |-- meta.yml
@@ -23,9 +23,6 @@ import static org.hamcrest.Matchers.startsWith;
 //|-- c_155cf3e0-6321-48de-9aac-4dd132baf21f
 //|   |-- c_155cf3e0-6321-48de-9aac-4dd132baf21f.yml
 //|   |-- enable-deployment.yml
-//|   `-- secrets
-//|       |-- meta.yml -> ../../cassandravarsops/secrets/meta.yml
-//|       `-- secrets.yml -> ../../cassandravarsops/secrets/secrets.yml
 //|[..]
 public class SecretsGeneratorTest extends StructureGeneratorImplTest{
 
@@ -67,36 +64,6 @@ public class SecretsGeneratorTest extends StructureGeneratorImplTest{
     }//superclass TU
 
     @Test
-    public void raise_exception_if_secrets_directory_is_missing(){
-        //Then
-        thrown.expect(DeploymentException.class);
-        thrown.expectMessage(startsWith(DeploymentConstants.SECRETS_EXCEPTION));
-
-        //When
-        this.secretsGenerator.checkThatSecretsDirectoryExists(this.workDir);
-    }
-
-    @Test
-    public void raise_exception_if_model_meta_file_is_missing() {
-        //Then
-        thrown.expect(DeploymentException.class);
-        thrown.expectMessage(DeploymentConstants.META_FILE_EXCEPTION);
-
-        //When
-        this.secretsGenerator.checkThatMetaFileExists(this.workDir);
-    }
-
-    @Test
-    public void raise_exception_if_model_secrets_file_is_missing() {
-        //Then
-        thrown.expect(DeploymentException.class);
-        thrown.expectMessage(DeploymentConstants.SECRETS_FILE_EXCEPTION);
-
-        //When
-        this.secretsGenerator.checkThatSecretsFileExists(this.workDir);
-    }
-
-    @Test
     public void check_that_all_prerequisites_are_satisfied() {
         //Given
         this.aModelStructure();
@@ -105,67 +72,6 @@ public class SecretsGeneratorTest extends StructureGeneratorImplTest{
         this.secretsGenerator.checkPrerequisites(this.workDir);
 
         //Then => No exception raised
-    }
-
-    @Test
-    public void check_that_secrets_directory_is_generated() {
-        //Given
-        Structure deploymentStructure = new Structure.StructureBuilder(this.workDir)
-                .withDirectoryHierarchy(this.deploymentProperties.getRootDeployment(), this.secretsGenerator.computeDeploymentName(SERVICE_INSTANCE_ID))
-                .build();
-
-        //When
-        this.secretsGenerator.generateSecretsDirectory(this.workDir, SERVICE_INSTANCE_ID);
-
-        //Then
-        Path secretsDir = StructureGeneratorHelper.generatePath(this.workDir,
-                this.deploymentProperties.getRootDeployment(),
-                this.secretsGenerator.computeDeploymentName(SERVICE_INSTANCE_ID),
-                DeploymentConstants.SECRETS
-        );
-        assertThat("Secrets directory doesn't exist:" + secretsDir, Files.exists(secretsDir));
-    }
-
-    @Test
-    public void check_that_meta_file_is_generated() {
-        //Given
-        this.aModelStructure();
-        Structure deploymentStructure = new Structure.StructureBuilder(this.workDir)
-                .withDirectoryHierarchy(this.deploymentProperties.getRootDeployment(), this.secretsGenerator.computeDeploymentName(SERVICE_INSTANCE_ID), DeploymentConstants.SECRETS)
-                .build();
-
-        //When
-        this.secretsGenerator.generateMetaFile(workDir, SERVICE_INSTANCE_ID);
-
-        //Then
-        Path targetMetaFile = StructureGeneratorHelper.generatePath(this.workDir,
-                this.deploymentProperties.getRootDeployment(),
-                this.secretsGenerator.computeDeploymentName(SERVICE_INSTANCE_ID),
-                DeploymentConstants.SECRETS,
-                DeploymentConstants.META + DeploymentConstants.YML_EXTENSION);
-        assertThat("Meta file doesn't exist :"+ targetMetaFile, Files.exists(targetMetaFile));
-        assertThat("Meta file is not a symbolic link", Files.isSymbolicLink(targetMetaFile));
-    }
-
-    @Test
-    public void check_that_secrets_file_is_generated() {
-        //Given
-        this.aModelStructure();
-        Structure deploymentStructure = new Structure.StructureBuilder(this.workDir)
-                .withDirectoryHierarchy(this.deploymentProperties.getRootDeployment(), this.secretsGenerator.computeDeploymentName(SERVICE_INSTANCE_ID), DeploymentConstants.SECRETS)
-                .build();
-
-        //When
-        this.secretsGenerator.generateSecretsFile(this.workDir, SERVICE_INSTANCE_ID);
-
-        //Then
-        Path targetSecretsFile = StructureGeneratorHelper.generatePath(this.workDir,
-                this.deploymentProperties.getRootDeployment(),
-                this.secretsGenerator.computeDeploymentName(SERVICE_INSTANCE_ID),
-                DeploymentConstants.SECRETS,
-                DeploymentConstants.SECRETS + DeploymentConstants.YML_EXTENSION);
-        assertThat("Secrets file doesn't exist:" + targetSecretsFile, Files.exists(targetSecretsFile));
-        assertThat("Secrets file is not a symbolic link", Files.isSymbolicLink(targetSecretsFile));
     }
 
     @Test
@@ -203,61 +109,6 @@ public class SecretsGeneratorTest extends StructureGeneratorImplTest{
         assertThat("manifest file location", targetManifestFilePath, equalTo(expectedCoaGeneratedManifestFile));
     }
 
-
-
-    @Test
-    public void check_that_meta_file_is_removed() {
-
-        //Given
-        this.aDeploymentStructure();
-
-        //When
-        this.secretsGenerator.removeMetaFile(this.workDir, SERVICE_INSTANCE_ID);
-
-        //Then
-        Path targetMetaFile = StructureGeneratorHelper.generatePath(this.workDir,
-                this.deploymentProperties.getRootDeployment(),
-                this.secretsGenerator.computeDeploymentName(SERVICE_INSTANCE_ID),
-                DeploymentConstants.SECRETS,
-                DeploymentConstants.META + DeploymentConstants.YML_EXTENSION);
-        assertThat("Meta file is still existing", Files.notExists(targetMetaFile));
-    }
-
-    @Test
-    public void check_that_secrets_file_is_removed() {
-        //Given
-        this.aDeploymentStructure();
-
-        //When
-        this.secretsGenerator.removeSecretsFile(this.workDir, SERVICE_INSTANCE_ID);
-
-        //Then
-        Path targetSecretsFile = StructureGeneratorHelper.generatePath(this.workDir,
-                this.deploymentProperties.getRootDeployment(),
-                this.deploymentProperties.getModelDeployment() +  DeploymentConstants.UNDERSCORE + SERVICE_INSTANCE_ID,
-                DeploymentConstants.SECRETS,
-                DeploymentConstants.SECRETS + DeploymentConstants.YML_EXTENSION);
-        assertThat("Secrets file is still existing", Files.notExists(targetSecretsFile));
-    }
-
-    @Test
-    public void check_that_enable_deployment_file_is_removed() {
-
-        //Given
-        this.aDeploymentStructure();
-
-        //When
-        this.secretsGenerator.removeEnableDeploymentFile(this.workDir, SERVICE_INSTANCE_ID);
-
-        //Then
-        Path targetEnableDeploymentFile = StructureGeneratorHelper.generatePath(this.workDir,
-                this.deploymentProperties.getRootDeployment(),
-                this.deploymentProperties.getModelDeployment() +  DeploymentConstants.UNDERSCORE + SERVICE_INSTANCE_ID,
-                DeploymentConstants.ENABLE_DEPLOYMENT_FILENAME);
-        assertThat("Enable deployment file is still existing", Files.notExists(targetEnableDeploymentFile));
-
-    }
-
     private void aModelStructure(){
         Structure modelStructure = new Structure.StructureBuilder(this.workDir)
                 .withFile(new String[]{this.deploymentProperties.getRootDeployment(), this.deploymentProperties.getModelDeployment(), DeploymentConstants.SECRETS},
@@ -276,13 +127,6 @@ public class SecretsGeneratorTest extends StructureGeneratorImplTest{
                 .withFile(new String[]{this.deploymentProperties.getRootDeployment(), this.secretsGenerator.computeDeploymentName(SERVICE_INSTANCE_ID)},
                         DeploymentConstants.ENABLE_DEPLOYMENT_FILENAME) //enable-deployment.yml
                 .build();
-    }
-
-
-    @Test
-    @Ignore
-    public void check_if_files_content_are_correct() {
-        //TODO
     }
 
     @Test

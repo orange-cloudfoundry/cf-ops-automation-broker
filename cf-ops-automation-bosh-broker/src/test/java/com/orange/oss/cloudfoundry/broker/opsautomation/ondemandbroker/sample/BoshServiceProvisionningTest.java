@@ -10,10 +10,7 @@ import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.osbclient
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.osbclient.OsbClientFactory;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.osbclient.ServiceInstanceBindingServiceClient;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.osbclient.ServiceInstanceServiceClient;
-import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.DeploymentConstants;
-import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.DeploymentProperties;
-import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.OsbProxyImpl;
-import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.SecretsGenerator;
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.*;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.tools.Copy;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.Context;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.terraform.TerraformModuleHelper;
@@ -392,6 +389,7 @@ public class BoshServiceProvisionningTest {
                 false,
                 "api-info",
                 osbProxy.buildOriginatingIdentityHeader(aCfUserContext()),
+                OsbConstants.X_Broker_API_Version_Value,
                 serviceInstanceBindingRequest);
         assertThat(bindResponse.getStatusCode()).isEqualTo(CREATED);
         assertThat(bindResponse.getBody()).isNotNull();
@@ -407,7 +405,8 @@ public class BoshServiceProvisionningTest {
                 SERVICE_PLAN_ID,
                 false,
                 "api-info",
-                osbProxy.buildOriginatingIdentityHeader(aCfUserContext()));
+                osbProxy.buildOriginatingIdentityHeader(aCfUserContext()),
+                OsbConstants.X_Broker_API_Version_Value);
     }
 
     private String create_async_service_instance_using_osb_client() {
@@ -419,6 +418,7 @@ public class BoshServiceProvisionningTest {
                 true,
                 "api-info",
                 osbProxy.buildOriginatingIdentityHeader(aCfUserContext()),
+                OsbConstants.X_Broker_API_Version_Value,
                 createServiceInstanceRequest);
         assertThat(createResponse.getStatusCode()).isEqualTo(ACCEPTED);
         assertThat(createResponse.getBody()).isNotNull();
@@ -426,7 +426,7 @@ public class BoshServiceProvisionningTest {
     }
 
     public void exposes_catalog() {
-        Catalog catalog = catalogServiceClient.getCatalog();
+        Catalog catalog = catalogServiceClient.getCatalog(OsbConstants.X_Broker_API_Version_Value);
         assertThat(catalog.getServiceDefinitions()).isNotEmpty();
         assertThat(catalog).isNotNull();
         ServiceDefinition serviceDefinition = catalog.getServiceDefinitions().get(0);
@@ -459,7 +459,8 @@ public class BoshServiceProvisionningTest {
                 SERVICE_PLAN_ID,
                 true,
                 "api-info",
-                osbProxy.buildOriginatingIdentityHeader(aCfUserContext()));
+                osbProxy.buildOriginatingIdentityHeader(aCfUserContext()),
+                OsbConstants.X_Broker_API_Version_Value);
         assertThat(response.getStatusCode()).isEqualTo(ACCEPTED);
         assertThat(response.getBody()).isNotNull();
         return response.getBody().getOperation();

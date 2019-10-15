@@ -276,6 +276,7 @@ public class OsbProxyImplTest {
                 false, //for now OsbProxyImpl expects sync broker response
                 "api-info",
                 aContextOriginatingHeader(),
+                OsbConstants.X_Broker_API_Version_Value,
                 request);
     }
 
@@ -319,6 +320,7 @@ public class OsbProxyImplTest {
                 false,
                 "api-info",
                 aContextOriginatingHeader(),
+                OsbConstants.X_Broker_API_Version_Value,
                 request);
     }
 
@@ -347,7 +349,8 @@ public class OsbProxyImplTest {
                 "coab-planid",
                 false,
                 "api-info",
-                aContextOriginatingHeader());
+                aContextOriginatingHeader(),
+                OsbConstants.X_Broker_API_Version_Value);
     }
 
     @Test
@@ -374,7 +377,8 @@ public class OsbProxyImplTest {
                 "coab-planid",
                 false,
                 "api-info",
-                aContextOriginatingHeader());
+                aContextOriginatingHeader(),
+                OsbConstants.X_Broker_API_Version_Value);
     }
 
 

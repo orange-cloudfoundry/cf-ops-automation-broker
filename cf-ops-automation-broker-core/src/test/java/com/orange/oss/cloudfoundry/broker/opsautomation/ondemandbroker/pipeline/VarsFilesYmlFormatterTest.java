@@ -1,5 +1,8 @@
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline;
 
+import java.io.IOException;
+import java.util.ArrayList;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.UserFacingRuntimeException;
@@ -9,11 +12,9 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import org.springframework.cloud.servicebroker.model.CloudFoundryContext;
 import org.springframework.cloud.servicebroker.model.instance.CreateServiceInstanceRequest;
-
-import java.io.IOException;
-import java.util.ArrayList;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Fail.fail;
@@ -29,12 +30,16 @@ public class VarsFilesYmlFormatterTest {
 
     @Test
     public void rejects_invalid_patterns() throws JsonProcessingException {
-        assertParamValueRejected("(("); //credhub interpolation
-        assertParamValueRejected("(( a/string ))");
-        assertParamValueRejected("a/path"); //don't yet need paths, add it when requested
-        assertParamValueRejected("))");
-        assertParamValueRejected("?"); //other unknown chars
-        assertParamValueRejected("&"); //YML references
+        assertDeploymentNameAndParamValueRejected("`a_malicious_shell_command_to_inject_in_bosh_templates`");
+        assertDeploymentNameAndParamValueRejected("``");
+        assertDeploymentNameAndParamValueRejected("$(a_malicious_shell_command_to_inject_in_bosh_templates)");
+        assertDeploymentNameAndParamValueRejected("$()");
+        assertDeploymentNameAndParamValueRejected("(("); //credhub interpolation
+        assertDeploymentNameAndParamValueRejected("(( a/string ))");
+        assertDeploymentNameAndParamValueRejected("a/path"); //don't yet need paths, add it when requested
+        assertDeploymentNameAndParamValueRejected("))");
+        assertDeploymentNameAndParamValueRejected("?"); //other unknown chars
+        assertDeploymentNameAndParamValueRejected("&"); //YML references
 
 
         assertParamValueAccepted("a string with spaces");
@@ -81,7 +86,7 @@ public class VarsFilesYmlFormatterTest {
         }
     }
 
-    protected void assertParamValueRejected(String paramValue) throws JsonProcessingException {
+    protected void assertDeploymentNameAndParamValueRejected(String paramValue) throws JsonProcessingException {
         CoabVarsFileDto coabVarsFileDto = aTypicalUserProvisionningRequest();
         coabVarsFileDto.deployment_name = paramValue;
         coabVarsFileDto.parameters.put("aparam", paramValue);
@@ -90,7 +95,8 @@ public class VarsFilesYmlFormatterTest {
             formatter.formatAsYml(coabVarsFileDto);
             fail("expected " + paramValue + "to be rejected");
         } catch (UserFacingRuntimeException e) {
-
+            assertThat(e.getMessage()).contains("deployment_name");
+            assertThat(e.getMessage()).contains("aparam");
         }
     }
 

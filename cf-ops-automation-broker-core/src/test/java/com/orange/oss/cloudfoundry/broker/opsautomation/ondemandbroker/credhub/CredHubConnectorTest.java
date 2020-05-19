@@ -1,27 +1,35 @@
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.credhub;
 
-import org.junit.jupiter.api.Test;
-import org.junit.runner.RunWith;
-import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.credhub.core.CredHubTemplate;
-import org.springframework.credhub.core.credential.CredHubCredentialOperations;
-import org.springframework.credhub.support.*;
-import org.springframework.credhub.support.password.PasswordCredential;
-import org.springframework.credhub.support.value.ValueCredential;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.platform.runner.JUnitPlatform;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import org.springframework.credhub.core.CredHubTemplate;
+import org.springframework.credhub.core.credential.CredHubCredentialOperations;
+import org.springframework.credhub.support.CredentialDetails;
+import org.springframework.credhub.support.CredentialName;
+import org.springframework.credhub.support.CredentialSummary;
+import org.springframework.credhub.support.CredentialType;
+import org.springframework.credhub.support.SimpleCredentialName;
+import org.springframework.credhub.support.password.PasswordCredential;
+import org.springframework.credhub.support.value.ValueCredential;
 
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.Mockito.when;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
+@RunWith(JUnitPlatform.class)
 public class CredHubConnectorTest {
 
     @SuppressWarnings("unused")

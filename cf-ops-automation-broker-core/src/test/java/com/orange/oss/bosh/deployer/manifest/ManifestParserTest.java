@@ -1,23 +1,24 @@
 package com.orange.oss.bosh.deployer.manifest;
 
-import org.assertj.core.api.Assertions;
-import org.junit.jupiter.api.Test;
-import org.junit.runner.RunWith;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.core.io.Resource;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
-
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.Map;
 
-import static org.assertj.core.api.Assertions.assertThat;
-@RunWith(SpringJUnit4ClassRunner.class)
-@SpringBootTest(classes = {ManifestParser.class})
+import org.assertj.core.api.Assertions;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.core.io.Resource;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+@ExtendWith(SpringExtension.class)
+@SpringBootTest(classes = {ManifestParser.class})
 public class ManifestParserTest {
 
 	private static Logger logger=LoggerFactory.getLogger(ManifestParserTest.class.getName());

@@ -4,7 +4,7 @@ import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processor
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.DefaultBrokerProcessor;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.DefaultBrokerSink;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.ProcessorChain;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
@@ -60,7 +60,7 @@ public class OpsAutomationServiceBrokerAutoConfigurationTests {
 		CreateServiceInstanceResponse si = this.service.createServiceInstance(req);
 
 		String appGuid="appGuid";
-		Map<String, Object> bindResource = new HashMap<String, Object>();
+		Map<String, Object> bindResource = new HashMap<>();
 		CreateServiceInstanceBindingRequest breq = CreateServiceInstanceBindingRequest.builder()
 				.serviceDefinitionId(serviceDefId)
 				.planId(planId)
@@ -84,11 +84,10 @@ class OpsAutomationServiceBrokerApplication {
 
 	@Bean
 	public ProcessorChain processorChain() {
-		List<BrokerProcessor> processors=new ArrayList<BrokerProcessor>();
+		List<BrokerProcessor> processors= new ArrayList<>();
 		processors.add(new DefaultBrokerProcessor());
 		DefaultBrokerSink sink=new DefaultBrokerSink();
-		ProcessorChain chain=new ProcessorChain(processors, sink);
-		return chain;
+		return new ProcessorChain(processors, sink);
 	}
 
 

@@ -20,6 +20,10 @@ import org.apache.http.HttpStatus;
 import org.eclipse.jgit.api.AddCommand;
 import org.eclipse.jgit.api.Git;
 import org.junit.*;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -68,7 +72,7 @@ import static org.springframework.http.HttpStatus.CREATED;
 public class BoshServiceProvisionningTest {
 
 
-    @BeforeClass
+    @BeforeAll
     public static void prepare_CONFIG_YML_env_var() throws Exception {
 
         InputStream resourceAsStream = BoshServiceProvisionningTest.class.getResourceAsStream("/catalog.yml");
@@ -82,7 +86,7 @@ public class BoshServiceProvisionningTest {
         }
     }
 
-    @After
+    @AfterEach
     public void after() {
         System.clearProperty("CATALOG_YML");
         assertThat(System.getProperty("CATALOG_YML")).isNull();
@@ -158,13 +162,13 @@ public class BoshServiceProvisionningTest {
     }
 
 
-    @Before
+    @BeforeEach
     public void startHttpClient() {
         RestAssured.port = port;
         RestAssured.authentication = basic("user", "secret");
     }
 
-    @Before
+    @BeforeEach
     public void initializeOsbClientsToLocalSystemUnderTest() {
         String url = "http://127.0.0.1:" + port;
         String user = "user";
@@ -184,7 +188,7 @@ public class BoshServiceProvisionningTest {
 
 
 
-    @Before
+    @BeforeEach
     public void setUpWireMockRecording() {
         if (isWiremockRecordingEnabled()) {
             WireMock.startRecording(preprodBrokerUrlToRecord);
@@ -195,7 +199,7 @@ public class BoshServiceProvisionningTest {
         }
     }
 
-    @After
+    @AfterEach
     public void stopWireMockRecording() {
         if (isWiremockRecordingEnabled()) {
             @SuppressWarnings("unused") SnapshotRecordResult recordedMappings = WireMock.stopRecording();
@@ -205,7 +209,7 @@ public class BoshServiceProvisionningTest {
     }
 
 
-    @Before
+    @BeforeEach
     public void startGitServer() throws IOException {
         gitServer = new GitServer();
 
@@ -323,7 +327,7 @@ public class BoshServiceProvisionningTest {
     }
 
 
-    @After
+    @AfterEach
     public void stopGitServer() throws InterruptedException {
         gitServer.stopAndCleanupReposServer();
     }

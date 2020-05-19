@@ -4,7 +4,7 @@ import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processor
 import net.jodah.failsafe.RetryPolicy;
 import org.assertj.core.api.Assertions;
 import org.eclipse.jgit.api.errors.TransportException;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.internal.stubbing.answers.AnswersWithDelay;

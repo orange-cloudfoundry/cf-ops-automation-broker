@@ -3,9 +3,9 @@ package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.*;
 import org.eclipse.jgit.api.AddCommand;
 import org.eclipse.jgit.api.Git;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -79,7 +79,7 @@ public class GitIT {
 
     private GitServer gitServer;
 
-    @Before
+    @BeforeEach
     public void startGitServer() throws IOException {
         gitServer = new GitServer();
 
@@ -95,7 +95,7 @@ public class GitIT {
         }
     }
 
-    @After
+    @AfterEach
     public void cleanUpGit() throws Exception {
         gitServer.stopAndCleanupReposServer();
     }

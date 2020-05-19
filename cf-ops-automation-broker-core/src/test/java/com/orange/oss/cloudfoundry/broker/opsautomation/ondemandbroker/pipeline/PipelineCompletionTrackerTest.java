@@ -4,10 +4,9 @@ import feign.FeignException;
 import feign.Request;
 import feign.RequestTemplate;
 import feign.Response;
-import org.junit.Before;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
+import org.junit.jupiter.api.Test;
 import org.junit.rules.TemporaryFolder;
 import org.mockito.Mockito;
 import org.springframework.cloud.servicebroker.exception.ServiceBrokerException;
@@ -32,7 +31,6 @@ import java.util.HashMap;
 
 import static com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.OsbBuilderHelper.*;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hamcrest.CoreMatchers.containsString;
 import static org.junit.Assert.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.AdditionalAnswers.returnsLastArg;
@@ -58,20 +56,20 @@ public class PipelineCompletionTrackerTest {
     private SecretsReader secretsReader = Mockito.mock(SecretsReader.class);
     private PipelineCompletionTracker tracker = new PipelineCompletionTracker(clock, 1200L, osbProxy, secretsReader);
 
-    @Before
+    @BeforeEach
     public void setUp_SecretsReader_to_report_missing_manifest() {
         //Mockito happens to return false by default on boolean method, but let's be explicit so that
         //future refactorings would not break by accident
         Mockito.when(secretsReader.isBoshDeploymentAvailable(any(), any())).thenReturn(false);
     }
 
-    @Before
+    @BeforeEach
     public void preparePaasSecretWorkDir() throws IOException {
         File file = temporaryFolder.newFolder(REPOSITORY_DIRECTORY);
         workDir = file.toPath();
     }
 
-    @Before
+    @BeforeEach
     public void setUpOsbProxy() {
         doAnswer(returnsLastArg()).when(osbProxy).delegateProvision(any(), any(), any());
     }

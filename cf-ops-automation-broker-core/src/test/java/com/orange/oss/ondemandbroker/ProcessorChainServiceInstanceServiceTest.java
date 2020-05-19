@@ -3,7 +3,7 @@ package com.orange.oss.ondemandbroker;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.OsbBuilderHelper;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.*;
 import org.assertj.core.api.Assertions;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -51,7 +52,7 @@ public class ProcessorChainServiceInstanceServiceTest {
         assertThat(ctx.contextKeys.get(ProcessorChainServiceInstanceService.CREATE_SERVICE_INSTANCE_REQUEST)).isEqualTo(request);
     }
 
-   @Test(expected = RuntimeException.class)
+   @Test
     public void creates_method_logs_and_rethrows_exceptions() {
        RuntimeException confidentialException = new RuntimeException("unable to push at https://login:pwd@mygit.site.org/secret_path", new IOException());
        CreateServiceInstanceRequest request = CreateServiceInstanceRequest.builder().build();
@@ -59,9 +60,9 @@ public class ProcessorChainServiceInstanceServiceTest {
        Mockito.doThrow(confidentialException).when(processorChain).create(any(Context.class));
 
        //when
-        CreateServiceInstanceResponse response = service.createServiceInstance(request);
-
-        //then exception is logged and rethrown
+       assertThrows(RuntimeException.class, () ->
+           service.createServiceInstance(request));
+       //then exception is logged and rethrown
     }
 
     @Test
@@ -91,7 +92,7 @@ public class ProcessorChainServiceInstanceServiceTest {
     }
 
     @Test
-    public void chains_getLastCreateOperation_processors() throws Exception {
+    public void chains_getLastCreateOperation_processors() {
         //given
         GetLastServiceOperationRequest request = GetLastServiceOperationRequest.builder()
                 .serviceInstanceId("instanceId").build();

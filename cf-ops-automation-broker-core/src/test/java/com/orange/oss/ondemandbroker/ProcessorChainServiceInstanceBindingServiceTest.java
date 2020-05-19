@@ -3,7 +3,7 @@ package com.orange.oss.ondemandbroker;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.OsbBuilderHelper;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.*;
 import org.assertj.core.api.Assertions;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -55,7 +56,7 @@ public class ProcessorChainServiceInstanceBindingServiceTest {
         assertThat(ctx.contextKeys.get(ProcessorChainServiceInstanceBindingService.CREATE_SERVICE_INSTANCE_BINDING_REQUEST)).isEqualTo(request);
     }
 
-    @Test(expected = RuntimeException.class)
+    @Test
     public void creates_method_logs_and_rethrows_exceptions() {
         RuntimeException confidentialException = new RuntimeException("unable to push at https://login:pwd@mygit.site.org/secret_path", new IOException());
         CreateServiceInstanceBindingRequest request = CreateServiceInstanceBindingRequest.builder().build();
@@ -63,8 +64,8 @@ public class ProcessorChainServiceInstanceBindingServiceTest {
         Mockito.doThrow(confidentialException).when(processorChain).bind(any(Context.class));
 
         //when
-        service.createServiceInstanceBinding(request);
-
+        assertThrows(RuntimeException.class, () ->
+            service.createServiceInstanceBinding(request));
         //then exception is logged and rethrown
     }
 

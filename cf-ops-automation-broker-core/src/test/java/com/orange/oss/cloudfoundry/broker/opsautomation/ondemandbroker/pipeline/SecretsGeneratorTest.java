@@ -1,8 +1,8 @@
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline;
 
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -28,7 +28,7 @@ public class SecretsGeneratorTest extends StructureGeneratorImplTest{
 
     private SecretsGenerator secretsGenerator;
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         super.setUp();
         this.secretsGenerator = new SecretsGenerator(this.deploymentProperties.getRootDeployment(),
@@ -130,7 +130,7 @@ public class SecretsGeneratorTest extends StructureGeneratorImplTest{
     }
 
     @Test
-    @Ignore
+    @Disabled
     public void populatePaasSecrets() {
         Path workDir = Paths.get("/home/ijly7474/GIT/coab/preprod-secrets");
         this.secretsGenerator.checkPrerequisites(workDir);

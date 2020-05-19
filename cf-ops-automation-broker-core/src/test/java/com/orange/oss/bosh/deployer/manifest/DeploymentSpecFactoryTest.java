@@ -3,7 +3,7 @@ package com.orange.oss.bosh.deployer.manifest;
 
 import com.orange.oss.bosh.deployer.manifest.ManifestMapping.Manifest;
 import org.assertj.core.api.Assertions;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 
 

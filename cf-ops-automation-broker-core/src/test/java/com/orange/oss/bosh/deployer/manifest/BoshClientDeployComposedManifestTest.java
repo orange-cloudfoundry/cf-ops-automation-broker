@@ -5,7 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -70,7 +70,7 @@ public class BoshClientDeployComposedManifestTest {
 		
 		
 		//stemcells
-		manifest.stemcells=new ArrayList<Stemcell>();
+		manifest.stemcells= new ArrayList<>();
 		ManifestMapping.Stemcell stemcell=new Stemcell();
 		stemcell.alias="trusty";
 		stemcell.os="ubuntu-trusty";
@@ -79,7 +79,7 @@ public class BoshClientDeployComposedManifestTest {
 		
 		
 		//releases
-		manifest.releases=new ArrayList<Release>();
+		manifest.releases= new ArrayList<>();
 		ManifestMapping.Release release=new Release();
 		release.name="hazelcast";
 		release.version="latest";
@@ -87,12 +87,12 @@ public class BoshClientDeployComposedManifestTest {
 		
 		
 		//network and az for instance groups
-		List<Network> hzNetWorks=new ArrayList<Network>();
+		List<Network> hzNetWorks= new ArrayList<>();
 		Network net=new Network();
 		net.name="net-bosh-ondemand";
 		hzNetWorks.add(net);
 		
-		List<String> azs=new ArrayList<String>();
+		List<String> azs= new ArrayList<>();
 		azs.add("z1");
 			
 		
@@ -113,11 +113,11 @@ public class BoshClientDeployComposedManifestTest {
 		Job instanceJob=new Job();
 		instanceJob.name="hazelcast_node";
 		instanceJob.release="hazelcast";
-		instanceIG.jobs=new ArrayList<Job>();
+		instanceIG.jobs= new ArrayList<>();
 		instanceIG.jobs.add(instanceJob);
 		
 		
-		Map properties=new HashMap<String,String>();
+		Map<String, String> properties=new HashMap<>();
 		properties.put("hazelcast.jvm.memoryMo", "3000");
 		properties.put("hazelcast.group.name", "hz-group");
 		properties.put("hazelcast.group.password", "eentepAxHo");
@@ -146,7 +146,7 @@ public class BoshClientDeployComposedManifestTest {
 		Job managerJob=new Job();
 		managerJob.name="hazelcast_mancenter";
 		managerJob.release="hazelcast";
-		managerIG.jobs=new ArrayList<Job>();
+		managerIG.jobs= new ArrayList<>();
 		managerIG.jobs.add(managerJob);
 		
 		manifest.instance_groups.add(managerIG);

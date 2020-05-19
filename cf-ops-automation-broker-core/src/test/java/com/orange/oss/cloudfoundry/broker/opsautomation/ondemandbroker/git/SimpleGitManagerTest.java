@@ -10,6 +10,11 @@ import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.junit.*;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+
 import org.springframework.util.FileSystemUtils;
 
 import java.io.File;
@@ -24,6 +29,7 @@ import java.util.stream.StreamSupport;
 
 import static com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.GitIT.createDir;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class SimpleGitManagerTest {
 
@@ -36,18 +42,18 @@ public class SimpleGitManagerTest {
     private Context ctx = new Context();
 
 
-    @BeforeClass
+    @BeforeAll
     public static void startGitServer() throws IOException {
         gitServer = new GitServer();
         gitServer.startEphemeralReposServer(GitServer.NO_OP_INITIALIZER);
     }
 
-    @AfterClass
+    @AfterAll
     public static void stopGitServer() throws InterruptedException {
         gitServer.stopAndCleanupReposServer();
     }
 
-    @After
+    @AfterEach
     public void cleanUpClone() {
         if (gitManager != null) {
             gitManager.deleteWorkingDir(ctx);
@@ -295,7 +301,7 @@ public class SimpleGitManagerTest {
         assertThat(secondClone.resolve("a-file-in-master-branch.txt").toFile()).exists();
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void supports_checkOutRemoteBranch_key_when_branch_is_missing() {
         //given an empty repo
 
@@ -303,9 +309,10 @@ public class SimpleGitManagerTest {
         this.ctx = new Context();
         this.ctx.contextKeys.put(GitProcessorContext.checkOutRemoteBranch.toString(), "develop");
 
-        gitManager.cloneRepo(this.ctx);
-
         //then an exception should be thrown
+        assertThrows(IllegalArgumentException.class, () ->
+            gitManager.cloneRepo(this.ctx));
+
     }
 
     @Test

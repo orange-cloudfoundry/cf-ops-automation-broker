@@ -2,7 +2,7 @@ package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.terrafor
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 
@@ -14,7 +14,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class TerraformStateTest {
 
     @Test
-    public void parses_terraform_state_root_module_outputs() throws IOException {
+    public void parses_terraform_state_root_module_outputs() {
         //given a reference format
         String tfStateFile = "/terraform/terraform-with-outputs.tfstate";
 
@@ -33,7 +33,7 @@ public class TerraformStateTest {
 
     }
     @Test
-    public void parses_multiple_terraform_state_root_module_outputs() throws IOException {
+    public void parses_multiple_terraform_state_root_module_outputs() {
         //given a reference format
         String tfStateFile = "/terraform/terraform-with-completed-module-exec.tfstate";
 

@@ -1,6 +1,6 @@
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.credhub;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
@@ -66,6 +66,7 @@ public class CredHubConnectorTest {
         when (credentials.getByName(isA(CredentialName.class), eq(ValueCredential.class))).thenReturn(cdv);
 
         //When
+        //noinspection rawtypes
         Map actual = credHubConnector.getAllDeploymentTree(path);
 
         //Then

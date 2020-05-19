@@ -3,10 +3,10 @@ package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.terrafor
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.apache.commons.io.IOUtils;
-import org.junit.After;
-import org.junit.Before;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.junit.rules.ExpectedException;
 
 import java.io.FileReader;
@@ -21,6 +21,7 @@ import static java.nio.file.FileVisitOption.FOLLOW_LINKS;
 import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.CoreMatchers.containsString;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
  *
@@ -30,7 +31,7 @@ public class FileTerraformRepositoryTest {
     Path tempDirectory;
     FileTerraformRepository repository;
 
-    @Before
+    @BeforeEach
     public void setUpTempDir() throws IOException {
         tempDirectory = Files.createTempDirectory(FileTerraformRepositoryTest.class.getSimpleName());
         repository = new FileTerraformRepository(tempDirectory, "cloudflare-");
@@ -39,11 +40,11 @@ public class FileTerraformRepositoryTest {
     }
 
 
-    @After
+    @AfterEach
     public void cleanUpTempDir() throws IOException {
         FileVisitor<Path> cleaner = new FileVisitor<Path>() {
             @Override
-            public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+            public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
                 return FileVisitResult.CONTINUE;
             }
 
@@ -54,7 +55,7 @@ public class FileTerraformRepositoryTest {
             }
 
             @Override
-            public FileVisitResult visitFileFailed(Path file, IOException exc) throws IOException {
+            public FileVisitResult visitFileFailed(Path file, IOException exc) {
                 return null;
             }
 
@@ -67,23 +68,18 @@ public class FileTerraformRepositoryTest {
         Files.walkFileTree(tempDirectory, EnumSet.of(FOLLOW_LINKS), 1, cleaner);
     }
 
-    @Rule
-    public ExpectedException thrown = ExpectedException.none();
-
     @Test
     public void constructor_rejects_null_dir() {
-        thrown.expect(IllegalArgumentException.class);
-        thrown.expectMessage(containsString("null"));
-
-        new FileTerraformRepository(null, "a prefix");
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () ->
+            new FileTerraformRepository(null, "a prefix"));
+        assertThat(exception).hasMessageContaining("null");
     }
 
     @Test
     public void constructor_rejects_missing_dir() {
-        thrown.expect(IllegalArgumentException.class);
-        thrown.expectMessage(containsString("does not exist"));
-        
-        new FileTerraformRepository(Paths.get("/nosuchpath"), "a prefix");
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () ->
+            new FileTerraformRepository(Paths.get("/nosuchpath"), "a prefix"));
+        assertThat(exception).hasMessageContaining("does not exist");
     }
 
     @Test
@@ -137,13 +133,14 @@ public class FileTerraformRepositoryTest {
                         "}");
     }
 
-    @Test(expected = RuntimeException.class)
+    @Test
     public void rejects_module_names_injections() {
-        repository.buildFileForModule("../asuffix");
+        assertThrows(RuntimeException.class, () ->
+            repository.buildFileForModule("../asuffix"));
     }
 
     @Test
-    public void list_modules() throws IOException {
+    public void list_modules() {
         //Given a directory holding tf modules
         FileTerraformRepository repository1 = new FileTerraformRepository(tempDirectory, "cloudflare-");
         ImmutableTerraformModule module1 = aModule("0");

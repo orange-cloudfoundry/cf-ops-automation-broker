@@ -1,7 +1,7 @@
 package com.orange.oss.ondemandbroker;
 
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.UserFacingRuntimeException;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.springframework.cloud.servicebroker.exception.ServiceInstanceDoesNotExistException;
 import org.springframework.cloud.servicebroker.exception.ServiceInstanceUpdateNotSupportedException;
 

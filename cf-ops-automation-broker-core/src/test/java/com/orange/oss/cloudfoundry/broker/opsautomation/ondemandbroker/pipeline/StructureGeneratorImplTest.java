@@ -1,8 +1,8 @@
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline;
 
-import org.junit.Before;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.rules.TemporaryFolder;
 
@@ -30,7 +30,7 @@ public class StructureGeneratorImplTest {
     @Rule
     public TemporaryFolder temporaryFolder = new TemporaryFolder();
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         this.deploymentProperties = aDeploymentProperties();
         this.file = temporaryFolder.newFolder(REPOSITORY_DIRECTORY);

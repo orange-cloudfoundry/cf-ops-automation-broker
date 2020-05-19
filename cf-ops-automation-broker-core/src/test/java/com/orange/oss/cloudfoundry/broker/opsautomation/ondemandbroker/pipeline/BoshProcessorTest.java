@@ -4,7 +4,7 @@ import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.GitPr
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.Context;
 import com.orange.oss.ondemandbroker.ProcessorChainServiceInstanceBindingService;
 import com.orange.oss.ondemandbroker.ProcessorChainServiceInstanceService;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.cloud.servicebroker.model.CloudFoundryContext;
 import org.springframework.cloud.servicebroker.model.binding.CreateServiceInstanceBindingRequest;
@@ -59,7 +59,6 @@ public class BoshProcessorTest {
         SecretsGenerator secretsGenerator = mock(SecretsGenerator.class);
 
         //given a configured timeout
-        @SuppressWarnings("unchecked")
         PipelineCompletionTracker tracker = aCompletionTracker();
 
         BoshProcessor boshProcessor = new BoshProcessor(TEMPLATES_REPOSITORY_ALIAS_NAME, SECRETS_REPOSITORY_ALIAS_NAME, templatesGenerator, secretsGenerator, tracker, "Cassandra", "c_");
@@ -404,7 +403,6 @@ public class BoshProcessorTest {
         SecretsGenerator secretsGenerator = mock(SecretsGenerator.class);
 
         //given a configured timeout within tracker
-        @SuppressWarnings("unchecked")
         PipelineCompletionTracker tracker = aCompletionTracker();
 
 

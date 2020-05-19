@@ -1,19 +1,17 @@
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors;
 
-import org.junit.Test;
-
-import static org.junit.Assert.*;
+import org.junit.jupiter.api.Test;
 
 /**
  *
  */
 public class DefaultBrokerProcessorTest {
     @Test
-    public void preCreate_populates_request_key() throws Exception {
+    public void preCreate_populates_request_key() {
     }
 
     @Test
-    public void postCreate() throws Exception {
+    public void postCreate() {
     }
 
 }

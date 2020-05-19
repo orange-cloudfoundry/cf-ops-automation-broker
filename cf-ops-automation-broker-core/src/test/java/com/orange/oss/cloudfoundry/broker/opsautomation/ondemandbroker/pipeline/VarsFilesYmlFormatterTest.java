@@ -6,9 +6,9 @@ import java.util.ArrayList;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.UserFacingRuntimeException;
-import org.junit.Ignore;
+import org.junit.jupiter.api.Disabled;
 import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.junit.rules.ExpectedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,9 +24,6 @@ public class VarsFilesYmlFormatterTest {
     VarsFilesYmlFormatter formatter = new VarsFilesYmlFormatter();
 
     private static Logger logger = LoggerFactory.getLogger(VarsFilesYmlFormatterTest.class.getName());
-
-    @Rule
-    public ExpectedException thrown = ExpectedException.none();
 
     @Test
     public void rejects_invalid_patterns() throws JsonProcessingException {
@@ -183,7 +180,7 @@ public class VarsFilesYmlFormatterTest {
      * Exploration of malicous injection of untrusted code from JSON/YML param injection
      */
     @Test
-    @Ignore
+    @Disabled
     public void reading_malicious_handcrafted_json_should_reject_unknown_classes() throws IOException {
 
         //given a malicious yml provided by users are unfiltered plain text arbitrary params of their service instance
@@ -214,7 +211,7 @@ public class VarsFilesYmlFormatterTest {
         VulnerableBean vulnerableBean = vulnerableJsonMapper.readValue(JSON, VulnerableBean.class);
 
         //then
-        //noinspection ThrowableNotThrown
+        //noinspection ResultOfMethodCallIgnored
         fail("Malicious class loaded from untrusted JSon! Details:" + vulnerableBean.obj.toString());
     }
 

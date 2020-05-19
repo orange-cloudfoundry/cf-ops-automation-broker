@@ -2,9 +2,9 @@ package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline
 
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.tools.Copy;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.tools.Tree;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.IOException;
@@ -25,7 +25,7 @@ public class TemplatesGeneratorTest extends StructureGeneratorImplTest{
 
     private static String SYM_LINK = "../../";
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         super.setUp();
         //Shared template generator
@@ -307,7 +307,7 @@ public class TemplatesGeneratorTest extends StructureGeneratorImplTest{
     }
 
     @Test
-    @Ignore
+    @Disabled
     public void populateRealPaasTemplates() {
 
         //Given a path

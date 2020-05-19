@@ -1,17 +1,13 @@
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.tools;
 
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.StructureGeneratorHelper;
-import org.junit.Ignore;
 import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.junit.rules.TemporaryFolder;
 
 import java.io.IOException;
-import java.net.URISyntaxException;
-import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 

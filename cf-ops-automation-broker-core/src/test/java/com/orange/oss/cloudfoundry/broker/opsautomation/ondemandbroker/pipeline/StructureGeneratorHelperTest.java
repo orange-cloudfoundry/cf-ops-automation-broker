@@ -1,8 +1,7 @@
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline;
 
-import org.junit.Ignore;
 import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
@@ -39,12 +38,10 @@ public class StructureGeneratorHelperTest {
         String actual = String.valueOf(path);
 
         //Then
-        StringBuffer sb = new StringBuffer(String.valueOf(rootPath));
-        sb.append(File.separator)
-                .append(element1).append(File.separator)
-                .append(element2).append(File.separator)
-                .append(element3);
-        String expected = sb.toString();
+        String expected = rootPath + File.separator +
+            element1 + File.separator +
+            element2 + File.separator +
+            element3;
         assertEquals(expected, actual);
     }
 
@@ -80,7 +77,7 @@ public class StructureGeneratorHelperTest {
     }
 
     @Test
-    public void check_generate_symbolic_link_to_a_fake_file() throws IOException{
+    public void check_generate_symbolic_link_to_a_fake_file() {
         //Given a root path and path elements to create
         Path rootPath = this.temporaryFolder.getRoot().toPath();
         Path filePath = rootPath.resolve("aFakeFile.txt");
@@ -154,7 +151,7 @@ public class StructureGeneratorHelperTest {
     @Test
     public void check_find_and_replace() {
         //Given a template with markers
-        List<String> lines = new ArrayList<String>();
+        List<String> lines = new ArrayList<>();
         lines.add("---");
         lines.add("deployment:");
         lines.add("  @service_instance@:");
@@ -162,7 +159,7 @@ public class StructureGeneratorHelperTest {
         lines.add("  value: @url@.((!/secrets/cloudfoundry_system_domain))");
 
         //When asking to replace some markers
-        Map<String, String> map = new HashMap<String, String>();
+        Map<String, String> map = new HashMap<>();
         map.put("@service_instance@", "c_aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa0");
         map.put("@url@", "cassandra-broker_aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa0");
         List<String> resultLines = StructureGeneratorHelper.findAndReplace(lines, map);
@@ -250,7 +247,7 @@ public class StructureGeneratorHelperTest {
     }
 
     @Test
-    public void check_get_directory() throws IOException{
+    public void check_get_directory() {
         //Given
 
         //When
@@ -259,7 +256,7 @@ public class StructureGeneratorHelperTest {
     }
 
     @Test
-    public void check_get_file() throws IOException{
+    public void check_get_file() {
         //Given
 
         //When

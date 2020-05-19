@@ -1,6 +1,6 @@
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.catalog;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.springframework.core.env.PropertySource;
 import org.springframework.core.io.Resource;
 import org.springframework.security.util.InMemoryResource;
@@ -49,7 +49,7 @@ public class CatalogYamlPropertySourceMapperTest {
     }
 
     @Test
-    public void fail_to_map_invalid_yml_catalog_into_property_source() throws Exception {
+    public void fail_to_map_invalid_yml_catalog_into_property_source() {
         //invalid yml syntax
         String catalogYml = "servicebroker: catalog:\n";
         Resource resource = new InMemoryResource(catalogYml);

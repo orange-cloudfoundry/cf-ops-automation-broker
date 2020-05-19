@@ -40,7 +40,7 @@ public class OsbProxyImpl implements OsbProxy {
     private ObjectMapper objectMapper;
     private static Logger logger = LoggerFactory.getLogger(OsbProxyImpl.class.getName());
 
-    private static final String FEIGN_MESSAGE_SEPARATOR = "content:\n";
+    private static final String FEIGN_MESSAGE_SEPARATOR = "]: [";
 
     public OsbProxyImpl(String osbDelegateUser, String osbDelegatePassword, String brokerUrlPattern, OsbClientFactory clientFactory) {
         this.osbDelegateUser = osbDelegateUser;
@@ -106,7 +106,7 @@ public class OsbProxyImpl implements OsbProxy {
         }
 
         //noinspection UnnecessaryLocalVariable
-        @SuppressWarnings("ConstantConditions") CreateServiceInstanceBindingResponse mappedResponse = mapBindResponse(delegatedResponse, bindException, catalog);
+        CreateServiceInstanceBindingResponse mappedResponse = mapBindResponse(delegatedResponse, bindException, catalog);
         return mappedResponse;
     }
 
@@ -420,9 +420,6 @@ public class OsbProxyImpl implements OsbProxy {
         if (jsonStart != -1) {
             //found the delimiter, trim it
             jsonStart += FEIGN_MESSAGE_SEPARATOR.length();
-        } else {
-            //try another weaker delimiter in case feign lib changed behavior in between
-            jsonStart = exceptionMessage.indexOf("{");
         }
         ErrorMessage errorMessage;
         if (jsonStart == -1) {
@@ -430,6 +427,7 @@ public class OsbProxyImpl implements OsbProxy {
             errorMessage = new ErrorMessage("Internal error, please contact administrator");
         } else {
             String json = exceptionMessage.substring(jsonStart);
+            json = json.substring(0, json.length()-1);
             errorMessage = gson.fromJson(json, ErrorMessage.class);
         }
         return errorMessage;

@@ -19,6 +19,7 @@ package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.osbclien
 
 import okhttp3.*;
 import okhttp3.logging.HttpLoggingInterceptor;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -30,11 +31,14 @@ import javax.net.ssl.*;
 import java.io.IOException;
 import java.net.*;
 import java.security.KeyManagementException;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 @Configuration
@@ -48,7 +52,8 @@ public class OkHttpClientConfig {
     static {
         LOGGING_INTERCEPTOR = new HttpLoggingInterceptor();
         LOGGING_INTERCEPTOR.setLevel(HttpLoggingInterceptor.Level.BODY);
-    };
+    }
+
     @Value("${director.proxyHost:}")
     private String proxyHost;
     @Value("${director.proxyPort:0}")
@@ -56,30 +61,25 @@ public class OkHttpClientConfig {
 
     @Bean
     public OkHttpClient squareHttpClient() {
-        HostnameVerifier hostnameVerifier = new HostnameVerifier() {
-            @Override
-            public boolean verify(String hostname, SSLSession session) {
-                return true;
-            }
-        };
+        HostnameVerifier hostnameVerifier = (hostname, session) -> true;
         TrustManager[] trustAllCerts = new TrustManager[]{new TrustAllCerts()};
 
         SSLSocketFactory sslSocketFactory = null;
         try {
             SSLContext sc = SSLContext.getInstance("SSL");
             sc.init(null, trustAllCerts, new SecureRandom());
-            sslSocketFactory = (SSLSocketFactory) sc.getSocketFactory();
+            sslSocketFactory = sc.getSocketFactory();
         } catch (NoSuchAlgorithmException | KeyManagementException e) {
-            new IllegalArgumentException(e);
+            throw new IllegalArgumentException(e);
         }
 
         log.info("===> configuring OkHttp");
         OkHttpClient.Builder ohc = new OkHttpClient.Builder()
-                .protocols(Arrays.asList(Protocol.HTTP_1_1))
+                .protocols(Collections.singletonList(Protocol.HTTP_1_1))
                 .followRedirects(true)
                 .followSslRedirects(true)
                 .hostnameVerifier(hostnameVerifier)
-                .sslSocketFactory(sslSocketFactory)
+                .sslSocketFactory(sslSocketFactory, getDefaultX509TrustManager())
                 .addInterceptor(LOGGING_INTERCEPTOR);
 
         if ((this.proxyHost != null) && (this.proxyHost.length() > 0)) {
@@ -89,7 +89,7 @@ public class OkHttpClientConfig {
             ohc.proxySelector(new ProxySelector() {
                 @Override
                 public List<Proxy> select(URI uri) {
-                    return Arrays.asList(proxy);
+                    return Collections.singletonList(proxy);
                 }
 
                 @Override
@@ -102,15 +102,35 @@ public class OkHttpClientConfig {
         return ohc.build();
     }
 
+    /**
+     * Inspired from suggested code in javadoc at
+     * {@link OkHttpClient.Builder#sslSocketFactory(SSLSocketFactory, X509TrustManager)}
+     */
+    @NotNull
+    private X509TrustManager getDefaultX509TrustManager() {
+        try {
+            TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(
+                TrustManagerFactory.getDefaultAlgorithm());
+            trustManagerFactory.init((KeyStore) null);
+            TrustManager[] trustManagers = trustManagerFactory.getTrustManagers();
+            if (trustManagers.length != 1 || !(trustManagers[0] instanceof X509TrustManager)) {
+                throw new IllegalStateException("Unexpected default trust managers:"
+                    + Arrays.toString(trustManagers));
+            }
+            return (X509TrustManager) trustManagers[0];
+        }
+        catch (NoSuchAlgorithmException | KeyStoreException | IllegalStateException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     public static class TrustAllCerts extends X509ExtendedTrustManager {
         @Override
-        public void checkClientTrusted(X509Certificate[] chain, String authType)
-                throws CertificateException {
+        public void checkClientTrusted(X509Certificate[] chain, String authType) {
         }
 
         @Override
-        public void checkServerTrusted(X509Certificate[] chain, String authType)
-                throws CertificateException {
+        public void checkServerTrusted(X509Certificate[] chain, String authType) {
         }
 
         @Override
@@ -119,29 +139,25 @@ public class OkHttpClientConfig {
         }
 
         @Override
-        public void checkClientTrusted(X509Certificate[] chain, String authType, Socket socket)
-                throws CertificateException {
+        public void checkClientTrusted(X509Certificate[] chain, String authType, Socket socket) {
             // TODO Auto-generated method stub
 
         }
 
         @Override
-        public void checkClientTrusted(X509Certificate[] chain, String authType, SSLEngine engine)
-                throws CertificateException {
+        public void checkClientTrusted(X509Certificate[] chain, String authType, SSLEngine engine) {
             // TODO Auto-generated method stub
 
         }
 
         @Override
-        public void checkServerTrusted(X509Certificate[] chain, String authType, Socket socket)
-                throws CertificateException {
+        public void checkServerTrusted(X509Certificate[] chain, String authType, Socket socket) {
             // TODO Auto-generated method stub
 
         }
 
         @Override
-        public void checkServerTrusted(X509Certificate[] chain, String authType, SSLEngine engine)
-                throws CertificateException {
+        public void checkServerTrusted(X509Certificate[] chain, String authType, SSLEngine engine) {
             // TODO Auto-generated method stub
 
         }

@@ -33,6 +33,7 @@ import java.util.Map;
 
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 import static org.springframework.cloud.servicebroker.model.CloudFoundryContext.CLOUD_FOUNDRY_PLATFORM;
 import static org.springframework.http.HttpStatus.*;
@@ -303,12 +304,8 @@ public class OsbClientTest {
 
     }
 
-    @Rule
-    public ExpectedException thrown = ExpectedException.none();
-
-
     @Test
-    public void feign_client_handles_server_500_response() throws JsonProcessingException {
+    public void feign_client_handles_server_500_response() {
         //given
         String url = "https://127.0.0.1:" + 8089;
         String user = "user";
@@ -329,22 +326,15 @@ public class OsbClientTest {
                 .build();
 
         //Then expect
-        thrown.expect(FeignException.class);
-        thrown.expectMessage("status 500 reading ServiceInstanceServiceClient#createServiceInstance(String,boolean,String,String,String,CreateServiceInstanceRequest); content:\n" +
-                "{\"description\":\"Keyspace ks111 already exists\"}");
-
-        ResponseEntity<CreateServiceInstanceResponse> createResponse = serviceInstanceServiceClient.createServiceInstance(
+        FeignException feignException = assertThrows(FeignException.class,
+            () -> serviceInstanceServiceClient.createServiceInstance(
                 "222",
                 false,
                 null,
                 buildOriginatingIdentityHeader(),
                 OsbConstants.X_Broker_API_Version_Value,
-                createServiceInstanceRequest);
-
-        //then
-        assertThat(createResponse.getStatusCode()).isEqualTo(ACCEPTED);
-        assertThat(createResponse.getBody()).isNotNull();
-
+                createServiceInstanceRequest));
+        assertThat(feignException.getMessage()).isEqualTo("[500 Server Error] during [PUT] to [https://127.0.0.1:8089/v2/service_instances/222?accepts_incomplete=false] [ServiceInstanceServiceClient#createServiceInstance(String,boolean,String,String,String,CreateServiceInstanceRequest)]: [{\"description\":\"Keyspace ks111 already exists\"}]");
     }
 
     private static final String ORIGINATING_USER_KEY = "user_id";

@@ -52,14 +52,9 @@ public class OsbProxyImplTest {
 
     private final CreateServiceInstanceRequest request = aCreateServiceInstanceRequest();
 
-    private Request aFeignRequest;
+    private Request aFeignRequest = Request.create(Request.HttpMethod.GET, "https://url.domain", Collections.emptyMap(),
+        Request.Body.empty(), new RequestTemplate());
 
-
-    @Before
-    public void setUp() {
-        aFeignRequest = Request.create(Request.HttpMethod.GET, "https://url.domain", Collections.emptyMap(),
-            Request.Body.empty(), new RequestTemplate());
-    }
 
     @Test
     public void constructs_broker_url_osb_client() {

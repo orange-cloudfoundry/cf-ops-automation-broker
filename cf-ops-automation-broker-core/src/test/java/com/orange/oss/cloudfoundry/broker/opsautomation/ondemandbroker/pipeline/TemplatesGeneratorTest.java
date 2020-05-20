@@ -1,11 +1,5 @@
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline;
 
-import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.tools.Copy;
-import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.tools.Tree;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Test;
-
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -17,9 +11,19 @@ import java.text.MessageFormat;
 import java.util.EnumSet;
 import java.util.List;
 
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.tools.Copy;
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.tools.Tree;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.startsWith;
 import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class TemplatesGeneratorTest extends StructureGeneratorImplTest{
 
@@ -41,52 +45,47 @@ public class TemplatesGeneratorTest extends StructureGeneratorImplTest{
 
     @Test
     public void raise_exception_if_template_directory_is_missing() {
-        //Then
-        thrown.expect(DeploymentException.class);
-        thrown.expectMessage(startsWith(DeploymentConstants.TEMPLATE_EXCEPTION));
-
+        DeploymentException deploymentException = assertThrows(DeploymentException.class, () ->
         //When
-        this.templatesGenerator.checkThatTemplateDirectoryExists(this.workDir);
+                this.templatesGenerator.checkThatTemplateDirectoryExists(this.workDir));
+        //then
+        assertThat(deploymentException.getMessage(), startsWith(DeploymentConstants.TEMPLATE_EXCEPTION));
     }
 
     @Test
     public void raise_exception_if_operators_directory_is_missing() {
-        //Then
-        thrown.expect(DeploymentException.class);
-        thrown.expectMessage(startsWith(DeploymentConstants.OPERATORS_EXCEPTION));
-
-        //When
-        this.templatesGenerator.checkThatOperatorsDirectoryExists(this.workDir);
+        DeploymentException deploymentException = assertThrows(DeploymentException.class, () ->
+            //When
+            this.templatesGenerator.checkThatOperatorsDirectoryExists(this.workDir));
+        //then
+        assertThat(deploymentException.getMessage(), startsWith(DeploymentConstants.OPERATORS_EXCEPTION));
     }
 
     @Test
     public void raise_exception_if_model_manifest_file_is_missing() {
-        //Then
-        thrown.expect(DeploymentException.class);
-        thrown.expectMessage(DeploymentConstants.MANIFEST_FILE_EXCEPTION);
-
-        //When
-        this.templatesGenerator.checkThatModelManifestFileExists(this.workDir);
+        DeploymentException deploymentException = assertThrows(DeploymentException.class, () ->
+            //When
+            this.templatesGenerator.checkThatModelManifestFileExists(this.workDir));
+        //then
+        assertThat(deploymentException.getMessage(), startsWith(DeploymentConstants.MANIFEST_FILE_EXCEPTION));
     }
 
     @Test
     public void raise_exception_if_model_vars_file_is_missing() {
-        //Then
-        thrown.expect(DeploymentException.class);
-        thrown.expectMessage(DeploymentConstants.VARS_FILE_EXCEPTION);
-
-        //When
-        this.templatesGenerator.checkThatModelVarsFileExists(this.workDir);
+        DeploymentException deploymentException = assertThrows(DeploymentException.class, () ->
+            //When
+            this.templatesGenerator.checkThatModelVarsFileExists(this.workDir));
+        //then
+        assertThat(deploymentException.getMessage(), startsWith(DeploymentConstants.VARS_FILE_EXCEPTION));
     }
 
     @Test
     public void raise_exception_if_coab_operators_file_is_missing() {
-        //Then
-        thrown.expect(DeploymentException.class);
-        thrown.expectMessage(DeploymentConstants.COAB_OPERATORS_FILE_EXCEPTION);
-
-        //When
-        this.templatesGenerator.checkThatModelCoabOperatorsFileExists(this.workDir);
+        DeploymentException deploymentException = assertThrows(DeploymentException.class, () ->
+            //When
+            this.templatesGenerator.checkThatModelCoabOperatorsFileExists(this.workDir));
+        //then
+        assertThat(deploymentException.getMessage(), startsWith(DeploymentConstants.COAB_OPERATORS_FILE_EXCEPTION));
     }
 
     @Test
@@ -101,7 +100,7 @@ public class TemplatesGeneratorTest extends StructureGeneratorImplTest{
                 new VarsFilesYmlFormatter());
 
         //When
-        templatesGenerator.checkPrerequisites(this.temporaryFolder.getRoot().toPath());
+        templatesGenerator.checkPrerequisites(tempDir.toPath());
     }
 
     @Test
@@ -208,13 +207,13 @@ public class TemplatesGeneratorTest extends StructureGeneratorImplTest{
                 new VarsFilesYmlFormatter());
 
         //Given a minimal deployment structure
-        Structure deploymentStructure = new Structure.StructureBuilder(this.temporaryFolder.getRoot().toPath())
+        Structure deploymentStructure = new Structure.StructureBuilder(tempDir.toPath())
                 .withDirectoryHierarchy("coab-depls",
                         templatesGenerator.computeDeploymentName(SERVICE_INSTANCE_ID),
                         DeploymentConstants.TEMPLATE).build();
 
         //When
-        templatesGenerator.generateAllSymLinks(this.temporaryFolder.getRoot().toPath(), SERVICE_INSTANCE_ID);
+        templatesGenerator.generateAllSymLinks(tempDir.toPath(), SERVICE_INSTANCE_ID);
 
         //Then
         String expectedStructure = expectedStructure("coab-depls", "expected-areferencemodel-tree.txt", templatesGenerator.computeDeploymentName(SERVICE_INSTANCE_ID));
@@ -224,7 +223,7 @@ public class TemplatesGeneratorTest extends StructureGeneratorImplTest{
 
     private void initReferenceModelStructures() throws IOException {
         //Given a template repository in /tmp
-        Path paasTemplatePath = temporaryFolder.getRoot().toPath();
+        Path paasTemplatePath = tempDir.toPath();
 
         //Search for the sample-deployment
         Path referenceDataModel = Paths.get("../sample-deployment");
@@ -251,7 +250,7 @@ public class TemplatesGeneratorTest extends StructureGeneratorImplTest{
     private void checkDeployment(String rootDeployment, String modelDeployment, String modelDeploymentShortAlias) throws IOException{
 
         //Given a path
-        Path paasTemplatePath = temporaryFolder.getRoot().toPath();
+        Path paasTemplatePath = tempDir.toPath();
 
         //Given and a user request
         CoabVarsFileDto coabVarsFileDto = aTypicalUserProvisionningRequest();
@@ -287,7 +286,7 @@ public class TemplatesGeneratorTest extends StructureGeneratorImplTest{
     }
 
     private String generatedStructure(String rootDeployment, String modelDeployment, String deploymentName) {
-        Path paasTemplatePath = temporaryFolder.getRoot().toPath();
+        Path paasTemplatePath = tempDir.toPath();
         Path modelPath = StructureGeneratorHelper.generatePath(paasTemplatePath, rootDeployment, modelDeployment);
         Path deploymentPath = StructureGeneratorHelper.generatePath(paasTemplatePath, rootDeployment, deploymentName);
         return (new Tree().print(modelPath) + new Tree().print(deploymentPath));

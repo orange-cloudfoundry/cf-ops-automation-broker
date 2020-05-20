@@ -1,26 +1,6 @@
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline;
 
-import feign.FeignException;
-import feign.Request;
-import feign.RequestTemplate;
-import feign.Response;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.Rule;
-import org.junit.jupiter.api.Test;
-import org.junit.rules.TemporaryFolder;
-import org.mockito.Mockito;
-import org.springframework.cloud.servicebroker.exception.ServiceBrokerException;
-import org.springframework.cloud.servicebroker.exception.ServiceInstanceDoesNotExistException;
-import org.springframework.cloud.servicebroker.model.ServiceBrokerRequest;
-import org.springframework.cloud.servicebroker.model.binding.CreateServiceInstanceBindingRequest;
-import org.springframework.cloud.servicebroker.model.binding.CreateServiceInstanceBindingResponse;
-import org.springframework.cloud.servicebroker.model.binding.DeleteServiceInstanceBindingRequest;
-import org.springframework.cloud.servicebroker.model.catalog.ServiceDefinition;
-import org.springframework.cloud.servicebroker.model.instance.*;
-import org.springframework.http.HttpStatus;
-
 import java.io.File;
-import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Path;
 import java.time.Clock;
@@ -29,26 +9,57 @@ import java.time.ZoneId;
 import java.util.Collections;
 import java.util.HashMap;
 
-import static com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.OsbBuilderHelper.*;
+import feign.FeignException;
+import feign.Request;
+import feign.RequestTemplate;
+import feign.Response;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+import org.mockito.Mockito;
+
+import org.springframework.cloud.servicebroker.exception.ServiceBrokerException;
+import org.springframework.cloud.servicebroker.exception.ServiceInstanceDoesNotExistException;
+import org.springframework.cloud.servicebroker.model.ServiceBrokerRequest;
+import org.springframework.cloud.servicebroker.model.binding.CreateServiceInstanceBindingRequest;
+import org.springframework.cloud.servicebroker.model.binding.CreateServiceInstanceBindingResponse;
+import org.springframework.cloud.servicebroker.model.binding.DeleteServiceInstanceBindingRequest;
+import org.springframework.cloud.servicebroker.model.catalog.ServiceDefinition;
+import org.springframework.cloud.servicebroker.model.instance.CreateServiceInstanceRequest;
+import org.springframework.cloud.servicebroker.model.instance.DeleteServiceInstanceRequest;
+import org.springframework.cloud.servicebroker.model.instance.GetLastServiceOperationRequest;
+import org.springframework.cloud.servicebroker.model.instance.GetLastServiceOperationResponse;
+import org.springframework.cloud.servicebroker.model.instance.OperationState;
+import org.springframework.http.HttpStatus;
+
+import static com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.OsbBuilderHelper.aBindingRequest;
+import static com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.OsbBuilderHelper.aBindingResponse;
+import static com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.OsbBuilderHelper.aCatalog;
+import static com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.OsbBuilderHelper.aDeleteServiceInstanceRequest;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.AdditionalAnswers.returnsLastArg;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 public class PipelineCompletionTrackerTest {
 
     private static final String SERVICE_INSTANCE_ID = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa0";
-    private static final String REPOSITORY_DIRECTORY = "paas-secrets";
+
     private static final String ZONE = "Europe/Paris";
     private final GetLastServiceOperationRequest pollingRequest = mock(GetLastServiceOperationRequest.class);
     private Clock clock = Clock.fixed(Instant.now(), ZoneId.of(ZONE));
     private Request aFeignRequest = Request.create(Request.HttpMethod.GET, "https://url.domain", Collections.emptyMap(),
         Request.Body.empty(), new RequestTemplate());
 
-    @Rule
-    public TemporaryFolder temporaryFolder = new TemporaryFolder();
+    @TempDir
+    File repositoryDirectory;
 
     private Path workDir;
     private OsbProxy osbProxy = mock(OsbProxy.class);
@@ -64,9 +75,8 @@ public class PipelineCompletionTrackerTest {
     }
 
     @BeforeEach
-    public void preparePaasSecretWorkDir() throws IOException {
-        File file = temporaryFolder.newFolder(REPOSITORY_DIRECTORY);
-        workDir = file.toPath();
+    public void preparePaasSecretWorkDir() {
+        workDir = repositoryDirectory.toPath();
     }
 
     @BeforeEach

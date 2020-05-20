@@ -1,34 +1,36 @@
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline;
 
-import org.junit.Rule;
-import org.junit.jupiter.api.Test;
-import org.junit.rules.TemporaryFolder;
-
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.*;
+import java.nio.file.Files;
+import java.nio.file.LinkOption;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertEquals;
-import static org.hamcrest.Matchers.*;
 
 
 
 public class StructureGeneratorHelperTest {
 
 
-    @Rule
-    public TemporaryFolder temporaryFolder = new TemporaryFolder();
+    @TempDir
+    File temporaryFolderRoot;
 
 
     @Test
     public void check_generated_path() {
         //Given a root path and path elements
-        Path rootPath = this.temporaryFolder.getRoot().toPath();
+        Path rootPath = temporaryFolderRoot.toPath();
         String element1 = "element1";
         String element2 = "element2";
         String element3 = "element3";
@@ -48,7 +50,7 @@ public class StructureGeneratorHelperTest {
     @Test
     public void check_generate_directory() {
         //Given a root path and path elements to create
-        Path rootPath = this.temporaryFolder.getRoot().toPath();
+        Path rootPath = temporaryFolderRoot.toPath();
         String aDirectory = "directory";
 
         //When
@@ -62,7 +64,7 @@ public class StructureGeneratorHelperTest {
     @Test
     public void check_generate_symbolic_link_to_a_real_file() throws IOException{
         //Given a root path and path elements to create
-        Path rootPath = this.temporaryFolder.getRoot().toPath();
+        Path rootPath = temporaryFolderRoot.toPath();
         Path filePath = rootPath.resolve("aRealFile.txt");
         Files.createFile(filePath);
 
@@ -79,7 +81,7 @@ public class StructureGeneratorHelperTest {
     @Test
     public void check_generate_symbolic_link_to_a_fake_file() {
         //Given a root path and path elements to create
-        Path rootPath = this.temporaryFolder.getRoot().toPath();
+        Path rootPath = temporaryFolderRoot.toPath();
         Path filePath = rootPath.resolve("aFakeFile.txt");
 
         //When
@@ -93,7 +95,7 @@ public class StructureGeneratorHelperTest {
     @Test
     public void check_generate_symbolic_link_with_existing_target_file_do_not_fail() throws IOException{
         //Given a root path and path elements to create
-        Path rootPath = this.temporaryFolder.getRoot().toPath();
+        Path rootPath = temporaryFolderRoot.toPath();
         Path filePath = rootPath.resolve("aRealFile.txt");
         Files.createFile(filePath);
         Path existingFilePath = rootPath.resolve("linkToAFakeFile.txt");
@@ -111,12 +113,9 @@ public class StructureGeneratorHelperTest {
     @Test
     public void check_generate_file() {
         //Given a root path and path elements to create
-        Path rootPath = this.temporaryFolder.getRoot().toPath();
-        try {
-            Path path = this.temporaryFolder.newFolder("aPath").toPath();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        Path rootPath = temporaryFolderRoot.toPath();
+        //noinspection ResultOfMethodCallIgnored
+        rootPath.resolve("aPath").toFile().mkdir();
 
         //When
         StructureGeneratorHelper.generateFile(rootPath, new String[]{"aPath"}, "aTargetFile", DeploymentConstants.ENABLE_DEPLOYMENT_FILENAME, null);
@@ -129,17 +128,18 @@ public class StructureGeneratorHelperTest {
     @Test
     public void check_remove_file() {
         //Given a root path and path elements to create
-        Path rootPath = this.temporaryFolder.getRoot().toPath();
+        Path rootPath = temporaryFolderRoot.toPath();
+        Path aPath = rootPath.resolve("aPath");
         try {
-            Path path = this.temporaryFolder.newFolder("aPath").toPath();
-            path = path.resolve("aFile");
-            Files.createFile(path);
+            //noinspection ResultOfMethodCallIgnored
+            aPath.toFile().mkdir();
+            Files.createFile(aPath.resolve("aFile"));
         } catch (IOException e) {
             e.printStackTrace();
         }
 
         //When
-        Path expectedPath = rootPath.resolve("aPath").resolve("aFile");
+        Path expectedPath = aPath.resolve("aFile");
         assertThat("File exists", Files.exists(expectedPath));
         StructureGeneratorHelper.removeFile(rootPath, new String[]{"aPath"}, "aFile");
 
@@ -175,7 +175,7 @@ public class StructureGeneratorHelperTest {
     @Test
     public void check_list_files_paths_manifest() {
         //Given a root path and path elements to create
-        Path rootPath = this.temporaryFolder.getRoot().toPath();
+        Path rootPath = temporaryFolderRoot.toPath();
         try {
             Path directoryPath = rootPath.resolve(DeploymentConstants.TEMPLATE);
             Files.createDirectory(directoryPath);
@@ -201,7 +201,7 @@ public class StructureGeneratorHelperTest {
     @Test
     public void check_list_files_paths_vars() {
         //Given a root path and path elements to create
-        Path rootPath = this.temporaryFolder.getRoot().toPath();
+        Path rootPath = temporaryFolderRoot.toPath();
         try {
             Path directoryPath = rootPath.resolve(DeploymentConstants.TEMPLATE);
             Files.createDirectory(directoryPath);
@@ -227,7 +227,7 @@ public class StructureGeneratorHelperTest {
     @Test
     public void check_list_files_paths_operators() throws IOException{
         //Given a root path and path elements to create
-        Path rootPath = this.temporaryFolder.getRoot().toPath();
+        Path rootPath = temporaryFolderRoot.toPath();
         Path directoryPath = rootPath.resolve(DeploymentConstants.TEMPLATE);
         Files.createDirectory(directoryPath);
         Path path = directoryPath.resolve("file-operators.yml");

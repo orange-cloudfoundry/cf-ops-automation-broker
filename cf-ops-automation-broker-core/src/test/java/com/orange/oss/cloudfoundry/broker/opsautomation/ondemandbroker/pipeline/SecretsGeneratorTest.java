@@ -1,16 +1,17 @@
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Test;
-
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+import org.assertj.core.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.startsWith;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 //$ tree coab-depls
 //coab-depls
@@ -38,29 +39,29 @@ public class SecretsGeneratorTest extends StructureGeneratorImplTest{
 
     @Test
     public void raise_exception_if_root_deployment_is_missing(){
-        //Then
-        thrown.expect(DeploymentException.class);
-        thrown.expectMessage(startsWith(DeploymentConstants.ROOT_DEPLOYMENT_EXCEPTION));
-
-        //Given initialized by setUp method
-
+        DeploymentException deploymentException = assertThrows(DeploymentException.class,
+            () ->
         //When
-        this.secretsGenerator.checkPrerequisites(this.workDir);
+                this.secretsGenerator.checkPrerequisites(this.workDir));
+        //Then
+        Assertions.assertThat(deploymentException).hasMessageStartingWith(DeploymentConstants.ROOT_DEPLOYMENT_EXCEPTION);
+
     }//superclass TU
 
     @Test
     public void raise_exception_if_model_deployment_directory_is_missing(){
-        //Then
-        thrown.expect(DeploymentException.class);
-        thrown.expectMessage(startsWith(DeploymentConstants.MODEL_DEPLOYMENT_EXCEPTION));
-
         //Given (a part is initialized by setUp method)
         Structure modelStructure = new Structure.StructureBuilder(this.workDir)
                 .withDirectoryHierarchy(this.deploymentProperties.getRootDeployment())
                 .build();
 
+        DeploymentException deploymentException = assertThrows(DeploymentException.class,
+            () ->
         //When
-        this.secretsGenerator.checkPrerequisites(this.workDir);
+                this.secretsGenerator.checkPrerequisites(this.workDir));
+        //Then
+        Assertions.assertThat(deploymentException).hasMessageStartingWith(DeploymentConstants.MODEL_DEPLOYMENT_EXCEPTION);
+
     }//superclass TU
 
     @Test

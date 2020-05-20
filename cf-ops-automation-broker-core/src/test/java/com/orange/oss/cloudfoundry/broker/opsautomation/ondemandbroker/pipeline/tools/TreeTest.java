@@ -1,26 +1,24 @@
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.tools;
 
-import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.StructureGeneratorHelper;
-import org.junit.Rule;
-import org.junit.jupiter.api.Test;
-import org.junit.rules.TemporaryFolder;
-
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-import static org.hamcrest.MatcherAssert.assertThat;
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.StructureGeneratorHelper;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 public class TreeTest {
 
-    @Rule
-    public TemporaryFolder temporaryFolder = new TemporaryFolder();
+    @TempDir
+    File tempDir;
 
 
     @Test
     public void test() throws IOException {
         //Given a root path and path elements to create
-        Path rootPath = this.temporaryFolder.getRoot().toPath();
+        Path rootPath = tempDir.toPath();
         Path realFilePath = rootPath.resolve("aRealFile.txt");
         Files.createFile(realFilePath);
         Path fakeFilePath = rootPath.resolve("aFakeFile.txt");

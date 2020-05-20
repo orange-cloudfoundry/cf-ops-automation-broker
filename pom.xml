@@ -86,6 +86,11 @@
             <artifactId>junit-vintage-engine</artifactId>
             <scope>test</scope>
         </dependency>
+        <!-- If needed to to transiently support TemporaryFolder junit 4 syntax. See https://junit.org/junit5/docs/current/user-guide/#migrating-from-junit4-rule-support -->
+            <!--        <dependency>-->
+            <!--            <groupId>org.junit.jupiter</groupId>-->
+            <!--            <artifactId>junit-jupiter-migrationsupport</artifactId>            <scope>test</scope>-->
+            <!--        </dependency>-->
         <!-- project depl -->
         <dependency>
             <groupId>org.eclipse.jgit</groupId>

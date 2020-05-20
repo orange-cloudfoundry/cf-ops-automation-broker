@@ -9,7 +9,6 @@ import com.github.tomakehurst.wiremock.client.WireMock;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.OsbBuilderHelper;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.OsbConstants;
 import feign.FeignException;
-import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -59,7 +58,7 @@ import static org.springframework.http.HttpStatus.OK;
  * - invoke some manual-OsbClientTestApplication-curls.bash commands to diagnose
  * - turn on recording to update recorded mocks in resources/mappings + check diff
  */
-@SpringBootTest(webEnvironment = RANDOM_PORT, classes = {OsbClientTestApplication.class})
+@SpringBootTest(webEnvironment = RANDOM_PORT, classes = {OsbClientTestApplication.class, WireMockTestConfiguration.class})
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class OsbClientTest {
 
@@ -74,11 +73,6 @@ public class OsbClientTest {
 
     @LocalServerPort
     int port;
-
-    @AfterAll
-    void tearDown() {
-        wiremockFixture.stopWiremock();
-    }
 
     @BeforeEach
     void resetWiremock() {

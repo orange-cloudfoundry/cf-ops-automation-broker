@@ -1,15 +1,13 @@
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.osbclient;
 
 import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.common.Slf4jNotifier;
 
-import org.springframework.boot.test.context.TestComponent;
-
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
 
-@TestComponent
 public class WireMockTestFixture {
 
 	private WireMockServer wireMockServer;
@@ -25,6 +23,7 @@ public class WireMockTestFixture {
 		wireMockServer.start();
 	}
 
+	@PreDestroy
 	public void stopWiremock() {
 		wireMockServer.stop();
 	}

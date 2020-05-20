@@ -1,10 +1,7 @@
 
 Dependency bumps
 * [ ] clean up duplicated WireMockTestFixture and WireMockTestConfiguration
-* `Class annotated @RunWith(JUnitPlatform.class) lacks test methods`
-   * ProcessorChainServiceInstanceBindingServiceTest
-   * ProcessorChainServiceInstanceServiceTest
-
+   * See alternative community integrations at https://github.com/tomakehurst/wiremock/issues/684
 ```
 @ExtendWith(MockitoExtension.class)
 @RunWith(JUnitPlatform.class)

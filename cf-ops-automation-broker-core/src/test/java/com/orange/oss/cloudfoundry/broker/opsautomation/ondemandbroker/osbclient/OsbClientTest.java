@@ -9,6 +9,7 @@ import com.github.tomakehurst.wiremock.client.WireMock;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.OsbBuilderHelper;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.OsbConstants;
 import feign.FeignException;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -74,10 +75,10 @@ public class OsbClientTest {
     @LocalServerPort
     int port;
 
-//    @AfterAll
-//    void tearDown() {
-//        wiremockFixture.stopWiremock();
-//    }
+    @AfterAll
+    void tearDown() {
+        wiremockFixture.stopWiremock();
+    }
 
     @BeforeEach
     void resetWiremock() {

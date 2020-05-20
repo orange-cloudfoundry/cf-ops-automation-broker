@@ -25,8 +25,6 @@ import com.orange.oss.ondemandbroker.ProcessorChainServiceInstanceService;
 import org.junit.Assert;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.platform.runner.JUnitPlatform;
-import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -51,8 +49,8 @@ import static org.springframework.cloud.servicebroker.model.instance.OperationSt
 /**
  *
  */
+@SuppressWarnings("CatchMayIgnoreException")
 @ExtendWith(MockitoExtension.class)
-@RunWith(JUnitPlatform.class)
 public class TerraformProcessorTest {
 
     @Mock

@@ -1,4 +1,12 @@
 
+Dependency bumps
+* [ ] clean up duplicated WireMockTestFixture and WireMockTestConfiguration
+   * See alternative community integrations at https://github.com/tomakehurst/wiremock/issues/684
+```
+@ExtendWith(MockitoExtension.class)
+@RunWith(JUnitPlatform.class)
+public class ProcessorChainServiceInstanceBindingServiceTest
+```
 
   2019-05-15T12:29:00.07+0000 [APP/PROC/WEB/0] OUT org.eclipse.jgit.api.errors.TransportException: https://redacted/skc-ops-int/paas-templates.git: 502 Bad Gateway
    2019-05-15T12:29:00.07+0000 [APP/PROC/WEB/0] OUT 	at org.eclipse.jgit.api.FetchCommand.call(FetchCommand.java:250) ~[org.eclipse.jgit-4.9.0.201710071750-r.jar!/:4.9.0.201710071750-r]

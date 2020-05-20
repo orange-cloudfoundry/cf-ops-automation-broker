@@ -1,23 +1,5 @@
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.terraform.cloudflare;
 
-import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.UserFacingRuntimeException;
-import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.GitProcessorContext;
-import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.OsbBuilderHelper;
-import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.Context;
-import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.terraform.*;
-import com.orange.oss.ondemandbroker.ProcessorChainServiceInstanceService;
-import org.junit.Assert;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
-import org.junit.runner.RunWith;
-import org.mockito.Mock;
-import org.mockito.Mockito;
-import org.mockito.junit.MockitoJUnitRunner;
-import org.springframework.cloud.servicebroker.model.CloudFoundryContext;
-import org.springframework.cloud.servicebroker.model.catalog.ServiceDefinition;
-import org.springframework.cloud.servicebroker.model.instance.*;
-
 import java.io.IOException;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
@@ -28,8 +10,36 @@ import java.time.ZoneId;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.UserFacingRuntimeException;
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.GitProcessorContext;
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.OsbBuilderHelper;
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.Context;
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.terraform.FileTerraformRepository;
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.terraform.ImmutableOutputConfig;
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.terraform.ImmutableTerraformModule;
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.terraform.TerraformCompletionTracker;
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.terraform.TerraformModule;
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.terraform.TerraformModuleHelper;
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.terraform.TerraformRepository;
+import com.orange.oss.ondemandbroker.ProcessorChainServiceInstanceService;
+import org.junit.Assert;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import org.springframework.cloud.servicebroker.model.CloudFoundryContext;
+import org.springframework.cloud.servicebroker.model.catalog.ServiceDefinition;
+import org.springframework.cloud.servicebroker.model.instance.CreateServiceInstanceRequest;
+import org.springframework.cloud.servicebroker.model.instance.CreateServiceInstanceResponse;
+import org.springframework.cloud.servicebroker.model.instance.DeleteServiceInstanceRequest;
+import org.springframework.cloud.servicebroker.model.instance.DeleteServiceInstanceResponse;
+import org.springframework.cloud.servicebroker.model.instance.GetLastServiceOperationRequest;
+import org.springframework.cloud.servicebroker.model.instance.GetLastServiceOperationResponse;
+
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hamcrest.CoreMatchers.containsString;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
@@ -39,7 +49,8 @@ import static org.springframework.cloud.servicebroker.model.instance.OperationSt
 /**
  *
  */
-@RunWith(MockitoJUnitRunner.class)
+@SuppressWarnings("CatchMayIgnoreException")
+@ExtendWith(MockitoExtension.class)
 public class TerraformProcessorTest {
 
     @Mock
@@ -50,9 +61,10 @@ public class TerraformProcessorTest {
     private TerraformProcessor terraformProcessor = new TerraformProcessor(aConfig(), aSuffixValidator(), getRepositoryFactory(), completionTracker);
 
 
-    @Test(expected = UserFacingRuntimeException.class)
+    @Test
     public void rejects_bind_calls() {
-        terraformProcessor.preBind(new Context());
+        assertThrows(UserFacingRuntimeException.class, () ->
+            terraformProcessor.preBind(new Context()));
     }
 
     //FIXME: cloudflare specifics to be moved out
@@ -72,9 +84,6 @@ public class TerraformProcessorTest {
         }
     }
 
-    @Rule
-    public ExpectedException thrown = ExpectedException.none();
-
     //FIXME: cloudflare specifics to be moved out
     @Test
     public void hints_users_when_missing_param_value() {
@@ -82,11 +91,10 @@ public class TerraformProcessorTest {
         //cf cs cloudflare -c '{a_wrong_param="myroute"}'
         Context context = aContextWithCreateRequest(TerraformProcessor.ROUTE_PREFIX, null);
 
-        thrown.expect(UserFacingRuntimeException.class);
-        thrown.expectMessage(containsString(TerraformProcessor.ROUTE_PREFIX));
-        thrown.expectMessage(containsString("Missing"));
-
-        terraformProcessor.preCreate(context);
+        UserFacingRuntimeException exception = assertThrows(UserFacingRuntimeException.class, () ->
+            terraformProcessor.preCreate(context));
+        assertThat(exception).hasMessageContaining(TerraformProcessor.ROUTE_PREFIX);
+        assertThat(exception).hasMessageContaining("Missing");
     }
 
     //FIXME: cloudflare specifics to be moved out
@@ -105,11 +113,10 @@ public class TerraformProcessorTest {
         Context context = new Context();
         context.contextKeys.put(ProcessorChainServiceInstanceService.CREATE_SERVICE_INSTANCE_REQUEST, request);
 
-        thrown.expect(UserFacingRuntimeException.class);
-        thrown.expectMessage(containsString(TerraformProcessor.ROUTE_PREFIX));
-        thrown.expectMessage(containsString("Missing"));
-
-        terraformProcessor.preCreate(context);
+        UserFacingRuntimeException exception = assertThrows(UserFacingRuntimeException.class, () ->
+            terraformProcessor.preCreate(context));
+        assertThat(exception).hasMessageContaining(TerraformProcessor.ROUTE_PREFIX);
+        assertThat(exception).hasMessageContaining("Missing");
     }
 
     //FIXME: cloudflare specifics to be moved out
@@ -182,7 +189,7 @@ public class TerraformProcessorTest {
         assertThat(repository.getDirectory().toFile()).isEqualTo(workDir.toFile());
     }
 
-    @Test(expected = RuntimeException.class)
+    @Test
     public void missing_paas_secrets_git_local_checkout_triggers_OSB_retries() {
         //given the git mediation failed to properly clone the repo
         Context ctx = new Context();
@@ -191,9 +198,10 @@ public class TerraformProcessorTest {
         terraformProcessor = new TerraformProcessor(aConfig(), aSuffixValidator(), repositoryFactory, null);
 
         //when
-        @SuppressWarnings("unused") FileTerraformRepository repository = (FileTerraformRepository) terraformProcessor.getRepository(ctx);
-
+        assertThrows(RuntimeException.class, () ->
+            terraformProcessor.getRepository(ctx));
         //then OSB will retry polling status, or ask user to retry the delete request.
+
     }
 
 

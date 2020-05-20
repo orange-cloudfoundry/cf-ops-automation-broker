@@ -3,7 +3,7 @@ package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.terrafor
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.apache.commons.io.IOUtils;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 

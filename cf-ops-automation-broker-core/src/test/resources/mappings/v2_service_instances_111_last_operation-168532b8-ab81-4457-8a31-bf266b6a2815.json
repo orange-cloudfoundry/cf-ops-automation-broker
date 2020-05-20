@@ -2,7 +2,7 @@
   "id" : "e2f367a4-e329-4591-8c3f-c19fde2c9f05",
   "name" : "v2_service_instances_111_last_operation",
   "request" : {
-    "url" : "/v2/service_instances/111/last_operation?service_id=service_id&plan_id=plan_id&operation=an+opaque+operation+string",
+    "url" : "/v2/service_instances/111/last_operation?service_id=service_id&plan_id=plan_id&operation=an%20opaque%20operation%20string",
     "method" : "GET"
   },
   "response" : {

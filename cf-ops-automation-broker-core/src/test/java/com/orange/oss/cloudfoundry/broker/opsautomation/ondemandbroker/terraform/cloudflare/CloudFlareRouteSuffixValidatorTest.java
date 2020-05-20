@@ -1,7 +1,9 @@
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.terraform.cloudflare;
 
 import org.assertj.core.api.Assertions;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
  *
@@ -10,13 +12,15 @@ public class CloudFlareRouteSuffixValidatorTest {
 
     private CloudFlareRouteSuffixValidator cloudFlareRouteSuffixValidator = new CloudFlareRouteSuffixValidator("-cdn-cw-vdr-pprod-apps.redacted-domain.org");
 
-    @Test(expected = RuntimeException.class)
+    @Test
     public void rejects_empty_suffix() {
-        new CloudFlareRouteSuffixValidator("");
+        assertThrows(RuntimeException.class, () ->
+        new CloudFlareRouteSuffixValidator(""));
     }
-    @Test(expected = RuntimeException.class)
+    @Test
     public void rejects_null_suffix() {
-        new CloudFlareRouteSuffixValidator(null);
+        assertThrows(RuntimeException.class, () ->
+            new CloudFlareRouteSuffixValidator(null));
     }
 
     @Test
@@ -31,7 +35,7 @@ public class CloudFlareRouteSuffixValidatorTest {
     }
 
     @Test
-    public void rejects_too_long_routes() throws Exception {
+    public void rejects_too_long_routes() {
         Assertions.assertThat(cloudFlareRouteSuffixValidator.isRouteValid("too-too-too-too-too-too-too-too-too-too-too-too-too-too-too-too-too-too-too-too-too-too-too-too-too-too-too-too-long-route")).isFalse();
         Assertions.assertThat(cloudFlareRouteSuffixValidator.isRouteValid("tootootootootootootootootootootootootootootootootootootootootootootootootootootootoo-long-route")).isFalse();
 
@@ -40,7 +44,7 @@ public class CloudFlareRouteSuffixValidatorTest {
     @Test
     public void rejects_injection_attacks() {
         Assertions.assertThat(cloudFlareRouteSuffixValidator.isRouteValid("\"route")).isFalse();
-        Assertions.assertThat(cloudFlareRouteSuffixValidator.isRouteValid("\'route")).isFalse();
+        Assertions.assertThat(cloudFlareRouteSuffixValidator.isRouteValid("'route")).isFalse();
 
     }
 

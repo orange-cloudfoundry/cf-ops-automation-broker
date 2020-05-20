@@ -1,17 +1,19 @@
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.catalog;
 
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import org.springframework.boot.env.OriginTrackedMapPropertySource;
 import org.springframework.context.ApplicationContextInitializer;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.core.env.PropertySource;
 import org.springframework.core.io.Resource;
 import org.springframework.security.util.InMemoryResource;
-
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
 
 import static org.springframework.util.StringUtils.isEmpty;
 
@@ -38,15 +40,16 @@ public class YamlCataloglAsEnvironmentVarApplicationContextInitializer implement
             Resource resource = new InMemoryResource(yml);
             LOGGER.info("Using CATALOG_YML environment variable to set service broker catalog.");
             PropertySource<?> propertySource = CatalogYamlPropertySourceMapper.toPropertySource(resource);
-            convertPropertySourceToScOsbKeyPrefix((Map<String, String>) propertySource.getSource());
-            configurableApplicationContext.getEnvironment().getPropertySources().addFirst(propertySource);
+            //noinspection unchecked
+            configurableApplicationContext.getEnvironment().getPropertySources().addFirst(convertPropertySourceToScOsbKeyPrefix((Map<String, String>) propertySource.getSource()));
         } catch (IOException e) {
             throw new IllegalStateException("Unable to read CATALOG_YML environment variable.",e);
         }
     }
 
-    void convertPropertySourceToScOsbKeyPrefix(Map<String, String> source) {
-        Iterator<Map.Entry<String, String>> iterator = source.entrySet().iterator();
+    OriginTrackedMapPropertySource convertPropertySourceToScOsbKeyPrefix(Map<String, String> source) {
+        HashMap<String,String> sourceCopy = new HashMap<>(source);
+        Iterator<Map.Entry<String, String>> iterator = sourceCopy.entrySet().iterator();
         Map<String, String> convertedEntries = new HashMap<>(source.size());
         while (iterator.hasNext()) {
             Map.Entry<String, String> entry = iterator.next();
@@ -57,7 +60,8 @@ public class YamlCataloglAsEnvironmentVarApplicationContextInitializer implement
                 convertedEntries.put(convertedKey, entry.getValue());
             }
         }
-        source.putAll(convertedEntries);
+        sourceCopy.putAll(convertedEntries);
+        return new OriginTrackedMapPropertySource("catalog_from_env_var", sourceCopy);
     }
     
     private String convertToScOsbFormat(String key) {

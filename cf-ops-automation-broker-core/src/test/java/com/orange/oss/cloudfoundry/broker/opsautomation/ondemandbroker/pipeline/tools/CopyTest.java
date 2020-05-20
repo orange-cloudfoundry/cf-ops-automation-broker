@@ -1,9 +1,6 @@
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.tools;
 
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-
+import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -13,10 +10,13 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.EnumSet;
 
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+
 public class CopyTest {
 
-    @Rule
-    public TemporaryFolder temporaryFolder = new TemporaryFolder();
+    @TempDir
+    File temporaryDir;
 
     @Test
     public void test() {
@@ -38,7 +38,7 @@ public class CopyTest {
 */
 
 
-            Path target = temporaryFolder.getRoot().toPath();
+            Path target = temporaryDir.toPath();
 
 
             //recursive
@@ -50,12 +50,9 @@ public class CopyTest {
 
 
 
-        } catch (URISyntaxException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
+        } catch (URISyntaxException | IOException e) {
             e.printStackTrace();
         }
-
 
     }
 }

@@ -13,7 +13,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>2.0.9.RELEASE</version>
+        <version>2.3.0.RELEASE</version>
         <relativePath /> <!-- lookup parent from repository -->
     </parent>
 
@@ -70,11 +70,21 @@
             <scope>test</scope>
         </dependency>
 
-        <!-- project depl -->
+        <!-- See https://www.baeldung.com/mockito-junit-5-extension -->
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.platform</groupId>
+            <artifactId>junit-platform-runner</artifactId>
+            <scope>test</scope>
+        </dependency>
         <dependency>
             <groupId>org.eclipse.jgit</groupId>
             <artifactId>org.eclipse.jgit</artifactId>
-            <version>4.9.0.201710071750-r</version>
+            <version>5.7.0.202003110725-r</version>
         </dependency>
 
         <!-- for bosh manifest yml parsing -->
@@ -101,7 +111,7 @@
             <dependency>
                 <groupId>org.springframework.cloud</groupId>
                 <artifactId>spring-cloud-dependencies</artifactId>
-                <version>Finchley.SR2</version>
+                <version>Hoxton.SR4</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>

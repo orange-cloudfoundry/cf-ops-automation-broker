@@ -4,10 +4,12 @@ import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processor
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.DefaultBrokerProcessor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import org.springframework.credhub.core.CredHubTemplate;
 import org.springframework.credhub.support.CredentialDetails;
 import org.springframework.credhub.support.CredentialName;
 import org.springframework.credhub.support.SimpleCredentialName;
+import org.springframework.credhub.support.WriteMode;
 import org.springframework.credhub.support.password.PasswordCredential;
 import org.springframework.credhub.support.password.PasswordParameters;
 import org.springframework.credhub.support.password.PasswordParametersRequest;
@@ -46,7 +48,8 @@ public class PasswordGenProcessor extends DefaultBrokerProcessor {
 		PasswordParametersRequest parametersRequest=PasswordParametersRequest.builder()
 				.name(credentialParam)
 				.parameters(parameters)
-				.overwrite(true).build();
+				.mode(WriteMode.OVERWRITE)
+				.build();
 		this.template().credentials().generate(parametersRequest);
 
 

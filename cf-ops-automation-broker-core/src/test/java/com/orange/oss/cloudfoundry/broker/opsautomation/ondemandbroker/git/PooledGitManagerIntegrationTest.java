@@ -1,14 +1,15 @@
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git;
 
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.Context;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 
 import static com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.PooledGitManager.Metric.*;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.eq;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 public class PooledGitManagerIntegrationTest {
@@ -118,14 +119,14 @@ public class PooledGitManagerIntegrationTest {
         assertThat((long) pooledGitManager.getPoolAttribute(Returned)).isEqualTo(0);
     }
 
-    @Test(expected=RuntimeException.class)
+    @Test
     public void resets_pool_metrics_upon_request() {
         //given
         PooledGitManager pooledGitManager = pools_a_git_repo_across_invocations("pool-reset-test");
         //when
         pooledGitManager.resetMetrics();
         //then: metric is missing from JMX
-        pooledGitManager.getPoolAttribute(Created);
+        assertThrows(RuntimeException.class, () -> pooledGitManager.getPoolAttribute(Created));
     }
 
     @Test

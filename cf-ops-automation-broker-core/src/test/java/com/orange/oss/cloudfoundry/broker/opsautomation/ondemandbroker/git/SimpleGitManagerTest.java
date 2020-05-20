@@ -1,5 +1,16 @@
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.Writer;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.StreamSupport;
+
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.Context;
 import org.eclipse.jgit.api.AddCommand;
 import org.eclipse.jgit.api.Git;
@@ -9,21 +20,17 @@ import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
-import org.junit.*;
-import org.springframework.util.FileSystemUtils;
+import org.junit.Assert;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.StreamSupport;
+import org.springframework.util.FileSystemUtils;
 
 import static com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.GitIT.createDir;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class SimpleGitManagerTest {
 
@@ -36,18 +43,18 @@ public class SimpleGitManagerTest {
     private Context ctx = new Context();
 
 
-    @BeforeClass
+    @BeforeAll
     public static void startGitServer() throws IOException {
         gitServer = new GitServer();
         gitServer.startEphemeralReposServer(GitServer.NO_OP_INITIALIZER);
     }
 
-    @AfterClass
+    @AfterAll
     public static void stopGitServer() throws InterruptedException {
         gitServer.stopAndCleanupReposServer();
     }
 
-    @After
+    @AfterEach
     public void cleanUpClone() {
         if (gitManager != null) {
             gitManager.deleteWorkingDir(ctx);
@@ -295,7 +302,7 @@ public class SimpleGitManagerTest {
         assertThat(secondClone.resolve("a-file-in-master-branch.txt").toFile()).exists();
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void supports_checkOutRemoteBranch_key_when_branch_is_missing() {
         //given an empty repo
 
@@ -303,9 +310,10 @@ public class SimpleGitManagerTest {
         this.ctx = new Context();
         this.ctx.contextKeys.put(GitProcessorContext.checkOutRemoteBranch.toString(), "develop");
 
-        gitManager.cloneRepo(this.ctx);
-
         //then an exception should be thrown
+        assertThrows(IllegalArgumentException.class, () ->
+            gitManager.cloneRepo(this.ctx));
+
     }
 
     @Test
@@ -515,6 +523,8 @@ public class SimpleGitManagerTest {
     public void fetches_submodules_when_asked() {
 
         //given a repo with submodules configured
+        gitServer.initRepo("bosh-deployment.git", this::initNotEmptyRepo);
+        gitServer.initRepo("mysql-deployment.git", this::initNotEmptyRepo);
         gitServer.initRepo("paas-template.git", this::initPaasTemplateWithSubModules);
         gitManager = new SimpleGitManager("gituser", "gitsecret", GIT_BASE_URL + "paas-template.git", "committerName", "committer@address.org", null);
         ctx.contextKeys.put(GitProcessorContext.checkOutRemoteBranch.toString(), "develop");
@@ -525,8 +535,8 @@ public class SimpleGitManagerTest {
         //then the submodule isn't fetched (and no exception is thrown)
         Path workDir = getWorkDir(ctx, "");
         assertThat(workDir.resolve("coab-depls").resolve("cassandra").toFile()).exists();
-        assertThat(workDir.resolve("bosh-deployment").toFile()).doesNotExist();
-        assertThat(workDir.resolve("mysql-deployment").toFile()).doesNotExist();
+        assertThat(workDir.resolve("bosh-deployment").toFile()).isEmptyDirectory();
+        assertThat(workDir.resolve("mysql-deployment").toFile()).isEmptyDirectory();
 
         //when asking to clone it with opt-in for specific submodules
         ctx.contextKeys.put(GitProcessorContext.submoduleListToFetch.toString(), Collections.singletonList("mysql-deployment"));
@@ -535,8 +545,9 @@ public class SimpleGitManagerTest {
         //then the submodule isn't fetched (and no exception is thrown)
         workDir = getWorkDir(ctx, "");
         assertThat(workDir.resolve("coab-depls").resolve("cassandra").toFile()).exists();
-        assertThat(workDir.resolve("bosh-deployment").toFile()).doesNotExist();
-        assertThat(workDir.resolve("mysql-deployment").toFile()).exists();
+        assertThat(workDir.resolve("bosh-deployment").toFile()).isEmptyDirectory();
+        assertThat(workDir.resolve("mysql-deployment").toFile()).isDirectory();
+        assertThat(workDir.resolve("mysql-deployment").toFile()).isDirectoryRecursivelyContaining("glob:**/a-sub-dir/a-file.txt");
 
         //when asking to clone with all submodules opted-in
         ctx.contextKeys.clear();
@@ -547,9 +558,8 @@ public class SimpleGitManagerTest {
         //then the submodule isn't fetched (and no exception is thrown)
         workDir = getWorkDir(ctx, "");
         assertThat(workDir.resolve("coab-depls").resolve("cassandra").toFile()).exists();
-        assertThat(workDir.resolve("bosh-deployment").toFile()).exists();
-        assertThat(workDir.resolve("mysql-deployment").toFile()).exists();
-
+        assertThat(workDir.resolve("bosh-deployment").toFile()).isDirectoryRecursivelyContaining("glob:**/a-sub-dir/a-file.txt");
+        assertThat(workDir.resolve("mysql-deployment").toFile()).isDirectoryRecursivelyContaining("glob:**/a-sub-dir/a-file.txt");
     }
 
     @Test
@@ -569,6 +579,32 @@ public class SimpleGitManagerTest {
         assertThat(subModulesList).containsOnly("bosh-deployment", "mysql-deployment");
 
         //so that submodules get excluded from commit list
+    }
+
+    public void initNotEmptyRepo(Git git) {
+        File gitWorkDir = git.getRepository().getDirectory().getParentFile();
+        try {
+            git.commit().setMessage("Initial empty repo setup #initNotEmptyRepo").call();
+
+            //root deployment
+            Path subdir = gitWorkDir.toPath().resolve("a-sub-dir");
+            createDir(subdir);
+            createDummyFile(subdir.resolve("a-file.txt"));
+            AddCommand addC = git.add().addFilepattern(".");
+            addC.call();
+
+            git.commit().setMessage("#initNotEmptyRepo").call();
+
+            git.checkout().setName("master").call();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public void createDummyFile(Path path) throws IOException {
+        try (Writer writer = new FileWriter(path.toFile())) {
+            writer.write("dummy content");
+        }
     }
 
     private void initPaasTemplateWithSubModules(Git git) {
@@ -595,7 +631,7 @@ public class SimpleGitManagerTest {
 //            Repository repository = FileRepositoryBuilder.create(boshDeploymentRepo.toFile());
 //            repository.create();
             git.submoduleAdd().setPath("bosh-deployment").setURI(GIT_BASE_URL + "bosh-deployment.git").call();
-            git.submoduleAdd().setPath("mysql-deployment").setURI(GIT_BASE_URL + "mysql-deployment").call();
+            git.submoduleAdd().setPath("mysql-deployment").setURI(GIT_BASE_URL + "mysql-deployment.git").call();
             git.commit().setMessage("GitIT#startGitServer").call();
 
             git.checkout().setName("master").call();

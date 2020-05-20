@@ -1,34 +1,44 @@
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.catalog;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import java.util.HashMap;
+import java.util.Map;
+
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
 import org.springframework.boot.autoconfigure.AutoConfigurations;
+import org.springframework.boot.env.OriginTrackedMapPropertySource;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 import org.springframework.cloud.servicebroker.autoconfigure.web.ServiceBrokerAutoConfiguration;
 import org.springframework.cloud.servicebroker.model.catalog.Catalog;
-import org.springframework.cloud.servicebroker.model.instance.*;
+import org.springframework.cloud.servicebroker.model.instance.CreateServiceInstanceRequest;
+import org.springframework.cloud.servicebroker.model.instance.CreateServiceInstanceResponse;
+import org.springframework.cloud.servicebroker.model.instance.DeleteServiceInstanceRequest;
+import org.springframework.cloud.servicebroker.model.instance.DeleteServiceInstanceResponse;
+import org.springframework.cloud.servicebroker.model.instance.GetLastServiceOperationRequest;
+import org.springframework.cloud.servicebroker.model.instance.GetLastServiceOperationResponse;
+import org.springframework.cloud.servicebroker.model.instance.UpdateServiceInstanceRequest;
+import org.springframework.cloud.servicebroker.model.instance.UpdateServiceInstanceResponse;
 import org.springframework.cloud.servicebroker.service.ServiceInstanceService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.support.StaticApplicationContext;
 import org.springframework.core.env.PropertySource;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.data.MapEntry.entry;
 
+@SuppressWarnings("ConstantConditions")
 public class YamlCataloglAsEnvironmentVarApplicationContextInitializerTest {
 
-    @Before
+    @BeforeEach
     public void init() {
         System.setProperty("CATALOG_YML", CATALOG_YML);
         assertThat(System.getProperty("CATALOG_YML")).isNotEmpty();
     }
 
-    @After
+    @AfterEach
     public void after() {
         System.clearProperty("CATALOG_YML");
         assertThat(System.getProperty("CATALOG_YML")).isNull();
@@ -84,9 +94,10 @@ public class YamlCataloglAsEnvironmentVarApplicationContextInitializerTest {
         source.put("servicebroker.catalog.services[0].id", "ondemand-service");
         source.put("servicebroker.catalog.services[0].name", "ondemand");
         //when
-        contextInitializer.convertPropertySourceToScOsbKeyPrefix(source);
+        OriginTrackedMapPropertySource convertedSource = contextInitializer
+            .convertPropertySourceToScOsbKeyPrefix(source);
         //then
-        assertThat(source).containsOnly(
+        assertThat(convertedSource.getSource()).containsOnly(
                 entry("spring.cloud.openservicebroker.catalog.services[0].id", "ondemand-service"),
                 entry("spring.cloud.openservicebroker.catalog.services[0].name", "ondemand"));
     }
@@ -151,7 +162,7 @@ public class YamlCataloglAsEnvironmentVarApplicationContextInitializerTest {
      * See https://github.com/spring-cloud/spring-cloud-open-service-broker/blob/8cad269c90393857e2ebc36223472ec68a5e2401/spring-cloud-open-service-broker-autoconfigure/src/test/java/org/springframework/cloud/servicebroker/autoconfigure/web/ServiceBrokerAutoConfigurationTest.java#L89
      */
     @Test
-    public void loads_yml_env_vars_as_catalog_bean() throws Exception {
+    public void loads_yml_env_vars_as_catalog_bean() {
         this.contextRunner
                 .withUserConfiguration(NoCatalogBeanConfiguration.class)
                 .run((context) -> {

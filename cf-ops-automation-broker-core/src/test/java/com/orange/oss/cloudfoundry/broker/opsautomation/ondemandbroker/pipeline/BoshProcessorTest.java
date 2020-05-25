@@ -1,18 +1,5 @@
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline;
 
-import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.GitProcessorContext;
-import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.Context;
-import com.orange.oss.ondemandbroker.ProcessorChainServiceInstanceBindingService;
-import com.orange.oss.ondemandbroker.ProcessorChainServiceInstanceService;
-import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
-import org.springframework.cloud.servicebroker.model.CloudFoundryContext;
-import org.springframework.cloud.servicebroker.model.binding.CreateServiceInstanceBindingRequest;
-import org.springframework.cloud.servicebroker.model.binding.CreateServiceInstanceBindingResponse;
-import org.springframework.cloud.servicebroker.model.binding.DeleteServiceInstanceBindingRequest;
-import org.springframework.cloud.servicebroker.model.catalog.ServiceDefinition;
-import org.springframework.cloud.servicebroker.model.instance.*;
-
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.time.Clock;
@@ -21,12 +8,37 @@ import java.time.ZoneId;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.GitProcessorContext;
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.Context;
+import com.orange.oss.ondemandbroker.ProcessorChainServiceInstanceBindingService;
+import com.orange.oss.ondemandbroker.ProcessorChainServiceInstanceService;
+import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
+
+import org.springframework.cloud.servicebroker.model.CloudFoundryContext;
+import org.springframework.cloud.servicebroker.model.binding.CreateServiceInstanceBindingRequest;
+import org.springframework.cloud.servicebroker.model.binding.CreateServiceInstanceBindingResponse;
+import org.springframework.cloud.servicebroker.model.binding.DeleteServiceInstanceBindingRequest;
+import org.springframework.cloud.servicebroker.model.catalog.ServiceDefinition;
+import org.springframework.cloud.servicebroker.model.instance.CreateServiceInstanceRequest;
+import org.springframework.cloud.servicebroker.model.instance.CreateServiceInstanceResponse;
+import org.springframework.cloud.servicebroker.model.instance.DeleteServiceInstanceRequest;
+import org.springframework.cloud.servicebroker.model.instance.DeleteServiceInstanceResponse;
+import org.springframework.cloud.servicebroker.model.instance.GetLastServiceOperationRequest;
+import org.springframework.cloud.servicebroker.model.instance.GetLastServiceOperationResponse;
+import org.springframework.cloud.servicebroker.model.instance.OperationState;
+
 import static com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.OsbConstants.ORIGINATING_EMAIL_KEY;
 import static com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.OsbConstants.ORIGINATING_USER_KEY;
 import static com.orange.oss.ondemandbroker.ProcessorChainServiceInstanceService.OSB_PROFILE_ORGANIZATION_GUID;
 import static com.orange.oss.ondemandbroker.ProcessorChainServiceInstanceService.OSB_PROFILE_SPACE_GUID;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 public class BoshProcessorTest {
 
@@ -163,8 +175,8 @@ public class BoshProcessorTest {
     @Test
     public void formats_no_dashboard_url_when_not_configured() {
         formats_dashboard_url_when_configured(
-                "null",
-                "null");
+                null,
+                null);
     }
 
     protected void formats_dashboard_url_when_configured(String dashboardUrlTemplate, String expected) {

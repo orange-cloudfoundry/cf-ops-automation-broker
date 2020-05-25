@@ -1,5 +1,8 @@
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline;
 
+import java.nio.file.Path;
+import java.text.MessageFormat;
+
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.GitProcessorContext;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.Context;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.DefaultBrokerProcessor;
@@ -7,14 +10,17 @@ import com.orange.oss.ondemandbroker.ProcessorChainServiceInstanceBindingService
 import com.orange.oss.ondemandbroker.ProcessorChainServiceInstanceService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import org.springframework.cloud.servicebroker.model.CloudFoundryContext;
 import org.springframework.cloud.servicebroker.model.binding.CreateServiceInstanceBindingRequest;
 import org.springframework.cloud.servicebroker.model.binding.CreateServiceInstanceBindingResponse;
 import org.springframework.cloud.servicebroker.model.binding.DeleteServiceInstanceBindingRequest;
-import org.springframework.cloud.servicebroker.model.instance.*;
-
-import java.nio.file.Path;
-import java.text.MessageFormat;
+import org.springframework.cloud.servicebroker.model.instance.CreateServiceInstanceRequest;
+import org.springframework.cloud.servicebroker.model.instance.CreateServiceInstanceResponse;
+import org.springframework.cloud.servicebroker.model.instance.DeleteServiceInstanceRequest;
+import org.springframework.cloud.servicebroker.model.instance.DeleteServiceInstanceResponse;
+import org.springframework.cloud.servicebroker.model.instance.GetLastServiceOperationRequest;
+import org.springframework.cloud.servicebroker.model.instance.GetLastServiceOperationResponse;
 
 public class BoshProcessor extends DefaultBrokerProcessor {
 
@@ -227,9 +233,14 @@ public class BoshProcessor extends DefaultBrokerProcessor {
 
     public String formatDashboard(String dashboardUrlTemplate, CreateServiceInstanceRequest request) {
         if (dashboardUrlTemplate == null) {
+            logger.debug("No dashboard template url configured, returning null dashboardUrl");
             return null;
         }
-        return new MessageFormat(dashboardUrlTemplate).format(new String[]{request.getServiceInstanceId()});
+        String serviceInstanceId = request.getServiceInstanceId();
+        String formattedDashboardUrl = new MessageFormat(dashboardUrlTemplate).format(new String[] {serviceInstanceId});
+        logger.debug("Formated dashboard url into {} from template {} and req guid {}", formattedDashboardUrl,
+            dashboardUrlTemplate, serviceInstanceId);
+        return formattedDashboardUrl;
     }
 }
 

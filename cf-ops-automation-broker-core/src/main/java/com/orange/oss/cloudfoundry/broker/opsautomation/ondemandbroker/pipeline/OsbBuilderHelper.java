@@ -1,5 +1,11 @@
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline;
 
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+
+import org.jetbrains.annotations.NotNull;
+
 import org.springframework.cloud.servicebroker.model.CloudFoundryContext;
 import org.springframework.cloud.servicebroker.model.Context;
 import org.springframework.cloud.servicebroker.model.binding.BindResource;
@@ -13,10 +19,6 @@ import org.springframework.cloud.servicebroker.model.instance.CreateServiceInsta
 import org.springframework.cloud.servicebroker.model.instance.DeleteServiceInstanceRequest;
 import org.springframework.cloud.servicebroker.model.instance.GetServiceInstanceRequest;
 import org.springframework.cloud.servicebroker.model.instance.UpdateServiceInstanceRequest;
-
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
 
 import static com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.OsbConstants.ORIGINATING_EMAIL_KEY;
 import static com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.OsbConstants.ORIGINATING_USER_KEY;
@@ -165,4 +167,15 @@ public class OsbBuilderHelper {
                 .serviceInstanceId("instance_id")
                 .build();
     }
+
+    @NotNull
+    public static Map<String, Object> osbCmdbCustomParam(String brokeredServiceGuid) {
+        Map<String, Map<String,String>> osbCmdbMetaData = new HashMap<>();
+        osbCmdbMetaData.put(BoshProcessor.CMDB_LABELS_KEY,
+            Collections.singletonMap(BoshProcessor.CMDB_BROKERED_SERVICE_INSTANCE_GUID_KEY,
+                brokeredServiceGuid));
+        return Collections
+            .singletonMap(BoshProcessor.X_OSB_CMDB_CUSTOM_KEY_NAME, osbCmdbMetaData);
+    }
+
 }

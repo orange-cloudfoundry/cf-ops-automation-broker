@@ -2,6 +2,7 @@ package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline
 
 import java.nio.file.Path;
 import java.text.MessageFormat;
+import java.util.Map;
 
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.GitProcessorContext;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.Context;
@@ -23,6 +24,12 @@ import org.springframework.cloud.servicebroker.model.instance.GetLastServiceOper
 import org.springframework.cloud.servicebroker.model.instance.GetLastServiceOperationResponse;
 
 public class BoshProcessor extends DefaultBrokerProcessor {
+
+    public static final String X_OSB_CMDB_CUSTOM_KEY_NAME = "x-osb-cmdb";
+
+    public static final String CMDB_LABELS_KEY = "labels";
+
+    public static final String CMDB_BROKERED_SERVICE_INSTANCE_GUID_KEY = "brokered_service_instance_guid";
 
     private static Logger logger = LoggerFactory.getLogger(BoshProcessor.class.getName());
     private final String brokerDisplayName;
@@ -237,9 +244,25 @@ public class BoshProcessor extends DefaultBrokerProcessor {
             return null;
         }
         String serviceInstanceId = request.getServiceInstanceId();
-        String formattedDashboardUrl = new MessageFormat(dashboardUrlTemplate).format(new String[] {serviceInstanceId});
-        logger.debug("Formated dashboard url into {} from template {} and req guid {}", formattedDashboardUrl,
-            dashboardUrlTemplate, serviceInstanceId);
+        String brokered_service_instance_guid = null;
+        Map<String, Object> parameters = request.getParameters();
+        if (parameters != null) {
+            Map<String,Map<String,String>> osbCmdbCustomParamValue = (Map<String, Map<String, String>>) parameters.get(X_OSB_CMDB_CUSTOM_KEY_NAME);
+            if (osbCmdbCustomParamValue != null) {
+                Map<String, String> labels = osbCmdbCustomParamValue.get(CMDB_LABELS_KEY);
+                if (labels != null) {
+                    brokered_service_instance_guid = labels.get(CMDB_BROKERED_SERVICE_INSTANCE_GUID_KEY);
+                }
+            }
+        }
+
+        if (brokered_service_instance_guid == null) {
+            logger.info("Did not find Osb-cmdb custom brokered_service_instance_guid into CSIR {}", request);
+        }
+
+        String formattedDashboardUrl = new MessageFormat(dashboardUrlTemplate).format(new String[] {serviceInstanceId, brokered_service_instance_guid});
+        logger.debug("Formatted dashboard url into {} from template {} req guid {} and brokered_service_instance_guid {}",
+            formattedDashboardUrl, dashboardUrlTemplate, serviceInstanceId, brokered_service_instance_guid);
         return formattedDashboardUrl;
     }
 }

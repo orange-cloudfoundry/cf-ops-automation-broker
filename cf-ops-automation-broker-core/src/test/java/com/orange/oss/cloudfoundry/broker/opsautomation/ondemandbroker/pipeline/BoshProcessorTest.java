@@ -5,6 +5,7 @@ import java.nio.file.Path;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneId;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -163,6 +164,22 @@ public class BoshProcessorTest {
         formats_dashboard_url_when_configured(
                 "https://shield_{0}.redacted-ops-domain.com",
                 "https://shield_service-instance-id1.redacted-ops-domain.com");
+        formats_dashboard_url_when_configured(
+                "https://shield_{1}.redacted-ops-domain.com",
+                "https://shield_brokered-service-instance-id2.redacted-ops-domain.com");
+    }
+
+    @Test
+    public void formats_dashboard_url_when_configured_with_template_and_cmdb_params_missing() {
+        formats_dashboard_url_when_configured("https://shield_{0}.redacted-ops-domain.com",
+            "https://shield_service-instance-id1.redacted-ops-domain.com",
+            aCreateServiceInstanceRequestWithoutOsbCmdbParam());
+        formats_dashboard_url_when_configured("https://shield_{1}.redacted-ops-domain.com",
+            "https://shield_null.redacted-ops-domain.com",
+            aCreateServiceInstanceRequestWithoutOsbCmdbParam());
+        formats_dashboard_url_when_configured("https://shield_{1}.redacted-ops-domain.com",
+            "https://shield_null.redacted-ops-domain.com",
+            aCreateServiceInstanceRequestWithPartialOsbCmdbParam());
     }
 
     @Test
@@ -180,14 +197,45 @@ public class BoshProcessorTest {
     }
 
     protected void formats_dashboard_url_when_configured(String dashboardUrlTemplate, String expected) {
+        formats_dashboard_url_when_configured(dashboardUrlTemplate, expected,
+            aCreateServiceInstanceRequestWithOsbCmdbParam());
+    }
+
+    private void formats_dashboard_url_when_configured(String dashboardUrlTemplate, String expected,
+        CreateServiceInstanceRequest request) {
         //given
         BoshProcessor boshProcessor = aBasicBoshProcessor();
-        CreateServiceInstanceRequest request = CreateServiceInstanceRequest.builder().serviceInstanceId("service-instance-id1").build();
 
         //When
         String dashboardUrl = boshProcessor.formatDashboard(dashboardUrlTemplate, request);
         //then
         assertThat(dashboardUrl).isEqualTo(expected);
+    }
+
+    private CreateServiceInstanceRequest aCreateServiceInstanceRequestWithOsbCmdbParam() {
+        String brokeredServiceGuid = "brokered-service-instance-id2";
+        Map<String, Object> parameters = OsbBuilderHelper.osbCmdbCustomParam(brokeredServiceGuid);
+        return CreateServiceInstanceRequest.builder()
+            .serviceInstanceId("service-instance-id1")
+            .parameters(parameters)
+            .build();
+    }
+
+    private CreateServiceInstanceRequest aCreateServiceInstanceRequestWithPartialOsbCmdbParam() {
+        Map<String, Map<String,String>> osbCmdbMetaData = new HashMap<>();
+        osbCmdbMetaData.put(BoshProcessor.CMDB_LABELS_KEY,
+            Collections.singletonMap("a-random-key",
+                "brokered-service-instance-id2"));
+        return CreateServiceInstanceRequest.builder()
+            .serviceInstanceId("service-instance-id1")
+            .parameters(Collections.singletonMap(BoshProcessor.X_OSB_CMDB_CUSTOM_KEY_NAME, osbCmdbMetaData))
+            .build();
+    }
+
+    private CreateServiceInstanceRequest aCreateServiceInstanceRequestWithoutOsbCmdbParam() {
+        return CreateServiceInstanceRequest.builder()
+            .serviceInstanceId("service-instance-id1")
+            .build();
     }
 
 

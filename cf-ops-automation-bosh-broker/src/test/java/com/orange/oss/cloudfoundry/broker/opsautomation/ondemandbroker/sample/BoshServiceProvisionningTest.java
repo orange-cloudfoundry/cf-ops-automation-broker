@@ -29,6 +29,7 @@ import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.osbclient
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.osbclient.ServiceInstanceServiceClient;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.DeploymentConstants;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.DeploymentProperties;
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.OsbBuilderHelper;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.OsbConstants;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.OsbProxyImpl;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.SecretsGenerator;
@@ -83,6 +84,8 @@ import static org.springframework.http.HttpStatus.CREATED;
 @SpringBootTest(webEnvironment = RANDOM_PORT, classes = {BoshBrokerApplication.class, WireMockTestConfiguration.class})
 public class BoshServiceProvisionningTest {
 
+
+    public static final String BROKERED_SERVICE_INSTANCE_ID = "brokered_service_instance_id";
 
     @BeforeAll
     public static void prepare_CONFIG_YML_env_var() throws Exception {
@@ -429,6 +432,9 @@ public class BoshServiceProvisionningTest {
                 createServiceInstanceRequest);
         assertThat(createResponse.getStatusCode()).isEqualTo(ACCEPTED);
         assertThat(createResponse.getBody()).isNotNull();
+        assertThat(createResponse.getBody().getDashboardUrl())
+            .as("dashboard url template configured in application.properties")
+            .isEqualTo("https://grafana_" + BROKERED_SERVICE_INSTANCE_ID + ".redacted-ops-domain.com");
         return createResponse.getBody().getOperation();
     }
 
@@ -487,6 +493,7 @@ public class BoshServiceProvisionningTest {
                 .serviceDefinitionId(SERVICE_DEFINITION_ID)
                 .planId(SERVICE_PLAN_ID)
                 .serviceInstanceId(SERVICE_INSTANCE_ID)
+                .parameters(OsbBuilderHelper.osbCmdbCustomParam(BROKERED_SERVICE_INSTANCE_ID))
                 .context(CloudFoundryContext.builder()
                         .organizationGuid("org_id")
                         .spaceGuid("space_id")

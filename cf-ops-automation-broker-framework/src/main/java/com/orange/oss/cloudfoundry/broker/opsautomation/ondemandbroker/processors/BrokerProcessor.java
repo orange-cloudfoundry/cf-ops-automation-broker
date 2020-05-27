@@ -21,4 +21,7 @@ public interface BrokerProcessor {
 	void postDelete(Context ctx);
 
 	void cleanUp(Context ctx);
+
+	void preGetInstance(Context ctx);
+	void postGetInstance(Context ctx);
 }

@@ -2,14 +2,14 @@ package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Map;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.UserFacingRuntimeException;
+import org.apache.commons.lang.RandomStringUtils;
 import org.junit.jupiter.api.Disabled;
-import org.junit.Rule;
 import org.junit.jupiter.api.Test;
-import org.junit.rules.ExpectedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,12 +33,16 @@ public class VarsFilesYmlFormatterTest {
         assertDeploymentNameAndParamValueRejected("$()");
         assertDeploymentNameAndParamValueRejected("(("); //credhub interpolation
         assertDeploymentNameAndParamValueRejected("(( a/string ))");
-        assertDeploymentNameAndParamValueRejected("a/path"); //don't yet need paths, add it when requested
         assertDeploymentNameAndParamValueRejected("))");
         assertDeploymentNameAndParamValueRejected("?"); //other unknown chars
         assertDeploymentNameAndParamValueRejected("&"); //YML references
+        assertTooLongContentIsRejected(
+            RandomStringUtils.randomAlphabetic(VarsFilesYmlFormatter.MAX_SERIALIZED_SIZE + 1));
 
 
+        assertParamValueAccepted("a/path");
+        assertParamValueAccepted("../../etc/password");
+        assertParamValueAccepted("api.mycf.org/v2/info");
         assertParamValueAccepted("a string with spaces");
         assertParamValueAccepted("10mb");
         assertParamValueAccepted("a deployment model cassandravarsops_aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa0");
@@ -47,8 +51,41 @@ public class VarsFilesYmlFormatterTest {
         assertParamValueAccepted("cacheSizeMb");
         assertParamValueAccepted("10");
         assertParamValueAccepted("10.3");
+        String cmdbJson = "{\n" +
+            "    \"labels\": {\n" +
+            "      \"brokered_service_instance_guid\": \"3aa96c94-1d01-4389-ab4f-260d99257215\",\n" +
+            "      \"brokered_service_context_organization_guid\": \"c2169b61-9360-4d67-968c-575f3a10edf5\",\n" +
+            "      \"brokered_service_originating_identity_user_id\": \"0d02117b-aa21-43e2-b35e-8ad6f8223519\",\n" +
+            "      \"brokered_service_context_space_guid\": \"1a603476-a3a1-4c32-8021-d2a7b9b7c6b4\",\n" +
+            "      \"backing_service_instance_guid\": \"191260bb-3477-422d-8f40-bf053ccf6930\"\n" +
+            "    },\n" +
+            "    \"annotations\": {\n" +
+            "      \"brokered_service_context_instance_name\": \"osb-cmdb-broker-0-smoketest-1578565892\",\n" +
+            "      \"brokered_service_context_space_name\": \"smoke-tests\",\n" +
+            "      \"brokered_service_api_info_location\": \"api.mycf.org/v2/info\",\n" +
+            "      \"brokered_service_context_organization_name\": \"osb-cmdb-brokered-services-org-client-0\"\n" +
+            "    }\n" +
+            "  }\n";
+        Map osbCmdbParamValue = new ObjectMapper().readValue(cmdbJson, Map.class);
+        assertParamValueAccepted(osbCmdbParamValue);
 
     }
+
+    private void assertTooLongContentIsRejected(String aTooLongString) throws JsonProcessingException {
+        //YML references
+        CoabVarsFileDto coabVarsFileDto = aTypicalUserProvisionningRequest();
+        coabVarsFileDto.deployment_name = "a-name";
+        coabVarsFileDto.parameters.put("aparam",
+            aTooLongString);
+        //noinspection EmptyCatchBlock
+        try {
+            formatter.formatAsYml(coabVarsFileDto);
+            fail("expected " + "&" + "to be rejected");
+        } catch (UserFacingRuntimeException e) {
+            assertThat(e.getMessage()).contains("too long");
+        }
+    }
+
     @Test
     public void rejects_invalid_patterns_with_precise_message() throws JsonProcessingException {
         CoabVarsFileDto coabVarsFileDto = aTypicalUserProvisionningRequest();
@@ -97,7 +134,7 @@ public class VarsFilesYmlFormatterTest {
         }
     }
 
-    protected void assertParamValueAccepted(String paramValue) throws JsonProcessingException {
+    protected void assertParamValueAccepted(Object paramValue) throws JsonProcessingException {
         CoabVarsFileDto coabVarsFileDto = aTypicalUserProvisionningRequest();
         coabVarsFileDto.parameters.put("aparam", paramValue);
         formatter.formatAsYml(coabVarsFileDto);

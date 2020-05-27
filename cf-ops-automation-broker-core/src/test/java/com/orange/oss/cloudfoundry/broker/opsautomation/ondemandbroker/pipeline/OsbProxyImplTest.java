@@ -469,6 +469,7 @@ public class OsbProxyImplTest {
         assertThat(mappedResponse.getState()).isSameAs(OperationState.SUCCEEDED);
         assertThat(mappedResponse.getDescription()).isNull();
         assertThat(mappedResponse.isDeleteOperation()).isFalse();
+        assertThat(mappedResponse.isDeleteOperation()).isFalse();
     }
 
     @Test

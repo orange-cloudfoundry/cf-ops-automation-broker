@@ -56,7 +56,7 @@ import static org.eclipse.jgit.lib.Constants.DEFAULT_REMOTE_NAME;
 public class SimpleGitManager implements GitManager {
 
 
-    private static final String PRIVATE_GIT_INSTANCE = "private-git-instance";
+    protected static final String PRIVATE_GIT_INSTANCE = "private-git-instance";
     private static final Logger logger = LoggerFactory.getLogger(SimpleGitManager.class.getName());
     static final String PRIVATE_SUBMODULES_LIST = "private_submodules_list";
 

@@ -1,3 +1,20 @@
+Implement static dashboard url (#47 step 2)
+
+- implement the `GET /v2/service_instances/:instance_id` 
+   - DefaultBrokerProcessor.preGetServiceInstance() 
+   - document that operator should configure the catalog to return `instances_retrievable=true`  
+   - BoshProcessor.preGetServiceInstance() + BoshProcessorTest : 
+      - Return dashboard previously recorded in `coab-vars.yml`
+         - Extract existing code into Repository/interface
+            - read coab-depls/c_0a9018b8-7cb2-47c1-9542-0aceb8ca740a/template/coab-vars.yml into CoabVarsDto 
+   - BoshBrokerApplication.paasTemplateContextFilter: 
+       - check whether other steps could skip paas-secrets clone
+    
+- for inner brokers not supporting this fetch endpoint, record dashboard returned from provisionning call in git secrets git repo: in `coab-vars.yml`
+   
+- return `instances_retrievable` in [catalog service offering object](https://github.com/openservicebrokerapi/servicebroker/blob/master/spec.md#service-offering-object)    
+   
+--    
 
 Dependency bumps
 * [ ] clean up duplicated WireMockTestFixture and WireMockTestConfiguration

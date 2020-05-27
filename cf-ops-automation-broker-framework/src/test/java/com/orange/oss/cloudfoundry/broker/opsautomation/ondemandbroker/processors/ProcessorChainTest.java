@@ -1,11 +1,11 @@
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.ArrayList;
+import java.util.List;
 
 
 public class ProcessorChainTest {
@@ -83,6 +83,16 @@ public class ProcessorChainTest {
 				logger.info("post update 1");
 
 			}
+
+			@Override
+			public void preGetInstance(Context ctx) {
+				logger.info("pre getinstance 1");
+			}
+
+			@Override
+			public void postGetInstance(Context ctx) {
+				logger.info("post getinstance 1");
+			}
 		});
 		
 		processors.add(new BrokerProcessor() {
@@ -114,6 +124,11 @@ public class ProcessorChainTest {
 				logger.info("post Bind 2");
 			}
 
+			@Override
+			public void preGetInstance(Context ctx) { logger.info("pre getinstance 2"); }
+
+			@Override
+			public void postGetInstance(Context ctx) { logger.info("post getinstance 2"); }
 			@Override
 			public void preDelete(Context ctx) {
 				logger.info("pre delete 2");

@@ -81,10 +81,10 @@
             <artifactId>junit-platform-runner</artifactId>
             <scope>test</scope>
         </dependency>
+        <!-- for BoshServiceProvisionningTest -->
         <dependency>
             <groupId>org.eclipse.jgit</groupId>
             <artifactId>org.eclipse.jgit</artifactId>
-            <version>5.7.0.202003110725-r</version>
         </dependency>
 
         <!-- for bosh manifest yml parsing -->
@@ -119,6 +119,11 @@
                 <groupId>com.orange.oss.cloudfoundry.broker.opsautomation</groupId>
                 <artifactId>cf-ops-automation-broker-framework</artifactId>
                 <version>0.30.0-SNAPSHOT</version>
+            </dependency>
+            <dependency>
+                <groupId>org.eclipse.jgit</groupId>
+                <artifactId>org.eclipse.jgit</artifactId>
+                <version>4.10.0.201712302008-r</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

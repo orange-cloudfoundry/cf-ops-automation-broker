@@ -1,13 +1,16 @@
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.StreamSupport;
 
@@ -15,16 +18,27 @@ import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processor
 import org.eclipse.jgit.api.AddCommand;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.diff.DiffFormatter;
+import org.eclipse.jgit.lib.ObjectId;
+import org.eclipse.jgit.lib.ObjectReader;
 import org.eclipse.jgit.lib.PersonIdent;
 import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
+import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
+import org.eclipse.jgit.submodule.SubmoduleStatus;
+import org.eclipse.jgit.submodule.SubmoduleStatusType;
+import org.eclipse.jgit.treewalk.AbstractTreeIterator;
+import org.eclipse.jgit.treewalk.CanonicalTreeParser;
 import org.junit.Assert;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import org.springframework.util.FileSystemUtils;
 
@@ -36,6 +50,7 @@ public class SimpleGitManagerTest {
 
     private static final String GIT_BASE_URL = "git://127.0.0.1:9418/";
     private static final String GIT_URL = GIT_BASE_URL + "volatile-repo.git";
+    private static final Logger logger = LoggerFactory.getLogger(SimpleGitManager.class.getName());
 
     private static GitServer gitServer;
 
@@ -535,17 +550,17 @@ public class SimpleGitManagerTest {
         //then the submodule isn't fetched (and no exception is thrown)
         Path workDir = getWorkDir(ctx, "");
         assertThat(workDir.resolve("coab-depls").resolve("cassandra").toFile()).exists();
-        assertThat(workDir.resolve("bosh-deployment").toFile()).isEmptyDirectory();
-        assertThat(workDir.resolve("mysql-deployment").toFile()).isEmptyDirectory();
+        assertDirectoryIsMissingOrEmpty(workDir.resolve("bosh-deployment"));
+        assertDirectoryIsMissingOrEmpty(workDir.resolve("mysql-deployment"));
 
         //when asking to clone it with opt-in for specific submodules
         ctx.contextKeys.put(GitProcessorContext.submoduleListToFetch.toString(), Collections.singletonList("mysql-deployment"));
         gitManager.cloneRepo(ctx);
 
-        //then the submodule isn't fetched (and no exception is thrown)
+        //then only the specified submodule is fetched (and no exception is thrown)
         workDir = getWorkDir(ctx, "");
         assertThat(workDir.resolve("coab-depls").resolve("cassandra").toFile()).exists();
-        assertThat(workDir.resolve("bosh-deployment").toFile()).isEmptyDirectory();
+        assertDirectoryIsMissingOrEmpty(workDir.resolve("bosh-deployment"));
         assertThat(workDir.resolve("mysql-deployment").toFile()).isDirectory();
         assertThat(workDir.resolve("mysql-deployment").toFile()).isDirectoryRecursivelyContaining("glob:**/a-sub-dir/a-file.txt");
 
@@ -562,10 +577,19 @@ public class SimpleGitManagerTest {
         assertThat(workDir.resolve("mysql-deployment").toFile()).isDirectoryRecursivelyContaining("glob:**/a-sub-dir/a-file.txt");
     }
 
+    private void assertDirectoryIsMissingOrEmpty(Path directory) {
+        assertThat(directory.toFile()).satisfiesAnyOf(
+            file -> assertThat(file).isEmptyDirectory(),
+            file -> assertThat(file).doesNotExist()
+        );
+    }
+
     @Test
-    public void ignores_fetches_submodules_from_staged_files() {
+    public void ignores_fetched_submodules_from_staged_files() {
 
         //given a repo with submodules configured
+        gitServer.initRepo("bosh-deployment.git", this::initNotEmptyRepo);
+        gitServer.initRepo("mysql-deployment.git", this::initNotEmptyRepo);
         gitServer.initRepo("paas-template.git", this::initPaasTemplateWithSubModules);
         gitManager = new SimpleGitManager("gituser", "gitsecret", GIT_BASE_URL + "paas-template.git", "committerName", "committer@address.org", null);
         ctx.contextKeys.put(GitProcessorContext.checkOutRemoteBranch.toString(), "develop");
@@ -579,6 +603,121 @@ public class SimpleGitManagerTest {
         assertThat(subModulesList).containsOnly("bosh-deployment", "mysql-deployment");
 
         //so that submodules get excluded from commit list
+    }
+
+    @Test
+    @DisplayName("Does not remove submodules when no asked (issue #279)")
+    public void don_t_affect_submodules() throws Exception {
+
+        //given a repo with submodules configured
+        gitServer.initRepo("bosh-deployment.git", this::initNotEmptyRepo);
+        gitServer.initRepo("mysql-deployment.git", this::initNotEmptyRepo);
+        gitServer.initRepo("paas-template.git", this::initPaasTemplateWithSubModules);
+        gitManager = new SimpleGitManager("gituser", "gitsecret", GIT_BASE_URL + "paas-template.git", "committerName", "committer@address.org", null);
+        ctx.contextKeys.put(GitProcessorContext.checkOutRemoteBranch.toString(), "develop");
+
+        //given a clone is fetched without opt-in for submodules
+        gitManager.cloneRepo(ctx);
+
+        //then submodules are present and uninitialized
+        Git privateGit = (Git) ctx.contextKeys.get(SimpleGitManager.PRIVATE_GIT_INSTANCE);
+        assertSubModuleIsUninitialized(privateGit, "bosh-deployment");
+        assertSubModuleIsUninitialized(privateGit, "mysql-deployment");
+
+        //when adding files
+        //and asking to commit and push
+        String repoAlias = "";
+        addAFile(this.ctx, "hello.txt", "afile.txt", repoAlias);
+        gitManager.commitPushRepo(this.ctx, true);
+
+        //then submodules are present and uninitialized into a new clone
+        //then a new clone should have the file
+        Context ctx1 = new Context();
+        ctx1.contextKeys.put(GitProcessorContext.checkOutRemoteBranch.toString(), "develop");
+
+        gitManager.cloneRepo(ctx1);
+        Path cloneCtxt1 = getWorkDir(ctx1, "");
+        File secondCloneSameFile = cloneCtxt1.resolve("afile.txt").toFile();
+        assertThat(secondCloneSameFile).exists();
+        privateGit = (Git) ctx1.contextKeys.get(SimpleGitManager.PRIVATE_GIT_INSTANCE);
+
+        //Assert last commit does not include changes to submodules
+        assertCommitLogDoesNotContainString(privateGit, "bosh-deployment");
+        assertCommitLogDoesNotContainString(privateGit, "mysql-deployment");
+
+        //Assert submodules are still initialized
+        assertSubModuleIsUninitialized(privateGit, "bosh-deployment");
+        assertSubModuleIsUninitialized(privateGit, "mysql-deployment");
+    }
+
+    private void assertCommitLogDoesNotContainString(Git privateGit, String submodulePath)
+        throws GitAPIException, IOException {
+        Iterable<RevCommit> revCommits = privateGit.log().setMaxCount(1).call();
+        for (RevCommit revCommit : revCommits) {
+            String diff = getDiffOfCommit(revCommit, privateGit.getRepository());
+            logger.debug("RevCommit diff is {}", diff);
+            assertThat(diff).doesNotContain(submodulePath);
+        }
+    }
+
+    //See inspiration from https://stackoverflow.com/a/40094665/1484823
+
+    //Helper gets the diff as a string.
+    private String getDiffOfCommit(RevCommit newCommit, Repository repo) throws IOException {
+
+        //Get commit that is previous to the current one.
+        RevCommit[] parents = newCommit.getParents();
+        RevCommit oldCommit = (RevCommit) parents[0];
+        if(oldCommit == null){
+            return "Start of repo";
+        }
+        //Use treeIterator to diff.
+        AbstractTreeIterator oldTreeIterator = getCanonicalTreeParser(oldCommit, repo);
+        AbstractTreeIterator newTreeIterator = getCanonicalTreeParser(newCommit, repo);
+        OutputStream outputStream = new ByteArrayOutputStream();
+        try (DiffFormatter formatter = new DiffFormatter(outputStream)) {
+            formatter.setRepository(repo);
+            formatter.format(oldTreeIterator, newTreeIterator);
+        }
+        String diff = outputStream.toString();
+        return diff;
+    }
+    //Helper function to get the previous commit.
+    public RevCommit getPrevHash(RevCommit commit, Repository repo)  throws  IOException {
+
+        try (RevWalk walk = new RevWalk(repo)) {
+            // Starting point
+            walk.markStart(commit);
+            int count = 0;
+            for (RevCommit rev : walk) {
+                // got the previous commit.
+                if (count == 1) {
+                    return rev;
+                }
+                count++;
+            }
+            walk.dispose();
+        }
+        //Reached end and no previous commits.
+        return null;
+    }
+    //Helper function to get the tree of the changes in a commit. Written by Rüdiger Herrmann
+    private AbstractTreeIterator getCanonicalTreeParser(ObjectId commitId, Repository repository) throws IOException {
+        try (RevWalk walk = new RevWalk(repository)) {
+            RevCommit commit = walk.parseCommit(commitId);
+            ObjectId treeId = commit.getTree().getId();
+            try (ObjectReader reader = repository.newObjectReader()) {
+                return new CanonicalTreeParser(null, reader, treeId);
+            }
+        }
+    }
+    
+    private void assertSubModuleIsUninitialized(Git privateGit, String submoduleName) throws GitAPIException {
+        Map<String, SubmoduleStatus> submoduleStatus;
+        submoduleStatus = privateGit.submoduleStatus().call();
+        assertThat(submoduleStatus).isNotEmpty().as("expecting submodules to be registered");
+        assertThat(submoduleStatus.get(submoduleName)).isNotNull();
+        assertThat(submoduleStatus.get(submoduleName).getType()).isEqualTo(SubmoduleStatusType.UNINITIALIZED);
     }
 
     public void initNotEmptyRepo(Git git) {

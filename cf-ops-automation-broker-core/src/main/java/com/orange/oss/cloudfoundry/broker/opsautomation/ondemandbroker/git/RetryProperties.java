@@ -23,7 +23,7 @@ public class RetryProperties {
      * the max duration to perform retries for, else the execution will be failed.
      * See {@link RetryPolicy#withMaxDuration(Duration)}
      */
-    private int maxDurationMilliSeconds=60000;
+    private int maxDurationMilliSeconds=50000;
 
     public int getMaxAttempts() { return maxAttempts; }
     public void setMaxAttempts(int maxAttempts) { this.maxAttempts = maxAttempts; }

@@ -1,6 +1,6 @@
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.terraform;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.cloud.servicebroker.model.instance.GetLastServiceOperationResponse;
 import org.springframework.cloud.servicebroker.model.instance.OperationState;

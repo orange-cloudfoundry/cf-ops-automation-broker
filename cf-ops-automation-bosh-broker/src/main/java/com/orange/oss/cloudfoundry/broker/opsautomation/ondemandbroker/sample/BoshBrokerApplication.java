@@ -106,7 +106,8 @@ public class BoshBrokerApplication {
                 secretsGenerator,
                 pipelineCompletionTracker,
                 deploymentProperties.getBrokerDisplayName(),
-                deploymentProperties.getModelDeploymentShortAlias());
+                deploymentProperties.getModelDeploymentShortAlias(),
+                deploymentProperties.getDashboardUrlTemplate());
     }
 
     @Bean
@@ -231,6 +232,8 @@ public class BoshBrokerApplication {
             public void preUnBind(Context ctx) { skipPaasTemplateGitCloneAndPush(ctx); }
             @Override
             public void preUpdate(Context ctx) { skipPaasTemplateGitCloneAndPush(ctx); }
+            @Override
+            public void preGetInstance(Context ctx) { skipPaasTemplateGitCloneAndPush(ctx); }
 
             private void registerPaasTemplatesBranches(Context ctx) {
                 ctx.contextKeys.put(TEMPLATES_REPOSITORY_ALIAS_NAME + GitProcessorContext.checkOutRemoteBranch.toString(), pipelineProperties.getCheckOutRemoteBranch()); //"develop"

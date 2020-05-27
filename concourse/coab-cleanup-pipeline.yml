@@ -22,6 +22,9 @@ resources:
   type: slack-notification
   source:
     url: ((slack-webhook))
+    proxy: ((slack-proxy))
+    proxy_https_tunnel: ((slack-proxy-https-tunnel))
+    disable: ((slack-disable))
 
 - name: cf-ops-automation
   type: git
@@ -41,7 +44,7 @@ jobs:
       icon_url: http://cl.ly/image/3e1h0H3H2s0P/concourse-logo.png
       username: Concourse
   plan:
-  - aggregate:
+  - in_parallel:
     - get: cf-ops-automation
       params: { submodules: none}
       attempts: 2
@@ -72,3 +75,4 @@ jobs:
       ATC_EXTERNAL_URL: ((concourse-target))
       FLY_USERNAME: ((concourse-username))
       FLY_PASSWORD:  ((concourse-password))
+      FLY_TEAM: ((concourse-team))

@@ -17,7 +17,9 @@
 
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.osbclient;
 
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.OsbConstants;
 import org.springframework.cloud.servicebroker.model.catalog.Catalog;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 
@@ -29,5 +31,5 @@ import org.springframework.web.bind.annotation.RequestMethod;
 public interface CatalogServiceClient {
 
     @RequestMapping(value = "/v2/catalog", method = RequestMethod.GET)
-    Catalog getCatalog();
+    Catalog getCatalog(@RequestHeader(value = OsbConstants.X_Broker_API_Version, defaultValue = OsbConstants.X_Broker_API_Version_Value) String apiVersion);
 }

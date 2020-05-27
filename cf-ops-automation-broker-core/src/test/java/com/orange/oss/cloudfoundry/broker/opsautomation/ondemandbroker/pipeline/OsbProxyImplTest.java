@@ -5,11 +5,12 @@ import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.osbclient
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.osbclient.ServiceInstanceBindingServiceClient;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.osbclient.ServiceInstanceServiceClient;
 import feign.FeignException;
+import feign.Request;
+import feign.RequestTemplate;
 import feign.Response;
 import feign.codec.DecodeException;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
+import org.junit.jupiter.api.Test;
+
 import org.springframework.cloud.servicebroker.model.CloudFoundryContext;
 import org.springframework.cloud.servicebroker.model.Context;
 import org.springframework.cloud.servicebroker.model.binding.BindResource;
@@ -25,12 +26,13 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
 import java.nio.charset.Charset;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
 import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hamcrest.CoreMatchers.containsString;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 
 /**
@@ -42,11 +44,13 @@ import static org.mockito.Mockito.*;
  */
 public class OsbProxyImplTest {
 
-    private OsbClientFactory clientFactory = mock(OsbClientFactory.class);
-    private OsbProxyImpl osbProxy = new OsbProxyImpl("user", "password", "https://{0}-cassandra-broker.mydomain/com", clientFactory);
-    GetLastServiceOperationRequest pollingRequest;
-    private CreateServiceInstanceRequest request = aCreateServiceInstanceRequest();
-    GetLastServiceOperationResponse response;
+    private final OsbClientFactory clientFactory = mock(OsbClientFactory.class);
+    private final OsbProxyImpl osbProxy = new OsbProxyImpl("user", "password", "https://{0}-cassandra-broker.mydomain/com", clientFactory);
+
+    private final CreateServiceInstanceRequest request = aCreateServiceInstanceRequest();
+
+    private Request aFeignRequest = Request.create(Request.HttpMethod.GET, "https://url.domain", Collections.emptyMap(),
+        Request.Body.empty(), new RequestTemplate());
 
 
     @Test
@@ -276,6 +280,7 @@ public class OsbProxyImplTest {
                 false, //for now OsbProxyImpl expects sync broker response
                 "api-info",
                 aContextOriginatingHeader(),
+                OsbConstants.X_Broker_API_Version_Value,
                 request);
     }
 
@@ -310,7 +315,7 @@ public class OsbProxyImplTest {
                 .build();
 
         ServiceInstanceBindingServiceClient serviceInstanceBindingServiceClient = mock(ServiceInstanceBindingServiceClient.class);
-        //noinspection unchecked
+        //noinspection unused
         ResponseEntity<CreateServiceInstanceAppBindingResponse> responseEntity = osbProxy.delegateBind(request, serviceInstanceBindingServiceClient);
 
         verify(serviceInstanceBindingServiceClient).createServiceInstanceBinding(
@@ -319,13 +324,13 @@ public class OsbProxyImplTest {
                 false,
                 "api-info",
                 aContextOriginatingHeader(),
+                OsbConstants.X_Broker_API_Version_Value,
                 request);
     }
 
 
     @Test
     public void delegates_deprovision_call() {
-        ServiceDefinition serviceDefinition = aCatalog().getServiceDefinitions().get(0);
 
         DeleteServiceInstanceRequest request = DeleteServiceInstanceRequest.builder()
                 .serviceInstanceId("service-instance-id")
@@ -347,12 +352,12 @@ public class OsbProxyImplTest {
                 "coab-planid",
                 false,
                 "api-info",
-                aContextOriginatingHeader());
+                aContextOriginatingHeader(),
+                OsbConstants.X_Broker_API_Version_Value);
     }
 
     @Test
     public void delegates_unbind_call() {
-        ServiceDefinition serviceDefinition = aCatalog().getServiceDefinitions().get(0);
         DeleteServiceInstanceBindingRequest request = DeleteServiceInstanceBindingRequest.builder()
                 .serviceInstanceId("service-instance-id")
                 .bindingId("service-binding-id")
@@ -374,7 +379,8 @@ public class OsbProxyImplTest {
                 "coab-planid",
                 false,
                 "api-info",
-                aContextOriginatingHeader());
+                aContextOriginatingHeader(),
+                OsbConstants.X_Broker_API_Version_Value);
     }
 
 
@@ -408,6 +414,7 @@ public class OsbProxyImplTest {
                 .status(HttpStatus.GONE.value())
                 .headers(new HashMap<>())
                 .body("{\"description\":\"No such service instance 1234\"}", Charset.defaultCharset())
+                .request(aFeignRequest)
                 .build();
         FeignException provisionException = FeignException.errorStatus("ServiceInstanceServiceClient#deleteServiceInstance(String,String,String,boolean,String,String)", errorResponse);
 
@@ -431,6 +438,7 @@ public class OsbProxyImplTest {
                 .status(HttpStatus.INTERNAL_SERVER_ERROR.value())
                 .headers(new HashMap<>())
                 .body("{\"description\":\"Cannot drop non existing keyspace 'ks86f715e3_9450_4faf_9255_9bceb158375f'.\"}", Charset.defaultCharset())
+                .request(aFeignRequest)
                 .build();
         FeignException provisionException = FeignException.errorStatus("ServiceInstanceServiceClient#deleteServiceInstance(String,String,String,boolean,String,String)", errorResponse);
 
@@ -445,7 +453,7 @@ public class OsbProxyImplTest {
 
 
     @Test
-    public void maps_successull_provision_response() {
+    public void maps_successfull_provision_response() {
         //Given
         GetLastServiceOperationResponse originalResponse = aPreviousOnGoingOperation();
         CreateServiceInstanceResponse delegatedResponse = CreateServiceInstanceResponse.builder()
@@ -460,6 +468,7 @@ public class OsbProxyImplTest {
 
         assertThat(mappedResponse.getState()).isSameAs(OperationState.SUCCEEDED);
         assertThat(mappedResponse.getDescription()).isNull();
+        assertThat(mappedResponse.isDeleteOperation()).isFalse();
         assertThat(mappedResponse.isDeleteOperation()).isFalse();
     }
 
@@ -511,11 +520,6 @@ public class OsbProxyImplTest {
         assertThat(mappedResponse).isEqualTo(delegatedResponse);
     }
 
-    //
-
-    @Rule
-    public ExpectedException thrown = ExpectedException.none();
-
     @Test
     public void maps_rejected_provision_request() {
         //Given
@@ -524,13 +528,16 @@ public class OsbProxyImplTest {
                 .status(HttpStatus.BAD_REQUEST.value())
                 .headers(new HashMap<>())
                 .body("{\"description\":\"Missing required fields: keyspace param\"}", Charset.defaultCharset())
+                .request(aFeignRequest)
                 .build();
         FeignException provisionException = FeignException.errorStatus("ServiceInstanceServiceClient#createServiceInstance(String,boolean,String,String,CreateServiceInstanceRequest)", errorReponse);
 
-        thrown.expectMessage(containsString("Missing required fields: keyspace param"));
-
         //when
-        GetLastServiceOperationResponse mappedResponse = osbProxy.mapProvisionResponse(originalResponse, null, provisionException, aCatalog());
+        //noinspection unused
+        Exception exception = assertThrows(Exception.class,
+            () -> osbProxy.mapProvisionResponse(originalResponse, null, provisionException,
+                aCatalog()));
+        assertThat(exception.getMessage()).contains("Missing required fields: keyspace param");
     }
 
     @Test
@@ -540,14 +547,15 @@ public class OsbProxyImplTest {
                 .status(HttpStatus.BAD_REQUEST.value())
                 .headers(new HashMap<>())
                 .body("{\"description\":\"Missing required fields: keyspace param\"}", Charset.defaultCharset())
+                .request(aFeignRequest)
                 .build();
         FeignException provisionException = FeignException.errorStatus("ServiceInstanceBindingServiceClient#createServiceInstanceBinding(String,String,String,String,CreateServiceInstanceBindingRequest)", errorReponse);
 
-        thrown.expectMessage(containsString("Missing required fields: keyspace param"));
-
         //when
 
-        osbProxy.mapBindResponse(null, provisionException, aCatalog());
+        Exception exception = assertThrows(Exception.class,
+            () -> osbProxy.mapBindResponse(null, provisionException, aCatalog()));
+        assertThat(exception.getMessage()).contains("Missing required fields: keyspace param");
     }
 
     @Test
@@ -557,6 +565,7 @@ public class OsbProxyImplTest {
                 .status(HttpStatus.INSUFFICIENT_STORAGE.value())
                 .headers(new HashMap<>())
                 .body("{\"description\":\"Missing required fields: keyspace param\"}", Charset.defaultCharset())
+                .request(aFeignRequest)
                 .build();
         FeignException provisionException = FeignException.errorStatus("ServiceInstanceServiceClient#createServiceInstance(String,boolean,String,String,CreateServiceInstanceRequest)", errorReponse);
 
@@ -581,6 +590,7 @@ public class OsbProxyImplTest {
                 .status(httpStatus.value())
                 .headers(new HashMap<>())
                 .body("{\"description\":\"" + description + "\"}", Charset.defaultCharset())
+                .request(aFeignRequest)
                 .build();
         FeignException provisionException = FeignException.errorStatus("ServiceInstanceServiceClient#createServiceInstance(String,boolean,String,String,CreateServiceInstanceRequest)", errorReponse);
 
@@ -598,6 +608,7 @@ public class OsbProxyImplTest {
                 .status(HttpStatus.UNPROCESSABLE_ENTITY.value())
                 .headers(new HashMap<>())
                 .body("{\"description\":\"Missing required fields: keyspace param\"}", Charset.defaultCharset())
+                .request(aFeignRequest)
                 .build();
         FeignException provisionException = FeignException.errorStatus("ServiceInstanceServiceClient#createServiceInstance(String,boolean,String,String,CreateServiceInstanceRequest)", errorReponse);
 
@@ -609,7 +620,9 @@ public class OsbProxyImplTest {
     @Test
     public void parses_osb_client_exceptions_into_generic_message() {
         //Given
-        DecodeException decodeException = new DecodeException("Could not extract response: no suitable HttpMessageConverter found for response type [?] and content type [text/plain;charset=UTF-8]");
+        DecodeException decodeException = new DecodeException(500, "Could not extract response: no suitable " +
+            "HttpMessageConverter found for response type [?] and content type [text/plain;charset=UTF-8]",
+            aFeignRequest);
 
         //when
         String description = osbProxy.parseReponseBody(decodeException).getDescription();

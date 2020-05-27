@@ -1,32 +1,45 @@
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline;
 
-import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.GitProcessorContext;
-import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.Context;
-import com.orange.oss.ondemandbroker.ProcessorChainServiceInstanceBindingService;
-import com.orange.oss.ondemandbroker.ProcessorChainServiceInstanceService;
-import org.junit.Test;
-import org.mockito.Mockito;
-import org.springframework.cloud.servicebroker.model.CloudFoundryContext;
-import org.springframework.cloud.servicebroker.model.binding.CreateServiceInstanceBindingRequest;
-import org.springframework.cloud.servicebroker.model.binding.CreateServiceInstanceBindingResponse;
-import org.springframework.cloud.servicebroker.model.binding.DeleteServiceInstanceBindingRequest;
-import org.springframework.cloud.servicebroker.model.catalog.ServiceDefinition;
-import org.springframework.cloud.servicebroker.model.instance.*;
-
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneId;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.GitProcessorContext;
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.Context;
+import com.orange.oss.ondemandbroker.ProcessorChainServiceInstanceBindingService;
+import com.orange.oss.ondemandbroker.ProcessorChainServiceInstanceService;
+import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
+
+import org.springframework.cloud.servicebroker.model.CloudFoundryContext;
+import org.springframework.cloud.servicebroker.model.binding.CreateServiceInstanceBindingRequest;
+import org.springframework.cloud.servicebroker.model.binding.CreateServiceInstanceBindingResponse;
+import org.springframework.cloud.servicebroker.model.binding.DeleteServiceInstanceBindingRequest;
+import org.springframework.cloud.servicebroker.model.catalog.ServiceDefinition;
+import org.springframework.cloud.servicebroker.model.instance.CreateServiceInstanceRequest;
+import org.springframework.cloud.servicebroker.model.instance.CreateServiceInstanceResponse;
+import org.springframework.cloud.servicebroker.model.instance.DeleteServiceInstanceRequest;
+import org.springframework.cloud.servicebroker.model.instance.DeleteServiceInstanceResponse;
+import org.springframework.cloud.servicebroker.model.instance.GetLastServiceOperationRequest;
+import org.springframework.cloud.servicebroker.model.instance.GetLastServiceOperationResponse;
+import org.springframework.cloud.servicebroker.model.instance.OperationState;
 
 import static com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.OsbConstants.ORIGINATING_EMAIL_KEY;
 import static com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.OsbConstants.ORIGINATING_USER_KEY;
 import static com.orange.oss.ondemandbroker.ProcessorChainServiceInstanceService.OSB_PROFILE_ORGANIZATION_GUID;
 import static com.orange.oss.ondemandbroker.ProcessorChainServiceInstanceService.OSB_PROFILE_SPACE_GUID;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 public class BoshProcessorTest {
 
@@ -59,10 +72,9 @@ public class BoshProcessorTest {
         SecretsGenerator secretsGenerator = mock(SecretsGenerator.class);
 
         //given a configured timeout
-        @SuppressWarnings("unchecked")
         PipelineCompletionTracker tracker = aCompletionTracker();
 
-        BoshProcessor boshProcessor = new BoshProcessor(TEMPLATES_REPOSITORY_ALIAS_NAME, SECRETS_REPOSITORY_ALIAS_NAME, templatesGenerator, secretsGenerator, tracker, "Cassandra", "c_");
+        BoshProcessor boshProcessor = new BoshProcessor(TEMPLATES_REPOSITORY_ALIAS_NAME, SECRETS_REPOSITORY_ALIAS_NAME, templatesGenerator, secretsGenerator, tracker, "Cassandra", "c_", "https://static-dashboard.com");
 
         //When
         boshProcessor.preCreate(context);
@@ -77,6 +89,9 @@ public class BoshProcessorTest {
         CreateServiceInstanceResponse serviceInstanceResponse = (CreateServiceInstanceResponse) context.contextKeys.get(ProcessorChainServiceInstanceService.CREATE_SERVICE_INSTANCE_RESPONSE);
         // specifying asynchronous creations
         assertThat(serviceInstanceResponse.isAsync()).isTrue();
+        //and specifying dashboard url
+        assertThat(serviceInstanceResponse.getDashboardUrl()).isNotNull();
+
 
         PipelineCompletionTracker.PipelineOperationState pipelineOperationState = new PipelineCompletionTracker.PipelineOperationState(request, "2017-11-14T17:24:08.007Z");
         String expectedJsonPipelineOperationState = tracker.formatAsJson(pipelineOperationState);
@@ -98,7 +113,7 @@ public class BoshProcessorTest {
         PipelineCompletionTracker tracker = aCompletionTracker();
 
         //Given a basic processor with deployment model
-        BoshProcessor boshProcessor = new BoshProcessor(TEMPLATES_REPOSITORY_ALIAS_NAME, SECRETS_REPOSITORY_ALIAS_NAME, templatesGenerator, secretsGenerator, tracker, "Cassandra", "c");
+        BoshProcessor boshProcessor = new BoshProcessor(TEMPLATES_REPOSITORY_ALIAS_NAME, SECRETS_REPOSITORY_ALIAS_NAME, templatesGenerator, secretsGenerator, tracker, "Cassandra", "c", "https://static-dashboard.com");
 
 
         //Given a creation request with both deprecated and new OSB syntax
@@ -144,9 +159,88 @@ public class BoshProcessorTest {
         assertThat(coabVarsFileDto.parameters).isEqualTo(params);
     }
 
+    @Test
+    public void formats_dashboard_url_when_configured_with_template() {
+        formats_dashboard_url_when_configured(
+                "https://shield_{0}.redacted-ops-domain.com",
+                "https://shield_service-instance-id1.redacted-ops-domain.com");
+        formats_dashboard_url_when_configured(
+                "https://shield_{1}.redacted-ops-domain.com",
+                "https://shield_brokered-service-instance-id2.redacted-ops-domain.com");
+    }
 
     @Test
-    public void provision_commit_msg_includes_requester_details_with_empty_context() {
+    public void formats_dashboard_url_when_configured_with_template_and_cmdb_params_missing() {
+        formats_dashboard_url_when_configured("https://shield_{0}.redacted-ops-domain.com",
+            "https://shield_service-instance-id1.redacted-ops-domain.com",
+            aCreateServiceInstanceRequestWithoutOsbCmdbParam());
+        formats_dashboard_url_when_configured("https://shield_{1}.redacted-ops-domain.com",
+            "https://shield_null.redacted-ops-domain.com",
+            aCreateServiceInstanceRequestWithoutOsbCmdbParam());
+        formats_dashboard_url_when_configured("https://shield_{1}.redacted-ops-domain.com",
+            "https://shield_null.redacted-ops-domain.com",
+            aCreateServiceInstanceRequestWithPartialOsbCmdbParam());
+    }
+
+    @Test
+    public void formats_dashboard_url_when_configured_with_static() {
+        formats_dashboard_url_when_configured(
+                "https://static.redacted-ops-domain.com",
+                "https://static.redacted-ops-domain.com");
+    }
+
+    @Test
+    public void formats_no_dashboard_url_when_not_configured() {
+        formats_dashboard_url_when_configured(
+                null,
+                null);
+    }
+
+    protected void formats_dashboard_url_when_configured(String dashboardUrlTemplate, String expected) {
+        formats_dashboard_url_when_configured(dashboardUrlTemplate, expected,
+            aCreateServiceInstanceRequestWithOsbCmdbParam());
+    }
+
+    private void formats_dashboard_url_when_configured(String dashboardUrlTemplate, String expected,
+        CreateServiceInstanceRequest request) {
+        //given
+        BoshProcessor boshProcessor = aBasicBoshProcessor();
+
+        //When
+        String dashboardUrl = boshProcessor.formatDashboard(dashboardUrlTemplate, request);
+        //then
+        assertThat(dashboardUrl).isEqualTo(expected);
+    }
+
+    private CreateServiceInstanceRequest aCreateServiceInstanceRequestWithOsbCmdbParam() {
+        String brokeredServiceGuid = "brokered-service-instance-id2";
+        Map<String, Object> parameters = OsbBuilderHelper.osbCmdbCustomParam(brokeredServiceGuid);
+        return CreateServiceInstanceRequest.builder()
+            .serviceInstanceId("service-instance-id1")
+            .parameters(parameters)
+            .build();
+    }
+
+    private CreateServiceInstanceRequest aCreateServiceInstanceRequestWithPartialOsbCmdbParam() {
+        Map<String, Map<String,String>> osbCmdbMetaData = new HashMap<>();
+        osbCmdbMetaData.put(BoshProcessor.CMDB_LABELS_KEY,
+            Collections.singletonMap("a-random-key",
+                "brokered-service-instance-id2"));
+        return CreateServiceInstanceRequest.builder()
+            .serviceInstanceId("service-instance-id1")
+            .parameters(Collections.singletonMap(BoshProcessor.X_OSB_CMDB_CUSTOM_KEY_NAME, osbCmdbMetaData))
+            .build();
+    }
+
+    private CreateServiceInstanceRequest aCreateServiceInstanceRequestWithoutOsbCmdbParam() {
+        return CreateServiceInstanceRequest.builder()
+            .serviceInstanceId("service-instance-id1")
+            .build();
+    }
+
+
+    @Test
+    public void provisions_commit_msg_including_requester_details_with_empty_context() {
         //Given a creation request with both deprecated OSB syntax
         Map<String, Object> properties = new HashMap<>();
         org.springframework.cloud.servicebroker.model.Context context = CloudFoundryContext.builder().build();
@@ -172,7 +266,7 @@ public class BoshProcessorTest {
     }
 
     @Test
-    public void provision_commit_msg_includes_requester_details_without_context() {
+    public void provisions_commit_msg_including_requester_details_without_context() {
         //Given a creation request with both deprecated OSB syntax
 
         //Given a parameter request
@@ -198,7 +292,7 @@ public class BoshProcessorTest {
     }
 
     @Test
-    public void provision_commit_msg_includes_requester_details_with_context() {
+    public void provisions_commit_msg_including_requester_details_with_context() {
         //Given a creation request with both deprecated OSB syntax and new context syntax
         Map<String, Object> properties = new HashMap<>();
         properties.put(ORIGINATING_USER_KEY, "user_guid1");
@@ -217,10 +311,10 @@ public class BoshProcessorTest {
                 .originatingIdentity(context)
                 .build();
 
-        provision_commit_msg_includes_requester_details(request);
+        provisions_commit_msg_including_requester_details(request);
     }
 
-    protected void provision_commit_msg_includes_requester_details(CreateServiceInstanceRequest request) {
+    protected void provisions_commit_msg_including_requester_details(CreateServiceInstanceRequest request) {
         BoshProcessor boshProcessor = aBasicBoshProcessor();
 
         //When
@@ -234,7 +328,7 @@ public class BoshProcessorTest {
         SecretsGenerator secretsGenerator = mock(SecretsGenerator.class);
         PipelineCompletionTracker tracker = aCompletionTracker();
 
-        return new BoshProcessor(TEMPLATES_REPOSITORY_ALIAS_NAME, SECRETS_REPOSITORY_ALIAS_NAME, templatesGenerator, secretsGenerator, tracker, "Cassandra", "c");
+        return new BoshProcessor(TEMPLATES_REPOSITORY_ALIAS_NAME, SECRETS_REPOSITORY_ALIAS_NAME, templatesGenerator, secretsGenerator, tracker, "Cassandra", "c", "https://static-dashboard.com");
     }
 
     @Test
@@ -291,7 +385,7 @@ public class BoshProcessorTest {
 
 
         //When
-        BoshProcessor boshProcessor = new BoshProcessor(TEMPLATES_REPOSITORY_ALIAS_NAME, SECRETS_REPOSITORY_ALIAS_NAME, null, null, tracker, "Cassandra", "c");
+        BoshProcessor boshProcessor = new BoshProcessor(TEMPLATES_REPOSITORY_ALIAS_NAME, SECRETS_REPOSITORY_ALIAS_NAME, null, null, tracker, "Cassandra", "c", "https://static-dashboard.com");
         boshProcessor.preGetLastOperation(context);
 
         //Then mapped response from tracker is returned
@@ -316,7 +410,7 @@ public class BoshProcessorTest {
 
 
         //When
-        BoshProcessor boshProcessor = new BoshProcessor(TEMPLATES_REPOSITORY_ALIAS_NAME, SECRETS_REPOSITORY_ALIAS_NAME, null, null, tracker, "Cassandra", "c");
+        BoshProcessor boshProcessor = new BoshProcessor(TEMPLATES_REPOSITORY_ALIAS_NAME, SECRETS_REPOSITORY_ALIAS_NAME, null, null, tracker, "Cassandra", "c", "https://static-dashboard.com");
         boshProcessor.preBind(context);
 
         //Then
@@ -341,7 +435,7 @@ public class BoshProcessorTest {
         doNothing().when(tracker).delegateUnbindRequest(any(Path.class), any(DeleteServiceInstanceBindingRequest.class));
 
         //When
-        BoshProcessor boshProcessor = new BoshProcessor(TEMPLATES_REPOSITORY_ALIAS_NAME, SECRETS_REPOSITORY_ALIAS_NAME, null, null, tracker, "Cassandra", "c");
+        BoshProcessor boshProcessor = new BoshProcessor(TEMPLATES_REPOSITORY_ALIAS_NAME, SECRETS_REPOSITORY_ALIAS_NAME, null, null, tracker, "Cassandra", "c", "https://static-dashboard.com");
         boshProcessor.preUnBind(context);
 
         //Then
@@ -374,7 +468,7 @@ public class BoshProcessorTest {
         when(tracker.getDeploymentExecStatus(any(Path.class), eq(SERVICE_INSTANCE_ID), eq(DeploymentConstants.OSB_OPERATION_CREATE), any(GetLastServiceOperationRequest.class))).thenReturn(expectedResponse);
 
         //When
-        BoshProcessor boshProcessor = new BoshProcessor(TEMPLATES_REPOSITORY_ALIAS_NAME, SECRETS_REPOSITORY_ALIAS_NAME, null, null, tracker, "Cassandra", "c");
+        BoshProcessor boshProcessor = new BoshProcessor(TEMPLATES_REPOSITORY_ALIAS_NAME, SECRETS_REPOSITORY_ALIAS_NAME, null, null, tracker, "Cassandra", "c", "https://static-dashboard.com");
         boshProcessor.preGetLastOperation(context);
 
         //Then mapped response from tracker is returned
@@ -404,12 +498,11 @@ public class BoshProcessorTest {
         SecretsGenerator secretsGenerator = mock(SecretsGenerator.class);
 
         //given a configured timeout within tracker
-        @SuppressWarnings("unchecked")
         PipelineCompletionTracker tracker = aCompletionTracker();
 
 
         //When
-        BoshProcessor boshProcessor = new BoshProcessor(TEMPLATES_REPOSITORY_ALIAS_NAME, SECRETS_REPOSITORY_ALIAS_NAME, null, secretsGenerator, tracker, "Cassandra", "c");
+        BoshProcessor boshProcessor = new BoshProcessor(TEMPLATES_REPOSITORY_ALIAS_NAME, SECRETS_REPOSITORY_ALIAS_NAME, null, secretsGenerator, tracker, "Cassandra", "c", "https://static-dashboard.com");
         boshProcessor.preDelete(context);
 
         //Then verify parameters and delegation on calls

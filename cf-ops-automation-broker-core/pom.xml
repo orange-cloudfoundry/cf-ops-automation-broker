@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<artifactId>cf-ops-automation-broker-core</artifactId>
-	<version>0.28.0-SNAPSHOT</version>
+	<version>0.30.0-SNAPSHOT</version>
 	<packaging>jar</packaging>
 
 	<name>cf-ops-automation-broker-core</name>
@@ -12,7 +12,7 @@
 	<parent>
 		<groupId>com.orange.oss.cloudfoundry.broker.opsautomation</groupId>
 		<artifactId>cf-ops-automation-broker</artifactId>
-		<version>0.28.0-SNAPSHOT</version>
+		<version>0.30.0-SNAPSHOT</version>
 		<relativePath>../pom.xml</relativePath> <!-- lookup parent from repository -->
 	</parent>
 
@@ -60,20 +60,19 @@
 		<dependency>
 		  <groupId>org.eclipse.jgit</groupId>
 		  <artifactId>org.eclipse.jgit</artifactId>
-		  <version>4.9.0.201710071750-r</version>
 		</dependency>
 
 		<dependency>
 			<groupId>net.jodah</groupId>
 			<artifactId>failsafe</artifactId>
-			<version>2.0.1</version>
+			<version>2.4.0</version>
 		</dependency>
 
         <!-- https://mvnrepository.com/artifact/org.apache.commons/commons-pool2 -->
 		<dependency>
 			<groupId>org.apache.commons</groupId>
 			<artifactId>commons-pool2</artifactId>
-			<version>2.6.2</version>
+			<version>2.8.0</version>
 		</dependency>
 
 		<!-- Use SimpleLogger as the slf4j implementation in tests for getting debug traces from libs
@@ -136,14 +135,14 @@
 	    <dependency>
 	        <groupId>org.springframework.credhub</groupId>
 	        <artifactId>spring-credhub-core</artifactId>
-	        <version>2.0.0.RELEASE</version>
+	        <version>2.1.0.RELEASE</version>
 	    </dependency>
             
         <!-- for terraform json parsing: might be able to revert to jackson in future -->
 		<dependency>
 			<groupId>com.google.code.gson</groupId>
 			<artifactId>gson</artifactId>
-			<version>2.8.5</version>
+			<version>2.8.6</version>
 		</dependency>
 		<dependency>
 			<groupId>commons-lang</groupId>
@@ -154,7 +153,7 @@
 		<dependency>
 			<groupId>org.immutables</groupId>
 			<artifactId>value</artifactId>
-			<version>2.7.5</version>
+			<version>2.8.8</version>
 			<scope>provided</scope>
 		</dependency>
 
@@ -182,19 +181,19 @@
 		<dependency>
 			<groupId>io.github.openfeign</groupId>
 			<artifactId>feign-okhttp</artifactId>
-			<version>9.7.0</version>
+			<version>11.0</version>
 		</dependency>
 
 		<dependency>
 			<groupId>com.squareup.okhttp3</groupId>
 			<artifactId>okhttp</artifactId>
-			<version>3.10.0</version>
+			<version>4.7.2</version>
 		</dependency>
 
 		<dependency>
 			<groupId>com.squareup.okhttp3</groupId>
 			<artifactId>logging-interceptor</artifactId>
-			<version>3.10.0</version>
+			<version>4.7.2</version>
 		</dependency>
 
 		<!-- for testing osb client replaying recorded responses -->
@@ -202,7 +201,7 @@
 		<dependency>
 			<groupId>com.github.tomakehurst</groupId>
 			<artifactId>wiremock-standalone</artifactId>
-			<version>2.23.2</version>
+			<version>2.26.3</version>
 			<scope>test</scope>
 		</dependency>
 

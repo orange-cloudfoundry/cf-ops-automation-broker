@@ -1,18 +1,16 @@
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline;
 
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
-import org.junit.rules.TemporaryFolder;
-
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.startsWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class StructureGeneratorImplTest {
 
@@ -24,38 +22,37 @@ public class StructureGeneratorImplTest {
 
     private StructureGeneratorImpl structureGeneratorImpl;
 
-    @Rule
-    public ExpectedException thrown = ExpectedException.none();
+    @TempDir
+    File tempDir;
 
-    @Rule
-    public TemporaryFolder temporaryFolder = new TemporaryFolder();
-
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         this.deploymentProperties = aDeploymentProperties();
-        this.file = temporaryFolder.newFolder(REPOSITORY_DIRECTORY);
+        this.file = tempDir.toPath().resolve(REPOSITORY_DIRECTORY).toFile();
+        //noinspection ResultOfMethodCallIgnored
+        this.file.mkdir();
         this.workDir = file.toPath();
         this.structureGeneratorImpl = new StructureGeneratorImpl(this.deploymentProperties.getRootDeployment(), this.deploymentProperties.getModelDeployment(), this.deploymentProperties.getModelDeploymentShortAlias());
     }
 
     @Test
     public void raise_exception_if_root_deployment_is_missing(){
-        //Then
-        thrown.expect(DeploymentException.class);
-        thrown.expectMessage(startsWith(DeploymentConstants.ROOT_DEPLOYMENT_EXCEPTION));
-
+        DeploymentException deploymentException = assertThrows(DeploymentException.class,
+            () ->
         //When
-        this.structureGeneratorImpl.checkThatRootDeploymentExists(this.workDir);
+                this.structureGeneratorImpl.checkThatRootDeploymentExists(this.workDir));
+        //Then
+        assertThat(deploymentException).hasMessageStartingWith(DeploymentConstants.ROOT_DEPLOYMENT_EXCEPTION);
     }
 
     @Test
     public void raise_exception_if_model_deployment_is_missing(){
-        //Then
-        thrown.expect(DeploymentException.class);
-        thrown.expectMessage(startsWith(DeploymentConstants.MODEL_DEPLOYMENT_EXCEPTION));
-
+        DeploymentException deploymentException = assertThrows(DeploymentException.class,
+            () ->
         //When
-        this.structureGeneratorImpl.checkThatModelDeploymentExists(this.workDir);
+                this.structureGeneratorImpl.checkThatModelDeploymentExists(this.workDir));
+        //Then
+        assertThat(deploymentException).hasMessageStartingWith(DeploymentConstants.MODEL_DEPLOYMENT_EXCEPTION);
     }
 
     @Test
@@ -96,7 +93,7 @@ public class StructureGeneratorImplTest {
         Path deploymentInstanceDir = StructureGeneratorHelper.generatePath(this.workDir,
                 this.deploymentProperties.getRootDeployment(),
                 this.structureGeneratorImpl.computeDeploymentName(SERVICE_INSTANCE_ID));
-        assertThat("Deployment directory doesn't exist: " + deploymentInstanceDir, Files.exists(deploymentInstanceDir));
+        assertThat(Files.exists(deploymentInstanceDir)).as("Deployment directory doesn't exist: " + deploymentInstanceDir).isTrue();
     }
 
     private DeploymentProperties aDeploymentProperties() {

@@ -1,15 +1,13 @@
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.osbclient;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.junit4.SpringRunner;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 
-@RunWith(SpringRunner.class)
 @SpringBootTest // needed to have springboot starters/onConditionals trigger
 public class OsbClientFactoryTest {
 

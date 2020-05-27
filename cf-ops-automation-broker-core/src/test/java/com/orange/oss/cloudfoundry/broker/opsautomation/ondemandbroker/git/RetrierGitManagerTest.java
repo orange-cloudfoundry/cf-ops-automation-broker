@@ -1,24 +1,63 @@
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git;
 
+import java.time.Duration;
+
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.Context;
 import net.jodah.failsafe.RetryPolicy;
 import org.assertj.core.api.Assertions;
 import org.eclipse.jgit.api.errors.TransportException;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.internal.stubbing.answers.AnswersWithDelay;
+import org.mockito.internal.stubbing.answers.ThrowsException;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.anyBoolean;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class RetrierGitManagerTest {
 
     @Mock
     GitManager gitManager;
 
 
+
+    @Test
+    public void retries_clones_until_max_duration_reached() {
+        //Given a retrier is configured with a retry policy and a max retry duration of 2s
+        RetryPolicy<Object> retryPolicy = new RetryPolicy<>()
+                .withMaxAttempts(3)
+                .withMaxDuration(Duration.ofMillis(2*1000));
+        GitManager retrier = new RetrierGitManager("repoAlias", gitManager, retryPolicy);
+
+        //Given 2 network problems when trying to clone
+        TransportException gitException = new TransportException("https://elpaaso-gitlab.mycompany.com/paas-templates.git: 502 Bad Gateway");
+        IllegalArgumentException wrappedException = new IllegalArgumentException(gitException);
+        //Inject delay, see https://stackoverflow.com/questions/12813881/can-i-delay-a-stubbed-method-response-with-mockito
+        doAnswer( new AnswersWithDelay( 3*1000,  new ThrowsException(wrappedException))). //1st attempt consumming max retry time budget
+                doNothing(). //2nd attempt that should not happen
+                doNothing(). //3nd attempt that should not happen
+                when(gitManager).cloneRepo(any());
+
+        try {
+            //when trying to clone
+            retrier.cloneRepo(new Context());
+            //then it rethrows the exception
+            Assertions.fail("expected max attempts reached to rethrow last exception, as max duration exceeded");
+        } catch (IllegalArgumentException e) {
+            verify(gitManager, times(1)).cloneRepo(any());
+            //success
+        }
+
+    }
 
     @Test
     public void retries_clones() {

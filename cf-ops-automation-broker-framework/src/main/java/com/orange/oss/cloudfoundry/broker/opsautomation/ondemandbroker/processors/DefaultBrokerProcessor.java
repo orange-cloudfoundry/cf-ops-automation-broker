@@ -65,14 +65,18 @@ public class DefaultBrokerProcessor implements BrokerProcessor {
 	}
 
 	@Override
-	public void preUpdate(Context ctx) {
-		logger.debug("noop default preUpdate");
-	}
+	public void preUpdate(Context ctx) { logger.debug("noop default preUpdate"); }
 
 	@Override
 	public void postUpdate(Context ctx) {
 		logger.debug("noop default postUpdate");
 	}
+
+	@Override
+	public void preGetInstance(Context ctx) { logger.debug("noop default preGetInstance"); }
+
+	@Override
+	public void postGetInstance(Context ctx) { logger.debug("noop default postGetInstance"); }
 
 	@Override
 	public void cleanUp(Context ctx) { logger.debug("noop default cleanUp"); }

@@ -40,7 +40,7 @@ public class OsbProxyImpl implements OsbProxy {
     private ObjectMapper objectMapper;
     private static Logger logger = LoggerFactory.getLogger(OsbProxyImpl.class.getName());
 
-    private static final String FEIGN_MESSAGE_SEPARATOR = "content:\n";
+    private static final String FEIGN_MESSAGE_SEPARATOR = "]: [";
 
     public OsbProxyImpl(String osbDelegateUser, String osbDelegatePassword, String brokerUrlPattern, OsbClientFactory clientFactory) {
         this.osbDelegateUser = osbDelegateUser;
@@ -71,7 +71,7 @@ public class OsbProxyImpl implements OsbProxy {
     public GetLastServiceOperationResponse delegateProvision(GetLastServiceOperationRequest pollingRequest, CreateServiceInstanceRequest request, GetLastServiceOperationResponse response) {
         String brokerUrl = getBrokerUrl(pollingRequest.getServiceInstanceId());
         CatalogServiceClient catalogServiceClient = constructCatalogClient(brokerUrl);
-        Catalog catalog = catalogServiceClient.getCatalog();
+        Catalog catalog = catalogServiceClient.getCatalog(OsbConstants.X_Broker_API_Version_Value);
         CreateServiceInstanceRequest mappedRequest = mapProvisionRequest(request, catalog);
         ServiceInstanceServiceClient serviceInstanceServiceClient = constructServiceInstanceServiceClient(brokerUrl);
         
@@ -91,7 +91,7 @@ public class OsbProxyImpl implements OsbProxy {
     public CreateServiceInstanceBindingResponse delegateBind(CreateServiceInstanceBindingRequest request) {
         String brokerUrl = getBrokerUrl(request.getServiceInstanceId());
         CatalogServiceClient catalogServiceClient = constructCatalogClient(brokerUrl);
-        Catalog catalog = catalogServiceClient.getCatalog();
+        Catalog catalog = catalogServiceClient.getCatalog(OsbConstants.X_Broker_API_Version_Value);
         CreateServiceInstanceBindingRequest mappedRequest = mapBindRequest(request, catalog);
         ServiceInstanceBindingServiceClient serviceInstanceBindingServiceClient = constructServiceInstanceBindingServiceClient(brokerUrl);
 
@@ -106,7 +106,7 @@ public class OsbProxyImpl implements OsbProxy {
         }
 
         //noinspection UnnecessaryLocalVariable
-        @SuppressWarnings("ConstantConditions") CreateServiceInstanceBindingResponse mappedResponse = mapBindResponse(delegatedResponse, bindException, catalog);
+        CreateServiceInstanceBindingResponse mappedResponse = mapBindResponse(delegatedResponse, bindException, catalog);
         return mappedResponse;
     }
 
@@ -114,7 +114,7 @@ public class OsbProxyImpl implements OsbProxy {
     public GetLastServiceOperationResponse delegateDeprovision(GetLastServiceOperationRequest pollingRequest, DeleteServiceInstanceRequest request, GetLastServiceOperationResponse response) {
         String brokerUrl = getBrokerUrl(pollingRequest.getServiceInstanceId());
         CatalogServiceClient catalogServiceClient = constructCatalogClient(brokerUrl);
-        Catalog catalog = catalogServiceClient.getCatalog();
+        Catalog catalog = catalogServiceClient.getCatalog(OsbConstants.X_Broker_API_Version_Value);
         DeleteServiceInstanceRequest mappedRequest = mapDeprovisionRequest(request, catalog);
         ServiceInstanceServiceClient serviceInstanceServiceClient = constructServiceInstanceServiceClient(brokerUrl);
 
@@ -134,7 +134,7 @@ public class OsbProxyImpl implements OsbProxy {
     public void delegateUnbind(DeleteServiceInstanceBindingRequest request) {
         String brokerUrl = getBrokerUrl(request.getServiceInstanceId());
         CatalogServiceClient catalogServiceClient = constructCatalogClient(brokerUrl);
-        Catalog catalog = catalogServiceClient.getCatalog();
+        Catalog catalog = catalogServiceClient.getCatalog(OsbConstants.X_Broker_API_Version_Value);
         DeleteServiceInstanceBindingRequest mappedRequest = mapUnbindRequest(request, catalog);
         ServiceInstanceBindingServiceClient serviceInstanceBindingServiceClient = constructServiceInstanceBindingServiceClient(brokerUrl);
 
@@ -258,6 +258,7 @@ public class OsbProxyImpl implements OsbProxy {
                 false,
                 request.getApiInfoLocation(),
                 buildOriginatingIdentityHeader(request.getOriginatingIdentity()),
+                OsbConstants.X_Broker_API_Version_Value,
                 request);
     }
 
@@ -268,7 +269,8 @@ public class OsbProxyImpl implements OsbProxy {
                 request.getPlanId(),
                 false,
                 request.getApiInfoLocation(),
-                buildOriginatingIdentityHeader(request.getOriginatingIdentity()));
+                buildOriginatingIdentityHeader(request.getOriginatingIdentity()),
+                OsbConstants.X_Broker_API_Version_Value);
     }
 
     void delegateUnbind(DeleteServiceInstanceBindingRequest request, ServiceInstanceBindingServiceClient serviceInstanceBindingServiceClient) {
@@ -279,7 +281,8 @@ public class OsbProxyImpl implements OsbProxy {
                 request.getPlanId(),
                 false,
                 request.getApiInfoLocation(),
-                buildOriginatingIdentityHeader(request.getOriginatingIdentity()));
+                buildOriginatingIdentityHeader(request.getOriginatingIdentity()),
+                OsbConstants.X_Broker_API_Version_Value);
     }
 
     ResponseEntity<CreateServiceInstanceAppBindingResponse> delegateBind(CreateServiceInstanceBindingRequest request, ServiceInstanceBindingServiceClient serviceInstanceBindingServiceClient) {
@@ -289,6 +292,7 @@ public class OsbProxyImpl implements OsbProxy {
                 false,
                 request.getApiInfoLocation(),
                 buildOriginatingIdentityHeader(request.getOriginatingIdentity()),
+                OsbConstants.X_Broker_API_Version_Value,
                 request);
     }
 
@@ -416,9 +420,6 @@ public class OsbProxyImpl implements OsbProxy {
         if (jsonStart != -1) {
             //found the delimiter, trim it
             jsonStart += FEIGN_MESSAGE_SEPARATOR.length();
-        } else {
-            //try another weaker delimiter in case feign lib changed behavior in between
-            jsonStart = exceptionMessage.indexOf("{");
         }
         ErrorMessage errorMessage;
         if (jsonStart == -1) {
@@ -426,6 +427,7 @@ public class OsbProxyImpl implements OsbProxy {
             errorMessage = new ErrorMessage("Internal error, please contact administrator");
         } else {
             String json = exceptionMessage.substring(jsonStart);
+            json = json.substring(0, json.length()-1);
             errorMessage = gson.fromJson(json, ErrorMessage.class);
         }
         return errorMessage;

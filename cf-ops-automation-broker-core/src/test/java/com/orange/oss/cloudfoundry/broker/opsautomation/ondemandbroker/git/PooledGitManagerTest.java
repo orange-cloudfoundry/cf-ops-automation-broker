@@ -4,14 +4,15 @@ import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processor
 import org.apache.commons.pool2.KeyedPooledObjectFactory;
 import org.apache.commons.pool2.PooledObject;
 import org.apache.commons.pool2.impl.DefaultPooledObject;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.util.Collections;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Matchers.any;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -94,7 +95,7 @@ public class PooledGitManagerTest {
         assertThat(dest.contextKeys).isEqualTo(expected.contextKeys);
     }
 
-    @Test(expected = RuntimeException.class)
+    @Test
     public void rejects_pool_key_for_unsupported_submodules_request_fields() {
 
         //given
@@ -104,7 +105,7 @@ public class PooledGitManagerTest {
         ctx.contextKeys.put(repoAlias + GitProcessorContext.submoduleListToFetch.toString(), Collections.singletonList("mysql-deployment"));
 
         //when asked to process a request with unsupported attribute
-        pooledGitManager.makePoolKey(ctx);
+        assertThrows(RuntimeException.class, () -> pooledGitManager.makePoolKey(ctx));
         //then it rejects by throwing an exception
     }
 

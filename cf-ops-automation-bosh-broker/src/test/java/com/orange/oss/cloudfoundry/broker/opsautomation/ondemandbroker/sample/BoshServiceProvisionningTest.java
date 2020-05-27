@@ -1,17 +1,36 @@
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.sample;
 
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.io.Writer;
+import java.nio.file.FileVisitOption;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.EnumSet;
+import java.util.Map;
+
 import com.github.tomakehurst.wiremock.client.WireMock;
-import com.github.tomakehurst.wiremock.common.Slf4jNotifier;
-import com.github.tomakehurst.wiremock.junit.WireMockRule;
 import com.github.tomakehurst.wiremock.recording.SnapshotRecordResult;
-import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.*;
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.GitManager;
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.GitProcessor;
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.GitProcessorContext;
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.GitProperties;
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.GitServer;
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.PooledGitManager;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.osbclient.CatalogServiceClient;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.osbclient.OsbClientFactory;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.osbclient.ServiceInstanceBindingServiceClient;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.osbclient.ServiceInstanceServiceClient;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.DeploymentConstants;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.DeploymentProperties;
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.OsbBuilderHelper;
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.OsbConstants;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.OsbProxyImpl;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.SecretsGenerator;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.tools.Copy;
@@ -22,8 +41,11 @@ import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpStatus;
 import org.eclipse.jgit.api.AddCommand;
 import org.eclipse.jgit.api.Git;
-import org.junit.*;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -39,19 +61,12 @@ import org.springframework.cloud.servicebroker.model.instance.CreateServiceInsta
 import org.springframework.cloud.servicebroker.model.instance.CreateServiceInstanceResponse;
 import org.springframework.cloud.servicebroker.model.instance.DeleteServiceInstanceResponse;
 import org.springframework.http.ResponseEntity;
-import org.springframework.test.context.junit4.SpringRunner;
 
-import java.io.*;
-import java.nio.file.FileVisitOption;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.EnumSet;
-import java.util.Map;
-
-import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
 import static com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.GitServer.NO_OP_INITIALIZER;
-import static com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.OsbBuilderHelper.*;
+import static com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.OsbBuilderHelper.SERVICE_DEFINITION_ID;
+import static com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.OsbBuilderHelper.SERVICE_PLAN_ID;
+import static com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.OsbBuilderHelper.aBindingRequest;
+import static com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.OsbBuilderHelper.aCfUserContext;
 import static com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.sample.BoshBrokerApplication.SECRETS_REPOSITORY_ALIAS_NAME;
 import static io.restassured.RestAssured.basic;
 import static io.restassured.RestAssured.given;
@@ -66,12 +81,13 @@ import static org.springframework.http.HttpStatus.CREATED;
 /**
  * Will detect all components present in classpath, including BoshBrokerApplication
  */
-@RunWith(SpringRunner.class)
-@SpringBootTest(webEnvironment = RANDOM_PORT)
+@SpringBootTest(webEnvironment = RANDOM_PORT, classes = {BoshBrokerApplication.class, WireMockTestConfiguration.class})
 public class BoshServiceProvisionningTest {
 
 
-    @BeforeClass
+    public static final String BROKERED_SERVICE_INSTANCE_ID = "brokered_service_instance_id";
+
+    @BeforeAll
     public static void prepare_CONFIG_YML_env_var() throws Exception {
 
         InputStream resourceAsStream = BoshServiceProvisionningTest.class.getResourceAsStream("/catalog.yml");
@@ -85,7 +101,7 @@ public class BoshServiceProvisionningTest {
         }
     }
 
-    @After
+    @AfterEach
     public void after() {
         System.clearProperty("CATALOG_YML");
         assertThat(System.getProperty("CATALOG_YML")).isNull();
@@ -161,13 +177,13 @@ public class BoshServiceProvisionningTest {
     }
 
 
-    @Before
+    @BeforeEach
     public void startHttpClient() {
         RestAssured.port = port;
         RestAssured.authentication = basic("user", "secret");
     }
 
-    @Before
+    @BeforeEach
     public void initializeOsbClientsToLocalSystemUnderTest() {
         String url = "http://127.0.0.1:" + port;
         String user = "user";
@@ -178,16 +194,8 @@ public class BoshServiceProvisionningTest {
         serviceInstanceService = clientFactory.getClient(url, user, password, ServiceInstanceServiceClient.class);
         serviceInstanceBindingService = clientFactory.getClient(url, user, password, ServiceInstanceBindingServiceClient.class);
     }
-    @Rule
-    public WireMockRule wireMockRule = new WireMockRule(wireMockConfig()
-            .port(8088)
-            .httpsPort(8089)
-            .notifier(new Slf4jNotifier(true))
-    );
 
-
-
-    @Before
+    @BeforeEach
     public void setUpWireMockRecording() {
         if (isWiremockRecordingEnabled()) {
             WireMock.startRecording(preprodBrokerUrlToRecord);
@@ -198,7 +206,7 @@ public class BoshServiceProvisionningTest {
         }
     }
 
-    @After
+    @AfterEach
     public void stopWireMockRecording() {
         if (isWiremockRecordingEnabled()) {
             @SuppressWarnings("unused") SnapshotRecordResult recordedMappings = WireMock.stopRecording();
@@ -208,7 +216,7 @@ public class BoshServiceProvisionningTest {
     }
 
 
-    @Before
+    @BeforeEach
     public void startGitServer() throws IOException {
         gitServer = new GitServer();
 
@@ -326,7 +334,7 @@ public class BoshServiceProvisionningTest {
     }
 
 
-    @After
+    @AfterEach
     public void stopGitServer() throws InterruptedException {
         gitServer.stopAndCleanupReposServer();
     }
@@ -364,7 +372,6 @@ public class BoshServiceProvisionningTest {
     private void assertGitClonesWerePooledAndReturned(GitProperties gitProperties, GitManager templatesGitManager) {
         if (gitProperties.isUsePooling()) {
             assertThat(templatesGitManager instanceof PooledGitManager).isTrue();
-            //noinspection ConstantConditions
             PooledGitManager pooledGitManager = (PooledGitManager) templatesGitManager;
             long borrowed = pooledGitManager.getPoolAttribute(PooledGitManager.Metric.Borrowed);
             long returned = pooledGitManager.getPoolAttribute(PooledGitManager.Metric.Returned);
@@ -392,6 +399,7 @@ public class BoshServiceProvisionningTest {
                 false,
                 "api-info",
                 osbProxy.buildOriginatingIdentityHeader(aCfUserContext()),
+                OsbConstants.X_Broker_API_Version_Value,
                 serviceInstanceBindingRequest);
         assertThat(bindResponse.getStatusCode()).isEqualTo(CREATED);
         assertThat(bindResponse.getBody()).isNotNull();
@@ -407,7 +415,8 @@ public class BoshServiceProvisionningTest {
                 SERVICE_PLAN_ID,
                 false,
                 "api-info",
-                osbProxy.buildOriginatingIdentityHeader(aCfUserContext()));
+                osbProxy.buildOriginatingIdentityHeader(aCfUserContext()),
+                OsbConstants.X_Broker_API_Version_Value);
     }
 
     private String create_async_service_instance_using_osb_client() {
@@ -419,14 +428,18 @@ public class BoshServiceProvisionningTest {
                 true,
                 "api-info",
                 osbProxy.buildOriginatingIdentityHeader(aCfUserContext()),
+                OsbConstants.X_Broker_API_Version_Value,
                 createServiceInstanceRequest);
         assertThat(createResponse.getStatusCode()).isEqualTo(ACCEPTED);
         assertThat(createResponse.getBody()).isNotNull();
+        assertThat(createResponse.getBody().getDashboardUrl())
+            .as("dashboard url template configured in application.properties")
+            .isEqualTo("https://grafana_" + BROKERED_SERVICE_INSTANCE_ID + ".redacted-ops-domain.com");
         return createResponse.getBody().getOperation();
     }
 
     public void exposes_catalog() {
-        Catalog catalog = catalogServiceClient.getCatalog();
+        Catalog catalog = catalogServiceClient.getCatalog(OsbConstants.X_Broker_API_Version_Value);
         assertThat(catalog.getServiceDefinitions()).isNotEmpty();
         assertThat(catalog).isNotNull();
         ServiceDefinition serviceDefinition = catalog.getServiceDefinitions().get(0);
@@ -459,7 +472,8 @@ public class BoshServiceProvisionningTest {
                 SERVICE_PLAN_ID,
                 true,
                 "api-info",
-                osbProxy.buildOriginatingIdentityHeader(aCfUserContext()));
+                osbProxy.buildOriginatingIdentityHeader(aCfUserContext()),
+                OsbConstants.X_Broker_API_Version_Value);
         assertThat(response.getStatusCode()).isEqualTo(ACCEPTED);
         assertThat(response.getBody()).isNotNull();
         return response.getBody().getOperation();
@@ -479,6 +493,7 @@ public class BoshServiceProvisionningTest {
                 .serviceDefinitionId(SERVICE_DEFINITION_ID)
                 .planId(SERVICE_PLAN_ID)
                 .serviceInstanceId(SERVICE_INSTANCE_ID)
+                .parameters(OsbBuilderHelper.osbCmdbCustomParam(BROKERED_SERVICE_INSTANCE_ID))
                 .context(CloudFoundryContext.builder()
                         .organizationGuid("org_id")
                         .spaceGuid("space_id")

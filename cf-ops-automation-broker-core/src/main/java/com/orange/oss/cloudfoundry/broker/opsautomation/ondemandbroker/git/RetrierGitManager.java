@@ -10,18 +10,22 @@ import org.slf4j.LoggerFactory;
 public class RetrierGitManager implements GitManager {
 
     private static final Logger logger = LoggerFactory.getLogger(RetrierGitManager.class.getName());
-    private GitManager gitManager;
-    private RetryPolicy<Object> retryPolicy;
+    private final GitManager gitManager;
+    private final RetryPolicy<Object> retryPolicy;
 
     public RetrierGitManager(String repositoryAliasName, GitManager gitManager, RetryPolicy<Object> retryPolicy) {
         this.gitManager = gitManager;
         this.retryPolicy = retryPolicy;
         this.retryPolicy
-                .onRetry(e -> logger.warn("Failure, retrying. Cause: " + e.getLastFailure()))
-                .onRetriesExceeded(e -> logger.warn("Aborting. Max retries exceeded:" + this.retryPolicy.getMaxAttempts() + " Rethrowing:" + e.getFailure()))
+                .onRetry(e -> logger.warn("Transient (?) failure, retrying. Cause: {}",
+                    e.getLastFailure().toString(), e.getLastFailure()))
+                .onRetriesExceeded(e -> logger.warn("Aborting. Max attempts reached: #" + this.retryPolicy.getMaxAttempts() +
+                        " or max duration reached (" + this.retryPolicy.getMaxDuration().toString() + "). Rethrowing failure:" + e.getFailure()))
                 .handleIf(e -> isCauseSubclassOf(e, org.eclipse.jgit.api.errors.TransportException.class))
         ;
         logger.debug("Configured for {} with retry policy {}", repositoryAliasName, ToStringBuilder.reflectionToString(retryPolicy));
+        //Duration would typically be displayed as "PT2S" which means P (for duration prefixes), T (for time in units smaller than the day, in our case, usually seconds or minutes
+        //Learn more at https://en.wikipedia.org/wiki/ISO_8601#Durations
     }
 
     protected boolean isCauseSubclassOf(Throwable e, Class superClassToCheck) {

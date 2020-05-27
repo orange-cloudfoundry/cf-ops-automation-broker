@@ -1,13 +1,14 @@
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import org.hibernate.validator.constraints.NotEmpty;
-
-import javax.validation.Valid;
-import javax.validation.constraints.Pattern;
 import java.util.HashMap;
 import java.util.Map;
+
+import javax.validation.Valid;
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.Pattern;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
  * Formats vars files with user inputs to COA deployment models
@@ -18,8 +19,8 @@ public class CoabVarsFileDto {
      * \d 	A digit: [0-9]
      * \w 	A word character: [a-zA-Z_0-9]
      */
-    public static final String WHITE_LISTED_PATTERN = "[\\w\\d _.-]*";
-    public static final String WHITE_LISTED_MESSAGE = "must only contain a-Z, 0-9, space, _, dot and - chars";
+    public static final String WHITE_LISTED_PATTERN = "[\\w\\d _./-]*";
+    public static final String WHITE_LISTED_MESSAGE = "must only contain a-Z, 0-9, space, _, dot, slash and - chars";
     /**
      * Bosh deployment name to assign in the manifest by operators file
      */

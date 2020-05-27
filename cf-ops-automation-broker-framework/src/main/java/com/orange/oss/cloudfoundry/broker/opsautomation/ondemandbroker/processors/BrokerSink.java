@@ -5,6 +5,8 @@ public interface BrokerSink {
 	void getLastOperation(Context ctx);
 	void bind(Context ctx);
 	void unBind(Context ctx);
+	void getInstance(Context ctx);
 	void update(Context ctx);
+
 	void delete(Context ctx);
 }

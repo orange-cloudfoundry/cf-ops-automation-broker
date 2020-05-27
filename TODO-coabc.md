@@ -1,4 +1,29 @@
+Implement static dashboard url (#47 step 2)
 
+- implement the `GET /v2/service_instances/:instance_id` 
+   - DefaultBrokerProcessor.preGetServiceInstance() 
+   - document that operator should configure the catalog to return `instances_retrievable=true`  
+   - BoshProcessor.preGetServiceInstance() + BoshProcessorTest : 
+      - Return dashboard previously recorded in `coab-vars.yml`
+         - Extract existing code into Repository/interface
+            - read coab-depls/c_0a9018b8-7cb2-47c1-9542-0aceb8ca740a/template/coab-vars.yml into CoabVarsDto 
+   - BoshBrokerApplication.paasTemplateContextFilter: 
+       - check whether other steps could skip paas-secrets clone
+    
+- for inner brokers not supporting this fetch endpoint, record dashboard returned from provisionning call in git secrets git repo: in `coab-vars.yml`
+   
+- return `instances_retrievable` in [catalog service offering object](https://github.com/openservicebrokerapi/servicebroker/blob/master/spec.md#service-offering-object)    
+   
+--    
+
+Dependency bumps
+* [ ] clean up duplicated WireMockTestFixture and WireMockTestConfiguration
+   * See alternative community integrations at https://github.com/tomakehurst/wiremock/issues/684
+```
+@ExtendWith(MockitoExtension.class)
+@RunWith(JUnitPlatform.class)
+public class ProcessorChainServiceInstanceBindingServiceTest
+```
 
   2019-05-15T12:29:00.07+0000 [APP/PROC/WEB/0] OUT org.eclipse.jgit.api.errors.TransportException: https://redacted/skc-ops-int/paas-templates.git: 502 Bad Gateway
    2019-05-15T12:29:00.07+0000 [APP/PROC/WEB/0] OUT 	at org.eclipse.jgit.api.FetchCommand.call(FetchCommand.java:250) ~[org.eclipse.jgit-4.9.0.201710071750-r.jar!/:4.9.0.201710071750-r]

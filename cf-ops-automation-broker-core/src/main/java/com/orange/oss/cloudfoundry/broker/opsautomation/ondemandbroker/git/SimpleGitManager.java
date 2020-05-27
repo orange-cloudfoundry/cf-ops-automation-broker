@@ -1,10 +1,38 @@
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.function.Consumer;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
+
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.Context;
 import org.apache.commons.lang.builder.ToStringBuilder;
-import org.eclipse.jgit.api.*;
+import org.eclipse.jgit.api.AddCommand;
+import org.eclipse.jgit.api.CloneCommand;
+import org.eclipse.jgit.api.CommitCommand;
+import org.eclipse.jgit.api.CreateBranchCommand;
+import org.eclipse.jgit.api.FetchCommand;
+import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.ListBranchCommand;
+import org.eclipse.jgit.api.PullResult;
+import org.eclipse.jgit.api.PushCommand;
+import org.eclipse.jgit.api.ResetCommand;
+import org.eclipse.jgit.api.Status;
 import org.eclipse.jgit.api.errors.GitAPIException;
-import org.eclipse.jgit.lib.*;
+import org.eclipse.jgit.lib.BranchTrackingStatus;
+import org.eclipse.jgit.lib.Config;
+import org.eclipse.jgit.lib.Ref;
+import org.eclipse.jgit.lib.Repository;
+import org.eclipse.jgit.lib.StoredConfig;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.submodule.SubmoduleStatus;
 import org.eclipse.jgit.transport.PushResult;
@@ -13,14 +41,6 @@ import org.eclipse.jgit.transport.RemoteRefUpdate;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.*;
-import java.util.function.Consumer;
-import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 
 import static org.eclipse.jgit.lib.Constants.DEFAULT_REMOTE_NAME;
 
@@ -36,7 +56,7 @@ import static org.eclipse.jgit.lib.Constants.DEFAULT_REMOTE_NAME;
 public class SimpleGitManager implements GitManager {
 
 
-    private static final String PRIVATE_GIT_INSTANCE = "private-git-instance";
+    protected static final String PRIVATE_GIT_INSTANCE = "private-git-instance";
     private static final Logger logger = LoggerFactory.getLogger(SimpleGitManager.class.getName());
     static final String PRIVATE_SUBMODULES_LIST = "private_submodules_list";
 
@@ -65,7 +85,7 @@ public class SimpleGitManager implements GitManager {
 
             workDir = Files.createTempDirectory(getRepoWorkDirPrefix(repoAliasName));
 
-            int timeoutSeconds = 60; //git timeout
+            int timeoutSeconds = 55; //git timeout
             CloneCommand clone = new CloneCommand()
                     .setCredentialsProvider(cred)
                     .setDirectory(workDir.toFile())
@@ -154,7 +174,8 @@ public class SimpleGitManager implements GitManager {
             fetchSubModules = ! submodulesToFetch.isEmpty();
         }
         if (fetchSubModules) {
-            git.submoduleUpdate().setCredentialsProvider(cred).call();
+            Collection<String> result = git.submoduleUpdate().setCredentialsProvider(cred).call();
+            logger.debug("submodule update returned: {}", result);
         }
     }
 

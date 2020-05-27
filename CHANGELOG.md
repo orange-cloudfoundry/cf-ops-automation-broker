@@ -1,11 +1,18 @@
+## 1.19.0 (unreleased)
 
-## 1.18.0 (unreleased)
+## 1.18.0 
 
 ### IMPROVEMENTS
 
 - Part of Osb client are contributed upstream in https://github.com/spring-cloud/spring-cloud-open-service-broker 
 
 ### BUG FIXES
+ 
+* Metadata Plan not returned to cf #49 
+* Optimize size of state object returned to OSB API  #45 
+* Add retries when git push fails # 44
+* Set up git clone caches #42 
+* springboot & OSB bump (security + OSB 2.14 support) #39 
  
 ### CONFIGURATION CHANGES
 

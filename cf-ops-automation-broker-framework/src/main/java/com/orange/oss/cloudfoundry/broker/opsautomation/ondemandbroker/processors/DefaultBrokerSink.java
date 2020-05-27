@@ -28,6 +28,8 @@ public class DefaultBrokerSink implements BrokerSink {
         logger.debug("noop default Bind");
     }
 
+    @Override
+    public void getInstance(Context ctx) { logger.debug("noop default GetInstance"); }
 
     @Override
     public void delete(Context ctx) {

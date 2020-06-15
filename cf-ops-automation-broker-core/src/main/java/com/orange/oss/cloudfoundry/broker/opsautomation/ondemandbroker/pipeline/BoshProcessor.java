@@ -34,6 +34,7 @@ public class BoshProcessor extends DefaultBrokerProcessor {
     private static Logger logger = LoggerFactory.getLogger(BoshProcessor.class.getName());
     private final String brokerDisplayName;
     private String modelDeploymentShortAlias;
+    private String modelDeploymentSeparator;
     private String dashboardUrlTemplate;
 
     private String templatesRepositoryAliasName;
@@ -42,7 +43,7 @@ public class BoshProcessor extends DefaultBrokerProcessor {
     private TemplatesGenerator templatesGenerator;
     private SecretsGenerator secretsGenerator;
 
-    public BoshProcessor(String templatesRepositoryAliasName, String secretsRepositoryAliasName, TemplatesGenerator templatesGenerator, SecretsGenerator secretsGenerator, PipelineCompletionTracker tracker, String brokerDisplayName, String modelDeploymentShortAlias, String dashboardUrlTemplate) {
+    public BoshProcessor(String templatesRepositoryAliasName, String secretsRepositoryAliasName, TemplatesGenerator templatesGenerator, SecretsGenerator secretsGenerator, PipelineCompletionTracker tracker, String brokerDisplayName, String modelDeploymentShortAlias, String modelDeploymentSeparator, String dashboardUrlTemplate) {
         this.templatesRepositoryAliasName = templatesRepositoryAliasName;
         this.secretsRepositoryAliasName = secretsRepositoryAliasName;
         this.templatesGenerator = templatesGenerator;
@@ -50,6 +51,7 @@ public class BoshProcessor extends DefaultBrokerProcessor {
         this.tracker = tracker;
         this.brokerDisplayName = brokerDisplayName;
         this.modelDeploymentShortAlias = modelDeploymentShortAlias;
+        this.modelDeploymentSeparator = modelDeploymentSeparator;
         this.dashboardUrlTemplate = dashboardUrlTemplate;
     }
 
@@ -224,7 +226,7 @@ public class BoshProcessor extends DefaultBrokerProcessor {
         String spaceGuid = extractCfSpaceGuid(request);
 
         CoabVarsFileDto coabVarsFileDto = new CoabVarsFileDto();
-        coabVarsFileDto.deployment_name = modelDeploymentShortAlias + "_" + request.getServiceInstanceId();
+        coabVarsFileDto.deployment_name = modelDeploymentShortAlias + modelDeploymentSeparator + request.getServiceInstanceId();
         coabVarsFileDto.instance_id = request.getServiceInstanceId();
         coabVarsFileDto.service_id = request.getServiceDefinitionId();
         coabVarsFileDto.plan_id = request.getPlanId();

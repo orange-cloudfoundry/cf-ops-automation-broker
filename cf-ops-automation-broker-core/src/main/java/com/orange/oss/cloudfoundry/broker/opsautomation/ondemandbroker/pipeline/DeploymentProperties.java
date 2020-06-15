@@ -13,6 +13,7 @@ public class DeploymentProperties {
     private String rootDeployment = "coab-depls"; //Root deployment (i.e coab-depls)
     private String modelDeployment = "cassandravarsops"; //Model deployment (i.e cassandra, cassandravarsops, ...)
     private String modelDeploymentShortAlias = "c"; //shortname for the model deployment. Enables distinguishing services. Should be short so that broker URL remains shorter than 63 chars
+    private String modelDeploymentSeparator = DeploymentConstants.UNDERSCORE; //shortname for the model deployment. Enables distinguishing services. Should be short so that broker URL remains shorter than 63 chars
     private String dashboardUrlTemplate = null; // dashboard url template e.g. "https://shield_{0}.redacted-ops-domain.com" where {0} resolves to service instance guid.
 
     public String getRootDeployment() {
@@ -49,5 +50,11 @@ public class DeploymentProperties {
 
     public String getDashboardUrlTemplate() { return dashboardUrlTemplate; }
     public void setDashboardUrlTemplate(String dashboardUrlTemplate) { this.dashboardUrlTemplate = dashboardUrlTemplate; }
+
+    public String getModelDeploymentSeparator() { return modelDeploymentSeparator; }
+
+    public void setModelDeploymentSeparator(String modelDeploymentSeparator) { this.modelDeploymentSeparator = modelDeploymentSeparator; }
+
+
 }
 

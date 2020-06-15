@@ -34,7 +34,8 @@ public class SecretsGeneratorTest extends StructureGeneratorImplTest{
         super.setUp();
         this.secretsGenerator = new SecretsGenerator(this.deploymentProperties.getRootDeployment(),
                                     this.deploymentProperties.getModelDeployment(),
-                this.deploymentProperties.getModelDeploymentShortAlias());
+                this.deploymentProperties.getModelDeploymentShortAlias(),
+                this.deploymentProperties.getModelDeploymentSeparator());
     }
 
     @Test
@@ -98,7 +99,8 @@ public class SecretsGeneratorTest extends StructureGeneratorImplTest{
         //Given a DeploymentProperties for cassandra with "m" prefix (e.g. mongo)
         secretsGenerator = new SecretsGenerator("coab-depls",
                 "cassandravarsops",
-                "m");
+                "m",
+                "_");
 
 
         //When

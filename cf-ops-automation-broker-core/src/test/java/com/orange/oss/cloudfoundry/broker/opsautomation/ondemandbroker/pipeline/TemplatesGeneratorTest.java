@@ -36,6 +36,7 @@ public class TemplatesGeneratorTest extends StructureGeneratorImplTest{
         this.templatesGenerator = new TemplatesGenerator(this.deploymentProperties.getRootDeployment(),
                 this.deploymentProperties.getModelDeployment(),
                 "c",
+                "_",
                 new VarsFilesYmlFormatter());
         //Init sample deployments
         this.initReferenceModelStructures();
@@ -97,6 +98,7 @@ public class TemplatesGeneratorTest extends StructureGeneratorImplTest{
         TemplatesGenerator templatesGenerator = new TemplatesGenerator("coab-depls",
                 "areferencemodel",
                 "r",
+                "_",
                 new VarsFilesYmlFormatter());
 
         //When
@@ -204,6 +206,7 @@ public class TemplatesGeneratorTest extends StructureGeneratorImplTest{
         TemplatesGenerator templatesGenerator = new TemplatesGenerator("coab-depls",
                 "areferencemodel",
                 "r",
+                "_",
                 new VarsFilesYmlFormatter());
 
         //Given a minimal deployment structure
@@ -240,14 +243,14 @@ public class TemplatesGeneratorTest extends StructureGeneratorImplTest{
         //Given : The model structure is initialized in setup method
 
         //Check all models
-        checkDeployment("coab-depls", "mongodb", "m");
-        checkDeployment("coab-depls", "cassandravarsops", "c");
-        checkDeployment("coab-depls", "cassandra", "s");
-        checkDeployment("coab-depls", "cf-mysql", "y");
+        checkDeployment("coab-depls", "mongodb", "m","_");
+        checkDeployment("coab-depls", "cassandravarsops", "c", "_");
+        checkDeployment("coab-depls", "cassandra", "s", "_");
+        checkDeployment("coab-depls", "cf-mysql", "y", "_");
 
     }
 
-    private void checkDeployment(String rootDeployment, String modelDeployment, String modelDeploymentShortAlias) throws IOException{
+    private void checkDeployment(String rootDeployment, String modelDeployment, String modelDeploymentShortAlias, String modelDeploymentSeparator) throws IOException{
 
         //Given a path
         Path paasTemplatePath = tempDir.toPath();
@@ -259,6 +262,7 @@ public class TemplatesGeneratorTest extends StructureGeneratorImplTest{
         TemplatesGenerator templatesGenerator = new TemplatesGenerator(rootDeployment,
                 modelDeployment,
                 modelDeploymentShortAlias,
+                modelDeploymentSeparator,
                 new VarsFilesYmlFormatter());
 
         //When
@@ -319,6 +323,7 @@ public class TemplatesGeneratorTest extends StructureGeneratorImplTest{
         TemplatesGenerator templatesGenerator = new TemplatesGenerator("coab-depls",
                 "cf-mysql",
                 "y",
+                "_",
                 new VarsFilesYmlFormatter());
 
         //When

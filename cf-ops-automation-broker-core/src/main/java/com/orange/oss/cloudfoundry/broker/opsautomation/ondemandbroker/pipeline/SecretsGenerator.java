@@ -11,8 +11,8 @@ public class SecretsGenerator extends StructureGeneratorImpl implements SecretsR
     public SecretsGenerator(){
     }
 
-    public SecretsGenerator(String rootDeployment, String modelDeployment, String modelDeploymentShortAlias){
-        super(rootDeployment,modelDeployment, modelDeploymentShortAlias);
+    public SecretsGenerator(String rootDeployment, String modelDeployment, String modelDeploymentShortAlias, String modelDeploymentSeparator){
+        super(rootDeployment,modelDeployment, modelDeploymentShortAlias, modelDeploymentSeparator);
     }
 
     @Override
@@ -39,8 +39,8 @@ public class SecretsGenerator extends StructureGeneratorImpl implements SecretsR
     public Path getTargetManifestFilePath(Path workDir, String serviceInstanceId) {
         return StructureGeneratorHelper.generatePath(workDir,
                 this.rootDeployment,
-                this.modelDeploymentShortAlias + DeploymentConstants.UNDERSCORE  + serviceInstanceId,
-                this.modelDeploymentShortAlias + DeploymentConstants.UNDERSCORE + serviceInstanceId + DeploymentConstants.YML_EXTENSION);
+                this.modelDeploymentShortAlias + this.modelDeploymentSeparator  + serviceInstanceId,
+                this.modelDeploymentShortAlias + this.modelDeploymentSeparator + serviceInstanceId + DeploymentConstants.YML_EXTENSION);
     }
 
     @Override

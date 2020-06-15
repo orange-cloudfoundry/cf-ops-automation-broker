@@ -32,7 +32,7 @@ public class StructureGeneratorImplTest {
         //noinspection ResultOfMethodCallIgnored
         this.file.mkdir();
         this.workDir = file.toPath();
-        this.structureGeneratorImpl = new StructureGeneratorImpl(this.deploymentProperties.getRootDeployment(), this.deploymentProperties.getModelDeployment(), this.deploymentProperties.getModelDeploymentShortAlias());
+        this.structureGeneratorImpl = new StructureGeneratorImpl(this.deploymentProperties.getRootDeployment(), this.deploymentProperties.getModelDeployment(), this.deploymentProperties.getModelDeploymentShortAlias(), this.deploymentProperties.getModelDeploymentSeparator());
     }
 
     @Test
@@ -74,7 +74,21 @@ public class StructureGeneratorImplTest {
         String deploymentInstance = this.structureGeneratorImpl.computeDeploymentName(SERVICE_INSTANCE_ID);
 
         //Then
-        String expectedDeploymentInstance = this.deploymentProperties.getModelDeploymentShortAlias() + DeploymentConstants.UNDERSCORE + SERVICE_INSTANCE_ID;
+        String expectedDeploymentInstance = this.deploymentProperties.getModelDeploymentShortAlias() + DeploymentConstants.HYPHEN + SERVICE_INSTANCE_ID;
+        assertEquals(expectedDeploymentInstance, deploymentInstance);
+
+    }
+
+    @Test
+    public void check_deployment_instance_computation_with_defaults() {
+        //Given
+        StructureGeneratorImpl sgi= new StructureGeneratorImpl(aDefaultDeploymentProperties().getRootDeployment(), aDefaultDeploymentProperties().getModelDeployment(), aDefaultDeploymentProperties().getModelDeploymentShortAlias(), aDefaultDeploymentProperties().getModelDeploymentSeparator());
+
+        //When
+        String deploymentInstance = sgi.computeDeploymentName(SERVICE_INSTANCE_ID);
+
+        //Then
+        String expectedDeploymentInstance = "c" + "_" + SERVICE_INSTANCE_ID;
         assertEquals(expectedDeploymentInstance, deploymentInstance);
 
     }
@@ -100,11 +114,19 @@ public class StructureGeneratorImplTest {
         DeploymentProperties deploymentProperties = new DeploymentProperties();
         deploymentProperties.setRootDeployment("coab-depls");
         deploymentProperties.setModelDeployment("mongodb");
-        deploymentProperties.setModelDeploymentShortAlias("m_");
+        deploymentProperties.setModelDeploymentShortAlias("m");
+        deploymentProperties.setModelDeploymentSeparator("-");
         deploymentProperties.setBrokerDisplayName("mongo db");
         return deploymentProperties;
     }
 
+    private DeploymentProperties aDefaultDeploymentProperties() {
+        DeploymentProperties deploymentProperties = new DeploymentProperties();
+        deploymentProperties.setRootDeployment("coab-depls");
+        deploymentProperties.setModelDeployment("cassandra");
+        deploymentProperties.setBrokerDisplayName("cassandra db");
+        return deploymentProperties;
+    }
 
 
 

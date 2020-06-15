@@ -79,7 +79,8 @@ public class BoshBrokerApplication {
         return new SecretsGenerator(
                 deploymentProperties.getRootDeployment(),
                 deploymentProperties.getModelDeployment(),
-                deploymentProperties.getModelDeploymentShortAlias()
+                deploymentProperties.getModelDeploymentShortAlias(),
+                deploymentProperties.getModelDeploymentSeparator()
         );
     }
 
@@ -89,6 +90,7 @@ public class BoshBrokerApplication {
                 deploymentProperties.getRootDeployment(),
                 deploymentProperties.getModelDeployment(),
                 deploymentProperties.getModelDeploymentShortAlias(),
+                deploymentProperties.getModelDeploymentSeparator(),
                 new VarsFilesYmlFormatter() //externalize if needed
         );
     }
@@ -107,6 +109,7 @@ public class BoshBrokerApplication {
                 pipelineCompletionTracker,
                 deploymentProperties.getBrokerDisplayName(),
                 deploymentProperties.getModelDeploymentShortAlias(),
+                deploymentProperties.getModelDeploymentSeparator(),
                 deploymentProperties.getDashboardUrlTemplate());
     }
 

@@ -7,14 +7,16 @@ public class StructureGeneratorImpl implements StructureGenerator {
     String rootDeployment;
     String modelDeployment;
     String modelDeploymentShortAlias;
+    String modelDeploymentSeparator;
 
     public StructureGeneratorImpl(){
     }
 
-    public StructureGeneratorImpl(String rootDeployment, String modelDeployment, String modelDeploymentShortAlias){
+    public StructureGeneratorImpl(String rootDeployment, String modelDeployment, String modelDeploymentShortAlias, String modelDeploymentSeparator){
         this.rootDeployment = rootDeployment;
         this.modelDeployment = modelDeployment;
         this.modelDeploymentShortAlias = modelDeploymentShortAlias;
+        this.modelDeploymentSeparator = modelDeploymentSeparator;
     }
 
     public void checkPrerequisites(Path workDir) {
@@ -44,7 +46,7 @@ public class StructureGeneratorImpl implements StructureGenerator {
     }
 
     public String computeDeploymentName(String serviceInstanceId){
-        return this.modelDeploymentShortAlias + DeploymentConstants.UNDERSCORE + serviceInstanceId;
+        return this.modelDeploymentShortAlias + this.modelDeploymentSeparator + serviceInstanceId;
     }
 
 }

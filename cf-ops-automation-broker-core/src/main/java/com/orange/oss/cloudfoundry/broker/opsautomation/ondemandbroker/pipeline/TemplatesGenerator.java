@@ -17,8 +17,8 @@ public class TemplatesGenerator extends StructureGeneratorImpl{
 
     private VarsFilesYmlFormatter formatter;
 
-    public TemplatesGenerator(String rootDeployment, String modelDeployment, String modelDeploymentShortAlias, VarsFilesYmlFormatter formatter){
-        super(rootDeployment,modelDeployment, modelDeploymentShortAlias);
+    public TemplatesGenerator(String rootDeployment, String modelDeployment, String modelDeploymentShortAlias, String modelDeploymentSeparator, VarsFilesYmlFormatter formatter){
+        super(rootDeployment,modelDeployment, modelDeploymentShortAlias, modelDeploymentSeparator);
         this.formatter = formatter;
     }
 

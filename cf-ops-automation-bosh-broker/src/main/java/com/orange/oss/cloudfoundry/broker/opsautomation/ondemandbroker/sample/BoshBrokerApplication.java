@@ -226,7 +226,8 @@ public class BoshBrokerApplication {
             @Override
             public void preGetLastOperation(Context ctx) { skipPaasTemplateGitCloneAndPush(ctx); }
             @Override
-            public void preDelete(Context ctx) { skipPaasTemplateGitCloneAndPush(ctx); }
+            //public void preDelete(Context ctx) { skipPaasTemplateGitCloneAndPush(ctx); }
+            public void preDelete(Context ctx) { registerPaasTemplatesBranches(ctx); }
 
             //for yet unimplemented steps, don't clone paas-templates
             @Override

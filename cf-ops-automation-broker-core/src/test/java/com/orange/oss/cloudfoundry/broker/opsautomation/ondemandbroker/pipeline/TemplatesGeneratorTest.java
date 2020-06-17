@@ -124,6 +124,47 @@ public class TemplatesGeneratorTest extends StructureGeneratorImplTest{
         assertThat("Template directory doesn't exist", Files.exists(templateDir));
     }
 
+
+    @Test
+    public void check_that_service_instance_directories_and_files_are_removed() {
+        //Given a model structure and a generated service instance structure
+        Structure modelStructure = new Structure.StructureBuilder(this.workDir)
+                .withFile(new String[]{this.deploymentProperties.getRootDeployment(), this.deploymentProperties.getModelDeployment()},
+                        DeploymentConstants.DEPLOYMENT_DEPENDENCIES_FILENAME)
+                .build();
+        CoabVarsFileDto coabVarsFileDto = aTypicalUserProvisionningRequest();
+        this.templatesGenerator.generate(this.workDir,SERVICE_INSTANCE_ID,coabVarsFileDto);
+
+        Path serviceInstanceDir = StructureGeneratorHelper.generatePath(this.workDir,
+                this.deploymentProperties.getRootDeployment(),
+                this.templatesGenerator.computeDeploymentName(SERVICE_INSTANCE_ID)
+        );
+        Path coabVarsFile = StructureGeneratorHelper.generatePath(this.workDir,
+                this.deploymentProperties.getRootDeployment(),
+                this.templatesGenerator.computeDeploymentName(SERVICE_INSTANCE_ID),
+                DeploymentConstants.TEMPLATE,
+                DeploymentConstants.COAB + DeploymentConstants.HYPHEN + DeploymentConstants.VARS + DeploymentConstants.YML_EXTENSION
+        );
+
+        assertThat("Service instance directory should exist", Files.exists(serviceInstanceDir));
+        assertThat("Coab vars file should exist", Files.exists(coabVarsFile));
+
+
+        //When
+        this.templatesGenerator.removeServiceInstanceDirectory(this.workDir, SERVICE_INSTANCE_ID);
+
+        //Then
+        assertThat("Service instance directory still exists and should not", Files.notExists(serviceInstanceDir));
+        assertThat("Coab vars file still exist and should not", Files.notExists(coabVarsFile));
+
+
+    }
+
+
+
+
+
+
     @Test
     public void check_that_coab_vars_file_is_generated() throws IOException {
         //Given

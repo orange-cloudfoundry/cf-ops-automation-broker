@@ -493,21 +493,27 @@ public class BoshProcessorTest {
         Context context = new Context();
         context.contextKeys.put(ProcessorChainServiceInstanceService.DELETE_SERVICE_INSTANCE_REQUEST, request);
         context.contextKeys.put(SECRETS_REPOSITORY_ALIAS_NAME + GitProcessorContext.workDir.toString(), aGitRepoWorkDir());
+        context.contextKeys.put(TEMPLATES_REPOSITORY_ALIAS_NAME + GitProcessorContext.workDir.toString(), aGitRepoWorkDir());
+
 
         //Given a mock behaviour
         SecretsGenerator secretsGenerator = mock(SecretsGenerator.class);
+        TemplatesGenerator templatesGenerator = mock(TemplatesGenerator.class);
 
         //given a configured timeout within tracker
         PipelineCompletionTracker tracker = aCompletionTracker();
 
 
         //When
-        BoshProcessor boshProcessor = new BoshProcessor(TEMPLATES_REPOSITORY_ALIAS_NAME, SECRETS_REPOSITORY_ALIAS_NAME, null, secretsGenerator, tracker, "Cassandra", "c", "_","https://static-dashboard.com");
+        BoshProcessor boshProcessor = new BoshProcessor(TEMPLATES_REPOSITORY_ALIAS_NAME, SECRETS_REPOSITORY_ALIAS_NAME, templatesGenerator, secretsGenerator, tracker, "Cassandra", "c", "_","https://static-dashboard.com");
         boshProcessor.preDelete(context);
 
         //Then verify parameters and delegation on calls
         verify(secretsGenerator).checkPrerequisites(aGitRepoWorkDir());
         verify(secretsGenerator).remove(aGitRepoWorkDir(), SERVICE_INSTANCE_ID);
+
+        verify(templatesGenerator).checkPrerequisites(aGitRepoWorkDir());
+        verify(templatesGenerator).remove(aGitRepoWorkDir(), SERVICE_INSTANCE_ID);
 
         //Then verify populated context
         DeleteServiceInstanceResponse serviceInstanceResponse = (DeleteServiceInstanceResponse) context.contextKeys.get(ProcessorChainServiceInstanceService.DELETE_SERVICE_INSTANCE_RESPONSE);

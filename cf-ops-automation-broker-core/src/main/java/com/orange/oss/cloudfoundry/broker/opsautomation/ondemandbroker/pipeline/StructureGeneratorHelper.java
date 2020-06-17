@@ -9,6 +9,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
@@ -91,6 +92,21 @@ public class StructureGeneratorHelper {
             //Delete file
             Files.deleteIfExists(file);
 
+        } catch (IOException e) {
+            throw new DeploymentException(DeploymentConstants.REMOVAL_EXCEPTION, e);
+        }
+    }
+
+    public static void removeRecursivelyDirectory(Path rootPath, String[] pathElements) {
+        try {
+            //Compute path
+            Path dir = StructureGeneratorHelper.generatePath(rootPath, pathElements);
+
+            //Delete directory
+            Files.walk(dir)
+                    .sorted(Comparator.reverseOrder())
+                    .map(Path::toFile)
+                    .forEach(File::delete);
         } catch (IOException e) {
             throw new DeploymentException(DeploymentConstants.REMOVAL_EXCEPTION, e);
         }

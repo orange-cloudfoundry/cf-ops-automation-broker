@@ -95,6 +95,28 @@ public class SecretsGeneratorTest extends StructureGeneratorImplTest{
     }
 
     @Test
+    public void check_that_enable_deployment_file_is_removed() {
+        //Given
+        Structure deploymentStructure = new Structure.StructureBuilder(this.workDir)
+                .withDirectoryHierarchy(this.deploymentProperties.getRootDeployment(), this.secretsGenerator.computeDeploymentName(SERVICE_INSTANCE_ID))
+                .build();
+
+        this.secretsGenerator.generateEnableDeploymentFile(this.workDir, SERVICE_INSTANCE_ID);
+
+        Path targetEnableDeploymentFile = StructureGeneratorHelper.generatePath(this.workDir,
+                this.deploymentProperties.getRootDeployment(),
+                this.secretsGenerator.computeDeploymentName(SERVICE_INSTANCE_ID),
+                DeploymentConstants.ENABLE_DEPLOYMENT_FILENAME);
+        assertThat("Enable deployment file should exist :" + targetEnableDeploymentFile, Files.exists(targetEnableDeploymentFile));
+
+        //When
+        this.secretsGenerator.removeEnableDeploymentFile(this.workDir, SERVICE_INSTANCE_ID);
+
+        //Then
+        assertThat("Enable deployment file still exists and should not", Files.notExists(targetEnableDeploymentFile));
+    }
+
+    @Test
     public void check_that_coa_produced_manifest_is_parametrized()  {
         //Given a DeploymentProperties for cassandra with "m" prefix (e.g. mongo)
         secretsGenerator = new SecretsGenerator("coab-depls",

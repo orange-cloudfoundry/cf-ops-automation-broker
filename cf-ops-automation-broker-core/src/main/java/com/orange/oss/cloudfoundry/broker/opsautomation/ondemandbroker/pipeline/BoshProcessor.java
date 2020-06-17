@@ -134,14 +134,19 @@ public class BoshProcessor extends DefaultBrokerProcessor {
 
         //Need to retrieve workdir from context
         Path secretsWorkDir = getPaasSecret(ctx);
+        Path templatesWorkDir = getPaasTemplate(ctx);
 
         //Need to retrieve delete request from context
         DeleteServiceInstanceRequest request = (DeleteServiceInstanceRequest) ctx.contextKeys.get(ProcessorChainServiceInstanceService.DELETE_SERVICE_INSTANCE_REQUEST);
         String serviceInstanceId = request.getServiceInstanceId();
 
-        //Check pre-requisites and generate paas-secrets structure
+        //Check pre-requisites and remove paas-secrets structure
         this.secretsGenerator.checkPrerequisites(secretsWorkDir);
         this.secretsGenerator.remove(secretsWorkDir, serviceInstanceId);
+
+        //Check pre-requisites and remove paas-templates structure
+        this.templatesGenerator.checkPrerequisites(templatesWorkDir);
+        this.templatesGenerator.remove(templatesWorkDir, serviceInstanceId);
 
         //Create response and put it into context
         DeleteServiceInstanceResponse deletionResponse = DeleteServiceInstanceResponse.builder()

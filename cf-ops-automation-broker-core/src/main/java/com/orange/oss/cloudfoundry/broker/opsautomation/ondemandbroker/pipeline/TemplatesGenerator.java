@@ -66,6 +66,11 @@ public class TemplatesGenerator extends StructureGeneratorImpl{
 
     }
 
+    public void remove(Path workDir, String serviceInstanceId) {
+        //Remove enable deployment file
+        this.removeServiceInstanceDirectory(workDir, serviceInstanceId);
+    }
+
     protected void checkThatTemplateDirectoryExists(Path workDir){
         Path templateDir = StructureGeneratorHelper.generatePath(workDir,
                 this.rootDeployment,
@@ -214,4 +219,8 @@ public class TemplatesGenerator extends StructureGeneratorImpl{
         return ! StructureGeneratorHelper.getDirectory(path).contentEquals(DeploymentConstants.TEMPLATE);
     }
 
+    protected void removeServiceInstanceDirectory(Path workDir, String serviceInstanceId) {
+        String[] pathElements = new String[] {this.rootDeployment, this.computeDeploymentName(serviceInstanceId)};
+        StructureGeneratorHelper.removeRecursivelyDirectory(workDir, pathElements);
+    }
 }

@@ -147,6 +147,40 @@ public class StructureGeneratorHelperTest {
         assertThat("File still exists", Files.notExists(expectedPath));
     }
 
+    @Test
+    public void check_remove_directory() {
+        //Given a root path and path elements to create
+        Path rootPath = temporaryFolderRoot.toPath();
+        Path aPath = rootPath.resolve("aPath");
+        try {
+            //noinspection ResultOfMethodCallIgnored
+            aPath.toFile().mkdir();
+            Files.createFile(aPath.resolve("aFile"));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        //When
+        Path expectedPath = aPath.resolve("aFile");
+        assertThat("File exists", Files.exists(expectedPath));
+        StructureGeneratorHelper.removeRecursivelyDirectory(rootPath, new String[]{"aPath"});
+
+        //Then
+        assertThat("File still exists", Files.notExists(aPath));
+    }
+
+    @Test
+    public void check_remove_missing_directory() {
+        //Given a root path and path elements to create
+        Path rootPath = temporaryFolderRoot.toPath();
+
+        //When
+        StructureGeneratorHelper.removeRecursivelyDirectory(rootPath, new String[]{"aMissingPath"});
+
+        //Then
+        //No exception is thrown
+    }
+
 
     @Test
     public void check_find_and_replace() {

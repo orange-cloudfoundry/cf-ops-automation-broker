@@ -1,19 +1,30 @@
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline;
 
-import org.apache.commons.io.IOUtils;
-
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.*;
+import java.nio.file.DirectoryStream;
+import java.nio.file.FileSystems;
+import java.nio.file.FileVisitResult;
+import java.nio.file.Files;
+import java.nio.file.LinkOption;
+import java.nio.file.Path;
+import java.nio.file.PathMatcher;
+import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.io.IOUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class StructureGeneratorHelper {
+    private static Logger logger = LoggerFactory.getLogger(StructureGeneratorHelper.class.getName());
+
 
     public static Path generatePath(Path rootPath, String... pathElements) {
         Path generatedPath = rootPath;
@@ -101,6 +112,11 @@ public class StructureGeneratorHelper {
         try {
             //Compute path
             Path dir = StructureGeneratorHelper.generatePath(rootPath, pathElements);
+
+            if (! Files.exists(dir)) {
+                logger.info("Asked to delete empty dir at {} Returning successfully", dir);
+                return;
+            }
 
             //Delete directory
             Files.walk(dir)

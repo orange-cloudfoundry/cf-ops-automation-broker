@@ -1,19 +1,39 @@
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.sample;
 
-import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.*;
+import java.time.Clock;
+import java.util.ArrayList;
+import java.util.List;
+
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.GitManager;
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.GitProcessor;
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.GitProcessorContext;
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.GitProperties;
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.PooledGitManager;
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.PooledGitRepoFactory;
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.RetrierGitManager;
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.SimpleGitManager;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.osbclient.OsbClientFactory;
-import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.*;
-import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.*;
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.BoshProcessor;
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.DeploymentProperties;
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.OsbProxy;
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.OsbProxyImpl;
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.PipelineCompletionTracker;
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.PipelineProperties;
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.SecretsGenerator;
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.TemplatesGenerator;
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.VarsFilesYmlFormatter;
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.BrokerProcessor;
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.Context;
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.DefaultBrokerProcessor;
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.DefaultBrokerSink;
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.ProcessorChain;
 import net.jodah.failsafe.RetryPolicy;
+
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
-
-import java.time.Clock;
-import java.util.ArrayList;
-import java.util.List;
 
 @SpringBootApplication
 @EnableConfigurationProperties({GitProperties.class, PipelineProperties.class, OsbProxyProperties.class})
@@ -203,7 +223,7 @@ public class BoshBrokerApplication {
         List<BrokerProcessor> processors = new ArrayList<>();
 
         processors.add(paasTemplateContextFilter);
-        // git push wil trigger 1st for paas-templates and then 2nd for paas-secrets,
+        // git push will trigger 1st for paas-templates and then 2nd for paas-secrets,
         // reducing occurences of fail-fast consistency check failures
         // see related https://github.com/orange-cloudfoundry/cf-ops-automation/issues/201
         processors.add(secretsGitProcessor);

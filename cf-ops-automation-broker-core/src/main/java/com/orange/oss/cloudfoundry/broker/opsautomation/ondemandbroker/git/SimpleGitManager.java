@@ -338,12 +338,12 @@ public class SimpleGitManager implements GitManager {
                 logger.info(prefixLog("staged commit: "
                         + " added:" + status.getAdded()
                         + " changed:" + status.getChanged()
-                        + " deleted:" + status.getRemoved()
+                        + " deleted:" + status.getRemoved() + " with message [" + getCommitMessage(ctx) + "]"
                 ));
                 CommitCommand commitC = git.commit().setMessage(getCommitMessage(ctx));
 
                 RevCommit revCommit = commitC.call();
-                logger.info(prefixLog("commited files in " + revCommit.toString()));
+                logger.info(prefixLog("committed files in " + revCommit.toString()));
 
             } else {
                 logger.info(prefixLog("No changes to commit."));
@@ -400,25 +400,31 @@ public class SimpleGitManager implements GitManager {
         logger.info(prefixLog("pushed ..."));
         List<RemoteRefUpdate.Status> failedStatuses = extractFailedStatuses(pushResults);
 
-        if (failedStatuses.contains(RemoteRefUpdate.Status.REJECTED_NONFASTFORWARD)) {
-            logger.info(prefixLog("Failed to push with status {}"), failedStatuses);
-            logger.info(prefixLog("pull and rebasing from origin/{} ..."), getImplicitRemoteBranchToDisplay(ctx));
-            PullResult pullRebaseResult = git.pull().setRebase(true).setCredentialsProvider(cred).call();
-            if (!pullRebaseResult.isSuccessful()) {
-                logger.info(prefixLog("Failed to pull rebase: ") + pullRebaseResult);
-                throw new RuntimeException("failed to push: remote conflict. pull rebased failed:" + pullRebaseResult);
-            }
-            logger.info(prefixLog("rebased from origin/{}"), getImplicitRemoteBranchToDisplay(ctx));
-            logger.debug(prefixLog("pull details:") + ToStringBuilder.reflectionToString(pullRebaseResult));
+        if (! failedStatuses.isEmpty()) {
+            if (failedStatuses.contains(RemoteRefUpdate.Status.REJECTED_NONFASTFORWARD)) {
+                logger.info(prefixLog("Failed to push with status {}"), failedStatuses);
+                logger.info(prefixLog("pull and rebasing from origin/{} ..."), getImplicitRemoteBranchToDisplay(ctx));
+                PullResult pullRebaseResult = git.pull().setRebase(true).setCredentialsProvider(cred).call();
+                if (!pullRebaseResult.isSuccessful()) {
+                    logger.info(prefixLog("Failed to pull rebase: ") + pullRebaseResult);
+                    throw new RuntimeException("failed to push: remote conflict. pull rebased failed:" + pullRebaseResult);
+                }
+                logger.info(prefixLog("rebased from origin/{}"), getImplicitRemoteBranchToDisplay(ctx));
+                logger.debug(prefixLog("pull details:") + ToStringBuilder.reflectionToString(pullRebaseResult));
 
-            logger.info(prefixLog("re-pushing ..."));
-            pushCommand = git.push().setCredentialsProvider(cred);
-            pushResults = pushCommand.call();
-            logger.info(prefixLog("re-pushed ..."));
-            List<RemoteRefUpdate.Status> secondPushFailures = extractFailedStatuses(pushResults);
-            if (!secondPushFailures.isEmpty()) {
-                logger.info(prefixLog("Failed to re-push with status {}"), failedStatuses);
-                throw new RuntimeException("failed to push: remote conflict. pull rebased failed:" + pullRebaseResult);
+                logger.info(prefixLog("re-pushing ..."));
+                pushCommand = git.push().setCredentialsProvider(cred);
+                pushResults = pushCommand.call();
+                logger.info(prefixLog("re-pushed ..."));
+                List<RemoteRefUpdate.Status> secondPushFailures = extractFailedStatuses(pushResults);
+                if (!secondPushFailures.isEmpty()) {
+                    logger.info(prefixLog("Failed to re-push with status {}"), failedStatuses);
+                    throw new RuntimeException("failed to push: remote conflict. pull rebased failed:" + pullRebaseResult);
+                }
+            } else {
+                logger.info(prefixLog("unrecoverable push failure: {} with full details: {}"), failedStatuses,
+                    prettyPrint(pushResults));
+                throw new RuntimeException("unrecoverable push failure : " + pushResults);
             }
         }
 

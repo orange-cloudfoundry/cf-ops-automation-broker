@@ -20,12 +20,21 @@ jobs:
           command: |
             mvn -q install:help --settings settings.xml
             mvn install --settings settings.xml
+      # uploads the test metadata from the `target/surefire-reports` directory so that it can show up in the CircleCI dashboard.
+      # Upload test results for display in Test Summary: https://circleci.com/docs/2.0/collect-test-data/
+      # See https://circleci.com/docs/2.0/collect-test-data/#maven-surefire-plugin-for-java-junit-results
       - run:
           name: Save test results
+          # pending aggregation of multi modules report into a single html file
           command: |
-            mkdir -p ~/junit/
-            find . -type f -regex ".*/target/surefire-reports/.*xml" -exec cp {} ~/junit/ \;
+            mkdir -p ~/test-results/junit/
+            find . -type f -regex ".*/target/surefire-reports/.*xml" -exec cp {} ~/test-results/junit/ \;
+            for f in $(find . -type f -regex ".*/target/site/.*.html"); do module=$(echo "$f" | cut -d "/" -f2); shortname=$(basename $f); cp $f ~/test-results/junit/${module}_${shortname}; done
           when: always
+      - store_test_results:
+          path: ~/test-results
+#      - store_artifacts:
+#          path: ~/test-results
       - run:
           name: save jar artefacts
           command: |
@@ -34,8 +43,6 @@ jobs:
           when: always
       - store_artifacts:
           path: ./artefacts
-      - store_test_results:
-          path: ~/junit
       # run whitesource security scans on the built artefacts
       - run: ./whitesource-scan.sh -apiKey $WHITESOURCE_API_KEY -c whitesource_config.properties -project circle-ci_test -d ~/
       #- run: bash <(curl -s -L https://github.com/whitesource/unified-agent-distribution/raw/master/standAlone/wss_agent.sh) -apiKey $WHITESOURCE_API_KEY -c whitesource_config.properties -project circle-ci_test -d ~/

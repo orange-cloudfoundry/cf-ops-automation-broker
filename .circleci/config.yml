@@ -12,6 +12,21 @@ jobs:
       - checkout
       - attach_workspace:
           at: ~/cf-ops-automation-broker
+      # Fetch all dependencies once to be able to cache them and speed up subsequent builds
+      #  See https://circleci.com/docs/2.0/language-java-maven/ and https://github.com/qaware/go-offline-maven-plugin
+
+      - run:
+          name: Generate cumulative pom.xml checksum
+          command: |
+            find . -type f -name "pom.xml" -exec sh -c "sha256sum {} >> ~/pom-checksum.tmp" \;
+            sort -o ~/pom-checksum ~/pom-checksum.tmp
+          when: always
+      - restore_cache:
+          key: cf-ops-automation-broker-{{ checksum "~/pom-checksum" }}
+
+      #      - run: mvn dependency:go-offline # gets the project dependencies
+      - run: mvn de.qaware.maven:go-offline-maven-plugin:resolve-dependencies #gets the project dependencies include submodules
+
       - run:
           name: Build
           environment:
@@ -20,6 +35,13 @@ jobs:
           command: |
             mvn -q install:help --settings settings.xml
             mvn install --settings settings.xml
+            mvn surefire-report:report-only surefire-report:failsafe-report-only
+
+      - save_cache: # saves the project dependencies once surefire completed
+          paths:
+            - ~/.m2
+          key: cf-ops-automation-broker-{{ checksum "~/pom-checksum" }}
+
       # uploads the test metadata from the `target/surefire-reports` directory so that it can show up in the CircleCI dashboard.
       # Upload test results for display in Test Summary: https://circleci.com/docs/2.0/collect-test-data/
       # See https://circleci.com/docs/2.0/collect-test-data/#maven-surefire-plugin-for-java-junit-results

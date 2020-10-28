@@ -1,5 +1,5 @@
 Implement static dashboard url (#47 step 2)
-
+  
 - implement the `GET /v2/service_instances/:instance_id` 
    - DefaultBrokerProcessor.preGetServiceInstance() 
    - document that operator should configure the catalog to return `instances_retrievable=true`  

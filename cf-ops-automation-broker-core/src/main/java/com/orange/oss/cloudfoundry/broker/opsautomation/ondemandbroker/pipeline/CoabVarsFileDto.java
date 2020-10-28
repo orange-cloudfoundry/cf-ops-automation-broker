@@ -1,6 +1,7 @@
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import javax.validation.Valid;
@@ -9,6 +10,8 @@ import javax.validation.constraints.Pattern;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+
+import static java.util.Arrays.asList;
 
 /**
  * Formats vars files with user inputs to COA deployment models
@@ -21,6 +24,21 @@ public class CoabVarsFileDto {
      */
     public static final String WHITE_LISTED_PATTERN = "[\\w\\d _./-]*";
     public static final String WHITE_LISTED_MESSAGE = "must only contain a-Z, 0-9, space, _, dot, slash and - chars";
+
+    /**
+     * Name of the maps key (and subkeys) which should be applied relaxed patterns
+     * This is designed to support K8S service catalog annotations which contain specific chars that we ignore
+     */
+    public static final List<String> RELAXED_KEY_NAMES= asList("brokered_service_originating_identity_username", "brokered_service_originating_identity_groups");
+    /**
+     * \d 	A digit: [0-9]
+     * \w 	A word character: [a-zA-Z_0-9]
+     */
+    public static final String RELAXED_WHITE_LISTED_PATTERN = "[\\w\\d _.,/\\-:\\[\\]\"]*";
+    public static final String RELAXED_WHITE_LISTED_MESSAGE = "must only contain a-Z, 0-9, space, _ (underscore), . (dot), , " +
+        "(comma), : (column), left and right brackets ([]), quote (\"), slash (/) and dash (-) chars";
+
+
     /**
      * Bosh deployment name to assign in the manifest by operators file
      */

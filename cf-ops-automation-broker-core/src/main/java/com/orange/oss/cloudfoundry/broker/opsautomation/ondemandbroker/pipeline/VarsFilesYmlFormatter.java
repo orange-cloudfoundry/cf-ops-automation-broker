@@ -19,7 +19,10 @@ public class VarsFilesYmlFormatter {
     public static final int MAX_SERIALIZED_SIZE = 3000;
 
     private final Validator validator;
-    private final Pattern whiteListedPattern = Pattern.compile(CoabVarsFileDto.WHITE_LISTED_PATTERN);
+
+    private Pattern relaxedWhiteListedPattern = Pattern.compile(CoabVarsFileDto.RELAXED_WHITE_LISTED_PATTERN);
+
+    private Pattern whiteListedPattern = Pattern.compile(CoabVarsFileDto.WHITE_LISTED_PATTERN);
 
 
     public VarsFilesYmlFormatter() {
@@ -53,17 +56,29 @@ public class VarsFilesYmlFormatter {
         //until we bump to springboot 2.0, implementing it manually
         Map<String, Object> parameters = coabVarsFileDto.parameters;
         for (Map.Entry<String, Object> entry : parameters.entrySet()) {
-            validateParamsMapEntry(sb, entry.getKey(), entry.getValue());
+            String key = entry.getKey();
+            Pattern whiteListedPattern;
+            String whiteListedMessage;
+            if (CoabVarsFileDto.RELAXED_KEY_NAMES.contains(key)) {
+                //Relax pattern for any subkey of "annotations"
+                whiteListedPattern = relaxedWhiteListedPattern;
+                whiteListedMessage = CoabVarsFileDto.RELAXED_WHITE_LISTED_MESSAGE;
+            } else {
+                whiteListedPattern = this.whiteListedPattern;
+                whiteListedMessage = CoabVarsFileDto.WHITE_LISTED_MESSAGE;
+            }
+            validateParamsMapEntry(sb, key, entry.getValue(), whiteListedPattern, whiteListedMessage);
         }
         if (sb.length() >0) {
             throw new UserFacingRuntimeException("Unsupported characters in input: " + sb.toString());
         }
     }
 
-    private void validateParamsMapEntry(StringBuilder sb, String key, Object value) {
+    private void validateParamsMapEntry(StringBuilder sb, String key, Object value,
+        Pattern whiteListedPattern, String whiteListedMessage) {
         if (! whiteListedPattern.matcher(key).matches()) {
             //noinspection StringConcatenationInsideStringBufferAppend
-            sb.append("parameter name " + key + " " + CoabVarsFileDto.WHITE_LISTED_MESSAGE);
+            sb.append("parameter name " + key + " " + whiteListedMessage);
         }
         if (
                 ! (value instanceof String)  &&
@@ -79,7 +94,7 @@ public class VarsFilesYmlFormatter {
             String stringValue = (String) value;
             if (! whiteListedPattern.matcher(stringValue).matches()) {
                 //noinspection StringConcatenationInsideStringBufferAppend
-                sb.append("parameter " + key + " " + CoabVarsFileDto.WHITE_LISTED_MESSAGE + " whereas it has content:" + stringValue);
+                sb.append("parameter " + key + " " + whiteListedMessage + " whereas it has content:" + stringValue);
             }
         }
         if (value instanceof Map) {
@@ -92,7 +107,15 @@ public class VarsFilesYmlFormatter {
                         "has " + valueMapEntry.getKey().getClass().getName());
                     continue;
                 }
-                validateParamsMapEntry(sb, (String) valueMapEntry.getKey(), valueMapEntry.getValue());
+                if (CoabVarsFileDto.RELAXED_KEY_NAMES.contains(valueMapEntry.getKey())) {
+                    //Relax pattern for any subkey of "annotations"
+                    validateParamsMapEntry(sb, key + "." + valueMapEntry.getKey(), valueMapEntry.getValue(),
+                        relaxedWhiteListedPattern,
+                        CoabVarsFileDto.RELAXED_WHITE_LISTED_MESSAGE);
+                } else {
+                    validateParamsMapEntry(sb, key + "."  + valueMapEntry.getKey(), valueMapEntry.getValue(),
+                        whiteListedPattern, whiteListedMessage);
+                }
             }
         }
     }

@@ -26,7 +26,33 @@ public class VarsFilesYmlFormatterTest {
     private static Logger logger = LoggerFactory.getLogger(VarsFilesYmlFormatterTest.class.getName());
 
     @Test
-    public void rejects_invalid_patterns() throws JsonProcessingException {
+    public void handles_whitelisted_osb_cmdn_k8s_svcat_patterns() throws IOException {
+        //cmdbJson_k8s_profile with special characters accepted
+        assertParamJsonValueAccepted("{\n" +
+            "  \"annotations\": {\n" +
+            "    \"brokered_service_originating_identity_groups\": \"[\\\"system:serviceaccounts\\\",\\\"system:serviceaccounts:catalog\\\",\\\"system:authenticated\\\"]\",\n" +
+            "    \"brokered_service_originating_identity_username\": \"system:serviceaccount:catalog:service-catalog-controller-manager\"\n" +
+            "  },\n" +
+            "  \"labels\": {\n" +
+            "    \"brokered_service_context_clusterid\": \"ed99367d-2998-46c6-b700-59187141faf9\",\n" +
+            "    \"brokered_service_instance_guid\": \"3c2def14-7073-4398-a901-bc4929b765aa\",\n" +
+            "    \"brokered_service_originating_identity_uid\": \"d624ecee-99b0-4fd1-974f-0428bd9bc503\",\n" +
+            "    \"brokered_service_context_instance_name\": \"poctv-mongodb-dedicated\",\n" +
+            "    \"brokered_service_context_namespace\": \"fmt-private-mkaasq1\"\n" +
+            "  }\n" +
+            "}");
+
+        //white listed key with invalid character
+        assertParamJsonValueRejected(
+            "{\n" +
+                "  \"brokered_service_originating_identity_groups\": {\n" +
+                "    \"a-malicious-sub-key-with-variable\": \"$VARIABLE\" \n" +
+                "  }\n" +
+                "}");
+    }
+
+    @Test
+    public void rejects_invalid_patterns() throws IOException {
         assertDeploymentNameAndParamValueRejected("`a_malicious_shell_command_to_inject_in_bosh_templates`");
         assertDeploymentNameAndParamValueRejected("``");
         assertDeploymentNameAndParamValueRejected("$(a_malicious_shell_command_to_inject_in_bosh_templates)");
@@ -51,7 +77,9 @@ public class VarsFilesYmlFormatterTest {
         assertParamValueAccepted("cacheSizeMb");
         assertParamValueAccepted("10");
         assertParamValueAccepted("10.3");
-        String cmdbJson = "{\n" +
+
+        //cmdbJson_cf_profile without special characters
+        assertParamJsonValueAccepted("{\n" +
             "    \"labels\": {\n" +
             "      \"brokered_service_instance_guid\": \"3aa96c94-1d01-4389-ab4f-260d99257215\",\n" +
             "      \"brokered_service_context_organization_guid\": \"c2169b61-9360-4d67-968c-575f3a10edf5\",\n" +
@@ -65,10 +93,7 @@ public class VarsFilesYmlFormatterTest {
             "      \"brokered_service_api_info_location\": \"api.mycf.org/v2/info\",\n" +
             "      \"brokered_service_context_organization_name\": \"osb-cmdb-brokered-services-org-client-0\"\n" +
             "    }\n" +
-            "  }\n";
-        Map osbCmdbParamValue = new ObjectMapper().readValue(cmdbJson, Map.class);
-        assertParamValueAccepted(osbCmdbParamValue);
-
+            "  }\n");
     }
 
     private void assertTooLongContentIsRejected(String aTooLongString) throws JsonProcessingException {
@@ -133,6 +158,30 @@ public class VarsFilesYmlFormatterTest {
             assertThat(e.getMessage()).contains("aparam");
         }
     }
+
+    protected void assertParamJsonValueRejected(String jsonParamValueToDeserialize) throws IOException {
+        Map deserializedJson = (Map) parseFromYml(jsonParamValueToDeserialize, Map.class);
+        assertParamValueRejected(deserializedJson);
+    }
+
+    protected void assertParamValueRejected(Object paramValue) throws JsonProcessingException {
+        CoabVarsFileDto coabVarsFileDto = aTypicalUserProvisionningRequest();
+        coabVarsFileDto.deployment_name = "aName";
+        coabVarsFileDto.parameters.put("aparam", paramValue);
+        //noinspection EmptyCatchBlock
+        try {
+            formatter.formatAsYml(coabVarsFileDto);
+            fail("expected " + paramValue + "to be rejected");
+        } catch (UserFacingRuntimeException e) {
+            assertThat(e.getMessage()).contains("aparam");
+        }
+    }
+
+    protected void assertParamJsonValueAccepted(String jsonParamValueToDeserialize) throws IOException {
+        Map deserializedJson = (Map) parseFromYml(jsonParamValueToDeserialize, Map.class);
+        assertParamValueAccepted(deserializedJson);
+    }
+
 
     protected void assertParamValueAccepted(Object paramValue) throws JsonProcessingException {
         CoabVarsFileDto coabVarsFileDto = aTypicalUserProvisionningRequest();

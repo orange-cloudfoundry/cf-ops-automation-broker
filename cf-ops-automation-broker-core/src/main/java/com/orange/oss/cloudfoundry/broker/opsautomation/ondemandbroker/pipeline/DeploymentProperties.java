@@ -111,7 +111,9 @@ public class DeploymentProperties {
     }
 
     public void setServiceInstanceReadOnlyMessage(String serviceInstanceReadOnlyMessage) {
-        this.serviceInstanceReadOnlyMessage = serviceInstanceReadOnlyMessage;
+        if (serviceInstanceReadOnlyMessage != null && ! serviceInstanceReadOnlyMessage.isEmpty()) {
+            this.serviceInstanceReadOnlyMessage = serviceInstanceReadOnlyMessage;
+        }
     }
 
 }

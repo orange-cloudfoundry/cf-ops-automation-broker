@@ -1,5 +1,6 @@
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import org.springframework.boot.autoconfigure.logging.ConditionEvaluationReportLoggingListener;
@@ -19,6 +20,8 @@ class DeploymentPropertiesTest {
 	private final ApplicationContextRunner contextRunner = new ApplicationContextRunner()
 		.withInitializer(conditionEvaluationReportLoggingListener)
 		.withUserConfiguration(LoadPropertiesConfiguration.class);
+
+	DeploymentProperties deploymentProperties;
 
 
 	@Configuration
@@ -40,6 +43,23 @@ class DeploymentPropertiesTest {
 				assertThat(deploymentProperties.getServiceInstanceReadOnlyMessage()).isEqualTo(DeploymentProperties.DEFAULT_READ_ONLY_MESSAGE);
 				assertThat(deploymentProperties.isServiceInstanceReadOnlyMode()).isEqualTo(false);
 			});
+	}
+
+	@BeforeEach
+	void setUp() {
+		deploymentProperties = new DeploymentProperties();
+	}
+
+	@Test
+	void only_assigns_default_message_value() {
+		assertThat(deploymentProperties.getServiceInstanceReadOnlyMessage()).isEqualTo(DeploymentProperties.DEFAULT_READ_ONLY_MESSAGE);
+	}
+	@Test
+	void only_assigns_message_if_not_empty() {
+		deploymentProperties.setServiceInstanceReadOnlyMessage("");
+		assertThat(deploymentProperties.getServiceInstanceReadOnlyMessage()).isEqualTo(DeploymentProperties.DEFAULT_READ_ONLY_MESSAGE);
+		deploymentProperties.setServiceInstanceReadOnlyMessage("non-empty-custom-value");
+		assertThat(deploymentProperties.getServiceInstanceReadOnlyMessage()).isEqualTo("non-empty-custom-value");
 	}
 
 }

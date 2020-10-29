@@ -1,11 +1,18 @@
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline;
 
+import java.lang.reflect.Modifier;
+import java.nio.file.Path;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+
 import com.google.gson.ExclusionStrategy;
 import com.google.gson.FieldAttributes;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import org.springframework.cloud.servicebroker.exception.ServiceBrokerException;
 import org.springframework.cloud.servicebroker.exception.ServiceInstanceDoesNotExistException;
 import org.springframework.cloud.servicebroker.model.ServiceBrokerRequest;
@@ -14,13 +21,11 @@ import org.springframework.cloud.servicebroker.model.binding.CreateServiceInstan
 import org.springframework.cloud.servicebroker.model.binding.DeleteServiceInstanceBindingRequest;
 import org.springframework.cloud.servicebroker.model.catalog.Plan;
 import org.springframework.cloud.servicebroker.model.catalog.ServiceDefinition;
-import org.springframework.cloud.servicebroker.model.instance.*;
-
-import java.lang.reflect.Modifier;
-import java.nio.file.Path;
-import java.time.Clock;
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
+import org.springframework.cloud.servicebroker.model.instance.CreateServiceInstanceRequest;
+import org.springframework.cloud.servicebroker.model.instance.DeleteServiceInstanceRequest;
+import org.springframework.cloud.servicebroker.model.instance.GetLastServiceOperationRequest;
+import org.springframework.cloud.servicebroker.model.instance.GetLastServiceOperationResponse;
+import org.springframework.cloud.servicebroker.model.instance.OperationState;
 
 
 public class PipelineCompletionTracker {
@@ -186,6 +191,8 @@ public class PipelineCompletionTracker {
         boolean boshDeploymentAvailable = secretsReader.isBoshDeploymentAvailable(secretsWorkDir, serviceInstanceId);
 
         if (!boshDeploymentAvailable) {
+            logger.warn("Received bind/unbind request for a deployment not available, i.e. whose manifest is not " +
+                "present in secret for id {}", serviceInstanceId);
             throw new ServiceInstanceDoesNotExistException(serviceInstanceId);
         }
         if (osbProxy == null) {

@@ -22,6 +22,8 @@ public class ReadOnlyServiceInstanceBrokerProcessor extends DefaultBrokerProcess
 		Assert.notNull(serviceInstanceReadOnlyMessage, "expected non null serviceInstanceReadOnlyMessage");
 		this.serviceInstanceReadOnlyMode = serviceInstanceReadOnlyMode;
 		this.serviceInstanceReadOnlyMessage = serviceInstanceReadOnlyMessage;
+		logger.info("serviceInstanceReadOnlyMode={} with message={}", serviceInstanceReadOnlyMode,
+			serviceInstanceReadOnlyMessage);
 	}
 
 	@Override

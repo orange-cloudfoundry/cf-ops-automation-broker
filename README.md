@@ -164,6 +164,10 @@ previous_values:
 
 Note: for security reasons, input validation is applied on the name and value of arbitrary params to prevent various injections (such as reading from credhub, spruce, file system injection, yml loading or reference expansions), and only so alphabetical characters, numbers are supported.
 
+## Read-only mode
+
+When the service instance read-only mode is configured (see [DeploymentProperties.java](src/main/java/com/orange/oss/cloudfoundry/broker/opsautomation/ondemandbroker/pipeline/DeploymentProperties.java)), then service instance operations (create/update/delete) are rejected, while service binding operations (create/delete) are still accepted. This enables to perform maintenance on the underlying COA/git branches infrastructure while not risking corrupted COA inventory and not imposing full control plan downtime to coab users. 
+
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) document

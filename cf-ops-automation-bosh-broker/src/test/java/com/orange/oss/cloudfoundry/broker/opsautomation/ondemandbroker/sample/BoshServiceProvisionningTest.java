@@ -32,10 +32,12 @@ import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.OsbBuilderHelper;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.OsbConstants;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.OsbProxyImpl;
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.ReadOnlyServiceInstanceBrokerProcessor;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.SecretsGenerator;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.tools.Copy;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.Context;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.terraform.TerraformModuleHelper;
+import feign.FeignException;
 import io.restassured.RestAssured;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpStatus;
@@ -45,6 +47,8 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -71,11 +75,11 @@ import static com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.sa
 import static io.restassured.RestAssured.basic;
 import static io.restassured.RestAssured.given;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.hamcrest.Matchers.containsString;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 import static org.springframework.http.HttpStatus.ACCEPTED;
 import static org.springframework.http.HttpStatus.CREATED;
-
 
 
 /**
@@ -85,6 +89,7 @@ import static org.springframework.http.HttpStatus.CREATED;
 public class BoshServiceProvisionningTest {
 
 
+	private static final Logger logger = LoggerFactory.getLogger(BoshServiceProvisionningTest.class.getName());
     public static final String BROKERED_SERVICE_INSTANCE_ID = "brokered_service_instance_id";
 
     @BeforeAll
@@ -166,6 +171,9 @@ public class BoshServiceProvisionningTest {
 
     @Autowired
     OsbClientFactory clientFactory;
+
+    @Autowired
+    ReadOnlyServiceInstanceBrokerProcessor readOnlyServiceInstanceBrokerProcessor;
 
     private CatalogServiceClient catalogServiceClient;
     private ServiceInstanceBindingServiceClient serviceInstanceBindingService;
@@ -354,6 +362,13 @@ public class BoshServiceProvisionningTest {
         create_service_binding();
         delete_service_binding();
 
+        turn_on_readonly_service_instances_mode();
+        assert_create_service_instance_readonly_rejected();
+        assert_delete_service_instance_readonly_rejected();
+        create_service_binding();
+        delete_service_binding();
+        turn_off_readonly_service_instances_mode();
+
         String deleteOperation = delete_a_service_instance_using_osb_client();
 
         polls_last_operation(deleteOperation,
@@ -362,6 +377,16 @@ public class BoshServiceProvisionningTest {
 
         assertGitClonesWerePooledAndReturned();
 
+    }
+
+    private void turn_on_readonly_service_instances_mode() {
+    	logger.info("turn_on_readonly_service_instances_mode: next service instances requests will be rejected");
+        readOnlyServiceInstanceBrokerProcessor.setServiceInstanceReadOnlyMode(true);
+    }
+
+    private void turn_off_readonly_service_instances_mode() {
+		logger.info("turn_off_readonly_service_instances_mode: next service instances requests will be accepted");
+        readOnlyServiceInstanceBrokerProcessor.setServiceInstanceReadOnlyMode(false);
     }
 
     private void assertGitClonesWerePooledAndReturned() {
@@ -438,6 +463,25 @@ public class BoshServiceProvisionningTest {
         return createResponse.getBody().getOperation();
     }
 
+    private void assert_create_service_instance_readonly_rejected() {
+
+        CreateServiceInstanceRequest createServiceInstanceRequest = aCreateServiceInstanceRequest();
+        String serviceInstanceId = "aNewIdForReadOnlyRequestShouldBeRejected";
+        createServiceInstanceRequest.setServiceInstanceId(serviceInstanceId);
+        assertThatThrownBy(
+			() -> {
+				serviceInstanceService.createServiceInstance(
+					serviceInstanceId,
+					true,
+					"api-info",
+					osbProxy.buildOriginatingIdentityHeader(aCfUserContext()),
+					OsbConstants.X_Broker_API_Version_Value,
+					createServiceInstanceRequest);
+			})
+			.isInstanceOf(FeignException.ServiceUnavailable.class)
+			.hasMessageContaining(DeploymentProperties.DEFAULT_READ_ONLY_MESSAGE);
+	}
+
     public void exposes_catalog() {
         Catalog catalog = catalogServiceClient.getCatalog(OsbConstants.X_Broker_API_Version_Value);
         assertThat(catalog.getServiceDefinitions()).isNotEmpty();
@@ -477,6 +521,23 @@ public class BoshServiceProvisionningTest {
         assertThat(response.getStatusCode()).isEqualTo(ACCEPTED);
         assertThat(response.getBody()).isNotNull();
         return response.getBody().getOperation();
+    }
+
+    private void assert_delete_service_instance_readonly_rejected() {
+
+		assertThatThrownBy(
+			() -> {
+				serviceInstanceService.deleteServiceInstance(
+					SERVICE_INSTANCE_ID,
+					SERVICE_DEFINITION_ID,
+					SERVICE_PLAN_ID,
+					true,
+					"api-info",
+					osbProxy.buildOriginatingIdentityHeader(aCfUserContext()),
+					OsbConstants.X_Broker_API_Version_Value);
+			})
+			.isInstanceOf(FeignException.ServiceUnavailable.class)
+			.hasMessageContaining(DeploymentProperties.DEFAULT_READ_ONLY_MESSAGE);
     }
 
 

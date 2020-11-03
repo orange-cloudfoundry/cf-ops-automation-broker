@@ -12,6 +12,15 @@ public class OsbProxyProperties {
     private String osbDelegateUser;
     private String osbDelegatePassword;
 
+    private String brokerUrlPattern;
+
+    /**
+     * When true, then the inner broker will not receive unprovision calls (i.e. upon `cf delete-service-instance`)
+     * This is designed to support undeletes by operators until they explicitly approve the deletion the associated
+     * COA deployment (and the associated underlying bosh deployment)
+     */
+    private boolean skipDeProvision = false;
+
     public String getBrokerUrlPattern() {
         return brokerUrlPattern;
     }
@@ -19,8 +28,6 @@ public class OsbProxyProperties {
     public void setBrokerUrlPattern(String brokerUrlPattern) {
         this.brokerUrlPattern = brokerUrlPattern;
     }
-
-    private String brokerUrlPattern;
 
     public long getMaxExecutionDurationSeconds() {
         return maxExecutionDurationSeconds;
@@ -45,4 +52,13 @@ public class OsbProxyProperties {
     public void setOsbDelegatePassword(String osbDelegatePassword) {
         this.osbDelegatePassword = osbDelegatePassword;
     }
+
+    public boolean isSkipDeProvision() {
+        return skipDeProvision;
+    }
+
+    public void setSkipDeProvision(boolean skipDeProvision) {
+        this.skipDeProvision = skipDeProvision;
+    }
+
 }

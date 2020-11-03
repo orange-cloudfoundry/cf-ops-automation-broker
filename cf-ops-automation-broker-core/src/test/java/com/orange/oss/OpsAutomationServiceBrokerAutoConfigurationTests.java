@@ -56,7 +56,7 @@ public class OpsAutomationServiceBrokerAutoConfigurationTests {
 				//omitted context
 				.build();
 
-		CreateServiceInstanceResponse si = this.service.createServiceInstance(req);
+		CreateServiceInstanceResponse si = this.service.createServiceInstance(req).block();
 
 		String appGuid="appGuid";
 		Map<String, Object> bindResource = new HashMap<>();
@@ -68,7 +68,7 @@ public class OpsAutomationServiceBrokerAutoConfigurationTests {
 						.build())
 				.build();
 
-		CreateServiceInstanceBindingResponse sib = this.binding.createServiceInstanceBinding(breq);
+		CreateServiceInstanceBindingResponse sib = this.binding.createServiceInstanceBinding(breq).block();
 
 	}
 

@@ -1,7 +1,7 @@
 
 Maintenance info https://github.com/orange-cloudfoundry/cf-ops-automation-broker/issues/278
 
-* [ ] check bump of sc-osb. Coab is running 2.1.2.RELEASE. 
+* [x] check bump of sc-osb. Coab is running 2.1.2.RELEASE. 
    * Maintenance_info support requires 3.1.2.RELEASE or 3.2.0-M1
    * Bump to 3.1.x or 3.2.x may imply boot and spring bumps (see [version-compatibility](https://github.com/spring-cloud/spring-cloud-open-service-broker#version-compatibility))])
    
@@ -13,8 +13,8 @@ Spring Cloud Open Service Broker | Open Service Broker API | Spring Boot | Sprin
 2.1.x | 2.14 | 2.0.x | 5.0.x
    * Currently COA is running:
       * SpringCloud dependencies Hoxton.SR8. Hoxton.SR8 is compatible with Spring Boot 2.3.x and 2.2.x. See https://spring.io/blog/2020/08/28/spring-cloud-hoxton-sr8-has-been-released
-         * SpringBoot 2.2.3
-         * Spring 5.2.8.RELEASE
+      * SpringBoot 2.3.3
+      * Spring 5.2.8.RELEASE
    * SC-OSB bump requires using reactive apis, but we remain with servlet blocking stack. See https://github.com/spring-cloud/spring-cloud-open-service-broker/commit/121291aeec0f565bc0202d5c1d85c2eb27becbea      
  
 * [ ] check catalog can be configured to return maintenance info: test noop

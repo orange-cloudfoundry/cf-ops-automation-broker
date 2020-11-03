@@ -52,7 +52,7 @@ public class ProcessorChainServiceInstanceServiceTest {
         CreateServiceInstanceRequest request = CreateServiceInstanceRequest.builder().build();
 
         //when
-        CreateServiceInstanceResponse response = service.createServiceInstance(request);
+        CreateServiceInstanceResponse response = service.createServiceInstance(request).block();
 
         //then the default response is returned
         Assertions.assertThat(response).isEqualTo(CreateServiceInstanceResponse.builder().build());
@@ -76,7 +76,7 @@ public class ProcessorChainServiceInstanceServiceTest {
 
        //when
        assertThrows(RuntimeException.class, () ->
-           service.createServiceInstance(request));
+           service.createServiceInstance(request).block());
        //then exception is logged and rethrown
     }
 
@@ -100,7 +100,7 @@ public class ProcessorChainServiceInstanceServiceTest {
 
 
         //when
-        CreateServiceInstanceResponse response = service.createServiceInstance(request);
+        CreateServiceInstanceResponse response = service.createServiceInstance(request).block();
 
         //then
         Assertions.assertThat(response).isEqualTo(customResponse);
@@ -113,7 +113,7 @@ public class ProcessorChainServiceInstanceServiceTest {
                 .serviceInstanceId("instanceId").build();
 
         //when
-        GetLastServiceOperationResponse response = service.getLastOperation(request);
+        GetLastServiceOperationResponse response = service.getLastOperation(request).block();
 
         //then call is properly chained
         ArgumentCaptor<Context> argument = ArgumentCaptor.forClass(Context.class);
@@ -152,7 +152,7 @@ public class ProcessorChainServiceInstanceServiceTest {
 
 
         //when
-        GetLastServiceOperationResponse response = service.getLastOperation(request);
+        GetLastServiceOperationResponse response = service.getLastOperation(request).block();
 
         //then
         Assertions.assertThat(response).isEqualTo(customResponse);
@@ -166,7 +166,7 @@ public class ProcessorChainServiceInstanceServiceTest {
         DeleteServiceInstanceRequest request = OsbBuilderHelper.aDeleteServiceInstanceRequest();
 
         //when
-        DeleteServiceInstanceResponse response = service.deleteServiceInstance(request);
+        DeleteServiceInstanceResponse response = service.deleteServiceInstance(request).block();
         //then call is properly chained
         ArgumentCaptor<Context> argument = ArgumentCaptor.forClass(Context.class);
         Mockito.verify(processorChain).delete(argument.capture());
@@ -201,7 +201,7 @@ public class ProcessorChainServiceInstanceServiceTest {
 
 
         //when
-        DeleteServiceInstanceResponse response = service.deleteServiceInstance(request);
+        DeleteServiceInstanceResponse response = service.deleteServiceInstance(request).block();
 
         //then
         Assertions.assertThat(response).isEqualTo(customResponse);
@@ -212,7 +212,7 @@ public class ProcessorChainServiceInstanceServiceTest {
         //given
         UpdateServiceInstanceRequest request = OsbBuilderHelper.anUpdateServiceInstanceRequest();
         //when
-        UpdateServiceInstanceResponse response = service.updateServiceInstance(request);
+        UpdateServiceInstanceResponse response = service.updateServiceInstance(request).block();
 
         //then call is properly chained
         ArgumentCaptor<Context> argument = ArgumentCaptor.forClass(Context.class);
@@ -229,7 +229,7 @@ public class ProcessorChainServiceInstanceServiceTest {
         //given
         GetServiceInstanceRequest request = OsbBuilderHelper.aGetServiceInstanceRequest();
         //when
-        GetServiceInstanceResponse response = service.getServiceInstance(request);
+        GetServiceInstanceResponse response = service.getServiceInstance(request).block();
 
         //then call is properly chained
         ArgumentCaptor<Context> argument = ArgumentCaptor.forClass(Context.class);
@@ -264,7 +264,7 @@ public class ProcessorChainServiceInstanceServiceTest {
 
 
         //when
-        UpdateServiceInstanceResponse response = service.updateServiceInstance(request);
+        UpdateServiceInstanceResponse response = service.updateServiceInstance(request).block();
 
         //then
         Assertions.assertThat(response).isEqualTo(customResponse);
@@ -291,7 +291,7 @@ public class ProcessorChainServiceInstanceServiceTest {
 
 
         //when
-        GetServiceInstanceResponse response = service.getServiceInstance(request);
+        GetServiceInstanceResponse response = service.getServiceInstance(request).block();
 
         //then
         Assertions.assertThat(response).isEqualTo(customResponse);

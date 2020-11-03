@@ -4,7 +4,19 @@ import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processor
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.ProcessorChain;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.cloud.servicebroker.model.instance.*;
+import reactor.core.publisher.Mono;
+
+import org.springframework.cloud.servicebroker.model.instance.CreateServiceInstanceRequest;
+import org.springframework.cloud.servicebroker.model.instance.CreateServiceInstanceResponse;
+import org.springframework.cloud.servicebroker.model.instance.DeleteServiceInstanceRequest;
+import org.springframework.cloud.servicebroker.model.instance.DeleteServiceInstanceResponse;
+import org.springframework.cloud.servicebroker.model.instance.GetLastServiceOperationRequest;
+import org.springframework.cloud.servicebroker.model.instance.GetLastServiceOperationResponse;
+import org.springframework.cloud.servicebroker.model.instance.GetServiceInstanceRequest;
+import org.springframework.cloud.servicebroker.model.instance.GetServiceInstanceResponse;
+import org.springframework.cloud.servicebroker.model.instance.OperationState;
+import org.springframework.cloud.servicebroker.model.instance.UpdateServiceInstanceRequest;
+import org.springframework.cloud.servicebroker.model.instance.UpdateServiceInstanceResponse;
 import org.springframework.cloud.servicebroker.service.ServiceInstanceService;
 import org.springframework.stereotype.Service;
 
@@ -45,7 +57,7 @@ public class ProcessorChainServiceInstanceService implements ServiceInstanceServ
     }
 
     @Override
-    public CreateServiceInstanceResponse createServiceInstance(CreateServiceInstanceRequest request) {
+    public Mono<CreateServiceInstanceResponse> createServiceInstance(CreateServiceInstanceRequest request) {
         try {
             Context ctx=new Context();
             ctx.contextKeys.put(CREATE_SERVICE_INSTANCE_REQUEST, request);
@@ -57,7 +69,7 @@ public class ProcessorChainServiceInstanceService implements ServiceInstanceServ
             } else {
                 response = CreateServiceInstanceResponse.builder().build();
             }
-            return response;
+            return Mono.just(response);
         } catch (RuntimeException e) {
             logger.info("Unable to create service with request " + request + ", caught " + e, e);
             throw ProcessorChainServiceHelper.processInternalException(e);
@@ -65,7 +77,7 @@ public class ProcessorChainServiceInstanceService implements ServiceInstanceServ
     }
 
     @Override
-    public GetServiceInstanceResponse getServiceInstance(GetServiceInstanceRequest request) {
+    public Mono<GetServiceInstanceResponse> getServiceInstance(GetServiceInstanceRequest request) {
         try {
             Context ctx=new Context();
             ctx.contextKeys.put(GET_SERVICE_INSTANCE_REQUEST, request);
@@ -77,7 +89,7 @@ public class ProcessorChainServiceInstanceService implements ServiceInstanceServ
             } else {
                 response = GetServiceInstanceResponse.builder().build();
             }
-            return response;
+            return Mono.just(response);
         } catch (RuntimeException e) {
             logger.info("Unable to fetch service with request " + request + ", caught " + e, e);
             throw ProcessorChainServiceHelper.processInternalException(e);
@@ -85,7 +97,7 @@ public class ProcessorChainServiceInstanceService implements ServiceInstanceServ
     }
 
     @Override
-    public UpdateServiceInstanceResponse updateServiceInstance(UpdateServiceInstanceRequest request) {
+    public Mono<UpdateServiceInstanceResponse> updateServiceInstance(UpdateServiceInstanceRequest request) {
         try {
             Context ctx = new Context();
             ctx.contextKeys.put(UPDATE_SERVICE_INSTANCE_REQUEST, request);
@@ -97,7 +109,7 @@ public class ProcessorChainServiceInstanceService implements ServiceInstanceServ
             } else {
                 response = UpdateServiceInstanceResponse.builder().build();
             }
-            return response;
+            return Mono.just(response);
         } catch (RuntimeException e) {
             logger.info("Unable to update service with request " + request + ", caught " + e, e);
             throw ProcessorChainServiceHelper.processInternalException(e);
@@ -105,7 +117,7 @@ public class ProcessorChainServiceInstanceService implements ServiceInstanceServ
     }
 
     @Override
-    public DeleteServiceInstanceResponse deleteServiceInstance(DeleteServiceInstanceRequest request) {
+    public Mono<DeleteServiceInstanceResponse> deleteServiceInstance(DeleteServiceInstanceRequest request) {
         try {
             Context ctx = new Context();
             ctx.contextKeys.put(DELETE_SERVICE_INSTANCE_REQUEST, request);
@@ -117,7 +129,7 @@ public class ProcessorChainServiceInstanceService implements ServiceInstanceServ
             } else {
                 response = DeleteServiceInstanceResponse.builder().build();
             }
-            return response;
+            return Mono.just(response);
         } catch (RuntimeException e) {
             logger.info("Unable to delete service with request " + request + ", caught " + e, e);
             throw ProcessorChainServiceHelper.processInternalException(e);
@@ -125,7 +137,7 @@ public class ProcessorChainServiceInstanceService implements ServiceInstanceServ
     }
 
     @Override
-    public GetLastServiceOperationResponse getLastOperation(GetLastServiceOperationRequest request) {
+    public Mono<GetLastServiceOperationResponse> getLastOperation(GetLastServiceOperationRequest request) {
         try {
             Context ctx = new Context();
             ctx.contextKeys.put(GET_LAST_SERVICE_OPERATION_REQUEST, request);
@@ -137,7 +149,7 @@ public class ProcessorChainServiceInstanceService implements ServiceInstanceServ
             } else {
                 response = GetLastServiceOperationResponse.builder().operationState(OperationState.SUCCEEDED).build();
             }
-            return response;
+            return Mono.just(response);
         } catch (RuntimeException e) {
             logger.info("Unable to getLastOperation with request " + request + ", caught " + e, e);
             throw ProcessorChainServiceHelper.processInternalException(e);

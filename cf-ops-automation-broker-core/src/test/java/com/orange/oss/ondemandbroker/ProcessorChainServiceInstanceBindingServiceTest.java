@@ -47,7 +47,7 @@ public class ProcessorChainServiceInstanceBindingServiceTest {
         CreateServiceInstanceBindingRequest request = CreateServiceInstanceBindingRequest.builder().build();
 
         //when
-        CreateServiceInstanceBindingResponse response = service.createServiceInstanceBinding(request);
+        CreateServiceInstanceBindingResponse response = service.createServiceInstanceBinding(request).block();
 
         //then the default response is returned
         Assertions.assertThat(response).isEqualTo(CreateServiceInstanceAppBindingResponse.builder().build());
@@ -70,7 +70,7 @@ public class ProcessorChainServiceInstanceBindingServiceTest {
 
         //when
         assertThrows(RuntimeException.class, () ->
-            service.createServiceInstanceBinding(request));
+            service.createServiceInstanceBinding(request).block());
         //then exception is logged and rethrown
     }
 
@@ -101,7 +101,7 @@ public class ProcessorChainServiceInstanceBindingServiceTest {
 
 
         //when
-        CreateServiceInstanceBindingResponse response = service.createServiceInstanceBinding(request);
+        CreateServiceInstanceBindingResponse response = service.createServiceInstanceBinding(request).block();
 
         //then
         Assertions.assertThat(response).isEqualTo(customResponse);
@@ -115,7 +115,7 @@ public class ProcessorChainServiceInstanceBindingServiceTest {
         DeleteServiceInstanceBindingRequest request = OsbBuilderHelper.anUnbindRequest("service-instance-id", "service-binding-id");
 
         //when
-        service.deleteServiceInstanceBinding(request);
+        service.deleteServiceInstanceBinding(request).block();
 
         //then call is properly chained
         ArgumentCaptor<Context> argument = ArgumentCaptor.forClass(Context.class);

@@ -6,6 +6,7 @@ import java.util.Map;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import reactor.core.publisher.Mono;
 
 import org.springframework.boot.autoconfigure.AutoConfigurations;
 import org.springframework.boot.env.OriginTrackedMapPropertySource;
@@ -135,23 +136,23 @@ public class YamlCataloglAsEnvironmentVarApplicationContextInitializerTest {
 
         public static class TestServiceInstanceService implements ServiceInstanceService {
             @Override
-            public CreateServiceInstanceResponse createServiceInstance(CreateServiceInstanceRequest request) {
-                return null;
+            public Mono<CreateServiceInstanceResponse> createServiceInstance(CreateServiceInstanceRequest request) {
+                return Mono.empty();
             }
 
             @Override
-            public GetLastServiceOperationResponse getLastOperation(GetLastServiceOperationRequest request) {
-                return null;
+            public Mono<GetLastServiceOperationResponse> getLastOperation(GetLastServiceOperationRequest request) {
+                return Mono.empty();
             }
 
             @Override
-            public DeleteServiceInstanceResponse deleteServiceInstance(DeleteServiceInstanceRequest request) {
-                return null;
+            public Mono<DeleteServiceInstanceResponse> deleteServiceInstance(DeleteServiceInstanceRequest request) {
+                return Mono.empty();
             }
 
             @Override
-            public UpdateServiceInstanceResponse updateServiceInstance(UpdateServiceInstanceRequest request) {
-                return null;
+            public Mono<UpdateServiceInstanceResponse> updateServiceInstance(UpdateServiceInstanceRequest request) {
+                return Mono.empty();
             }
         }
     }

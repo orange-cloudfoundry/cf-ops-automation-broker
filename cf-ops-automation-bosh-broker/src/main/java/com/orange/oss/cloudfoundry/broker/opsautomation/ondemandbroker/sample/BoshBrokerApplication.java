@@ -17,6 +17,7 @@ import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.DeploymentProperties;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.OsbProxy;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.OsbProxyImpl;
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.OsbProxySkippedDeprovisionProxy;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.PipelineCompletionTracker;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.PipelineProperties;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.ReadOnlyServiceInstanceBrokerProcessor;
@@ -29,6 +30,8 @@ import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processor
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.DefaultBrokerSink;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.ProcessorChain;
 import net.jodah.failsafe.RetryPolicy;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -43,6 +46,9 @@ public class BoshBrokerApplication {
     @SuppressWarnings("WeakerAccess")
     static final String TEMPLATES_REPOSITORY_ALIAS_NAME = "paas-templates.";
     static final String SECRETS_REPOSITORY_ALIAS_NAME = "paas-secrets.";
+
+    private static Logger logger = LoggerFactory.getLogger(BoshBrokerApplication.class.getName());
+
 
     public static void main(String[] args) {
         SpringApplication.run(BoshBrokerApplication.class, args);
@@ -76,11 +82,17 @@ public class BoshBrokerApplication {
 
     @Bean
     public OsbProxy createOsbProxy(OsbProxyProperties osbProxyProperties, OsbClientFactory clientFactory) {
-        return new OsbProxyImpl(
-                osbProxyProperties.getOsbDelegateUser(),
-                osbProxyProperties.getOsbDelegatePassword(),
-                osbProxyProperties.getBrokerUrlPattern(),
-                clientFactory);
+        OsbProxyImpl osbProxyImpl = new OsbProxyImpl(
+            osbProxyProperties.getOsbDelegateUser(),
+            osbProxyProperties.getOsbDelegatePassword(),
+            osbProxyProperties.getBrokerUrlPattern(),
+            clientFactory);
+        if (osbProxyProperties.isSkipDeProvision()) {
+            logger.info("Configured to not delegate unprovision requests to inner broker. This support undeletes.");
+            return new OsbProxySkippedDeprovisionProxy(osbProxyImpl);
+        } else {
+            return osbProxyImpl;
+        }
     }
 
     @Bean

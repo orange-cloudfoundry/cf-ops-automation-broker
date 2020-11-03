@@ -42,7 +42,7 @@ The following diagram illustrates COAB interactions
 
 This project is still in a beta state providing POC broker releases for CloudFlare and Cassandra use-cases above. Next step is to generalize the approach.
 
-## Getting Started
+## Operating COAB
 
 Deploy the broker as a CF app:
 * The CF manifest.yml file would be available in [orange-cloudfoundry/paas-templates](https://github.com/orange-cloudfoundry/paas-templates) repo
@@ -52,6 +52,18 @@ Deploy the broker as a CF app:
 ### Configuring the service broker catalog
 
 Use `spring.cloud.openservicebroker.catalog` environment variable to set catalog config in a YAML format. See [spring-cloud-open-service-broker](https://docs.spring.io/spring-cloud-open-service-broker/docs/current/reference/html5/#_providing_a_catalog_using_properties) for a sample YML and raw properties configuration
+
+### Read-only mode
+
+When the service instance read-only mode is configured (see [DeploymentProperties.java](src/main/java/com/orange/oss/cloudfoundry/broker/opsautomation/ondemandbroker/pipeline/DeploymentProperties.java)), then service instance operations (create/update/delete) are rejected, while service binding operations (create/delete) are still accepted. This enables to perform maintenance on the underlying COA/git branches infrastructure while not risking corrupted COA inventory and not imposing full control plan downtime to coab users. 
+
+### skipDeProvision opt-in
+
+When `pipeline.skipDeProvision` is set to `true`, then the inner broker will not receive unprovision calls (i.e. upon `cf delete-service-instance`). Default is `false`
+
+This is designed to support undeletes by operators until they explicitly approve the deletion the associated COA deployment (and the associated underlying bosh deployment).
+
+Some brokers with highly sensitive data (e.g. implementing data erasure) should prefer to not opt-in for this flag, as this could increase risk of data recovery after the service deprovision phase. 
 
 ### Troubleshooting COAB
 
@@ -163,10 +175,6 @@ previous_values:
 ```
 
 Note: for security reasons, input validation is applied on the name and value of arbitrary params to prevent various injections (such as reading from credhub, spruce, file system injection, yml loading or reference expansions), and only so alphabetical characters, numbers are supported.
-
-## Read-only mode
-
-When the service instance read-only mode is configured (see [DeploymentProperties.java](src/main/java/com/orange/oss/cloudfoundry/broker/opsautomation/ondemandbroker/pipeline/DeploymentProperties.java)), then service instance operations (create/update/delete) are rejected, while service binding operations (create/delete) are still accepted. This enables to perform maintenance on the underlying COA/git branches infrastructure while not risking corrupted COA inventory and not imposing full control plan downtime to coab users. 
 
 ## Contributing
 

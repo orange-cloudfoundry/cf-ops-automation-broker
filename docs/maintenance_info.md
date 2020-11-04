@@ -17,13 +17,17 @@ Spring Cloud Open Service Broker | Open Service Broker API | Spring Boot | Sprin
       * Spring 5.2.8.RELEASE
    * SC-OSB bump requires using reactive apis, but we remain with servlet blocking stack. See https://github.com/spring-cloud/spring-cloud-open-service-broker/commit/121291aeec0f565bc0202d5c1d85c2eb27becbea      
  
-* [ ] check catalog can be configured to return maintenance info: test noop
+* [x] check catalog can be configured to return maintenance info: test noop
 * [ ] design end-to-end test of service instance upgrade with noop (to simulate old service instance without x-osb-cmdb)
-   * [ ] configure noop dashboard url with v1 using service instance guid
+   * [x] configure noop 49.0.0 without dashboard url 
+   * [x] create one noop instance `reference-0` without x-osb-cmdb params. Expect no dashboard url
+   * [x] configure noop 49.0.1 with dashboard url with v1 using backing service instance guid. 
+   * [ ] check  noop instance `reference-0` is upgradeable
    * [ ] create one noop instance `reference` without x-osb-cmdb params. Expect dashboard url with v1 using service instance guid
    * [ ] configure noop maintenance_info V2
    * [ ] configure noop dashboard url with v2 using brokered guid
    * [ ] test that CF accepts `cf update-service --upgrade reference -c params.json`
+       * [ ] coab implements service instance update support
        * [ ] coab generates new coab-vars.yml in RAM and compares it with disk version
        * [ ] if changes will be applied to coab-vars.yml, responds with update in progress until manifest gets updated + dashboard url
           * [ ] coab-vars.yml gets generated with incremented `epoq:<epoq>.<timestamp>`

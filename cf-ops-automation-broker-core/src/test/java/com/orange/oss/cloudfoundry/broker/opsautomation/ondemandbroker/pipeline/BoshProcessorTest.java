@@ -146,7 +146,7 @@ public class BoshProcessorTest {
                 .build();
 
         //when
-        CoabVarsFileDto coabVarsFileDto = boshProcessor.wrapOsbIntoVarsDto(request);
+        CoabVarsFileDto coabVarsFileDto = boshProcessor.wrapCreateOsbIntoVarsDto(request);
 
         //then
         assertThat(coabVarsFileDto.instance_id).isEqualTo("service-instance-id1");

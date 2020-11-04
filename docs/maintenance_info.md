@@ -22,12 +22,12 @@ Spring Cloud Open Service Broker | Open Service Broker API | Spring Boot | Sprin
    * [x] configure noop 49.0.0 without dashboard url 
    * [x] create one noop instance `reference-0` without x-osb-cmdb params. Expect no dashboard url
    * [x] configure noop 49.0.1 with dashboard url with v1 using backing service instance guid. 
-   * [ ] check  noop instance `reference-0` is upgradeable
+   * [x] check  noop instance `reference-0` is upgradeable
    * [ ] create one noop instance `reference` without x-osb-cmdb params. Expect dashboard url with v1 using service instance guid
    * [ ] configure noop maintenance_info V2
    * [ ] configure noop dashboard url with v2 using brokered guid
-   * [ ] test that CF accepts `cf update-service --upgrade reference -c params.json`
-       * [ ] coab implements service instance update support
+   * [x] test that CF CC accepts `cf update-service --upgrade reference -c params.json`
+       * [x] coab implements service instance update support
        * [ ] coab generates new coab-vars.yml in RAM and compares it with disk version
        * [ ] if changes will be applied to coab-vars.yml, responds with update in progress until manifest gets updated + dashboard url
           * [ ] coab-vars.yml gets generated with incremented `epoq:<epoq>.<timestamp>`
@@ -46,3 +46,32 @@ A: should not, since only coab-vars.yml would change
 
 Q: is it a good idea to simplify this upgrade to not trigger coab-vars.yml change nor deployment update ?
    * would imply a mix of dashboard urls with brokered guid and backing guids
+   
+## Details   
+   
+  * [x] test that CF CC accepts `cf update-service --upgrade reference -c params.json`
+      * CF CLI rejects it:
+      * Tested it with direct CC API: `CF_TRACE=true cf curl -X PUT /v2/service_instances/39308492-68d3-4601-adb6-8f76f37392f5?accepts_incomplete=true -d @/tmp/maintenance_info.json`
+```json
+{
+  "maintenance_info": {
+    "description": "Dashboard url with backing service guids",
+    "version": "49.0.1"
+  },
+  "parameters": {
+          "aparam":"avalue"
+  }
+}
+```
+
+properly received by broker
+
+```
+17:58:14.530: [APP/PROC/WEB.0] 2020-11-04 16:58:14.529  INFO 27 --- [nio-8080-exec-5] o.s.c.s.c.ServiceInstanceController      : Updating service instance
+17:58:14.530: [APP/PROC/WEB.0] 2020-11-04 16:58:14.529 DEBUG 27 --- [nio-8080-exec-5] o.s.c.s.c.ServiceInstanceController      : request=ServiceBrokerRequest{platformInstanceId='null', apiInfoLocation='api.redacted-domain.org/v2/info', originatingIdentity=Context{platform='cloudfoundry', properties={user_id=321ae0c8-1289-4e49-9aa4-4fca806754f1}}', requestIdentity=09b20f4a-6852-4951-8f3a-c8bcbe27d1fa}AsyncServiceBrokerRequest{asyncAccepted=true}AsyncParameterizedServiceInstanceRequest{parameters={aparam=avalue}, context=Context{platform='cloudfoundry', properties={spaceGuid=d8d14da7-7ac8-4a6b-b17b-8544c28e514a, spaceName=coa-noop-smoke-tests, organizationName=service-sandbox, instanceName=dummy-name, organizationGuid=b65a1232-add9-49ab-8bf1-283ddc08c0de}}}UpdateServiceInstanceRequest{serviceDefinitionId='noop-ondemand-service', planId='noop-ondemand-plan', previousValues=PreviousValues{planId='noop-ondemand-plan'maintenanceInfo='MaintenanceInfo{version='49.0.1, description='null}'}, serviceInstanceId='39308492-68d3-4601-adb6-8f76f37392f5', maintenanceInfo='MaintenanceInfo{version='49.0.1, description='null}'}
+17:58:14.530: [APP/PROC/WEB.0] 2020-11-04 16:58:14.529  INFO 27 --- [nio-8080-exec-5] o.s.c.s.c.ServiceInstanceController      : Updating service instance succeeded
+17:58:14.530: [APP/PROC/WEB.0] 2020-11-04 16:58:14.529 DEBUG 27 --- [nio-8080-exec-5] o.s.c.s.c.ServiceInstanceController      : serviceInstanceId=39308492-68d3-4601-adb6-8f76f37392f5, response=AsyncServiceInstanceResponse{async=false, operation='null'}UpdateServiceInstanceResponse{dashboardUrl='null'}
+17:58:14.533: [RTR.1] coa-noop-broker.redacted-domain.org - [2020-11-04T16:58:14.430017956Z] "PATCH /v2/service_instances/39308492-68d3-4601-adb6-8f76f37392f5?accepts_incomplete=true HTTP/1.1" 200 754 2 "-" "HTTPClient/1.0 (2.8.3, ruby 2.5.5 (2019-03-15))" "192.168.35.66:38488" "192.168.35.79:61090" x_forwarded_for:"192.168.35.66" x_forwarded_proto:"https" vcap_request_id:"effa42ae-d451-4d89-67e8-2cc902aa8319" response_time:0.102658 gorouter_time:0.000581 app_id:"06444d72-af92-4539-95c1-3dad397f724c" app_index:"0" x_cf_routererror:"-" x_b3_traceid:"822be555cf26c586" x_b3_spanid:"822be555cf26c586" x_b3_parentspanid:"-" b3:"822be555cf26c586-822be555cf26c586"
+```
+
+   

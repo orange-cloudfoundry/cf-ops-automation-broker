@@ -16,6 +16,7 @@ import org.springframework.cloud.servicebroker.model.CloudFoundryContext;
 import org.springframework.cloud.servicebroker.model.binding.CreateServiceInstanceBindingRequest;
 import org.springframework.cloud.servicebroker.model.binding.CreateServiceInstanceBindingResponse;
 import org.springframework.cloud.servicebroker.model.binding.DeleteServiceInstanceBindingRequest;
+import org.springframework.cloud.servicebroker.model.instance.AsyncParameterizedServiceInstanceRequest;
 import org.springframework.cloud.servicebroker.model.instance.CreateServiceInstanceRequest;
 import org.springframework.cloud.servicebroker.model.instance.CreateServiceInstanceResponse;
 import org.springframework.cloud.servicebroker.model.instance.DeleteServiceInstanceRequest;
@@ -66,7 +67,7 @@ public class BoshProcessor extends DefaultBrokerProcessor {
         String serviceInstanceId = creationRequest.getServiceInstanceId();
         logger.debug("service instance id is " + serviceInstanceId);
 
-        CoabVarsFileDto coabVarsFileDto = wrapOsbIntoVarsDto(creationRequest);
+        CoabVarsFileDto coabVarsFileDto = wrapCreateOsbIntoVarsDto(creationRequest);
 
         //Check pre-requisites and generate paas-template structure
         this.templatesGenerator.checkPrerequisites(templatesWorkDir);
@@ -172,7 +173,7 @@ public class BoshProcessor extends DefaultBrokerProcessor {
                 + "\n\n" + originDetails;
     }
 
-    private String extractCfSpaceGuid(CreateServiceInstanceRequest request) {
+    private String extractCfSpaceGuid(AsyncParameterizedServiceInstanceRequest request) {
         org.springframework.cloud.servicebroker.model.Context context = request.getContext();
         if (context instanceof CloudFoundryContext) {
             CloudFoundryContext cloudFoundryContext = (CloudFoundryContext) context;
@@ -181,7 +182,7 @@ public class BoshProcessor extends DefaultBrokerProcessor {
         return null;
     }
 
-    private String extractCfOrgGuid(CreateServiceInstanceRequest request) {
+    private String extractCfOrgGuid(AsyncParameterizedServiceInstanceRequest request) {
         org.springframework.cloud.servicebroker.model.Context context = request.getContext();
         if (context instanceof CloudFoundryContext) {
             CloudFoundryContext cloudFoundryContext = (CloudFoundryContext) context;
@@ -225,16 +226,26 @@ public class BoshProcessor extends DefaultBrokerProcessor {
         ctx.contextKeys.put(secretsRepositoryAliasName + GitProcessorContext.commitMessage.toString(), msg);
     }
 
-    protected CoabVarsFileDto wrapOsbIntoVarsDto(CreateServiceInstanceRequest request) {
+    protected CoabVarsFileDto wrapCreateOsbIntoVarsDto(CreateServiceInstanceRequest request) {
+        String serviceInstanceId = request.getServiceInstanceId();
+        String serviceDefinitionId = request.getServiceDefinitionId();
+        String planId = request.getPlanId();
+
+        return wrapGenericOsbIntoVarsDto(request, serviceInstanceId, serviceDefinitionId, planId);
+    }
+
+    private CoabVarsFileDto wrapGenericOsbIntoVarsDto(AsyncParameterizedServiceInstanceRequest request, String serviceInstanceId,
+        String serviceDefinitionId, String planId) {
+
         String userKey = extractUserKeyFromOsbContext(request.getOriginatingIdentity());
         String organizationGuid = extractCfOrgGuid(request);
         String spaceGuid = extractCfSpaceGuid(request);
 
         CoabVarsFileDto coabVarsFileDto = new CoabVarsFileDto();
-        coabVarsFileDto.deployment_name = modelDeploymentShortAlias + modelDeploymentSeparator + request.getServiceInstanceId();
-        coabVarsFileDto.instance_id = request.getServiceInstanceId();
-        coabVarsFileDto.service_id = request.getServiceDefinitionId();
-        coabVarsFileDto.plan_id = request.getPlanId();
+        coabVarsFileDto.deployment_name = modelDeploymentShortAlias + modelDeploymentSeparator + serviceInstanceId;
+        coabVarsFileDto.instance_id = serviceInstanceId;
+        coabVarsFileDto.service_id = serviceDefinitionId;
+        coabVarsFileDto.plan_id = planId;
 
         coabVarsFileDto.context.user_guid = userKey;
         coabVarsFileDto.context.space_guid = spaceGuid;
@@ -254,6 +265,7 @@ public class BoshProcessor extends DefaultBrokerProcessor {
         String brokered_service_instance_guid = null;
         Map<String, Object> parameters = request.getParameters();
         if (parameters != null) {
+            //noinspection unchecked
             Map<String,Map<String,String>> osbCmdbCustomParamValue = (Map<String, Map<String, String>>) parameters.get(X_OSB_CMDB_CUSTOM_KEY_NAME);
             if (osbCmdbCustomParamValue != null) {
                 Map<String, String> labels = osbCmdbCustomParamValue.get(CMDB_LABELS_KEY);

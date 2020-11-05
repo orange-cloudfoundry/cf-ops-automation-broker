@@ -1,13 +1,21 @@
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline;
 
-import com.google.gson.*;
-import org.springframework.cloud.servicebroker.model.ServiceBrokerRequest;
-import org.springframework.cloud.servicebroker.model.instance.CreateServiceInstanceRequest;
-import org.springframework.cloud.servicebroker.model.instance.DeleteServiceInstanceRequest;
-
 import java.lang.reflect.Type;
 import java.util.Map;
 import java.util.Set;
+
+import com.google.gson.JsonDeserializationContext;
+import com.google.gson.JsonDeserializer;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParseException;
+import com.google.gson.JsonSerializationContext;
+import com.google.gson.JsonSerializer;
+
+import org.springframework.cloud.servicebroker.model.ServiceBrokerRequest;
+import org.springframework.cloud.servicebroker.model.instance.CreateServiceInstanceRequest;
+import org.springframework.cloud.servicebroker.model.instance.DeleteServiceInstanceRequest;
+import org.springframework.cloud.servicebroker.model.instance.UpdateServiceInstanceRequest;
 
 /**
  * Created by ijly7474 on 22/01/18.
@@ -30,6 +38,10 @@ public class PipelineOperationStateGsonAdapter implements JsonDeserializer<Pipel
             case DeploymentConstants.OSB_CREATE_REQUEST_CLASS_NAME:
                 jsonElementRequest = jsonSerializationContext.serialize(request, CreateServiceInstanceRequest.class);
                 jsonObject.add(DeploymentConstants.OSB_CREATE_REQUEST_CLASS_NAME, jsonElementRequest);
+                break;
+            case DeploymentConstants.OSB_UPDATE_REQUEST_CLASS_NAME:
+                jsonElementRequest = jsonSerializationContext.serialize(request, UpdateServiceInstanceRequest.class);
+                jsonObject.add(DeploymentConstants.OSB_UPDATE_REQUEST_CLASS_NAME, jsonElementRequest);
                 break;
             case DeploymentConstants.OSB_DELETE_REQUEST_CLASS_NAME:
                 jsonElementRequest = jsonSerializationContext.serialize(request, DeleteServiceInstanceRequest.class);
@@ -58,6 +70,9 @@ public class PipelineOperationStateGsonAdapter implements JsonDeserializer<Pipel
                 case DeploymentConstants.OSB_CREATE_REQUEST_CLASS_NAME:
                 serviceBrokerRequest = jsonDeserializationContext.deserialize(entry.getValue(), CreateServiceInstanceRequest.class);
                 break;
+                case DeploymentConstants.OSB_UPDATE_REQUEST_CLASS_NAME:
+                serviceBrokerRequest = jsonDeserializationContext.deserialize(entry.getValue(), UpdateServiceInstanceRequest.class);
+                break;
                 case DeploymentConstants.OSB_DELETE_REQUEST_CLASS_NAME:
                 serviceBrokerRequest = jsonDeserializationContext.deserialize(entry.getValue(), DeleteServiceInstanceRequest.class);
                 break;
@@ -67,8 +82,6 @@ public class PipelineOperationStateGsonAdapter implements JsonDeserializer<Pipel
             }
         }
 
-        PipelineCompletionTracker.PipelineOperationState pipelineOperationState = new PipelineCompletionTracker.PipelineOperationState(serviceBrokerRequest, startRequestDate);
-
-        return pipelineOperationState;
+        return new PipelineCompletionTracker.PipelineOperationState(serviceBrokerRequest, startRequestDate);
     }
 }

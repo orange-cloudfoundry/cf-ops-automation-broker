@@ -28,6 +28,8 @@ import org.springframework.cloud.servicebroker.model.instance.DeleteServiceInsta
 import org.springframework.cloud.servicebroker.model.instance.GetLastServiceOperationRequest;
 import org.springframework.cloud.servicebroker.model.instance.GetLastServiceOperationResponse;
 import org.springframework.cloud.servicebroker.model.instance.OperationState;
+import org.springframework.cloud.servicebroker.model.instance.UpdateServiceInstanceRequest;
+import org.springframework.cloud.servicebroker.model.instance.UpdateServiceInstanceResponse;
 
 import static com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.OsbConstants.ORIGINATING_EMAIL_KEY;
 import static com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.OsbConstants.ORIGINATING_USER_KEY;
@@ -87,6 +89,64 @@ public class BoshProcessorTest {
 
         //Then verify populated context
         CreateServiceInstanceResponse serviceInstanceResponse = (CreateServiceInstanceResponse) context.contextKeys.get(ProcessorChainServiceInstanceService.CREATE_SERVICE_INSTANCE_RESPONSE);
+        // specifying asynchronous creations
+        assertThat(serviceInstanceResponse.isAsync()).isTrue();
+        //and specifying dashboard url
+        assertThat(serviceInstanceResponse.getDashboardUrl()).isNotNull();
+
+
+        PipelineCompletionTracker.PipelineOperationState pipelineOperationState = new PipelineCompletionTracker.PipelineOperationState(request, "2017-11-14T17:24:08.007Z");
+        String expectedJsonPipelineOperationState = tracker.formatAsJson(pipelineOperationState);
+
+        //when
+        assertThat(serviceInstanceResponse.getOperation()).isEqualTo(expectedJsonPipelineOperationState);
+         // and with a non-null commit message (asserted in a specific test)
+        String customTemplateMessage = (String) context.contextKeys.get(TEMPLATES_REPOSITORY_ALIAS_NAME+GitProcessorContext.commitMessage.toString());
+        assertThat(customTemplateMessage).isNotNull();
+        String customSecretsMessage = (String) context.contextKeys.get(SECRETS_REPOSITORY_ALIAS_NAME+GitProcessorContext.commitMessage.toString());
+        assertThat(customSecretsMessage).isNotNull();
+    }
+    @Test
+    public void updates_structures_and_returns_async_response() {
+        //Given a creation request
+        UpdateServiceInstanceRequest request = UpdateServiceInstanceRequest.builder()
+                .serviceDefinitionId("service_definition_id")
+                .planId("plan_id")
+                .serviceInstanceId(SERVICE_INSTANCE_ID)
+                .context(CloudFoundryContext.builder()
+                        .organizationGuid("org_id1")
+                        .spaceGuid("space_id1")
+                        .build()
+                )
+                .build();
+
+        //Given a populated context
+        Context context = new Context();
+        context.contextKeys.put(ProcessorChainServiceInstanceService.UPDATE_SERVICE_INSTANCE_REQUEST, request);
+        context.contextKeys.put(TEMPLATES_REPOSITORY_ALIAS_NAME + GitProcessorContext.workDir.toString(), aGitRepoWorkDir());
+        context.contextKeys.put(SECRETS_REPOSITORY_ALIAS_NAME + GitProcessorContext.workDir.toString(), aGitRepoWorkDir());
+
+        //Given a mock behaviour
+        TemplatesGenerator templatesGenerator = mock(TemplatesGenerator.class);
+        SecretsGenerator secretsGenerator = mock(SecretsGenerator.class);
+
+        //given a configured timeout
+        PipelineCompletionTracker tracker = aCompletionTracker();
+
+        BoshProcessor boshProcessor = new BoshProcessor(TEMPLATES_REPOSITORY_ALIAS_NAME, SECRETS_REPOSITORY_ALIAS_NAME, templatesGenerator, secretsGenerator, tracker, "Cassandra", "c_", "_","https://static-dashboard.com");
+
+        //When
+        boshProcessor.preUpdate(context);
+
+        //Then verify parameters and delegation on calls
+        verify(templatesGenerator).checkPrerequisites(aGitRepoWorkDir());
+        verify(templatesGenerator).generate(eq(aGitRepoWorkDir()), eq(SERVICE_INSTANCE_ID), any(CoabVarsFileDto.class));
+        verify(secretsGenerator).checkPrerequisites(aGitRepoWorkDir());
+        verify(secretsGenerator).generate(aGitRepoWorkDir(), SERVICE_INSTANCE_ID, null);
+
+        //Then verify populated context
+        UpdateServiceInstanceResponse serviceInstanceResponse =
+            (UpdateServiceInstanceResponse) context.contextKeys.get(ProcessorChainServiceInstanceService.UPDATE_SERVICE_INSTANCE_RESPONSE);
         // specifying asynchronous creations
         assertThat(serviceInstanceResponse.isAsync()).isTrue();
         //and specifying dashboard url
@@ -207,7 +267,7 @@ public class BoshProcessorTest {
         BoshProcessor boshProcessor = aBasicBoshProcessor();
 
         //When
-        String dashboardUrl = boshProcessor.formatDashboard(dashboardUrlTemplate, request);
+        String dashboardUrl = boshProcessor.formatDashboardOnCreate(dashboardUrlTemplate, request);
         //then
         assertThat(dashboardUrl).isEqualTo(expected);
     }

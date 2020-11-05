@@ -29,6 +29,11 @@ Spring Cloud Open Service Broker | Open Service Broker API | Spring Boot | Sprin
    * [x] test that CF CC accepts `cf update-service --upgrade reference -c params.json`
        * [x] coab implements service instance update support
        * [ ] coab generates new coab-vars.yml in RAM and compares it with disk version
+          * [x] generify existing coab-vars provisionning code to also apply on update 
+          * [ ] adapt provisionning code in BoshProcessor+ BoshProcessorTest to support update
+             * [x] adapt create logic to update 
+             * [ ] adapt getlastoperation logic to update
+             * [ ] refactor to reduce duplication between create and update 
        * [ ] if changes will be applied to coab-vars.yml, responds with update in progress until manifest gets updated + dashboard url
           * [ ] coab-vars.yml gets generated with incremented `epoq:<epoq>.<timestamp>`
           * [ ] attempt to git commit & git push

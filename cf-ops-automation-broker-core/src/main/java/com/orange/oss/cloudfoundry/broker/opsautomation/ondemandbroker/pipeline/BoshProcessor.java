@@ -9,6 +9,7 @@ import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processor
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.DefaultBrokerProcessor;
 import com.orange.oss.ondemandbroker.ProcessorChainServiceInstanceBindingService;
 import com.orange.oss.ondemandbroker.ProcessorChainServiceInstanceService;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,6 +24,8 @@ import org.springframework.cloud.servicebroker.model.instance.DeleteServiceInsta
 import org.springframework.cloud.servicebroker.model.instance.DeleteServiceInstanceResponse;
 import org.springframework.cloud.servicebroker.model.instance.GetLastServiceOperationRequest;
 import org.springframework.cloud.servicebroker.model.instance.GetLastServiceOperationResponse;
+import org.springframework.cloud.servicebroker.model.instance.UpdateServiceInstanceRequest;
+import org.springframework.cloud.servicebroker.model.instance.UpdateServiceInstanceResponse;
 
 public class BoshProcessor extends DefaultBrokerProcessor {
 
@@ -80,7 +83,7 @@ public class BoshProcessor extends DefaultBrokerProcessor {
         //Create response and put it into context
         CreateServiceInstanceResponse creationResponse = CreateServiceInstanceResponse.builder().
                 async(true).
-                dashboardUrl(formatDashboard(dashboardUrlTemplate, creationRequest)).
+                dashboardUrl(formatDashboardOnCreate(dashboardUrlTemplate, creationRequest)).
                 operation(this.tracker.getPipelineOperationStateAsJson(creationRequest)).build();
         ctx.contextKeys.put(ProcessorChainServiceInstanceService.CREATE_SERVICE_INSTANCE_RESPONSE, creationResponse);
 
@@ -131,6 +134,40 @@ public class BoshProcessor extends DefaultBrokerProcessor {
     }
 
     @Override
+    public void preUpdate(Context ctx) {
+        //Need to retrieve workdirs from context (one for secrets and one for template)
+        Path templatesWorkDir = getPaasTemplate(ctx);
+        Path secretsWorkDir = getPaasSecret(ctx);
+
+        //Need to retrieve service instance id from  context
+        UpdateServiceInstanceRequest updateRequest =
+            (UpdateServiceInstanceRequest) ctx.contextKeys.get(ProcessorChainServiceInstanceService.UPDATE_SERVICE_INSTANCE_REQUEST);
+        String serviceInstanceId = updateRequest.getServiceInstanceId();
+        logger.debug("service instance id is " + serviceInstanceId);
+
+        CoabVarsFileDto coabVarsFileDto = wrapUpdateOsbIntoVarsDto(updateRequest);
+
+        //Check pre-requisites and generate paas-template structure
+        this.templatesGenerator.checkPrerequisites(templatesWorkDir);
+        this.templatesGenerator.generate(templatesWorkDir, serviceInstanceId, coabVarsFileDto);
+
+        //Check pre-requisites and generate paas-secrets structure
+        this.secretsGenerator.checkPrerequisites(secretsWorkDir);
+        this.secretsGenerator.generate(secretsWorkDir, serviceInstanceId, null);
+
+        //Create response and put it into context
+        UpdateServiceInstanceResponse creationResponse = UpdateServiceInstanceResponse.builder().
+            async(true).
+            dashboardUrl(formatDashboardOnUpdate(dashboardUrlTemplate, updateRequest)).
+            operation(this.tracker.getPipelineOperationStateAsJson(updateRequest)).build();
+        ctx.contextKeys.put(ProcessorChainServiceInstanceService.UPDATE_SERVICE_INSTANCE_RESPONSE, creationResponse);
+
+        //Generate commit message and put it into context
+        setCommitMsg(ctx, formatUpdateCommitMsg(updateRequest));
+
+    }
+
+    @Override
     public void preDelete(Context ctx) {
 
         //Need to retrieve workdir from context
@@ -170,6 +207,19 @@ public class BoshProcessor extends DefaultBrokerProcessor {
 
         originDetails = "Requested from space_guid=" + spaceGuid + " org_guid=" + organizationGuid + " by user_guid=" + userKey;
         return brokerDisplayName + " broker: create instance id=" + request.getServiceInstanceId()
+                + "\n\n" + originDetails;
+    }
+
+    protected String formatUpdateCommitMsg(UpdateServiceInstanceRequest request) {
+        String originDetails;
+
+        Object userKey = extractUserKeyFromOsbContext(request.getOriginatingIdentity());
+
+        String organizationGuid = extractCfOrgGuid(request);
+        String spaceGuid = extractCfSpaceGuid(request);
+
+        originDetails = "Requested from space_guid=" + spaceGuid + " org_guid=" + organizationGuid + " by user_guid=" + userKey;
+        return brokerDisplayName + " broker: update instance id=" + request.getServiceInstanceId()
                 + "\n\n" + originDetails;
     }
 
@@ -234,6 +284,14 @@ public class BoshProcessor extends DefaultBrokerProcessor {
         return wrapGenericOsbIntoVarsDto(request, serviceInstanceId, serviceDefinitionId, planId);
     }
 
+    protected CoabVarsFileDto wrapUpdateOsbIntoVarsDto(UpdateServiceInstanceRequest request) {
+        String serviceInstanceId = request.getServiceInstanceId();
+        String serviceDefinitionId = request.getServiceDefinitionId();
+        String planId = request.getPlanId();
+
+        return wrapGenericOsbIntoVarsDto(request, serviceInstanceId, serviceDefinitionId, planId);
+    }
+
     private CoabVarsFileDto wrapGenericOsbIntoVarsDto(AsyncParameterizedServiceInstanceRequest request, String serviceInstanceId,
         String serviceDefinitionId, String planId) {
 
@@ -256,12 +314,23 @@ public class BoshProcessor extends DefaultBrokerProcessor {
         return coabVarsFileDto;
     }
 
-    public String formatDashboard(String dashboardUrlTemplate, CreateServiceInstanceRequest request) {
+    public String formatDashboardOnCreate(String dashboardUrlTemplate, CreateServiceInstanceRequest request) {
+        String serviceInstanceId = request.getServiceInstanceId();
+        return genericFormatDashboard(dashboardUrlTemplate, request, serviceInstanceId);
+    }
+
+    public String formatDashboardOnUpdate(String dashboardUrlTemplate, UpdateServiceInstanceRequest request) {
+        String serviceInstanceId = request.getServiceInstanceId();
+        return genericFormatDashboard(dashboardUrlTemplate, request, serviceInstanceId);
+    }
+
+    @Nullable
+    private String genericFormatDashboard(String dashboardUrlTemplate, AsyncParameterizedServiceInstanceRequest request,
+        String serviceInstanceId) {
         if (dashboardUrlTemplate == null) {
             logger.debug("No dashboard template url configured, returning null dashboardUrl");
             return null;
         }
-        String serviceInstanceId = request.getServiceInstanceId();
         String brokered_service_instance_guid = null;
         Map<String, Object> parameters = request.getParameters();
         if (parameters != null) {
@@ -284,5 +353,6 @@ public class BoshProcessor extends DefaultBrokerProcessor {
             formattedDashboardUrl, dashboardUrlTemplate, serviceInstanceId, brokered_service_instance_guid);
         return formattedDashboardUrl;
     }
+
 }
 

@@ -1,6 +1,21 @@
 
 Maintenance info https://github.com/orange-cloudfoundry/cf-ops-automation-broker/issues/278
 
+## Design
+
+Initial step to focus on maintenance_info support (refreshing osb-client view including dashboard) with coab-vars.yml update.
+
+Stemcell/bosh-release/deployment model upgrades are currently out of scope of COAB broker, and rather handled by coa pipelines.
+
+This work might benefit for plan update and params update.
+
+Update endpoint triggers writing of 
+* coab-vars.yml: flat variables used in bosh deployment
+* coab-fingerprint.yml: single fingerprint variable used to track completion of the deployment update in the resultin manifest
+
+## Detailed tasks
+
+
 * [x] check bump of sc-osb. Coab is running 2.1.2.RELEASE. 
    * Maintenance_info support requires 3.1.2.RELEASE or 3.2.0-M1
    * Bump to 3.1.x or 3.2.x may imply boot and spring bumps (see [version-compatibility](https://github.com/spring-cloud/spring-cloud-open-service-broker#version-compatibility))])
@@ -35,12 +50,13 @@ Spring Cloud Open Service Broker | Open Service Broker API | Spring Boot | Sprin
              * [x] adapt create logic to update. Always respond with update in progress for now + dashboard url
              
              * [ ] adapt getlastoperation logic to check match of `coab-fingerprint.yml`
-             * [ ] refactor to reduce duplication between create and update 
-       * if changes were applied to coab-vars.yml w.r.t.
-          *  git commit & git push
-          *  coa pipeline triggers, potentially deploying grafana with FQDN matching brokered guid.    
-          *  manifest gets committed with `coab-fingerprint`
-       * [ ] if no changes will be applied to coab-vars.yml, responds with update completed + dashboard url    
+             * [ ] refactor to reduce duplication between create and update
+       * [ ] Optimize response time for noop updates 
+          * if changes were applied to coab-vars.yml w.r.t.
+             *  git commit & git push
+             *  coa pipeline triggers, potentially deploying grafana with FQDN matching brokered guid.    
+             *  manifest gets committed with `coab-fingerprint`
+          * [ ] if no changes will be applied to coab-vars.yml, responds with update completed + dashboard url    
    * [ ] assert coab-vars.yml now contains x-osb-cmdb   
    * [ ] assert update completes once bosh deployment completes   
    * [ ] assert `reference` service instance now returns dashboard url with v2 using brokered guid   

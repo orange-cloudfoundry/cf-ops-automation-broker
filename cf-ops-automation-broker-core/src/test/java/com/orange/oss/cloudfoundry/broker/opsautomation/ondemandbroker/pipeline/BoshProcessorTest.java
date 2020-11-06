@@ -107,7 +107,7 @@ public class BoshProcessorTest {
         assertThat(customSecretsMessage).isNotNull();
     }
     @Test
-    public void updates_structures_and_returns_async_response() {
+    public void updates_coab_vars_and_returns_async_response() {
         //Given a creation request
         UpdateServiceInstanceRequest request = UpdateServiceInstanceRequest.builder()
                 .serviceDefinitionId("service_definition_id")
@@ -140,9 +140,7 @@ public class BoshProcessorTest {
 
         //Then verify parameters and delegation on calls
         verify(templatesGenerator).checkPrerequisites(aGitRepoWorkDir());
-        verify(templatesGenerator).generate(eq(aGitRepoWorkDir()), eq(SERVICE_INSTANCE_ID), any(CoabVarsFileDto.class));
-        verify(secretsGenerator).checkPrerequisites(aGitRepoWorkDir());
-        verify(secretsGenerator).generate(aGitRepoWorkDir(), SERVICE_INSTANCE_ID, null);
+        verify(templatesGenerator).generateCoabVarsFile(eq(aGitRepoWorkDir()), eq(SERVICE_INSTANCE_ID), any(CoabVarsFileDto.class));
 
         //Then verify populated context
         UpdateServiceInstanceResponse serviceInstanceResponse =

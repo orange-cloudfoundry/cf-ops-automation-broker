@@ -149,11 +149,7 @@ public class BoshProcessor extends DefaultBrokerProcessor {
 
         //Check pre-requisites and generate paas-template structure
         this.templatesGenerator.checkPrerequisites(templatesWorkDir);
-        this.templatesGenerator.generate(templatesWorkDir, serviceInstanceId, coabVarsFileDto);
-
-        //Check pre-requisites and generate paas-secrets structure
-        this.secretsGenerator.checkPrerequisites(secretsWorkDir);
-        this.secretsGenerator.generate(secretsWorkDir, serviceInstanceId, null);
+        this.templatesGenerator.generateCoabVarsFile(templatesWorkDir, serviceInstanceId, coabVarsFileDto);
 
         //Create response and put it into context
         UpdateServiceInstanceResponse creationResponse = UpdateServiceInstanceResponse.builder().

@@ -28,17 +28,18 @@ Spring Cloud Open Service Broker | Open Service Broker API | Spring Boot | Sprin
    * [ ] configure noop dashboard url with v2 using brokered guid
    * [x] test that CF CC accepts `cf update-service --upgrade reference -c params.json`
        * [x] coab implements service instance update support
-       * [ ] coab generates new coab-vars.yml in RAM and compares it with disk version
-          * [x] generify existing coab-vars provisionning code to also apply on update 
+       * [ ] coab generates new `coab-fingerprint.yml` + coab-vars.yml
+          * [x] generify existing coab-vars provisionning code to also apply on update
+          * [x] adapt git processor to support pre and post update OSB life cycle hooks 
           * [ ] adapt provisionning code in BoshProcessor+ BoshProcessorTest to support update
-             * [x] adapt create logic to update 
-             * [ ] adapt getlastoperation logic to update
+             * [x] adapt create logic to update. Always respond with update in progress for now + dashboard url
+             
+             * [ ] adapt getlastoperation logic to check match of `coab-fingerprint.yml`
              * [ ] refactor to reduce duplication between create and update 
-       * [ ] if changes will be applied to coab-vars.yml, responds with update in progress until manifest gets updated + dashboard url
-          * [ ] coab-vars.yml gets generated with incremented `epoq:<epoq>.<timestamp>`
-          * [ ] attempt to git commit & git push
-          * [ ] coa pipeline triggers, potentially deploying grafana with FQDN matching brokered guid.    
-          * [ ] manifest gets committed with `epoq:<epoq>.<timestamp>`
+       * if changes were applied to coab-vars.yml w.r.t.
+          *  git commit & git push
+          *  coa pipeline triggers, potentially deploying grafana with FQDN matching brokered guid.    
+          *  manifest gets committed with `coab-fingerprint`
        * [ ] if no changes will be applied to coab-vars.yml, responds with update completed + dashboard url    
    * [ ] assert coab-vars.yml now contains x-osb-cmdb   
    * [ ] assert update completes once bosh deployment completes   

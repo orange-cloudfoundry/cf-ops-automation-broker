@@ -24,6 +24,12 @@ public class GitProcessor extends DefaultBrokerProcessor {
     public void postCreate(Context ctx) { commitPushRepo(ctx); }
 
     @Override
+    public void preUpdate(Context ctx) { cloneRepo(ctx); }
+
+    @Override
+    public void postUpdate(Context ctx) { commitPushRepo(ctx); }
+
+    @Override
     public void preGetLastOperation(Context ctx) { cloneRepo(ctx); }
 
     @Override

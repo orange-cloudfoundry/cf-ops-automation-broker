@@ -11,7 +11,35 @@ This work might benefit for plan update and params update.
 
 Update endpoint triggers writing of 
 * coab-vars.yml: flat variables used in bosh deployment
-* coab-fingerprint.yml: single fingerprint variable used to track completion of the deployment update in the resultin manifest
+* coab-fingerprint.yml: single fingerprint variable used to track completion of the deployment update in the resulting manifest
+
+coab-fingerprint.yml is inserted by deployment models into the bosh manifest as an extra unrecognized attribute (which gets ignored by bosh director). Being a single yaml key makes it easy to be managed by a bosh operator regardless of the key value.
+
+Currently getLastOperation is not fetching the paas-templates repo (as an optimization). Can we avoid fetching it ?
+- propagate the deployment completion fingerprint in the operation field
+   - currently includes the OSB provision endpoint JSON body (used to propagate the request to the nested inner broker) => prefix it with "osb-request"
+   - add `coab-fingerprint` key with coab-vars.yml as content
+      - Q: would this leak confidential information to the OSB client ? 
+         - OSB client is rather trusted (OSB-CMDB)
+         - coab-vars.yml is just the same data formatted differently.
+      - Q: what about optimizing space to not reach max size of the OSB `state` param ?
+         - coab-vars.yml is 1000 chars long without custom params 
+         - comparison hash needs to be generated from normalized formatting of the two yaml structure: CoabVarsDto POJO
+         - alternative hashes
+            - java hashCode on CoabVarsDto
+            - more complex MD5 ?
+         - => include hashCode on CoabVarsDto of the coab-vars into the state parameter and only compare the two hascodes
+         - we keep the full coab-vars.yml into the manifest to ease troubleshooting and auditing in paas-templates git repo  
+
+--- status
+* [x] check coab-noop proto with fingerprint
+   * [x] find a way to assert this into the deployment models
+* [ ] inject fingerprint into last operation state
+   * [ ] inject coabvars to PipelineCompletionTracker.getPipelineOperationStateAsJson()
+      * coabvars missing in the case of delete
+         * (delete is optionally skipped and not forwarded to inner broker)
+         * provide null coab-vars reference for delete: won't be checked for completion anyway
+
 
 ## Detailed tasks
 
@@ -48,6 +76,7 @@ Spring Cloud Open Service Broker | Open Service Broker API | Spring Boot | Sprin
           * [x] adapt git processor to support pre and post update OSB life cycle hooks 
           * [ ] adapt provisionning code in BoshProcessor+ BoshProcessorTest to support update
              * [x] adapt create logic to update. Always respond with update in progress for now + dashboard url
+             * [ ] update coab-vars generation to also generate fingerprint
              
              * [ ] adapt getlastoperation logic to check match of `coab-fingerprint.yml`
              * [ ] refactor to reduce duplication between create and update

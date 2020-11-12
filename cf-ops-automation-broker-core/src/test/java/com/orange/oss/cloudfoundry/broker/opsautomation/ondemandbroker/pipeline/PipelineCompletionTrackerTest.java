@@ -1,6 +1,7 @@
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline;
 
 import java.io.File;
+import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Path;
 import java.time.Clock;
@@ -8,6 +9,8 @@ import java.time.Instant;
 import java.time.ZoneId;
 import java.util.Collections;
 import java.util.HashMap;
+
+import javax.annotation.Nonnull;
 
 import feign.FeignException;
 import feign.Request;
@@ -111,9 +114,12 @@ public class PipelineCompletionTrackerTest {
     }
 
     @Test
-    public void returns_succeeded_state_during_provision_if_manifest_is_present_regardless_of_elapsed_time() {
+    public void returns_succeeded_state_during_provision_if_manifest_is_present_regardless_of_elapsed_time()
+        throws IOException {
         //Given an existing manifest file
         Mockito.when(secretsReader.isBoshDeploymentAvailable(any(), any())).thenReturn(true);
+        //and a completion marker is present in manifest
+        Mockito.when(secretsReader.getBoshDeploymentCompletionMarker(any(), any())).thenReturn(aCoabVarsFileDto());
         String jsonPipelineOperationState = createProvisionOperationStateInThePast();
 
         //When
@@ -128,9 +134,12 @@ public class PipelineCompletionTrackerTest {
     }
 
     @Test
-    public void delegates_to_osb_proxy_when_provision_completes_with_manifest_being_present() {
+    public void delegates_to_osb_proxy_when_provision_completes_with_manifest_being_present() throws IOException {
         //Given an existing manifest file
         Mockito.when(secretsReader.isBoshDeploymentAvailable(any(), any())).thenReturn(true);
+        //and a completion marker is present in manifest
+        Mockito.when(secretsReader.getBoshDeploymentCompletionMarker(any(), any())).thenReturn(aCoabVarsFileDto());
+
         String jsonPipelineOperationState = createProvisionOperationStateInThePast();
         //Given a proxy that returns a custom response message
         GetLastServiceOperationResponse proxiedResponse = GetLastServiceOperationResponse.builder()
@@ -334,10 +343,15 @@ public class PipelineCompletionTrackerTest {
 //    }
 
     @Test
-    public void returns_succeeded_state_if_manifest_is_present_and_provision_operation_state_without_timeout() {
-        //Given an existing manifest file and a create operation state without timeout
+    public void returns_succeeded_state_if_completion_marker_matches_and_provision_operation_state_without_timeout()
+        throws IOException {
+        //Given an existing manifest file
         Mockito.when(secretsReader.isBoshDeploymentAvailable(any(), any())).thenReturn(true);
-        String jsonPipelineOperationState = tracker.getPipelineOperationStateAsJson(OsbBuilderHelper.aCreateServiceInstanceRequest());
+        //and a completion marker is present in manifest
+        Mockito.when(secretsReader.getBoshDeploymentCompletionMarker(any(), any())).thenReturn(aCoabVarsFileDto());
+        //and a create operation state without timeout
+        String jsonPipelineOperationState = tracker.getPipelineOperationStateAsJson(OsbBuilderHelper.aCreateServiceInstanceRequest(),
+            aCoabVarsFileDto());
 
         //When
         GetLastServiceOperationResponse response = tracker.getDeploymentExecStatus(workDir, SERVICE_INSTANCE_ID, jsonPipelineOperationState, pollingRequest);
@@ -350,7 +364,9 @@ public class PipelineCompletionTrackerTest {
     @Test
     public void returns_inprogress_state_if_manifest_is_not_present_and_provision_operation_state_before_timeout() {
         //Given a missing manifest file and a create operation state without timeout
-        String jsonPipelineOperationState = tracker.getPipelineOperationStateAsJson(OsbBuilderHelper.aCreateServiceInstanceRequest());
+        Mockito.when(secretsReader.isBoshDeploymentAvailable(any(), any())).thenReturn(false);
+        String jsonPipelineOperationState = tracker.getPipelineOperationStateAsJson(OsbBuilderHelper.aCreateServiceInstanceRequest(),
+            aCoabVarsFileDto());
 
         //When
         GetLastServiceOperationResponse response = tracker.getDeploymentExecStatus(workDir, SERVICE_INSTANCE_ID, jsonPipelineOperationState, pollingRequest);
@@ -359,8 +375,43 @@ public class PipelineCompletionTrackerTest {
         assertThat(response.getState()).isEqualTo(OperationState.IN_PROGRESS);
     }
 
+    @Test
+    public void returns_inprogress_state_when_completion_marker_does_not_match_and_provision_operation_state_before_timeout()
+        throws IOException {
+        //Given an existing manifest file
+        Mockito.when(secretsReader.isBoshDeploymentAvailable(any(), any())).thenReturn(true);
+        //and an older completion marker is present in manifest
+        Mockito.when(secretsReader.getBoshDeploymentCompletionMarker(any(), any())).thenReturn(aCoabVarsFileDto());
+        //and a create operation state without timeout
+        String jsonPipelineOperationState = tracker.getPipelineOperationStateAsJson(OsbBuilderHelper.aCreateServiceInstanceRequest(),
+            aCoabVarsFileDtoV2());
 
-    
+        //When
+        GetLastServiceOperationResponse response = tracker.getDeploymentExecStatus(workDir, SERVICE_INSTANCE_ID, jsonPipelineOperationState, pollingRequest);
+
+        //Then
+        assertThat(response.getState()).isEqualTo(OperationState.IN_PROGRESS);
+    }
+
+    @Nonnull
+    private CoabVarsFileDto aCoabVarsFileDto() {
+        CoabVarsFileDto coabVarsFileDto = new CoabVarsFileDto();
+        coabVarsFileDto.deployment_name="a-deployment-name";
+        coabVarsFileDto.plan_id="plan_guid1";
+        return coabVarsFileDto;
+    }
+
+    @Nonnull
+    private CoabVarsFileDto aCoabVarsFileDtoV2() {
+        CoabVarsFileDto coabVarsFileDto = new CoabVarsFileDto();
+        coabVarsFileDto.deployment_name="a-deployment-name";
+        coabVarsFileDto.plan_id="plan_guid2";
+        //We could also simulate previous value, but this does not bring much value/coverage here
+        return coabVarsFileDto;
+    }
+
+
+
     private String createProvisionOperationStateInThePast() {
         CreateServiceInstanceRequest request = OsbBuilderHelper.aCreateServiceInstanceRequest();
         return createOperationStateInThePast(request);
@@ -372,7 +423,8 @@ public class PipelineCompletionTrackerTest {
     }
 
     private String createOperationStateInThePast(ServiceBrokerRequest request) {
-        PipelineCompletionTracker.PipelineOperationState pipelineOperationState = new PipelineCompletionTracker.PipelineOperationState(request, "2018-01-22T14:00:00.000Z");
+        PipelineCompletionTracker.PipelineOperationState pipelineOperationState = new PipelineCompletionTracker.PipelineOperationState(request, "2018-01-22T14:00:00.000Z",
+            aCoabVarsFileDto().hashCode());
 
         //when
         PipelineCompletionTracker tracker = new PipelineCompletionTracker(Clock.systemUTC(), 1200L, mock(OsbProxy.class), Mockito.mock(SecretsReader.class));
@@ -383,7 +435,8 @@ public class PipelineCompletionTrackerTest {
     public void operation_state_POJO_serializes_back_and_forth_to_json() {
         //given
         CreateServiceInstanceRequest originalRequest = OsbBuilderHelper.aCreateServiceInstanceRequest();
-        PipelineCompletionTracker.PipelineOperationState pipelineOperationState = new PipelineCompletionTracker.PipelineOperationState(originalRequest, "2018-01-22T14:00:00.000Z");
+        PipelineCompletionTracker.PipelineOperationState pipelineOperationState = new PipelineCompletionTracker.PipelineOperationState(originalRequest, "2018-01-22T14:00:00.000Z",
+            -23);
 
         //when
         String json = tracker.formatAsJson(pipelineOperationState);
@@ -398,6 +451,7 @@ public class PipelineCompletionTrackerTest {
         //CreateServiceInstanceRequest.equals ignores transient fields that we need to preserve in our context
         assertEquals(actualServiceBrokerRequest.getServiceInstanceId(), originalRequest.getServiceInstanceId());
         assertEquals(actualServiceBrokerRequest.getServiceDefinitionId(), originalRequest.getServiceDefinitionId());
+        assertEquals(actualPipelineOperationState.getCompletionMarkerHashcode(), pipelineOperationState.getCompletionMarkerHashcode());
     }
 
     @Test
@@ -408,7 +462,8 @@ public class PipelineCompletionTrackerTest {
         originalRequest.setServiceDefinition(serviceDefinition);
         originalRequest.setPlan(serviceDefinition.getPlans().get(0));
 
-        PipelineCompletionTracker.PipelineOperationState pipelineOperationState = new PipelineCompletionTracker.PipelineOperationState(originalRequest, "2018-01-22T14:00:00.000Z");
+        PipelineCompletionTracker.PipelineOperationState pipelineOperationState = new PipelineCompletionTracker.PipelineOperationState(originalRequest, "2018-01-22T14:00:00.000Z",
+            -23);
 
         //when
         String json = tracker.formatAsJson(pipelineOperationState);

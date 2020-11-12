@@ -1,5 +1,7 @@
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline;
 
+import java.io.IOException;
+import java.nio.file.Path;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
@@ -40,6 +42,17 @@ public class VarsFilesYmlFormatter {
         }
         return yml;
     }
+
+    protected CoabVarsFileDto parseFromYml(String yaml) throws IOException {
+        return getMapper().readValue(yaml, CoabVarsFileDto.class);
+    }
+
+    protected CoabVarsFileDto parseFromBoshManifestYml(Path pathToBoshManifestFile) throws IOException {
+        BoshDeploymentManifestDTO boshDeploymentManifestDTO = getMapper()
+            .readValue(pathToBoshManifestFile.toFile(), BoshDeploymentManifestDTO.class);
+        return boshDeploymentManifestDTO.coabCompletionMarker;
+    }
+
 
     protected void validate(CoabVarsFileDto coabVarsFileDto) {
 
@@ -98,9 +111,11 @@ public class VarsFilesYmlFormatter {
             }
         }
         if (value instanceof Map) {
+            //noinspection unchecked
             Map<Object,Object> valueMap = (Map<Object, Object>) value;
             for (Map.Entry<Object, Object> valueMapEntry : valueMap.entrySet()) {
                 if (!(valueMapEntry.getKey() instanceof String)) {
+                    //noinspection StringConcatenationInsideStringBufferAppend
                     sb.append("key map "+ valueMapEntry.getKey() +" from parameter " + key + " " + CoabVarsFileDto.WHITE_LISTED_MESSAGE +
                         " " +
                         "whereas it " +

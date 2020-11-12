@@ -1,0 +1,28 @@
+coab_completion_marker:
+  deployment_name: noop
+instance_groups:
+  - azs:
+      - z1
+    instances: 0
+    jobs:
+      - name: route_registrar
+        release: routing
+    name: no-op
+    networks:
+      - name: tf-net-coab-depls-instance
+    stemcell: default
+    vm_type: 2cpu-8g
+name: noop
+releases:
+  - name: routing
+    version: 0.206.0
+stemcells:
+  - alias: default
+    os: ubuntu-xenial
+    version: "621.89"
+update:
+  canaries: 1
+  canary_watch_time: 30000-240000
+  max_in_flight: 1
+  serial: false
+  update_watch_time: 30000-240000

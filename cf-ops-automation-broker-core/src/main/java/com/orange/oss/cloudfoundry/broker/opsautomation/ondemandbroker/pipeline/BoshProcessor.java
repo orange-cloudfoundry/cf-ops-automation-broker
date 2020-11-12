@@ -84,7 +84,7 @@ public class BoshProcessor extends DefaultBrokerProcessor {
         CreateServiceInstanceResponse creationResponse = CreateServiceInstanceResponse.builder().
                 async(true).
                 dashboardUrl(formatDashboardOnCreate(dashboardUrlTemplate, creationRequest)).
-                operation(this.tracker.getPipelineOperationStateAsJson(creationRequest)).build();
+                operation(this.tracker.getPipelineOperationStateAsJson(creationRequest, coabVarsFileDto)).build();
         ctx.contextKeys.put(ProcessorChainServiceInstanceService.CREATE_SERVICE_INSTANCE_RESPONSE, creationResponse);
 
         //Generate commit message and put it into context
@@ -155,7 +155,7 @@ public class BoshProcessor extends DefaultBrokerProcessor {
         UpdateServiceInstanceResponse creationResponse = UpdateServiceInstanceResponse.builder().
             async(true).
             dashboardUrl(formatDashboardOnUpdate(dashboardUrlTemplate, updateRequest)).
-            operation(this.tracker.getPipelineOperationStateAsJson(updateRequest)).build();
+            operation(this.tracker.getPipelineOperationStateAsJson(updateRequest, coabVarsFileDto)).build();
         ctx.contextKeys.put(ProcessorChainServiceInstanceService.UPDATE_SERVICE_INSTANCE_RESPONSE, creationResponse);
 
         //Generate commit message and put it into context
@@ -183,9 +183,10 @@ public class BoshProcessor extends DefaultBrokerProcessor {
         this.templatesGenerator.remove(templatesWorkDir, serviceInstanceId);
 
         //Create response and put it into context
+        CoabVarsFileDto dummyCoabVarsFileDtoWillBeIgnored = new CoabVarsFileDto();
         DeleteServiceInstanceResponse deletionResponse = DeleteServiceInstanceResponse.builder()
                 .async(true)
-                .operation(this.tracker.getPipelineOperationStateAsJson(request)).build();
+                .operation(this.tracker.getPipelineOperationStateAsJson(request, dummyCoabVarsFileDtoWillBeIgnored)).build();
 
         ctx.contextKeys.put(ProcessorChainServiceInstanceService.DELETE_SERVICE_INSTANCE_RESPONSE, deletionResponse);
 

@@ -49,6 +49,13 @@
 			<scope>test</scope>
 		</dependency>
 
+		<!-- See https://stackoverflow.com/questions/188311/how-should-one-unit-test-the-hashcode-equals-contract -->
+		<dependency>
+			<groupId>nl.jqno.equalsverifier</groupId>
+			<artifactId>equalsverifier</artifactId>
+			<version>3.5</version>
+			<scope>test</scope>
+		</dependency>
 
 		<!-- project depl -->
 		

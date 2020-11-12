@@ -113,7 +113,8 @@ public class BoshBrokerApplication {
                 deploymentProperties.getRootDeployment(),
                 deploymentProperties.getModelDeployment(),
                 deploymentProperties.getModelDeploymentShortAlias(),
-                deploymentProperties.getModelDeploymentSeparator()
+                deploymentProperties.getModelDeploymentSeparator(),
+                new VarsFilesYmlFormatter()  //externalize if needed
         );
     }
 

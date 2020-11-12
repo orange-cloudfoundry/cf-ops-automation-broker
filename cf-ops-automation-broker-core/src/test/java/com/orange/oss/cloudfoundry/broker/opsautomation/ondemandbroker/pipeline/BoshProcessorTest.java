@@ -95,7 +95,7 @@ public class BoshProcessorTest {
         assertThat(serviceInstanceResponse.getDashboardUrl()).isNotNull();
 
 
-        PipelineCompletionTracker.PipelineOperationState pipelineOperationState = new PipelineCompletionTracker.PipelineOperationState(request, "2017-11-14T17:24:08.007Z");
+        PipelineCompletionTracker.PipelineOperationState pipelineOperationState = new PipelineCompletionTracker.PipelineOperationState(request, "2017-11-14T17:24:08.007Z", -23);
         String expectedJsonPipelineOperationState = tracker.formatAsJson(pipelineOperationState);
 
         //when
@@ -151,7 +151,8 @@ public class BoshProcessorTest {
         assertThat(serviceInstanceResponse.getDashboardUrl()).isNotNull();
 
 
-        PipelineCompletionTracker.PipelineOperationState pipelineOperationState = new PipelineCompletionTracker.PipelineOperationState(request, "2017-11-14T17:24:08.007Z");
+        PipelineCompletionTracker.PipelineOperationState pipelineOperationState = new PipelineCompletionTracker.PipelineOperationState(request, "2017-11-14T17:24:08.007Z",
+            -23);
         String expectedJsonPipelineOperationState = tracker.formatAsJson(pipelineOperationState);
 
         //when
@@ -579,7 +580,8 @@ public class BoshProcessorTest {
         assertThat(serviceInstanceResponse.isAsync()).isTrue();
 
         //and operation state is specified
-        PipelineCompletionTracker.PipelineOperationState pipelineOperationState = new PipelineCompletionTracker.PipelineOperationState(request, "2017-11-14T17:24:08.007Z");
+        PipelineCompletionTracker.PipelineOperationState pipelineOperationState = new PipelineCompletionTracker.PipelineOperationState(request, "2017-11-14T17:24:08.007Z",
+            -23);
         String expectedJsonPipelineOperationState = tracker.formatAsJson(pipelineOperationState);
 
         assertThat(serviceInstanceResponse.getOperation()).isEqualTo(expectedJsonPipelineOperationState);

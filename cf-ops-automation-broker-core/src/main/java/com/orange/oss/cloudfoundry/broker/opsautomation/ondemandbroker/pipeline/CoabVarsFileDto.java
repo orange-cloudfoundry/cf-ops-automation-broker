@@ -10,6 +10,9 @@ import javax.validation.constraints.Pattern;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.apache.commons.lang.builder.EqualsBuilder;
+import org.apache.commons.lang.builder.HashCodeBuilder;
+import org.apache.commons.lang.builder.ToStringBuilder;
 
 import static java.util.Arrays.asList;
 
@@ -115,6 +118,19 @@ public class CoabVarsFileDto {
         @JsonProperty("organization_guid")
         @Pattern(regexp = WHITE_LISTED_PATTERN, message = WHITE_LISTED_MESSAGE)
         public String organization_guid;
+
+        @Override
+        public boolean equals(Object obj) {
+            return EqualsBuilder.reflectionEquals(this, obj);
+        }
+        @Override
+        public int hashCode() {
+            return HashCodeBuilder.reflectionHashCode(this);
+        }
+        @Override
+        public String toString() {
+            return ToStringBuilder.reflectionToString(this);
+        }
     }
 
     public static class PreviousValues {
@@ -126,5 +142,33 @@ public class CoabVarsFileDto {
         @JsonProperty("plan_id")
         @Pattern(regexp = WHITE_LISTED_PATTERN, message = WHITE_LISTED_MESSAGE)
         public String plan_id;
+
+        @Override
+        public boolean equals(Object obj) {
+            return EqualsBuilder.reflectionEquals(this, obj);
+        }
+        @Override
+        public int hashCode() {
+            return HashCodeBuilder.reflectionHashCode(this);
+        }
+        @Override
+        public String toString() {
+            return ToStringBuilder.reflectionToString(this);
+        }
+
     }
+
+    @Override
+    public boolean equals(Object obj) {
+        return EqualsBuilder.reflectionEquals(this, obj);
+    }
+    @Override
+    public int hashCode() {
+        return HashCodeBuilder.reflectionHashCode(this);
+    }
+    @Override
+    public String toString() {
+        return ToStringBuilder.reflectionToString(this);
+    }
+
 }

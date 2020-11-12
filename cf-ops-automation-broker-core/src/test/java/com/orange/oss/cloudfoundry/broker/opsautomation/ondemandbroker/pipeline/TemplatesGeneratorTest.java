@@ -132,7 +132,7 @@ public class TemplatesGeneratorTest extends StructureGeneratorImplTest{
                 .withFile(new String[]{this.deploymentProperties.getRootDeployment(), this.deploymentProperties.getModelDeployment()},
                         DeploymentConstants.DEPLOYMENT_DEPENDENCIES_FILENAME)
                 .build();
-        CoabVarsFileDto coabVarsFileDto = aTypicalUserProvisionningRequest();
+        CoabVarsFileDto coabVarsFileDto = CoabVarsFileDtoSampleHelper.aTypicalUserProvisionningRequest();
         this.templatesGenerator.generate(this.workDir,SERVICE_INSTANCE_ID,coabVarsFileDto);
 
         Path serviceInstanceDir = StructureGeneratorHelper.generatePath(this.workDir,
@@ -171,7 +171,7 @@ public class TemplatesGeneratorTest extends StructureGeneratorImplTest{
         Structure deploymentStructure = new Structure.StructureBuilder(this.workDir)
                 .withDirectoryHierarchy(this.deploymentProperties.getRootDeployment(),  this.templatesGenerator.computeDeploymentName(SERVICE_INSTANCE_ID), DeploymentConstants.TEMPLATE)
                 .build();
-        CoabVarsFileDto coabVarsFileDto = aTypicalUserProvisionningRequest();
+        CoabVarsFileDto coabVarsFileDto = CoabVarsFileDtoSampleHelper.aTypicalUserProvisionningRequest();
 
         //When
         this.templatesGenerator.generateCoabVarsFile(this.workDir, SERVICE_INSTANCE_ID, coabVarsFileDto);
@@ -297,7 +297,7 @@ public class TemplatesGeneratorTest extends StructureGeneratorImplTest{
         Path paasTemplatePath = tempDir.toPath();
 
         //Given and a user request
-        CoabVarsFileDto coabVarsFileDto = aTypicalUserProvisionningRequest();
+        CoabVarsFileDto coabVarsFileDto = CoabVarsFileDtoSampleHelper.aTypicalUserProvisionningRequest();
 
         //Given a template generator
         TemplatesGenerator templatesGenerator = new TemplatesGenerator(rootDeployment,
@@ -337,19 +337,6 @@ public class TemplatesGeneratorTest extends StructureGeneratorImplTest{
         return (new Tree().print(modelPath) + new Tree().print(deploymentPath));
     }
 
-    protected CoabVarsFileDto aTypicalUserProvisionningRequest() {
-        CoabVarsFileDto coabVarsFileDto = new CoabVarsFileDto();
-        coabVarsFileDto.deployment_name = "cassandravarsops_aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa0";
-        coabVarsFileDto.instance_id = "service_instance_id";
-        coabVarsFileDto.service_id = "service_definition_id";
-        coabVarsFileDto.plan_id = "plan_guid";
-
-        coabVarsFileDto.context.user_guid = "user_guid1";
-        coabVarsFileDto.context.space_guid = "space_guid1";
-        coabVarsFileDto.context.organization_guid = "org_guid1";
-        return coabVarsFileDto;
-    }
-
     @Test
     @Disabled
     public void populateRealPaasTemplates() {
@@ -358,7 +345,7 @@ public class TemplatesGeneratorTest extends StructureGeneratorImplTest{
         Path workDir = Paths.get("/home/losapio/GIT/Coab/paas-templates");
 
         //Given and a user request
-        CoabVarsFileDto coabVarsFileDto = aTypicalUserProvisionningRequest();
+        CoabVarsFileDto coabVarsFileDto = CoabVarsFileDtoSampleHelper.aTypicalUserProvisionningRequest();
 
         //Given a template generator
         TemplatesGenerator templatesGenerator = new TemplatesGenerator("coab-depls",

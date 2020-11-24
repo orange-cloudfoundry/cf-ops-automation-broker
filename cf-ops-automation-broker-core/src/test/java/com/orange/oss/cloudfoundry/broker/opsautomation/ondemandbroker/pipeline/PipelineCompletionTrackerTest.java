@@ -511,7 +511,7 @@ public class PipelineCompletionTrackerTest {
 
         //then the resulting json does not contain catalog details about the service definition,
         // in particular metadata which can contain heaby inline image data
-        assertThat(json).doesNotContain("description");
+        assertThat(json).doesNotContain("plan_description");
         assertThat(json).doesNotContain("metadata");
     }
 

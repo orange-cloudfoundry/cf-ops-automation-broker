@@ -138,6 +138,7 @@ public class OsbBuilderHelper {
                 .planId(SERVICE_PLAN_ID)
                 .parameters(parameters)
                 .serviceInstanceId("service-instance-guid")
+                .maintenanceInfo(anInitialMaintenanceInfo())
                 .context(aCfUserContext())
                 .build();
     }
@@ -162,6 +163,13 @@ public class OsbBuilderHelper {
                 .serviceInstanceId("instance_id")
                 .maintenanceInfo(anUpgradedMaintenanceInfo())
                 .build();
+    }
+
+    public static MaintenanceInfo anInitialMaintenanceInfo() {
+        return MaintenanceInfo.builder()
+            .version(1, 0, 0, "")
+            .description("Initial version")
+            .build();
     }
 
     public static MaintenanceInfo anUpgradedMaintenanceInfo() {

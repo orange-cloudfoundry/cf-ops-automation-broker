@@ -2,6 +2,7 @@ package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline
 
 import org.junit.jupiter.api.Test;
 
+import org.springframework.cloud.servicebroker.model.instance.CreateServiceInstanceRequest;
 import org.springframework.cloud.servicebroker.model.instance.UpdateServiceInstanceRequest;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -12,7 +13,15 @@ class CoabVarsFileDtoBuilderTest {
 
 	@Test
 	void includesMaintenanceInfoFromCreateRequest() {
+		//Given a create request
+		CreateServiceInstanceRequest request = OsbBuilderHelper.aCreateServiceInstanceRequest();
+		assertThat(request.getMaintenanceInfo()).isNotNull();
 
+		//when
+		CoabVarsFileDto coabVarsFileDto = builder.wrapCreateOsbIntoVarsDto(request, "m_1234");
+
+		//then
+		assertThat(coabVarsFileDto.maintenanceInfo).isEqualTo(request.getMaintenanceInfo());
 	}
 
 	@Test

@@ -7,18 +7,27 @@ Initial step to focus on maintenance_info support (refreshing osb-client view in
 
 Stemcell/bosh-release/deployment model upgrades are currently out of scope of COAB broker, and rather handled by coa pipelines.
 
-This work might benefit for plan update and params update.
+This work might however be useful for plan update and params update.
 
-Update endpoint triggers writing of 
+COAB Update endpoint triggers writing of the following in the paas-templates service instance branch 
 * coab-vars.yml: flat variables used in bosh deployment
+
+The COAB model (through a COA predeploy hook) transforms `coab-vars.yml` into: 
 * coab-fingerprint.yml: single fingerprint variable used to track completion of the deployment update in the resulting manifest
 
-coab-fingerprint.yml is inserted by deployment models into the bosh manifest as an extra unrecognized attribute (which gets ignored by bosh director). Being a single yaml key makes it easy to be managed by a bosh operator regardless of the key value.
+Then, `coab-fingerprint.yml` is inserted by deployment models into the bosh manifest as an extra `coab_completion_marker` unrecognized bosh manifest attribute (which gets ignored by bosh director). 
+Being a single yaml key makes it easy to be managed by a bosh operator regardless of the key values.
 
-Currently getLastOperation is not fetching the paas-templates repo (as an optimization). Can we avoid fetching it ?
-- propagate the deployment completion fingerprint in the operation field
-   - currently includes the OSB provision endpoint JSON body (used to propagate the request to the nested inner broker) => prefix it with "osb-request"
-   - add `coab-fingerprint` key with coab-vars.yml as content
+COAB then waits for the presence of the `coab_completion_marker` in the bosh manifest in the secrets repo until it matches the original `coab-vars.yml` derived from request
+
+Since getLastOperation is not fetching the paas-templates repo (as an optimization to reduce load on git server), how can we obtain the original `coab-vars.yml` to compare it against `coab_completion_marker` pushed by COA in secret repo ?
+   
+The `operation` field  includes the OSB provision endpoint JSON body (used to propagate the request to the nested inner broker), but this is not exactly `coab-vars.yml` content.
+
+We propagate a finger print of `coab_completion_marker` in the operation field (used to track statefull operation in OSB API)
+
+Other alternatives that were considered:
+   - add `coab-fingerprint` key with coab-vars.yml as content to `operation` field 
       - Q: would this leak confidential information to the OSB client ? 
          - OSB client is rather trusted (OSB-CMDB)
          - coab-vars.yml is just the same data formatted differently.
@@ -28,7 +37,7 @@ Currently getLastOperation is not fetching the paas-templates repo (as an optimi
          - alternative hashes
             - java hashCode on CoabVarsDto
             - more complex MD5 ?
-         - => include hashCode on CoabVarsDto of the coab-vars into the state parameter and only compare the two hascodes
+         - => **include hashCode on CoabVarsDto of the coab-vars into the state parameter and only compare the two hashcodes**
          - we keep the full coab-vars.yml into the manifest to ease troubleshooting and auditing in paas-templates git repo  
 
 --- status
@@ -73,6 +82,9 @@ Currently getLastOperation is not fetching the paas-templates repo (as an optimi
             * redis: no
             * k3s 
    * [ ] Add test of maintenance_info upgrade
+      * Pb: in 1st test imp, coab-vars.yml does not yet contain maintenance_info, so the `cf update-service --upgrade` push no changes and this does not trigger a COA build
+         * CoabVarsDto.previousValue may contain previous maintenance_info 
+         * refine request 
 
 ## Detailed tasks
 
@@ -94,7 +106,7 @@ Spring Cloud Open Service Broker | Open Service Broker API | Spring Boot | Sprin
    * SC-OSB bump requires using reactive apis, but we remain with servlet blocking stack. See https://github.com/spring-cloud/spring-cloud-open-service-broker/commit/121291aeec0f565bc0202d5c1d85c2eb27becbea      
  
 * [x] check catalog can be configured to return maintenance info: test noop
-* [ ] design end-to-end test of service instance upgrade with noop (to simulate old service instance without x-osb-cmdb)
+* [ ] design end-to-end test of service instance upgrade with noop (to simulate old service instance without `x-osb-cmdb` param)
    * [x] configure noop 49.0.0 without dashboard url 
    * [x] create one noop instance `reference-0` without x-osb-cmdb params. Expect no dashboard url
    * [x] configure noop 49.0.1 with dashboard url with v1 using backing service instance guid. 
@@ -104,22 +116,21 @@ Spring Cloud Open Service Broker | Open Service Broker API | Spring Boot | Sprin
    * [ ] configure noop dashboard url with v2 using brokered guid
    * [x] test that CF CC accepts `cf update-service --upgrade reference -c params.json`
        * [x] coab implements service instance update support
-       * [ ] coab generates new `coab-fingerprint.yml` + coab-vars.yml
+       * [ ] coab generates new `coab-vars.yml`
           * [x] generify existing coab-vars provisionning code to also apply on update
           * [x] adapt git processor to support pre and post update OSB life cycle hooks 
-          * [ ] adapt provisionning code in BoshProcessor+ BoshProcessorTest to support update
+          * [x] adapt provisionning code in BoshProcessor+ BoshProcessorTest to support update
              * [x] adapt create logic to update. Always respond with update in progress for now + dashboard url
-             * [ ] update coab-vars generation to also generate fingerprint
-             
-             * [ ] adapt getlastoperation logic to check match of `coab-fingerprint.yml`
-             * [ ] refactor to reduce duplication between create and update
-       * [ ] Optimize response time for noop updates 
-          * if changes were applied to coab-vars.yml w.r.t.
+             * [x] adapt getlastoperation logic to check match of `coab_completion_marker`
+             * [x] refactor to reduce duplication between create and update
+       * [ ] Later, optimize response time for `noop` updates (i.e. the ones requested by developer which do not change the `coab-vars.yml` and hence don't trigger a COA build) 
+          * when changes were applied to `coab-vars.yml` w.r.t.
              *  git commit & git push
              *  coa pipeline triggers, potentially deploying grafana with FQDN matching brokered guid.    
              *  manifest gets committed with `coab-fingerprint`
-          * [ ] if no changes will be applied to coab-vars.yml, responds with update completed + dashboard url    
-   * [ ] assert coab-vars.yml now contains x-osb-cmdb   
+          * [ ] when no changes will be applied to coab-vars.yml, respond with update completed + dashboard url
+             * currently will still response 202 accepted in progress, regardless of whether changes where made.    
+   * [ ] assert coab-vars.yml now contains `x-osb-cmdb` param  
    * [ ] assert update completes once bosh deployment completes   
    * [ ] assert `reference` service instance now returns dashboard url with v2 using brokered guid   
 * [ ] Implement OSB service instance update which synchronously

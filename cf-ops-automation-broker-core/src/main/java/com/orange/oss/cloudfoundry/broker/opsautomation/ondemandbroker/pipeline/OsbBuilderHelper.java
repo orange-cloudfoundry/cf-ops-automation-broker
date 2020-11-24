@@ -29,6 +29,7 @@ public class OsbBuilderHelper {
 
     public static final String SERVICE_DEFINITION_ID = "service_definition_id";
     public static final String SERVICE_PLAN_ID = "plan_id";
+    public static final String UPGRADED_SERVICE_PLAN_ID = "upgraded_plan_id";
 
     @SuppressWarnings("WeakerAccess")
     public static DeleteServiceInstanceBindingRequest anUnbindRequest(String serviceInstanceId, String bindingId) {
@@ -119,7 +120,10 @@ public class OsbBuilderHelper {
         properties.put(ORIGINATING_EMAIL_KEY, "user_email");
 
         return CloudFoundryContext.builder()
-                .properties(properties).build();
+            .organizationGuid("org_id")
+            .spaceGuid("space_id")
+            .properties(properties)
+            .build();
     }
 
     @SuppressWarnings("WeakerAccess")
@@ -133,11 +137,7 @@ public class OsbBuilderHelper {
                 .planId(SERVICE_PLAN_ID)
                 .parameters(parameters)
                 .serviceInstanceId("service-instance-guid")
-                .context(CloudFoundryContext.builder()
-                    .organizationGuid("org_id")
-                    .spaceGuid("space_id")
-                    .build()
-                )
+                .context(aCfUserContext())
                 .build();
     }
 

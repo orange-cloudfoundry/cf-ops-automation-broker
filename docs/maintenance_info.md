@@ -59,18 +59,18 @@ Currently getLastOperation is not fetching the paas-templates repo (as an optimi
          * [ ] Consider refactoring into SecretsManager to surface parsing role
       * [x] adapt PipelineCompletionTracker to deserialize using SecretsGenerator
          * [x] Add test coverage 
-* [ ] Refine BoshServiceProvisionningTest
-   * [ ] Adapt generated manifest to include completion marker
+* [x] Refine BoshServiceProvisionningTest
+   * [x] Adapt generated manifest to include completion marker
       * Need to capture CoabVarsDto or parse it from disk to include it as a completion marker in the manifest (Possibly through BoshDeploymentManifestDTO)
          * [x] Extract CoabVarsDtoBuilder from BoshProcessor
-   * [ ] Add test of plan upgrade
-      * 
+   * [x] Add test of plan upgrade
+      * Fix PipelineCompletionTracker to handle UpdateServiceInstanceRequest 
+         * Q: do we need to propagate OSB update call to inner broker ? Not yet, see details below.
+            * cf-mysql: not yet
+            * mongo-db: no
+            * redis: no
+            * k3s 
    * [ ] Add test of maintenance_info upgrade
-   * Q: do we need to propagate OSB update call to inner broker ? Not yet, see details below.
-      * cf-mysql: not yet
-      * mongo-db: no
-      * redis: no
-      * k3s 
 
 ## Detailed tasks
 

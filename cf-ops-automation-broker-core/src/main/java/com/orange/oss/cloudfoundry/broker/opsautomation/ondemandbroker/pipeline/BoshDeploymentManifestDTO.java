@@ -1,6 +1,7 @@
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
@@ -14,6 +15,7 @@ public class BoshDeploymentManifestDTO {
 	 * Bosh deployment name to assign in the manifest by operators file
 	 */
 	@JsonProperty("coab_completion_marker")
+	@JsonInclude(value= JsonInclude.Include.NON_NULL)
 	public CoabVarsFileDto coabCompletionMarker;
 
 }

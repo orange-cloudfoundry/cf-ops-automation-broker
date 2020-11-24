@@ -62,9 +62,15 @@ Currently getLastOperation is not fetching the paas-templates repo (as an optimi
 * [ ] Refine BoshServiceProvisionningTest
    * [ ] Adapt generated manifest to include completion marker
       * Need to capture CoabVarsDto or parse it from disk to include it as a completion marker in the manifest (Possibly through BoshDeploymentManifestDTO)
+         * [x] Extract CoabVarsDtoBuilder from BoshProcessor
    * [ ] Add test of plan upgrade
-   * [ ] Add test of maintenance_info upgrade ?
-   
+      * 
+   * [ ] Add test of maintenance_info upgrade
+   * Q: do we need to propagate OSB update call to inner broker ? Not yet, see details below.
+      * cf-mysql: not yet
+      * mongo-db: no
+      * redis: no
+      * k3s 
 
 ## Detailed tasks
 

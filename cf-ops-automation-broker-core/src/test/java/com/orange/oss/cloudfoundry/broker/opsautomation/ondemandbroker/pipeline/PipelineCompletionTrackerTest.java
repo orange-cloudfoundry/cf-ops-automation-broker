@@ -362,6 +362,25 @@ public class PipelineCompletionTrackerTest {
     }
 
     @Test
+    public void returns_succeeded_state_if_completion_marker_matches_and_update_operation_state_without_timeout()
+        throws IOException {
+        //Given an existing manifest file
+        Mockito.when(secretsReader.isBoshDeploymentAvailable(any(), any())).thenReturn(true);
+        //and a completion marker is present in manifest
+        Mockito.when(secretsReader.getBoshDeploymentCompletionMarker(any(), any())).thenReturn(aCoabVarsFileDto());
+        //and an update operation state without timeout
+        String jsonPipelineOperationState = tracker.getPipelineOperationStateAsJson(OsbBuilderHelper.anUpdateServiceInstanceRequest(),
+            aCoabVarsFileDto());
+
+        //When
+        GetLastServiceOperationResponse response = tracker.getDeploymentExecStatus(workDir, SERVICE_INSTANCE_ID, jsonPipelineOperationState, pollingRequest);
+
+        //Then
+        assertThat(response.getState()).isEqualTo(OperationState.SUCCEEDED);
+        assertThat(response.getDescription()).describedAs("Update succeeded");
+    }
+
+    @Test
     public void returns_inprogress_state_if_manifest_is_not_present_and_provision_operation_state_before_timeout() {
         //Given a missing manifest file and a create operation state without timeout
         Mockito.when(secretsReader.isBoshDeploymentAvailable(any(), any())).thenReturn(false);
@@ -376,12 +395,13 @@ public class PipelineCompletionTrackerTest {
     }
 
     @Test
-    public void returns_inprogress_state_when_completion_marker_does_not_match_and_provision_operation_state_before_timeout()
+    public void returns_inprogress_state_when_completion_marker_missing_and_provision_operation_state_before_timeout()
         throws IOException {
         //Given an existing manifest file
         Mockito.when(secretsReader.isBoshDeploymentAvailable(any(), any())).thenReturn(true);
-        //and an older completion marker is present in manifest
-        Mockito.when(secretsReader.getBoshDeploymentCompletionMarker(any(), any())).thenReturn(aCoabVarsFileDto());
+        //and a completion marker is missing in manifest (e.g. paas-templates v48 service instance, prior to coab
+        //update in v50)
+        Mockito.when(secretsReader.getBoshDeploymentCompletionMarker(any(), any())).thenReturn(null);
         //and a create operation state without timeout
         String jsonPipelineOperationState = tracker.getPipelineOperationStateAsJson(OsbBuilderHelper.aCreateServiceInstanceRequest(),
             aCoabVarsFileDtoV2());
@@ -392,6 +412,27 @@ public class PipelineCompletionTrackerTest {
         //Then
         assertThat(response.getState()).isEqualTo(OperationState.IN_PROGRESS);
     }
+
+    @Test
+    public void returns_inprogress_state_when_completion_marker_does_not_match_and_update_operation_state_before_timeout()
+        throws IOException {
+        //Given an existing manifest file
+        Mockito.when(secretsReader.isBoshDeploymentAvailable(any(), any())).thenReturn(true);
+        //and an older completion marker is present in manifest (e.g. before plan update)
+        Mockito.when(secretsReader.getBoshDeploymentCompletionMarker(any(), any())).thenReturn(aCoabVarsFileDto());
+        //and an update operation state without timeout
+        String jsonPipelineOperationState =
+            tracker.getPipelineOperationStateAsJson(OsbBuilderHelper.anUpdateServiceInstanceRequest(),
+            aCoabVarsFileDtoV2());
+
+        //When
+        GetLastServiceOperationResponse response = tracker.getDeploymentExecStatus(workDir, SERVICE_INSTANCE_ID, jsonPipelineOperationState, pollingRequest);
+
+        //Then
+        assertThat(response.getState()).isEqualTo(OperationState.IN_PROGRESS);
+    }
+
+
 
     @Nonnull
     private CoabVarsFileDto aCoabVarsFileDto() {

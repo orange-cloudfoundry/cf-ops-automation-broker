@@ -99,12 +99,12 @@ public class PipelineCompletionTracker {
             if (boshDeploymentCompletionMarker != null) {
                 int boshDeploymentCompletionMarkerHashcode = boshDeploymentCompletionMarker.hashCode();
                 logger.debug("loaded boshDeploymentCompletionMarker={}", boshDeploymentCompletionMarker);
-                logger.debug("isCompletionTrackerMachingRequest={} as a result of Request completion tracker hashCode={} and manifest completion tracker hashCode={} ",
-                        isCompletionTrackerMachingRequest,
-                        pipelineOperationState.completionMarkerHashcode,
-                        boshDeploymentCompletionMarkerHashcode);
                 isCompletionTrackerMachingRequest =
                     (pipelineOperationState.completionMarkerHashcode == boshDeploymentCompletionMarkerHashcode);
+                logger.debug("isCompletionTrackerMachingRequest={} as a result of Request completion tracker hashCode={} and manifest completion tracker hashCode={} ",
+                    isCompletionTrackerMachingRequest,
+                    pipelineOperationState.completionMarkerHashcode,
+                    boshDeploymentCompletionMarkerHashcode);
             } else {
                 logger.debug("Did not find yet boshDeploymentCompletionMarker in bosh manifest for " +
                     "serviceInstanceId={} Might be a service instance provisioned before coab 0.33 version.",
@@ -150,6 +150,20 @@ public class PipelineCompletionTracker {
                     }
                     break;
 
+                case DeploymentConstants.OSB_UPDATE_REQUEST_CLASS_NAME:
+                    if (isCompletionTrackerMachingRequest) {
+                        responseBuilder.operationState(OperationState.SUCCEEDED);
+                        responseBuilder.description("Update succeeded");
+                        logger.debug("Updates don't yet get propagated to inner broker, proceeding with returning success response");
+                    } else {
+                        if (isRequestTimedOut) {
+                            responseBuilder.operationState(OperationState.FAILED);
+                            responseBuilder.description("Execution timeout after " + displayedElapsedTimeSecs + "s max is " + maxExecutionDurationSeconds);
+                        } else {
+                            responseBuilder.operationState(OperationState.IN_PROGRESS);
+                        }
+                    }
+                    break;
                 case DeploymentConstants.OSB_DELETE_REQUEST_CLASS_NAME:
                     responseBuilder.deleteOperation(true);
                     if (osbProxy != null) {
@@ -162,7 +176,7 @@ public class PipelineCompletionTracker {
                     }
                     break;
                 default:
-                    throw new RuntimeException("Get Deployment Execution status fails (unhandled request class)");
+                    throw new RuntimeException("Get Deployment Execution status fails (unhandled request class:" + classFullyQualifiedName + ")");
             }
             if (response == null) {
                 response = responseBuilder.build();
@@ -193,7 +207,7 @@ public class PipelineCompletionTracker {
         Assert.notNull(coabVarsFileDto, "provide a dummy coabars object, e.g. on delete");
 
         int completionMarkerHashcode = coabVarsFileDto.hashCode();
-        logger.debug("Computed completionMarkerHashcode={} from coabVarsFileDto={}",
+        logger.debug("Computed completionMarkerHashcode={} from OSB request wrapped in coabVarsFileDto={}",
             completionMarkerHashcode, coabVarsFileDto);
         PipelineCompletionTracker.PipelineOperationState pipelineOperationState = new PipelineCompletionTracker.PipelineOperationState(
                 serviceBrokerRequest,

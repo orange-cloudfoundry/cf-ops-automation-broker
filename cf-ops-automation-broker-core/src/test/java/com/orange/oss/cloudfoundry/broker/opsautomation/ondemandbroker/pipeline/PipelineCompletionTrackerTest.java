@@ -95,7 +95,7 @@ public class PipelineCompletionTrackerTest {
                 pollingRequest,
                 aDeleteServiceInstanceRequest()));
         assertThat(runtimeException.getMessage()).isEqualTo("Get Deployment Execution status fails (unhandled request" +
-            " class)");
+            " class:unsupported-class-name)");
     }
 
     @Test

@@ -44,19 +44,21 @@ Currently getLastOperation is not fetching the paas-templates repo (as an optimi
       * coabvars missing in the case of delete
          * (delete is optionally skipped and not forwarded to inner broker)
          * provide null coab-vars reference for delete: won't be checked for completion anyway
-   * [ ] deserialize coab-vars from deployment manifest
+   * [x] deserialize coab-vars from deployment manifest
       * Pb: coab-vars contains arbitrary nested content (from params) and so does not suit plain deserialization using Gson unless type
       * Use Jackson instead of Gson
       * [x] Add equals/hashcode/toString to CoabVarsDto
       * [x] Add parsing code into VarsFilesYmlFormatter
-         * [ ] consider renaming to reflect also parsing
+         * [x] consider renaming to reflect also parsing
       * [x] Add test coverage for osb-cmdb sample inputs in VarsFilesYmlFormatterTest
-         * [ ] Refactor method names to surface parsing
       * [x] add parsing to SecretsGenerator contract
          * [x] Introduce New DTO to parse the generated manifest, only picking up CoabVarsDTO: BoshDeploymentManifestDTO
             * [x] Add unit test for parsing sample manifests 
          * [x] Add test coverage
-         * [ ] Consider refactoring into SecretsManager to surface parsing role
+         * [x] Consider refactoring into SecretsManager to surface parsing role: 
+            * Keeping it as SecretsGenerator for now because of :
+               * Consistency with TemplatesGenerator
+               * Avoid too many cosmetic changes that would slow down contribs by JCL38  
       * [x] adapt PipelineCompletionTracker to deserialize using SecretsGenerator
          * [x] Add test coverage 
 * [x] Refine BoshServiceProvisionningTest

@@ -76,7 +76,7 @@ public class BoshProcessorTest {
         //given a configured timeout
         PipelineCompletionTracker tracker = aCompletionTracker();
 
-        BoshProcessor boshProcessor = new BoshProcessor(TEMPLATES_REPOSITORY_ALIAS_NAME, SECRETS_REPOSITORY_ALIAS_NAME, templatesGenerator, secretsGenerator, tracker, "Cassandra", "c_", "_","https://static-dashboard.com"
+        BoshProcessor boshProcessor = new BoshProcessor(TEMPLATES_REPOSITORY_ALIAS_NAME, SECRETS_REPOSITORY_ALIAS_NAME, templatesGenerator, secretsGenerator, tracker, "Cassandra", "c", "_","https://static-dashboard.com"
         );
 
         //When
@@ -96,7 +96,12 @@ public class BoshProcessorTest {
         assertThat(serviceInstanceResponse.getDashboardUrl()).isNotNull();
 
 
-        PipelineCompletionTracker.PipelineOperationState pipelineOperationState = new PipelineCompletionTracker.PipelineOperationState(request, "2017-11-14T17:24:08.007Z", -23);
+        CoabVarsFileDtoBuilder builder = new CoabVarsFileDtoBuilder();
+        CoabVarsFileDto coabVarsFileDto = builder
+            .wrapCreateOsbIntoVarsDto(request, "c" + "_" + request.getServiceInstanceId());
+        PipelineCompletionTracker.PipelineOperationState pipelineOperationState =
+            new PipelineCompletionTracker.PipelineOperationState(request, "2017-11-14T17:24:08.007Z",
+                coabVarsFileDto.hashCode());
         String expectedJsonPipelineOperationState = tracker.formatAsJson(pipelineOperationState);
 
         //when
@@ -134,7 +139,7 @@ public class BoshProcessorTest {
         //given a configured timeout
         PipelineCompletionTracker tracker = aCompletionTracker();
 
-        BoshProcessor boshProcessor = new BoshProcessor(TEMPLATES_REPOSITORY_ALIAS_NAME, SECRETS_REPOSITORY_ALIAS_NAME, templatesGenerator, secretsGenerator, tracker, "Cassandra", "c_", "_","https://static-dashboard.com"
+        BoshProcessor boshProcessor = new BoshProcessor(TEMPLATES_REPOSITORY_ALIAS_NAME, SECRETS_REPOSITORY_ALIAS_NAME, templatesGenerator, secretsGenerator, tracker, "Cassandra", "c", "_","https://static-dashboard.com"
         );
 
         //When
@@ -152,9 +157,11 @@ public class BoshProcessorTest {
         //and specifying dashboard url
         assertThat(serviceInstanceResponse.getDashboardUrl()).isNotNull();
 
-
+        CoabVarsFileDtoBuilder builder = new CoabVarsFileDtoBuilder();
+        CoabVarsFileDto coabVarsFileDto = builder
+            .wrapUpdateOsbIntoVarsDto(request, "c" + "_" + request.getServiceInstanceId());
         PipelineCompletionTracker.PipelineOperationState pipelineOperationState = new PipelineCompletionTracker.PipelineOperationState(request, "2017-11-14T17:24:08.007Z",
-            -23);
+            coabVarsFileDto.hashCode());
         String expectedJsonPipelineOperationState = tracker.formatAsJson(pipelineOperationState);
 
         //when
@@ -589,8 +596,9 @@ public class BoshProcessorTest {
         assertThat(serviceInstanceResponse.isAsync()).isTrue();
 
         //and operation state is specified
+        CoabVarsFileDto dummyCoabVarsFileDtoWillBeIgnored = new CoabVarsFileDto();
         PipelineCompletionTracker.PipelineOperationState pipelineOperationState = new PipelineCompletionTracker.PipelineOperationState(request, "2017-11-14T17:24:08.007Z",
-            -23);
+            dummyCoabVarsFileDtoWillBeIgnored.hashCode());
         String expectedJsonPipelineOperationState = tracker.formatAsJson(pipelineOperationState);
 
         assertThat(serviceInstanceResponse.getOperation()).isEqualTo(expectedJsonPipelineOperationState);

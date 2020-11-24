@@ -14,6 +14,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import org.springframework.cloud.servicebroker.model.CloudFoundryContext;
+import org.springframework.cloud.servicebroker.model.catalog.MaintenanceInfo;
 import org.springframework.cloud.servicebroker.model.instance.CreateServiceInstanceRequest;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -52,20 +53,20 @@ public class VarsFilesYmlFormatterTest {
     }
 
     @Test
-    public void rejects_invalid_patterns() throws IOException {
-        assertDeploymentNameAndParamValueRejected("`a_malicious_shell_command_to_inject_in_bosh_templates`");
-        assertDeploymentNameAndParamValueRejected("``");
-        assertDeploymentNameAndParamValueRejected("$(a_malicious_shell_command_to_inject_in_bosh_templates)");
-        assertDeploymentNameAndParamValueRejected("$()");
-        assertDeploymentNameAndParamValueRejected("(("); //credhub interpolation
-        assertDeploymentNameAndParamValueRejected("(( a/string ))");
-        assertDeploymentNameAndParamValueRejected("))");
-        assertDeploymentNameAndParamValueRejected("?"); //other unknown chars
-        assertDeploymentNameAndParamValueRejected("&"); //YML references
-        assertTooLongContentIsRejected(
-            RandomStringUtils.randomAlphabetic(VarsFilesYmlFormatter.MAX_SERIALIZED_SIZE + 1));
+    void accepts_maintenance_info_field_into_coab_vars() throws IOException {
+        CoabVarsFileDto coabVarsFileDtoWithoutMaintenanceInfo = aTypicalUserProvisionningRequest();
+        assertDtoSerializesAndDeserializesWithoutError(coabVarsFileDtoWithoutMaintenanceInfo);
 
+        CoabVarsFileDto coabVarsFileDtoWithMaintenanceInfo = aTypicalUserProvisionningRequest();
+        coabVarsFileDtoWithMaintenanceInfo.maintenanceInfo = MaintenanceInfo.builder()
+            .version(2,0,0, "")
+            .description("Includes dashboards")
+            .build();
+        assertDtoSerializesAndDeserializesWithoutError(coabVarsFileDtoWithMaintenanceInfo);
+    }
 
+    @Test
+    public void accepts_valid_patterns() throws IOException {
         assertParamValueAccepted("a/path");
         assertParamValueAccepted("../../etc/password");
         assertParamValueAccepted("api.mycf.org/v2/info");
@@ -94,6 +95,22 @@ public class VarsFilesYmlFormatterTest {
             "      \"brokered_service_context_organization_name\": \"osb-cmdb-brokered-services-org-client-0\"\n" +
             "    }\n" +
             "  }\n");
+    }
+    @Test
+    public void rejects_invalid_patterns() throws IOException {
+        assertDeploymentNameAndParamValueRejected("`a_malicious_shell_command_to_inject_in_bosh_templates`");
+        assertDeploymentNameAndParamValueRejected("``");
+        assertDeploymentNameAndParamValueRejected("$(a_malicious_shell_command_to_inject_in_bosh_templates)");
+        assertDeploymentNameAndParamValueRejected("$()");
+        assertDeploymentNameAndParamValueRejected("(("); //credhub interpolation
+        assertDeploymentNameAndParamValueRejected("(( a/string ))");
+        assertDeploymentNameAndParamValueRejected("))");
+        assertDeploymentNameAndParamValueRejected("?"); //other unknown chars
+        assertDeploymentNameAndParamValueRejected("&"); //YML references
+        assertTooLongContentIsRejected(
+            RandomStringUtils.randomAlphabetic(VarsFilesYmlFormatter.MAX_SERIALIZED_SIZE + 1));
+
+
     }
 
     private void assertTooLongContentIsRejected(String aTooLongString) throws JsonProcessingException {
@@ -193,6 +210,10 @@ public class VarsFilesYmlFormatterTest {
         CoabVarsFileDto coabVarsFileDto = aTypicalUserProvisionningRequest();
         coabVarsFileDto.parameters.put("aparam", paramValue);
         //assert value is accepted
+        assertDtoSerializesAndDeserializesWithoutError(coabVarsFileDto);
+    }
+
+    private void assertDtoSerializesAndDeserializesWithoutError(CoabVarsFileDto coabVarsFileDto) throws IOException {
         String yamlDump = formatter.formatAsYml(coabVarsFileDto);
 
         //assert it can be parsed back into Dto

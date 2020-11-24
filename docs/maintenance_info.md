@@ -173,7 +173,12 @@ Spring Cloud Open Service Broker | Open Service Broker API | Spring Boot | Sprin
             * k3s 
    * [ ] Add test of maintenance_info upgrade
       * Pb: in 1st naive test impl, coab-vars.yml does not yet contain maintenance_info, so the `cf update-service --upgrade` push no changes and this does not trigger a COA build
-         * CoabVarsDto.previousValue may contain previous maintenance_info 
-         * refine request 
-      * [ ] Store maintenance_info in coab-vars.yml
+         * CoabVarsDto.previousValue may contain previous maintenance_info, and could be sufficient to trigger a build 
+         * `maintenance_info` is however useful for 
+            * auditing purposes
+            * in the future, comply with osb 1.17 which returns `maintenance_info` in service instance fetch endpoint 
+      * [ ] Store `maintenance_info` in coab-vars.yml
+         * [ ] Add new `maintenance_info` field in CoabVarsDto
+         * [ ] Refine CoabVarsDtoBuilder to set it
+      * [ ] refine test request 
    

@@ -13,6 +13,7 @@ import org.springframework.cloud.servicebroker.model.binding.CreateServiceInstan
 import org.springframework.cloud.servicebroker.model.binding.CreateServiceInstanceBindingRequest;
 import org.springframework.cloud.servicebroker.model.binding.DeleteServiceInstanceBindingRequest;
 import org.springframework.cloud.servicebroker.model.catalog.Catalog;
+import org.springframework.cloud.servicebroker.model.catalog.MaintenanceInfo;
 import org.springframework.cloud.servicebroker.model.catalog.Plan;
 import org.springframework.cloud.servicebroker.model.catalog.ServiceDefinition;
 import org.springframework.cloud.servicebroker.model.instance.CreateServiceInstanceRequest;
@@ -153,6 +154,24 @@ public class OsbBuilderHelper {
     }
 
     public static UpdateServiceInstanceRequest anUpdateServiceInstanceRequest() {
+        // Given an incoming delete request
+        return UpdateServiceInstanceRequest.builder()
+                .serviceDefinitionId("service_id")
+                .planId(SERVICE_PLAN_ID)
+                .parameters(new HashMap<>())
+                .serviceInstanceId("instance_id")
+                .maintenanceInfo(anUpgradedMaintenanceInfo())
+                .build();
+    }
+
+    public static MaintenanceInfo anUpgradedMaintenanceInfo() {
+        return MaintenanceInfo.builder()
+            .version(2, 0, 0, "")
+            .description("Includes dashboards")
+            .build();
+    }
+
+    public static UpdateServiceInstanceRequest anUpgradeServiceInstanceRequest() {
         // Given an incoming delete request
         return UpdateServiceInstanceRequest.builder()
                 .serviceDefinitionId("service_id")

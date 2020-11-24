@@ -1,6 +1,7 @@
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline;
 
 import org.springframework.cloud.servicebroker.model.CloudFoundryContext;
+import org.springframework.cloud.servicebroker.model.catalog.MaintenanceInfo;
 import org.springframework.cloud.servicebroker.model.instance.AsyncParameterizedServiceInstanceRequest;
 import org.springframework.cloud.servicebroker.model.instance.CreateServiceInstanceRequest;
 import org.springframework.cloud.servicebroker.model.instance.UpdateServiceInstanceRequest;
@@ -35,7 +36,10 @@ public class CoabVarsFileDtoBuilder {
 
 	public CoabVarsFileDto wrapGenericOsbIntoVarsDto(AsyncParameterizedServiceInstanceRequest request,
 		String serviceInstanceId,
-		String serviceDefinitionId, String planId, String deploymentName) {
+		String serviceDefinitionId,
+		String planId,
+		MaintenanceInfo maintenanceInfo,
+		String deploymentName) {
 
 		String userKey = extractUserKeyFromOsbContext(request.getOriginatingIdentity());
 		String organizationGuid = extractCfOrgGuid(request);
@@ -46,6 +50,7 @@ public class CoabVarsFileDtoBuilder {
 		coabVarsFileDto.instance_id = serviceInstanceId;
 		coabVarsFileDto.service_id = serviceDefinitionId;
 		coabVarsFileDto.plan_id = planId;
+		coabVarsFileDto.maintenanceInfo = maintenanceInfo;
 
 		coabVarsFileDto.context.user_guid = userKey;
 		coabVarsFileDto.context.space_guid = spaceGuid;
@@ -57,20 +62,24 @@ public class CoabVarsFileDtoBuilder {
 	}
 
 	public CoabVarsFileDto wrapCreateOsbIntoVarsDto(CreateServiceInstanceRequest request, String deploymentName) {
-		String serviceInstanceId = request.getServiceInstanceId();
-		String serviceDefinitionId = request.getServiceDefinitionId();
-		String planId = request.getPlanId();
 
-		return wrapGenericOsbIntoVarsDto(request, serviceInstanceId, serviceDefinitionId, planId,
+		return wrapGenericOsbIntoVarsDto(
+			request,
+			request.getServiceInstanceId(),
+			request.getServiceDefinitionId(),
+			request.getPlanId(),
+			request.getMaintenanceInfo(),
 			deploymentName);
 	}
 
 	public CoabVarsFileDto wrapUpdateOsbIntoVarsDto(UpdateServiceInstanceRequest request, String deploymentName) {
-		String serviceInstanceId = request.getServiceInstanceId();
-		String serviceDefinitionId = request.getServiceDefinitionId();
-		String planId = request.getPlanId();
 
-		return wrapGenericOsbIntoVarsDto(request, serviceInstanceId, serviceDefinitionId, planId,
+		return wrapGenericOsbIntoVarsDto(
+			request,
+			request.getServiceInstanceId(),
+			request.getServiceDefinitionId(),
+			request.getPlanId(),
+			request.getMaintenanceInfo(),
 			deploymentName);
 	}
 

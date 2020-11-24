@@ -114,7 +114,7 @@ public class BoshProcessorTest {
     }
     @Test
     public void updates_coab_vars_and_returns_async_response() {
-        //Given a creation request
+        //Given an update request
         UpdateServiceInstanceRequest request = UpdateServiceInstanceRequest.builder()
                 .serviceDefinitionId("service_definition_id")
                 .planId("plan_id")

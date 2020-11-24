@@ -14,6 +14,8 @@ import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.apache.commons.lang.builder.ToStringBuilder;
 
+import org.springframework.cloud.servicebroker.model.catalog.MaintenanceInfo;
+
 import static java.util.Arrays.asList;
 
 /**
@@ -92,6 +94,13 @@ public class CoabVarsFileDto {
     @JsonProperty("parameters")
     @JsonInclude(JsonInclude.Include.NON_NULL) //include even if empty
     public final Map<String, Object> parameters = new HashMap<>();
+
+    /**
+     * Maintenance_info attached to the Service Instance (at provision or update time)
+     */
+    @JsonProperty("maintenance_info")
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public MaintenanceInfo maintenanceInfo;
 
     /**
      * For update requests,Information about the Service Instance prior to the updatefrom

@@ -1,13 +1,22 @@
 
 Maintenance info https://github.com/orange-cloudfoundry/cf-ops-automation-broker/issues/278
 
-## Design
+## Goals
 
 Initial step to focus on maintenance_info support (refreshing osb-client view including dashboard) with coab-vars.yml update.
 
 Stemcell/bosh-release/deployment model upgrades are currently out of scope of COAB broker, and rather handled by coa pipelines.
 
 This work might however be useful for plan update and params update.
+
+
+Q: would this conflict with service instance upgrade pipeline ?
+A: should not, since only coab-vars.yml would change
+
+Q: is it a good idea to simplify this upgrade to not trigger coab-vars.yml change nor deployment update ?
+   * would imply a mix of dashboard urls with brokered guid and backing guids
+
+## Design of COAB and COA (models) interactions
 
 COAB Update endpoint triggers writing of the following in the paas-templates service instance branch 
 * coab-vars.yml: flat variables used in bosh deployment
@@ -40,7 +49,88 @@ Other alternatives that were considered:
          - => **include hashCode on CoabVarsDto of the coab-vars into the state parameter and only compare the two hashcodes**
          - we keep the full coab-vars.yml into the manifest to ease troubleshooting and auditing in paas-templates git repo  
 
---- status
+
+## End to end validation scenario
+  
+ 
+* [x] check catalog can be configured to return maintenance info: test noop
+* [ ] design end-to-end test of service instance upgrade with noop (to simulate old service instance without `x-osb-cmdb` param)
+   * [x] configure noop 49.0.0 without dashboard url 
+   * [x] create one noop instance `reference-0` without x-osb-cmdb params. Expect no dashboard url
+   * [x] configure noop 49.0.1 with dashboard url with v1 using backing service instance guid. 
+   * [x] check  noop instance `reference-0` is upgradeable
+   * [ ] create one noop instance `reference` without x-osb-cmdb params. Expect dashboard url with v1 using service instance guid
+   * [ ] configure noop maintenance_info V2
+   * [ ] configure noop dashboard url with v2 using brokered guid
+   * [x] test that CF CC accepts `cf update-service --upgrade reference -c params.json`
+       * [x] coab implements service instance update support
+       * [ ] coab generates new `coab-vars.yml`
+          * [x] generify existing coab-vars provisionning code to also apply on update
+          * [x] adapt git processor to support pre and post update OSB life cycle hooks 
+          * [x] adapt provisionning code in BoshProcessor+ BoshProcessorTest to support update
+             * [x] adapt create logic to update. Always respond with update in progress for now + dashboard url
+             * [x] adapt getlastoperation logic to check match of `coab_completion_marker`
+             * [x] refactor to reduce duplication between create and update
+       * [ ] Later, optimize response time for `noop` updates (i.e. the ones requested by developer which do not change the `coab-vars.yml` and hence don't trigger a COA build) 
+          * when changes were applied to `coab-vars.yml` w.r.t.
+             *  git commit & git push
+             *  coa pipeline triggers, potentially deploying grafana with FQDN matching brokered guid.    
+             *  manifest gets committed with `coab-fingerprint`
+          * [ ] when no changes will be applied to coab-vars.yml, respond with update completed + dashboard url
+             * currently will still response 202 accepted in progress, regardless of whether changes where made.    
+   * [ ] assert coab-vars.yml now contains `x-osb-cmdb` param  
+   * [ ] assert update completes once bosh deployment completes   
+   * [ ] assert `reference` service instance now returns dashboard url with v2 using brokered guid   
+
+
+   
+## CF CLI behavior investigation
+   
+  * [x] test that CF CC accepts `cf update-service --upgrade reference -c params.json`
+      * CF CLI rejects it:
+      * Tested it with direct CC API: `CF_TRACE=true cf curl -X PUT /v2/service_instances/39308492-68d3-4601-adb6-8f76f37392f5?accepts_incomplete=true -d @/tmp/maintenance_info.json`
+```json
+{
+  "maintenance_info": {
+    "description": "Dashboard url with backing service guids",
+    "version": "49.0.1"
+  },
+  "parameters": {
+          "aparam":"avalue"
+  }
+}
+```
+
+properly received by broker
+
+```
+17:58:14.530: [APP/PROC/WEB.0] 2020-11-04 16:58:14.529  INFO 27 --- [nio-8080-exec-5] o.s.c.s.c.ServiceInstanceController      : Updating service instance
+17:58:14.530: [APP/PROC/WEB.0] 2020-11-04 16:58:14.529 DEBUG 27 --- [nio-8080-exec-5] o.s.c.s.c.ServiceInstanceController      : request=ServiceBrokerRequest{platformInstanceId='null', apiInfoLocation='api.redacted-domain.org/v2/info', originatingIdentity=Context{platform='cloudfoundry', properties={user_id=321ae0c8-1289-4e49-9aa4-4fca806754f1}}', requestIdentity=09b20f4a-6852-4951-8f3a-c8bcbe27d1fa}AsyncServiceBrokerRequest{asyncAccepted=true}AsyncParameterizedServiceInstanceRequest{parameters={aparam=avalue}, context=Context{platform='cloudfoundry', properties={spaceGuid=d8d14da7-7ac8-4a6b-b17b-8544c28e514a, spaceName=coa-noop-smoke-tests, organizationName=service-sandbox, instanceName=dummy-name, organizationGuid=b65a1232-add9-49ab-8bf1-283ddc08c0de}}}UpdateServiceInstanceRequest{serviceDefinitionId='noop-ondemand-service', planId='noop-ondemand-plan', previousValues=PreviousValues{planId='noop-ondemand-plan'maintenanceInfo='MaintenanceInfo{version='49.0.1, description='null}'}, serviceInstanceId='39308492-68d3-4601-adb6-8f76f37392f5', maintenanceInfo='MaintenanceInfo{version='49.0.1, description='null}'}
+17:58:14.530: [APP/PROC/WEB.0] 2020-11-04 16:58:14.529  INFO 27 --- [nio-8080-exec-5] o.s.c.s.c.ServiceInstanceController      : Updating service instance succeeded
+17:58:14.530: [APP/PROC/WEB.0] 2020-11-04 16:58:14.529 DEBUG 27 --- [nio-8080-exec-5] o.s.c.s.c.ServiceInstanceController      : serviceInstanceId=39308492-68d3-4601-adb6-8f76f37392f5, response=AsyncServiceInstanceResponse{async=false, operation='null'}UpdateServiceInstanceResponse{dashboardUrl='null'}
+17:58:14.533: [RTR.1] coa-noop-broker.redacted-domain.org - [2020-11-04T16:58:14.430017956Z] "PATCH /v2/service_instances/39308492-68d3-4601-adb6-8f76f37392f5?accepts_incomplete=true HTTP/1.1" 200 754 2 "-" "HTTPClient/1.0 (2.8.3, ruby 2.5.5 (2019-03-15))" "192.168.35.66:38488" "192.168.35.79:61090" x_forwarded_for:"192.168.35.66" x_forwarded_proto:"https" vcap_request_id:"effa42ae-d451-4d89-67e8-2cc902aa8319" response_time:0.102658 gorouter_time:0.000581 app_id:"06444d72-af92-4539-95c1-3dad397f724c" app_index:"0" x_cf_routererror:"-" x_b3_traceid:"822be555cf26c586" x_b3_spanid:"822be555cf26c586" x_b3_parentspanid:"-" b3:"822be555cf26c586-822be555cf26c586"
+```
+
+## Implementation tasks
+  
+  
+* [x] check bump of sc-osb. Coab is running 2.1.2.RELEASE. 
+   * Maintenance_info support requires 3.1.2.RELEASE or 3.2.0-M1
+   * Bump to 3.1.x or 3.2.x may imply boot and spring bumps (see [version-compatibility](https://github.com/spring-cloud/spring-cloud-open-service-broker#version-compatibility))])
+   
+Spring Cloud Open Service Broker | Open Service Broker API | Spring Boot | Spring Framework
+-- | -- | -- | --
+3.2.x | 2.15 | 2.3.x | 5.2.x
+3.1.x | 2.15 | 2.2.x | 5.2.x
+3.0.x | 2.14 | 2.1.x | 5.1.x
+2.1.x | 2.14 | 2.0.x | 5.0.x
+   * Currently COA is running:
+      * SpringCloud dependencies Hoxton.SR8. Hoxton.SR8 is compatible with Spring Boot 2.3.x and 2.2.x. See https://spring.io/blog/2020/08/28/spring-cloud-hoxton-sr8-has-been-released
+      * SpringBoot 2.3.3
+      * Spring 5.2.8.RELEASE
+   * SC-OSB bump requires using reactive apis, but we remain with servlet blocking stack. See https://github.com/spring-cloud/spring-cloud-open-service-broker/commit/121291aeec0f565bc0202d5c1d85c2eb27becbea    
+   
+   
 * [x] check coab-noop proto with fingerprint
    * [x] find a way to assert this into the deployment models
    * [x] refine coab noop model with realistic coab-vars.yml (including -- doc separator)
@@ -82,91 +172,8 @@ Other alternatives that were considered:
             * redis: no
             * k3s 
    * [ ] Add test of maintenance_info upgrade
-      * Pb: in 1st test imp, coab-vars.yml does not yet contain maintenance_info, so the `cf update-service --upgrade` push no changes and this does not trigger a COA build
+      * Pb: in 1st naive test impl, coab-vars.yml does not yet contain maintenance_info, so the `cf update-service --upgrade` push no changes and this does not trigger a COA build
          * CoabVarsDto.previousValue may contain previous maintenance_info 
          * refine request 
-
-## Detailed tasks
-
-
-* [x] check bump of sc-osb. Coab is running 2.1.2.RELEASE. 
-   * Maintenance_info support requires 3.1.2.RELEASE or 3.2.0-M1
-   * Bump to 3.1.x or 3.2.x may imply boot and spring bumps (see [version-compatibility](https://github.com/spring-cloud/spring-cloud-open-service-broker#version-compatibility))])
-   
-Spring Cloud Open Service Broker | Open Service Broker API | Spring Boot | Spring Framework
--- | -- | -- | --
-3.2.x | 2.15 | 2.3.x | 5.2.x
-3.1.x | 2.15 | 2.2.x | 5.2.x
-3.0.x | 2.14 | 2.1.x | 5.1.x
-2.1.x | 2.14 | 2.0.x | 5.0.x
-   * Currently COA is running:
-      * SpringCloud dependencies Hoxton.SR8. Hoxton.SR8 is compatible with Spring Boot 2.3.x and 2.2.x. See https://spring.io/blog/2020/08/28/spring-cloud-hoxton-sr8-has-been-released
-      * SpringBoot 2.3.3
-      * Spring 5.2.8.RELEASE
-   * SC-OSB bump requires using reactive apis, but we remain with servlet blocking stack. See https://github.com/spring-cloud/spring-cloud-open-service-broker/commit/121291aeec0f565bc0202d5c1d85c2eb27becbea      
- 
-* [x] check catalog can be configured to return maintenance info: test noop
-* [ ] design end-to-end test of service instance upgrade with noop (to simulate old service instance without `x-osb-cmdb` param)
-   * [x] configure noop 49.0.0 without dashboard url 
-   * [x] create one noop instance `reference-0` without x-osb-cmdb params. Expect no dashboard url
-   * [x] configure noop 49.0.1 with dashboard url with v1 using backing service instance guid. 
-   * [x] check  noop instance `reference-0` is upgradeable
-   * [ ] create one noop instance `reference` without x-osb-cmdb params. Expect dashboard url with v1 using service instance guid
-   * [ ] configure noop maintenance_info V2
-   * [ ] configure noop dashboard url with v2 using brokered guid
-   * [x] test that CF CC accepts `cf update-service --upgrade reference -c params.json`
-       * [x] coab implements service instance update support
-       * [ ] coab generates new `coab-vars.yml`
-          * [x] generify existing coab-vars provisionning code to also apply on update
-          * [x] adapt git processor to support pre and post update OSB life cycle hooks 
-          * [x] adapt provisionning code in BoshProcessor+ BoshProcessorTest to support update
-             * [x] adapt create logic to update. Always respond with update in progress for now + dashboard url
-             * [x] adapt getlastoperation logic to check match of `coab_completion_marker`
-             * [x] refactor to reduce duplication between create and update
-       * [ ] Later, optimize response time for `noop` updates (i.e. the ones requested by developer which do not change the `coab-vars.yml` and hence don't trigger a COA build) 
-          * when changes were applied to `coab-vars.yml` w.r.t.
-             *  git commit & git push
-             *  coa pipeline triggers, potentially deploying grafana with FQDN matching brokered guid.    
-             *  manifest gets committed with `coab-fingerprint`
-          * [ ] when no changes will be applied to coab-vars.yml, respond with update completed + dashboard url
-             * currently will still response 202 accepted in progress, regardless of whether changes where made.    
-   * [ ] assert coab-vars.yml now contains `x-osb-cmdb` param  
-   * [ ] assert update completes once bosh deployment completes   
-   * [ ] assert `reference` service instance now returns dashboard url with v2 using brokered guid   
-* [ ] Implement OSB service instance update which synchronously
-* [ ] Store maintenance_info in coab-vars.yml
-
-Q: would this conflict with service instance upgrade pipeline ?
-A: should not, since only coab-vars.yml would change
-
-Q: is it a good idea to simplify this upgrade to not trigger coab-vars.yml change nor deployment update ?
-   * would imply a mix of dashboard urls with brokered guid and backing guids
-   
-## Details   
-   
-  * [x] test that CF CC accepts `cf update-service --upgrade reference -c params.json`
-      * CF CLI rejects it:
-      * Tested it with direct CC API: `CF_TRACE=true cf curl -X PUT /v2/service_instances/39308492-68d3-4601-adb6-8f76f37392f5?accepts_incomplete=true -d @/tmp/maintenance_info.json`
-```json
-{
-  "maintenance_info": {
-    "description": "Dashboard url with backing service guids",
-    "version": "49.0.1"
-  },
-  "parameters": {
-          "aparam":"avalue"
-  }
-}
-```
-
-properly received by broker
-
-```
-17:58:14.530: [APP/PROC/WEB.0] 2020-11-04 16:58:14.529  INFO 27 --- [nio-8080-exec-5] o.s.c.s.c.ServiceInstanceController      : Updating service instance
-17:58:14.530: [APP/PROC/WEB.0] 2020-11-04 16:58:14.529 DEBUG 27 --- [nio-8080-exec-5] o.s.c.s.c.ServiceInstanceController      : request=ServiceBrokerRequest{platformInstanceId='null', apiInfoLocation='api.redacted-domain.org/v2/info', originatingIdentity=Context{platform='cloudfoundry', properties={user_id=321ae0c8-1289-4e49-9aa4-4fca806754f1}}', requestIdentity=09b20f4a-6852-4951-8f3a-c8bcbe27d1fa}AsyncServiceBrokerRequest{asyncAccepted=true}AsyncParameterizedServiceInstanceRequest{parameters={aparam=avalue}, context=Context{platform='cloudfoundry', properties={spaceGuid=d8d14da7-7ac8-4a6b-b17b-8544c28e514a, spaceName=coa-noop-smoke-tests, organizationName=service-sandbox, instanceName=dummy-name, organizationGuid=b65a1232-add9-49ab-8bf1-283ddc08c0de}}}UpdateServiceInstanceRequest{serviceDefinitionId='noop-ondemand-service', planId='noop-ondemand-plan', previousValues=PreviousValues{planId='noop-ondemand-plan'maintenanceInfo='MaintenanceInfo{version='49.0.1, description='null}'}, serviceInstanceId='39308492-68d3-4601-adb6-8f76f37392f5', maintenanceInfo='MaintenanceInfo{version='49.0.1, description='null}'}
-17:58:14.530: [APP/PROC/WEB.0] 2020-11-04 16:58:14.529  INFO 27 --- [nio-8080-exec-5] o.s.c.s.c.ServiceInstanceController      : Updating service instance succeeded
-17:58:14.530: [APP/PROC/WEB.0] 2020-11-04 16:58:14.529 DEBUG 27 --- [nio-8080-exec-5] o.s.c.s.c.ServiceInstanceController      : serviceInstanceId=39308492-68d3-4601-adb6-8f76f37392f5, response=AsyncServiceInstanceResponse{async=false, operation='null'}UpdateServiceInstanceResponse{dashboardUrl='null'}
-17:58:14.533: [RTR.1] coa-noop-broker.redacted-domain.org - [2020-11-04T16:58:14.430017956Z] "PATCH /v2/service_instances/39308492-68d3-4601-adb6-8f76f37392f5?accepts_incomplete=true HTTP/1.1" 200 754 2 "-" "HTTPClient/1.0 (2.8.3, ruby 2.5.5 (2019-03-15))" "192.168.35.66:38488" "192.168.35.79:61090" x_forwarded_for:"192.168.35.66" x_forwarded_proto:"https" vcap_request_id:"effa42ae-d451-4d89-67e8-2cc902aa8319" response_time:0.102658 gorouter_time:0.000581 app_id:"06444d72-af92-4539-95c1-3dad397f724c" app_index:"0" x_cf_routererror:"-" x_b3_traceid:"822be555cf26c586" x_b3_spanid:"822be555cf26c586" x_b3_parentspanid:"-" b3:"822be555cf26c586-822be555cf26c586"
-```
-
+      * [ ] Store maintenance_info in coab-vars.yml
    

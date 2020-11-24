@@ -76,7 +76,8 @@ public class BoshProcessorTest {
         //given a configured timeout
         PipelineCompletionTracker tracker = aCompletionTracker();
 
-        BoshProcessor boshProcessor = new BoshProcessor(TEMPLATES_REPOSITORY_ALIAS_NAME, SECRETS_REPOSITORY_ALIAS_NAME, templatesGenerator, secretsGenerator, tracker, "Cassandra", "c_", "_","https://static-dashboard.com");
+        BoshProcessor boshProcessor = new BoshProcessor(TEMPLATES_REPOSITORY_ALIAS_NAME, SECRETS_REPOSITORY_ALIAS_NAME, templatesGenerator, secretsGenerator, tracker, "Cassandra", "c_", "_","https://static-dashboard.com"
+        );
 
         //When
         boshProcessor.preCreate(context);
@@ -133,7 +134,8 @@ public class BoshProcessorTest {
         //given a configured timeout
         PipelineCompletionTracker tracker = aCompletionTracker();
 
-        BoshProcessor boshProcessor = new BoshProcessor(TEMPLATES_REPOSITORY_ALIAS_NAME, SECRETS_REPOSITORY_ALIAS_NAME, templatesGenerator, secretsGenerator, tracker, "Cassandra", "c_", "_","https://static-dashboard.com");
+        BoshProcessor boshProcessor = new BoshProcessor(TEMPLATES_REPOSITORY_ALIAS_NAME, SECRETS_REPOSITORY_ALIAS_NAME, templatesGenerator, secretsGenerator, tracker, "Cassandra", "c_", "_","https://static-dashboard.com"
+        );
 
         //When
         boshProcessor.preUpdate(context);
@@ -172,7 +174,8 @@ public class BoshProcessorTest {
         PipelineCompletionTracker tracker = aCompletionTracker();
 
         //Given a basic processor with deployment model
-        BoshProcessor boshProcessor = new BoshProcessor(TEMPLATES_REPOSITORY_ALIAS_NAME, SECRETS_REPOSITORY_ALIAS_NAME, templatesGenerator, secretsGenerator, tracker, "Cassandra", "c", "_","https://static-dashboard.com");
+        BoshProcessor boshProcessor = new BoshProcessor(TEMPLATES_REPOSITORY_ALIAS_NAME, SECRETS_REPOSITORY_ALIAS_NAME, templatesGenerator, secretsGenerator, tracker, "Cassandra", "c", "_","https://static-dashboard.com"
+        );
 
 
         //Given a creation request with both deprecated and new OSB syntax
@@ -387,7 +390,8 @@ public class BoshProcessorTest {
         SecretsGenerator secretsGenerator = mock(SecretsGenerator.class);
         PipelineCompletionTracker tracker = aCompletionTracker();
 
-        return new BoshProcessor(TEMPLATES_REPOSITORY_ALIAS_NAME, SECRETS_REPOSITORY_ALIAS_NAME, templatesGenerator, secretsGenerator, tracker, "Cassandra", "c", "_","https://static-dashboard.com");
+        return new BoshProcessor(TEMPLATES_REPOSITORY_ALIAS_NAME, SECRETS_REPOSITORY_ALIAS_NAME, templatesGenerator, secretsGenerator, tracker, "Cassandra", "c", "_","https://static-dashboard.com"
+        );
     }
 
     @Test
@@ -444,7 +448,8 @@ public class BoshProcessorTest {
 
 
         //When
-        BoshProcessor boshProcessor = new BoshProcessor(TEMPLATES_REPOSITORY_ALIAS_NAME, SECRETS_REPOSITORY_ALIAS_NAME, null, null, tracker, "Cassandra", "c", "_","https://static-dashboard.com");
+        BoshProcessor boshProcessor = new BoshProcessor(TEMPLATES_REPOSITORY_ALIAS_NAME, SECRETS_REPOSITORY_ALIAS_NAME, null, null, tracker, "Cassandra", "c", "_","https://static-dashboard.com"
+        );
         boshProcessor.preGetLastOperation(context);
 
         //Then mapped response from tracker is returned
@@ -469,7 +474,8 @@ public class BoshProcessorTest {
 
 
         //When
-        BoshProcessor boshProcessor = new BoshProcessor(TEMPLATES_REPOSITORY_ALIAS_NAME, SECRETS_REPOSITORY_ALIAS_NAME, null, null, tracker, "Cassandra", "c", "_","https://static-dashboard.com");
+        BoshProcessor boshProcessor = new BoshProcessor(TEMPLATES_REPOSITORY_ALIAS_NAME, SECRETS_REPOSITORY_ALIAS_NAME, null, null, tracker, "Cassandra", "c", "_","https://static-dashboard.com"
+        );
         boshProcessor.preBind(context);
 
         //Then
@@ -494,7 +500,8 @@ public class BoshProcessorTest {
         doNothing().when(tracker).delegateUnbindRequest(any(Path.class), any(DeleteServiceInstanceBindingRequest.class));
 
         //When
-        BoshProcessor boshProcessor = new BoshProcessor(TEMPLATES_REPOSITORY_ALIAS_NAME, SECRETS_REPOSITORY_ALIAS_NAME, null, null, tracker, "Cassandra", "c", "_","https://static-dashboard.com");
+        BoshProcessor boshProcessor = new BoshProcessor(TEMPLATES_REPOSITORY_ALIAS_NAME, SECRETS_REPOSITORY_ALIAS_NAME, null, null, tracker, "Cassandra", "c", "_","https://static-dashboard.com"
+        );
         boshProcessor.preUnBind(context);
 
         //Then
@@ -527,7 +534,8 @@ public class BoshProcessorTest {
         when(tracker.getDeploymentExecStatus(any(Path.class), eq(SERVICE_INSTANCE_ID), eq(DeploymentConstants.OSB_OPERATION_CREATE), any(GetLastServiceOperationRequest.class))).thenReturn(expectedResponse);
 
         //When
-        BoshProcessor boshProcessor = new BoshProcessor(TEMPLATES_REPOSITORY_ALIAS_NAME, SECRETS_REPOSITORY_ALIAS_NAME, null, null, tracker, "Cassandra", "c", "_","https://static-dashboard.com");
+        BoshProcessor boshProcessor = new BoshProcessor(TEMPLATES_REPOSITORY_ALIAS_NAME, SECRETS_REPOSITORY_ALIAS_NAME, null, null, tracker, "Cassandra", "c", "_","https://static-dashboard.com"
+        );
         boshProcessor.preGetLastOperation(context);
 
         //Then mapped response from tracker is returned
@@ -564,7 +572,8 @@ public class BoshProcessorTest {
 
 
         //When
-        BoshProcessor boshProcessor = new BoshProcessor(TEMPLATES_REPOSITORY_ALIAS_NAME, SECRETS_REPOSITORY_ALIAS_NAME, templatesGenerator, secretsGenerator, tracker, "Cassandra", "c", "_","https://static-dashboard.com");
+        BoshProcessor boshProcessor = new BoshProcessor(TEMPLATES_REPOSITORY_ALIAS_NAME, SECRETS_REPOSITORY_ALIAS_NAME, templatesGenerator, secretsGenerator, tracker, "Cassandra", "c", "_","https://static-dashboard.com"
+        );
         boshProcessor.preDelete(context);
 
         //Then verify parameters and delegation on calls

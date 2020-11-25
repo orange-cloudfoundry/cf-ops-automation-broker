@@ -1,10 +1,10 @@
-# Sample catalofg yml configuration file.
+# Sample catalog yml configuration file.
 # Refer to OSB lib for full sample
 #
 # Used by BoshServiceProvisionningTest
 #
 #Note: this catalog currently needs to be in sync with service definition id and plan id used in OsbBuilderHelper and its clients.
-
+# See reference format at https://github.com/spring-cloud/spring-cloud-open-service-broker/blob/5b3e599dfa23a12c347bae74c9b0cc2cbac793d2/spring-cloud-open-service-broker-autoconfigure/src/test/resources/catalog-full.yml#L1
 spring:
   cloud:
     openservicebroker:
@@ -31,5 +31,8 @@ spring:
                 - id: plan_id # mandatory field
                   name: default # mandatory field; defaults to default
                   description: "This is a default ondemand plan.  All services are created equally." # mandatory field
-
+                  # Better if this can remain consistent with
+                  maintenance_info:
+                    version: 2.0.0
+                    description: "Includes dashboards"
 

@@ -113,7 +113,8 @@ public class BoshBrokerApplication {
                 deploymentProperties.getRootDeployment(),
                 deploymentProperties.getModelDeployment(),
                 deploymentProperties.getModelDeploymentShortAlias(),
-                deploymentProperties.getModelDeploymentSeparator()
+                deploymentProperties.getModelDeploymentSeparator(),
+                new VarsFilesYmlFormatter()  //externalize if needed
         );
     }
 
@@ -265,21 +266,21 @@ public class BoshBrokerApplication {
             // for necessary steps, configure the right branch to fetch
             @Override
             public void preCreate(Context ctx) { registerPaasTemplatesBranches(ctx); }
+            @Override
+            public void preUpdate(Context ctx) { registerPaasTemplatesBranches(ctx); }
+            @Override
+            // delete step now also cleans up paas-templates
+            public void preDelete(Context ctx) { registerPaasTemplatesBranches(ctx); }
 
             //for steps only requiring paas-secrets, don't clone paas-templates
             @Override
             public void preGetLastOperation(Context ctx) { skipPaasTemplateGitCloneAndPush(ctx); }
-            @Override
-            //public void preDelete(Context ctx) { skipPaasTemplateGitCloneAndPush(ctx); }
-            public void preDelete(Context ctx) { registerPaasTemplatesBranches(ctx); }
 
             //for yet unimplemented steps, don't clone paas-templates
             @Override
             public void preBind(Context ctx) { skipPaasTemplateGitCloneAndPush(ctx); }
             @Override
             public void preUnBind(Context ctx) { skipPaasTemplateGitCloneAndPush(ctx); }
-            @Override
-            public void preUpdate(Context ctx) { skipPaasTemplateGitCloneAndPush(ctx); }
             @Override
             public void preGetInstance(Context ctx) { skipPaasTemplateGitCloneAndPush(ctx); }
 

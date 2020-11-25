@@ -13,6 +13,7 @@ import org.springframework.cloud.servicebroker.model.binding.CreateServiceInstan
 import org.springframework.cloud.servicebroker.model.binding.CreateServiceInstanceBindingRequest;
 import org.springframework.cloud.servicebroker.model.binding.DeleteServiceInstanceBindingRequest;
 import org.springframework.cloud.servicebroker.model.catalog.Catalog;
+import org.springframework.cloud.servicebroker.model.catalog.MaintenanceInfo;
 import org.springframework.cloud.servicebroker.model.catalog.Plan;
 import org.springframework.cloud.servicebroker.model.catalog.ServiceDefinition;
 import org.springframework.cloud.servicebroker.model.instance.CreateServiceInstanceRequest;
@@ -29,6 +30,7 @@ public class OsbBuilderHelper {
 
     public static final String SERVICE_DEFINITION_ID = "service_definition_id";
     public static final String SERVICE_PLAN_ID = "plan_id";
+    public static final String UPGRADED_SERVICE_PLAN_ID = "upgraded_plan_id";
 
     @SuppressWarnings("WeakerAccess")
     public static DeleteServiceInstanceBindingRequest anUnbindRequest(String serviceInstanceId, String bindingId) {
@@ -119,7 +121,10 @@ public class OsbBuilderHelper {
         properties.put(ORIGINATING_EMAIL_KEY, "user_email");
 
         return CloudFoundryContext.builder()
-                .properties(properties).build();
+            .organizationGuid("org_id")
+            .spaceGuid("space_id")
+            .properties(properties)
+            .build();
     }
 
     @SuppressWarnings("WeakerAccess")
@@ -133,11 +138,8 @@ public class OsbBuilderHelper {
                 .planId(SERVICE_PLAN_ID)
                 .parameters(parameters)
                 .serviceInstanceId("service-instance-guid")
-                .context(CloudFoundryContext.builder()
-                    .organizationGuid("org_id")
-                    .spaceGuid("space_id")
-                    .build()
-                )
+                .maintenanceInfo(anInitialMaintenanceInfo())
+                .context(aCfUserContext())
                 .build();
     }
 
@@ -153,6 +155,50 @@ public class OsbBuilderHelper {
     }
 
     public static UpdateServiceInstanceRequest anUpdateServiceInstanceRequest() {
+        // Given an incoming delete request
+        return UpdateServiceInstanceRequest.builder()
+                .serviceDefinitionId("service_id")
+                .planId(SERVICE_PLAN_ID)
+                .parameters(new HashMap<>())
+                .serviceInstanceId("instance_id")
+                .maintenanceInfo(anUpgradedMaintenanceInfo())
+                .previousValues(new UpdateServiceInstanceRequest.PreviousValues(
+                    null,
+                    anInitialMaintenanceInfo()))
+
+                .build();
+    }
+
+    public static UpdateServiceInstanceRequest aPlanUpdateServiceInstanceRequest() {
+        return UpdateServiceInstanceRequest.builder()
+            .serviceDefinitionId("service_id")
+            .planId(UPGRADED_SERVICE_PLAN_ID)
+            .serviceInstanceId("instance_id")
+            .maintenanceInfo( anInitialMaintenanceInfo())
+            .parameters(new HashMap<>())
+            .previousValues(new UpdateServiceInstanceRequest.PreviousValues(
+                SERVICE_PLAN_ID,
+                null))
+            .context(aCfUserContext())
+            .originatingIdentity(aCfUserContext())
+            .build();
+    }
+
+    public static MaintenanceInfo anInitialMaintenanceInfo() {
+        return MaintenanceInfo.builder()
+            .version(1, 0, 0, "")
+            .description("Initial version")
+            .build();
+    }
+
+    public static MaintenanceInfo anUpgradedMaintenanceInfo() {
+        return MaintenanceInfo.builder()
+            .version(2, 0, 0, "")
+            .description("Includes dashboards")
+            .build();
+    }
+
+    public static UpdateServiceInstanceRequest anUpgradeServiceInstanceRequest() {
         // Given an incoming delete request
         return UpdateServiceInstanceRequest.builder()
                 .serviceDefinitionId("service_id")

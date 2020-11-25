@@ -1,15 +1,13 @@
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class TemplatesGenerator extends StructureGeneratorImpl{
 
@@ -155,7 +153,7 @@ public class TemplatesGenerator extends StructureGeneratorImpl{
         StructureGeneratorHelper.generateSymbolicLink(workDir, sourcePathElements, targetPathElements, sourceFileName, sourceFileName);
     }
 
-    protected void generateCoabVarsFile(Path workDir, String serviceInstanceId, CoabVarsFileDto coabVarsFileDto){
+    public void generateCoabVarsFile(Path workDir, String serviceInstanceId, CoabVarsFileDto coabVarsFileDto){
         String[] targetPathElements = new String[] {this.rootDeployment, this.computeDeploymentName(serviceInstanceId), DeploymentConstants.TEMPLATE};
         String sourceFileName = DeploymentConstants.COAB + DeploymentConstants.HYPHEN + DeploymentConstants.VARS + DeploymentConstants.YML_EXTENSION;
 

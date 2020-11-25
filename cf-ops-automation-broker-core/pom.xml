@@ -21,7 +21,7 @@
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 		<java.version>1.8</java.version>
 		<orangeSpringCloudServiceBrokerVersion>a13e8c6fb811f0c8bd4c4916edff6405db3cdfd0</orangeSpringCloudServiceBrokerVersion>
-		<upstreamSpringCloudServiceBrokerVersion>2.1.2.RELEASE</upstreamSpringCloudServiceBrokerVersion>
+		<upstreamSpringCloudServiceBrokerVersion>3.1.2.RELEASE</upstreamSpringCloudServiceBrokerVersion>
 	</properties>
 
 	<dependencies>
@@ -49,6 +49,13 @@
 			<scope>test</scope>
 		</dependency>
 
+		<!-- See https://stackoverflow.com/questions/188311/how-should-one-unit-test-the-hashcode-equals-contract -->
+		<dependency>
+			<groupId>nl.jqno.equalsverifier</groupId>
+			<artifactId>equalsverifier</artifactId>
+			<version>3.5</version>
+			<scope>test</scope>
+		</dependency>
 
 		<!-- project depl -->
 		
@@ -101,29 +108,21 @@
 <!--			<version>${orangeSpringCloudServiceBrokerVersion}</version>-->
 <!--		</dependency>-->
 
-		<!-- When 2.x upstream is released with our patches  -->
+		<!-- When we choose to upgrade to 3.x upstream is released  -->
 		<dependency>
 			<groupId>org.springframework.cloud</groupId>
-			<artifactId>spring-cloud-open-service-broker-autoconfigure</artifactId>
-			<version>${upstreamSpringCloudServiceBrokerVersion}</version>
-		</dependency>
-		<dependency>
-			<groupId>org.springframework.cloud</groupId>
-			<artifactId>spring-cloud-starter-open-service-broker-webmvc</artifactId>
-			<version>${upstreamSpringCloudServiceBrokerVersion}</version>
-		</dependency>
-		<dependency>
-			<groupId>org.springframework.cloud</groupId>
-			<artifactId>spring-cloud-open-service-broker-core</artifactId>
+			<artifactId>spring-cloud-starter-open-service-broker</artifactId>
 			<version>${upstreamSpringCloudServiceBrokerVersion}</version>
 		</dependency>
 
-		<!-- When we choose to upgrade to 3.x upstream is released  -->
-<!--		<dependency>-->
-<!--			<groupId>org.springframework.cloud</groupId>-->
-<!--			<artifactId>spring-cloud-starter-open-service-broker</artifactId>-->
-<!--			<version>3.0.0.RELEASE</version>-->
-<!--		</dependency>-->
+		<!-- necessary to test spring-cloud-open-service-broker reactive api -->
+		<dependency>
+			<groupId>io.projectreactor</groupId>
+			<artifactId>reactor-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+
+
 
 		<!-- for bosh manifest yml parsing -->
 		<dependency>

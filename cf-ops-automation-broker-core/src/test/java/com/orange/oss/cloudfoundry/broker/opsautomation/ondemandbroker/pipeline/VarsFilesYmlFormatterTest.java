@@ -26,7 +26,7 @@ public class VarsFilesYmlFormatterTest {
     private static Logger logger = LoggerFactory.getLogger(VarsFilesYmlFormatterTest.class.getName());
 
     @Test
-    public void handles_whitelisted_osb_cmdn_k8s_svcat_patterns() throws IOException {
+    public void handles_whitelisted_osb_cmdb_k8s_svcat_patterns() throws IOException {
         //cmdbJson_k8s_profile with special characters accepted
         assertParamJsonValueAccepted("{\n" +
             "  \"annotations\": {\n" +
@@ -52,20 +52,35 @@ public class VarsFilesYmlFormatterTest {
     }
 
     @Test
-    public void rejects_invalid_patterns() throws IOException {
-        assertDeploymentNameAndParamValueRejected("`a_malicious_shell_command_to_inject_in_bosh_templates`");
-        assertDeploymentNameAndParamValueRejected("``");
-        assertDeploymentNameAndParamValueRejected("$(a_malicious_shell_command_to_inject_in_bosh_templates)");
-        assertDeploymentNameAndParamValueRejected("$()");
-        assertDeploymentNameAndParamValueRejected("(("); //credhub interpolation
-        assertDeploymentNameAndParamValueRejected("(( a/string ))");
-        assertDeploymentNameAndParamValueRejected("))");
-        assertDeploymentNameAndParamValueRejected("?"); //other unknown chars
-        assertDeploymentNameAndParamValueRejected("&"); //YML references
-        assertTooLongContentIsRejected(
-            RandomStringUtils.randomAlphabetic(VarsFilesYmlFormatter.MAX_SERIALIZED_SIZE + 1));
+    void accepts_maintenance_info_field_into_coab_vars() throws IOException {
+        CoabVarsFileDto coabVarsFileDtoWithoutMaintenanceInfo = aTypicalUserProvisionningRequest();
+        assertDtoSerializesAndDeserializesWithoutError(coabVarsFileDtoWithoutMaintenanceInfo);
 
+        CoabVarsFileDto coabVarsFileDtoWithMaintenanceInfo = aTypicalUserProvisionningRequest();
+        coabVarsFileDtoWithMaintenanceInfo.maintenanceInfo = OsbBuilderHelper.anInitialMaintenanceInfo();
+        assertDtoSerializesAndDeserializesWithoutError(coabVarsFileDtoWithMaintenanceInfo);
+    }
 
+    @Test
+    void accepts_previous_value_field_into_coab_vars() throws IOException {
+        CoabVarsFileDto coabVarsFileDtoWithoutValue = aTypicalUserProvisionningRequest();
+        assertDtoSerializesAndDeserializesWithoutError(coabVarsFileDtoWithoutValue);
+
+        CoabVarsFileDto coabVarsFileDtoWithPreviousValue = aTypicalUserProvisionningRequest();
+        coabVarsFileDtoWithPreviousValue.previous_values = new CoabVarsFileDto.PreviousValues();
+        coabVarsFileDtoWithPreviousValue.previous_values.plan_id="older_plan";
+        coabVarsFileDtoWithPreviousValue.previous_values.maintenanceInfo=OsbBuilderHelper.anInitialMaintenanceInfo();
+        assertDtoSerializesAndDeserializesWithoutError(coabVarsFileDtoWithPreviousValue);
+
+        CoabVarsFileDto coabVarsFileDtoWithPreviousValueWithNoPlan = aTypicalUserProvisionningRequest();
+        coabVarsFileDtoWithPreviousValueWithNoPlan.previous_values = new CoabVarsFileDto.PreviousValues();
+        coabVarsFileDtoWithPreviousValueWithNoPlan.previous_values.plan_id=null;
+        coabVarsFileDtoWithPreviousValueWithNoPlan.previous_values.maintenanceInfo=OsbBuilderHelper.anInitialMaintenanceInfo();
+        assertDtoSerializesAndDeserializesWithoutError(coabVarsFileDtoWithPreviousValueWithNoPlan);
+    }
+
+    @Test
+    public void accepts_valid_patterns() throws IOException {
         assertParamValueAccepted("a/path");
         assertParamValueAccepted("../../etc/password");
         assertParamValueAccepted("api.mycf.org/v2/info");
@@ -95,6 +110,22 @@ public class VarsFilesYmlFormatterTest {
             "    }\n" +
             "  }\n");
     }
+    @Test
+    public void rejects_invalid_patterns() throws IOException {
+        assertDeploymentNameAndParamValueRejected("`a_malicious_shell_command_to_inject_in_bosh_templates`");
+        assertDeploymentNameAndParamValueRejected("``");
+        assertDeploymentNameAndParamValueRejected("$(a_malicious_shell_command_to_inject_in_bosh_templates)");
+        assertDeploymentNameAndParamValueRejected("$()");
+        assertDeploymentNameAndParamValueRejected("(("); //credhub interpolation
+        assertDeploymentNameAndParamValueRejected("(( a/string ))");
+        assertDeploymentNameAndParamValueRejected("))");
+        assertDeploymentNameAndParamValueRejected("?"); //other unknown chars
+        assertDeploymentNameAndParamValueRejected("&"); //YML references
+        assertTooLongContentIsRejected(
+            RandomStringUtils.randomAlphabetic(VarsFilesYmlFormatter.MAX_SERIALIZED_SIZE + 1));
+
+
+    }
 
     private void assertTooLongContentIsRejected(String aTooLongString) throws JsonProcessingException {
         //YML references
@@ -105,6 +136,7 @@ public class VarsFilesYmlFormatterTest {
         //noinspection EmptyCatchBlock
         try {
             formatter.formatAsYml(coabVarsFileDto);
+            //noinspection ResultOfMethodCallIgnored
             fail("expected " + "&" + "to be rejected");
         } catch (UserFacingRuntimeException e) {
             assertThat(e.getMessage()).contains("too long");
@@ -128,6 +160,7 @@ public class VarsFilesYmlFormatterTest {
         coabVarsFileDto.parameters.put("a-param-with-unexpected-value", new ArrayList<>());
         try {
             formatter.formatAsYml(coabVarsFileDto);
+            //noinspection ResultOfMethodCallIgnored
             fail("expected " + "((" + "to be rejected");
         } catch (UserFacingRuntimeException e) {
             String patternMessage = CoabVarsFileDto.WHITE_LISTED_MESSAGE;
@@ -152,6 +185,7 @@ public class VarsFilesYmlFormatterTest {
         //noinspection EmptyCatchBlock
         try {
             formatter.formatAsYml(coabVarsFileDto);
+            //noinspection ResultOfMethodCallIgnored
             fail("expected " + paramValue + "to be rejected");
         } catch (UserFacingRuntimeException e) {
             assertThat(e.getMessage()).contains("deployment_name");
@@ -160,6 +194,7 @@ public class VarsFilesYmlFormatterTest {
     }
 
     protected void assertParamJsonValueRejected(String jsonParamValueToDeserialize) throws IOException {
+        //noinspection rawtypes
         Map deserializedJson = (Map) parseFromYml(jsonParamValueToDeserialize, Map.class);
         assertParamValueRejected(deserializedJson);
     }
@@ -171,6 +206,7 @@ public class VarsFilesYmlFormatterTest {
         //noinspection EmptyCatchBlock
         try {
             formatter.formatAsYml(coabVarsFileDto);
+            //noinspection ResultOfMethodCallIgnored
             fail("expected " + paramValue + "to be rejected");
         } catch (UserFacingRuntimeException e) {
             assertThat(e.getMessage()).contains("aparam");
@@ -178,15 +214,26 @@ public class VarsFilesYmlFormatterTest {
     }
 
     protected void assertParamJsonValueAccepted(String jsonParamValueToDeserialize) throws IOException {
-        Map deserializedJson = (Map) parseFromYml(jsonParamValueToDeserialize, Map.class);
-        assertParamValueAccepted(deserializedJson);
+        //noinspection rawtypes
+        Map deserializedJsonParam = (Map) parseFromYml(jsonParamValueToDeserialize, Map.class);
+        assertParamValueAccepted(deserializedJsonParam);
     }
 
 
-    protected void assertParamValueAccepted(Object paramValue) throws JsonProcessingException {
+    protected void assertParamValueAccepted(Object paramValue) throws IOException {
         CoabVarsFileDto coabVarsFileDto = aTypicalUserProvisionningRequest();
         coabVarsFileDto.parameters.put("aparam", paramValue);
-        formatter.formatAsYml(coabVarsFileDto);
+        //assert value is accepted
+        assertDtoSerializesAndDeserializesWithoutError(coabVarsFileDto);
+    }
+
+    private void assertDtoSerializesAndDeserializesWithoutError(CoabVarsFileDto coabVarsFileDto) throws IOException {
+        String yamlDump = formatter.formatAsYml(coabVarsFileDto);
+
+        //assert it can be parsed back into Dto
+        CoabVarsFileDto deserialized = (CoabVarsFileDto) parseFromYml(yamlDump, coabVarsFileDto.getClass());
+        logger.debug("deserialized into {} from yaml {}", deserialized, yamlDump);
+        assertThat(coabVarsFileDto).isEqualTo(deserialized);
     }
 
 
@@ -243,13 +290,13 @@ public class VarsFilesYmlFormatterTest {
                         "  cacheSizeMb: 10\n" +
                         "  slowQuery: false\n");
 
-        //and potentially in the future parse back from yml, e.g. for OSB get endpoints
-        @SuppressWarnings("unused") Object deserialized = parseFromYml(result, coabVarsFileDto.getClass());
-        //potentially check that both are identitical (need to debug reflection equals)
-        //        assertThat(reflectionEquals(coabVarsFileDto, deserialized)).isTrue();
+        //and parse back from yml. This is necessary when tracking deployment completion
+        @SuppressWarnings("unused") CoabVarsFileDto deserialized = formatter.parseFromYml(result);
+        //potentially check that both are identical (need to debug reflection equals)
+        assertThat(coabVarsFileDto).isEqualTo(deserialized);
     }
 
-    protected Object parseFromYml(String result, Class expectedClass) throws IOException {
+    protected Object parseFromYml(String result, @SuppressWarnings("rawtypes") Class expectedClass) throws IOException {
         //noinspection unchecked
         Object deserialized = formatter.getMapper().readValue(result, expectedClass);
         assertThat(deserialized).isNotNull();

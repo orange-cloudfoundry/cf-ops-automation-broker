@@ -1,13 +1,21 @@
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline;
 
-import com.google.gson.*;
-import org.springframework.cloud.servicebroker.model.ServiceBrokerRequest;
-import org.springframework.cloud.servicebroker.model.instance.CreateServiceInstanceRequest;
-import org.springframework.cloud.servicebroker.model.instance.DeleteServiceInstanceRequest;
-
 import java.lang.reflect.Type;
 import java.util.Map;
 import java.util.Set;
+
+import com.google.gson.JsonDeserializationContext;
+import com.google.gson.JsonDeserializer;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParseException;
+import com.google.gson.JsonSerializationContext;
+import com.google.gson.JsonSerializer;
+
+import org.springframework.cloud.servicebroker.model.ServiceBrokerRequest;
+import org.springframework.cloud.servicebroker.model.instance.CreateServiceInstanceRequest;
+import org.springframework.cloud.servicebroker.model.instance.DeleteServiceInstanceRequest;
+import org.springframework.cloud.servicebroker.model.instance.UpdateServiceInstanceRequest;
 
 /**
  * Created by ijly7474 on 22/01/18.
@@ -31,6 +39,10 @@ public class PipelineOperationStateGsonAdapter implements JsonDeserializer<Pipel
                 jsonElementRequest = jsonSerializationContext.serialize(request, CreateServiceInstanceRequest.class);
                 jsonObject.add(DeploymentConstants.OSB_CREATE_REQUEST_CLASS_NAME, jsonElementRequest);
                 break;
+            case DeploymentConstants.OSB_UPDATE_REQUEST_CLASS_NAME:
+                jsonElementRequest = jsonSerializationContext.serialize(request, UpdateServiceInstanceRequest.class);
+                jsonObject.add(DeploymentConstants.OSB_UPDATE_REQUEST_CLASS_NAME, jsonElementRequest);
+                break;
             case DeploymentConstants.OSB_DELETE_REQUEST_CLASS_NAME:
                 jsonElementRequest = jsonSerializationContext.serialize(request, DeleteServiceInstanceRequest.class);
                 jsonObject.add(DeploymentConstants.OSB_DELETE_REQUEST_CLASS_NAME, jsonElementRequest);
@@ -40,6 +52,8 @@ public class PipelineOperationStateGsonAdapter implements JsonDeserializer<Pipel
         }
         JsonElement jsonElementStartRequestDate = jsonSerializationContext.serialize(startRequestDate, String.class);
         jsonObject.add("startRequestDate", jsonElementStartRequestDate);
+        jsonObject.add("completionMarkerHashcode",
+            jsonSerializationContext.serialize(pipelineOperationState.getCompletionMarkerHashcode(), Integer.class));
 
         return jsonObject;
     }
@@ -51,24 +65,29 @@ public class PipelineOperationStateGsonAdapter implements JsonDeserializer<Pipel
         Set<Map.Entry<String, JsonElement>> entries = jsonObject.entrySet();
         ServiceBrokerRequest serviceBrokerRequest = null;
         String startRequestDate = null;
+        int completionMarkerHashcode = 0;
         for (Map.Entry<String, JsonElement> entry : entries) {
-            String className = entry.getKey();
-            switch(className)
+            String entryKey = entry.getKey();
+            switch(entryKey)
             {
                 case DeploymentConstants.OSB_CREATE_REQUEST_CLASS_NAME:
-                serviceBrokerRequest = jsonDeserializationContext.deserialize(entry.getValue(), CreateServiceInstanceRequest.class);
-                break;
+                    serviceBrokerRequest = jsonDeserializationContext.deserialize(entry.getValue(), CreateServiceInstanceRequest.class);
+                    break;
+                case DeploymentConstants.OSB_UPDATE_REQUEST_CLASS_NAME:
+                    serviceBrokerRequest = jsonDeserializationContext.deserialize(entry.getValue(), UpdateServiceInstanceRequest.class);
+                    break;
                 case DeploymentConstants.OSB_DELETE_REQUEST_CLASS_NAME:
-                serviceBrokerRequest = jsonDeserializationContext.deserialize(entry.getValue(), DeleteServiceInstanceRequest.class);
-                break;
+                    serviceBrokerRequest = jsonDeserializationContext.deserialize(entry.getValue(), DeleteServiceInstanceRequest.class);
+                    break;
                 case "startRequestDate":
-                startRequestDate = jsonDeserializationContext.deserialize(entry.getValue(), String.class);
-                break;
+                    startRequestDate = jsonDeserializationContext.deserialize(entry.getValue(), String.class);
+                    break;
+                case "completionMarkerHashcode":
+                    completionMarkerHashcode = jsonDeserializationContext.deserialize(entry.getValue(), Integer.class);
+                    break;
             }
         }
 
-        PipelineCompletionTracker.PipelineOperationState pipelineOperationState = new PipelineCompletionTracker.PipelineOperationState(serviceBrokerRequest, startRequestDate);
-
-        return pipelineOperationState;
+        return new PipelineCompletionTracker.PipelineOperationState(serviceBrokerRequest, startRequestDate, completionMarkerHashcode);
     }
 }

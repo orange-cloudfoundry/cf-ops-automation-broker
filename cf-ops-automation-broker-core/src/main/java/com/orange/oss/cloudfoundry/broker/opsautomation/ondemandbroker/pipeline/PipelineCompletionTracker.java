@@ -1,5 +1,6 @@
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline;
 
+import java.io.IOException;
 import java.lang.reflect.Modifier;
 import java.nio.file.Path;
 import java.time.Clock;
@@ -26,6 +27,7 @@ import org.springframework.cloud.servicebroker.model.instance.DeleteServiceInsta
 import org.springframework.cloud.servicebroker.model.instance.GetLastServiceOperationRequest;
 import org.springframework.cloud.servicebroker.model.instance.GetLastServiceOperationResponse;
 import org.springframework.cloud.servicebroker.model.instance.OperationState;
+import org.springframework.util.Assert;
 
 
 public class PipelineCompletionTracker {
@@ -62,6 +64,7 @@ public class PipelineCompletionTracker {
                         if (ServiceDefinition.class.equals(f.getDeclaredClass())) {
                             return true;
                         }
+                        //noinspection RedundantIfStatement
                         if (Plan.class.equals(f.getDeclaredClass())) {
                             return true;
                         }
@@ -77,28 +80,55 @@ public class PipelineCompletionTracker {
     }
 
     GetLastServiceOperationResponse getDeploymentExecStatus(Path secretsWorkDir, String serviceInstanceId, String jsonPipelineOperationState, GetLastServiceOperationRequest pollingRequest) {
+        PipelineOperationState pipelineOperationState = this.parseFromJson(jsonPipelineOperationState);
 
         //Check if target manifest file is present, i.e. if nested broker bosh deployment completed successfully
         boolean isTargetManifestFilePresent = secretsReader.isBoshDeploymentAvailable(secretsWorkDir, serviceInstanceId);
 
+        boolean isCompletionTrackerMachingRequest = false;
+        if (isTargetManifestFilePresent) {
+            CoabVarsFileDto boshDeploymentCompletionMarker = null;
+            try {
+                boshDeploymentCompletionMarker = secretsReader
+                    .getBoshDeploymentCompletionMarker(secretsWorkDir, serviceInstanceId);
+            }
+            catch (IOException e) {
+                logger.warn("Unable to parse COA bosh manifest file in dir {} for instance {} caught:",
+                    secretsWorkDir, serviceInstanceId, e);
+            }
+            if (boshDeploymentCompletionMarker != null) {
+                int boshDeploymentCompletionMarkerHashcode = boshDeploymentCompletionMarker.hashCode();
+                logger.debug("loaded boshDeploymentCompletionMarker={}", boshDeploymentCompletionMarker);
+                isCompletionTrackerMachingRequest =
+                    (pipelineOperationState.completionMarkerHashcode == boshDeploymentCompletionMarkerHashcode);
+                logger.debug("isCompletionTrackerMachingRequest={} as a result of Request completion tracker hashCode={} and manifest completion tracker hashCode={} ",
+                    isCompletionTrackerMachingRequest,
+                    pipelineOperationState.completionMarkerHashcode,
+                    boshDeploymentCompletionMarkerHashcode);
+            } else {
+                logger.debug("Did not find yet boshDeploymentCompletionMarker in bosh manifest for " +
+                    "serviceInstanceId={} Might be a service instance provisioned before coab 0.33 version.",
+                    serviceInstanceId);
+            }
+        }
+
         //Check if timeout is reached
-        PipelineOperationState pipelineOperationState = this.parseFromJson(jsonPipelineOperationState);
         long elapsedTimeSecsSinceStartRequestDate = this.getElapsedTimeSecsSinceStartRequestDate(pipelineOperationState.getStartRequestDate());
         boolean isRequestTimedOut = this.isRequestTimedOut(elapsedTimeSecsSinceStartRequestDate);
 
         //Build response based on the appropriate values and return it
         ServiceBrokerRequest serviceBrokerRequest = pipelineOperationState.getServiceBrokerRequest();
         String classFullyQualifiedName = serviceBrokerRequest.getClass().getName();
-        return this.buildResponse(classFullyQualifiedName, isTargetManifestFilePresent, isRequestTimedOut, elapsedTimeSecsSinceStartRequestDate, pollingRequest, serviceBrokerRequest);
+        return this.buildResponse(classFullyQualifiedName, isCompletionTrackerMachingRequest, isRequestTimedOut, elapsedTimeSecsSinceStartRequestDate, pollingRequest, serviceBrokerRequest);
     }
 
 
-    GetLastServiceOperationResponse buildResponse(String classFullyQualifiedName, boolean isManifestFilePresent, boolean isRequestTimedOut, long displayedElapsedTimeSecs, GetLastServiceOperationRequest pollingRequest, ServiceBrokerRequest storedRequest) {
+    GetLastServiceOperationResponse buildResponse(String classFullyQualifiedName, boolean isCompletionTrackerMachingRequest, boolean isRequestTimedOut, long displayedElapsedTimeSecs, GetLastServiceOperationRequest pollingRequest, ServiceBrokerRequest storedRequest) {
         GetLastServiceOperationResponse.GetLastServiceOperationResponseBuilder responseBuilder = GetLastServiceOperationResponse.builder();
         GetLastServiceOperationResponse response = null;
             switch (classFullyQualifiedName) {
                 case DeploymentConstants.OSB_CREATE_REQUEST_CLASS_NAME:
-                    if (isManifestFilePresent) {
+                    if (isCompletionTrackerMachingRequest) {
                         responseBuilder.operationState(OperationState.SUCCEEDED);
                         responseBuilder.description("Creation succeeded");
                         if (osbProxy != null) {
@@ -120,6 +150,20 @@ public class PipelineCompletionTracker {
                     }
                     break;
 
+                case DeploymentConstants.OSB_UPDATE_REQUEST_CLASS_NAME:
+                    if (isCompletionTrackerMachingRequest) {
+                        responseBuilder.operationState(OperationState.SUCCEEDED);
+                        responseBuilder.description("Update succeeded");
+                        logger.debug("Updates don't yet get propagated to inner broker, proceeding with returning success response");
+                    } else {
+                        if (isRequestTimedOut) {
+                            responseBuilder.operationState(OperationState.FAILED);
+                            responseBuilder.description("Execution timeout after " + displayedElapsedTimeSecs + "s max is " + maxExecutionDurationSeconds);
+                        } else {
+                            responseBuilder.operationState(OperationState.IN_PROGRESS);
+                        }
+                    }
+                    break;
                 case DeploymentConstants.OSB_DELETE_REQUEST_CLASS_NAME:
                     responseBuilder.deleteOperation(true);
                     if (osbProxy != null) {
@@ -132,7 +176,7 @@ public class PipelineCompletionTracker {
                     }
                     break;
                 default:
-                    throw new RuntimeException("Get Deployment Execution status fails (unhandled request class)");
+                    throw new RuntimeException("Get Deployment Execution status fails (unhandled request class:" + classFullyQualifiedName + ")");
             }
             if (response == null) {
                 response = responseBuilder.build();
@@ -159,10 +203,15 @@ public class PipelineCompletionTracker {
         return elapsedSeconds;
     }
 
-    String getPipelineOperationStateAsJson(ServiceBrokerRequest serviceBrokerRequest) {
+    String getPipelineOperationStateAsJson(ServiceBrokerRequest serviceBrokerRequest, CoabVarsFileDto coabVarsFileDto) {
+        Assert.notNull(coabVarsFileDto, "provide a dummy coabars object, e.g. on delete");
+
+        int completionMarkerHashcode = coabVarsFileDto.hashCode();
+        logger.debug("Computed completionMarkerHashcode={} from OSB request wrapped in coabVarsFileDto={}",
+            completionMarkerHashcode, coabVarsFileDto);
         PipelineCompletionTracker.PipelineOperationState pipelineOperationState = new PipelineCompletionTracker.PipelineOperationState(
                 serviceBrokerRequest,
-                getCurrentDate()
+                getCurrentDate(), completionMarkerHashcode
 
         );
         return formatAsJson(pipelineOperationState);
@@ -201,12 +250,15 @@ public class PipelineCompletionTracker {
     }
 
     static class PipelineOperationState {
-        private ServiceBrokerRequest serviceBrokerRequest;
-        private String startRequestDate;
+        private final ServiceBrokerRequest serviceBrokerRequest;
+        private final String startRequestDate;
+        private final int completionMarkerHashcode;
 
-        PipelineOperationState(ServiceBrokerRequest serviceBrokerRequest, String startRequestDate) {
+        PipelineOperationState(ServiceBrokerRequest serviceBrokerRequest, String startRequestDate,
+            int completionMarkerHashcode) {
             this.serviceBrokerRequest = serviceBrokerRequest;
             this.startRequestDate = startRequestDate;
+            this.completionMarkerHashcode = completionMarkerHashcode;
         }
 
         ServiceBrokerRequest getServiceBrokerRequest(){
@@ -217,24 +269,30 @@ public class PipelineCompletionTracker {
             return this.startRequestDate;
         }
 
-        @SuppressWarnings("SimplifiableIfStatement")
+        public int getCompletionMarkerHashcode() {
+            return completionMarkerHashcode;
+        }
+
         @Override
         public boolean equals(Object o) {
             if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
+            if (!(o instanceof PipelineOperationState)) return false;
 
             PipelineOperationState that = (PipelineOperationState) o;
 
-            if (!startRequestDate.equals(that.startRequestDate)) return false;
-            return serviceBrokerRequest.equals(that.serviceBrokerRequest);
+            if (completionMarkerHashcode != that.completionMarkerHashcode) return false;
+            if (!serviceBrokerRequest.equals(that.serviceBrokerRequest)) return false;
+            return startRequestDate.equals(that.startRequestDate);
         }
 
-        @SuppressWarnings("UnnecessaryLocalVariable")
         @Override
         public int hashCode() {
-            int result = 31 * startRequestDate.hashCode();
+            int result = serviceBrokerRequest.hashCode();
+            result = 31 * result + startRequestDate.hashCode();
+            result = 31 * result + completionMarkerHashcode;
             return result;
         }
+
     }
 
 

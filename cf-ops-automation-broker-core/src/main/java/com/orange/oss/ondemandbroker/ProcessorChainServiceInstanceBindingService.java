@@ -4,7 +4,13 @@ import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processor
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.ProcessorChain;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.cloud.servicebroker.model.binding.*;
+import reactor.core.publisher.Mono;
+
+import org.springframework.cloud.servicebroker.model.binding.CreateServiceInstanceAppBindingResponse;
+import org.springframework.cloud.servicebroker.model.binding.CreateServiceInstanceBindingRequest;
+import org.springframework.cloud.servicebroker.model.binding.CreateServiceInstanceBindingResponse;
+import org.springframework.cloud.servicebroker.model.binding.DeleteServiceInstanceBindingRequest;
+import org.springframework.cloud.servicebroker.model.binding.DeleteServiceInstanceBindingResponse;
 import org.springframework.cloud.servicebroker.service.ServiceInstanceBindingService;
 import org.springframework.stereotype.Service;
 
@@ -34,7 +40,7 @@ public class ProcessorChainServiceInstanceBindingService implements ServiceInsta
     }
 
     @Override
-    public CreateServiceInstanceBindingResponse createServiceInstanceBinding(CreateServiceInstanceBindingRequest request) {
+    public Mono<CreateServiceInstanceBindingResponse> createServiceInstanceBinding(CreateServiceInstanceBindingRequest request) {
         try {
             Context ctx= new Context();
             ctx.contextKeys.put(CREATE_SERVICE_INSTANCE_BINDING_REQUEST, request);
@@ -46,7 +52,7 @@ public class ProcessorChainServiceInstanceBindingService implements ServiceInsta
             } else {
                 response = CreateServiceInstanceAppBindingResponse.builder().build();
             }
-            return response;
+            return Mono.just(response);
         } catch (RuntimeException e) {
             logger.info("Unable to create service binding with request " + request + ", caught " + e, e);
             throw processInternalException(e);
@@ -55,7 +61,7 @@ public class ProcessorChainServiceInstanceBindingService implements ServiceInsta
     }
 
     @Override
-    public DeleteServiceInstanceBindingResponse deleteServiceInstanceBinding(DeleteServiceInstanceBindingRequest request) {
+    public Mono<DeleteServiceInstanceBindingResponse> deleteServiceInstanceBinding(DeleteServiceInstanceBindingRequest request) {
         try {
             Context ctx= new Context();
             ctx.contextKeys.put(DELETE_SERVICE_INSTANCE_BINDING_REQUEST, request);
@@ -64,7 +70,7 @@ public class ProcessorChainServiceInstanceBindingService implements ServiceInsta
             logger.info("Unable to delete service binding with request " + request + ", caught " + e, e);
             throw processInternalException(e);
         }
-        return DeleteServiceInstanceBindingResponse.builder().async(false).build();
+        return Mono.just(DeleteServiceInstanceBindingResponse.builder().async(false).build());
     }
 
 

@@ -1,5 +1,7 @@
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git;
 
+import javax.annotation.Nonnull;
+
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.Context;
 import org.junit.jupiter.api.Test;
 
@@ -29,15 +31,42 @@ public class GitProcessorTest {
 
     }
     @Test
-    public void delegates_normal_requests_to_gitmanager() {
+    public void delegates_normal_provisionning_requests_to_gitmanager() {
         //given a normal request
-        Context ctx = new Context();
-        ctx.contextKeys.put(repoAliasName + GitProcessorContext.checkOutRemoteBranch.toString(), "develop");
-        ctx.contextKeys.put(repoAliasName + GitProcessorContext.createBranchIfMissing.toString(), "service-instance-guid");
+        Context ctx = aContextWithoutSkipKey();
         //when
         gitProcessor.preCreate(ctx);
         //then
         verify(gitManager).cloneRepo(any(Context.class));
+    }
+
+    @Test
+    public void delegates_normal_update_requests_to_gitmanager() {
+        //given a normal request
+        Context ctx = aContextWithoutSkipKey();
+        //when
+        gitProcessor.preUpdate(ctx);
+        //then
+        verify(gitManager).cloneRepo(any(Context.class));
+    }
+
+    @Test
+    public void delegates_normal_delete_requests_to_gitmanager() {
+        //given a normal request
+        Context ctx = aContextWithoutSkipKey();
+        //when
+        gitProcessor.preDelete(ctx);
+        //then
+        verify(gitManager).cloneRepo(any(Context.class));
+    }
+
+    @Nonnull
+    private Context aContextWithoutSkipKey() {
+        Context ctx = new Context();
+        ctx.contextKeys.put(repoAliasName + GitProcessorContext.checkOutRemoteBranch.toString(), "develop");
+        ctx.contextKeys
+            .put(repoAliasName + GitProcessorContext.createBranchIfMissing.toString(), "service-instance-guid");
+        return ctx;
     }
 
 }

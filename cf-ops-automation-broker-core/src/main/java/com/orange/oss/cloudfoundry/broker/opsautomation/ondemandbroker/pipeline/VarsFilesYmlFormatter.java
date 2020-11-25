@@ -1,5 +1,7 @@
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline;
 
+import java.io.IOException;
+import java.nio.file.Path;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
@@ -13,8 +15,12 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.UserFacingRuntimeException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class VarsFilesYmlFormatter {
+
+    private static Logger logger = LoggerFactory.getLogger(VarsFilesYmlFormatter.class.getName());
 
     public static final int MAX_SERIALIZED_SIZE = 3000;
 
@@ -38,8 +44,20 @@ public class VarsFilesYmlFormatter {
         if (yml.length() > MAX_SERIALIZED_SIZE) {
             throw new UserFacingRuntimeException("Unsupported too long params or context. Size reached " + yml.length() + " while max is: " + MAX_SERIALIZED_SIZE + " chars");
         }
+        logger.debug("coab-vars.yml content: {}", yml);
         return yml;
     }
+
+    protected CoabVarsFileDto parseFromYml(String yaml) throws IOException {
+        return getMapper().readValue(yaml, CoabVarsFileDto.class);
+    }
+
+    protected CoabVarsFileDto parseFromBoshManifestYml(Path pathToBoshManifestFile) throws IOException {
+        BoshDeploymentManifestDTO boshDeploymentManifestDTO = getMapper()
+            .readValue(pathToBoshManifestFile.toFile(), BoshDeploymentManifestDTO.class);
+        return boshDeploymentManifestDTO.coabCompletionMarker;
+    }
+
 
     protected void validate(CoabVarsFileDto coabVarsFileDto) {
 
@@ -98,9 +116,11 @@ public class VarsFilesYmlFormatter {
             }
         }
         if (value instanceof Map) {
+            //noinspection unchecked
             Map<Object,Object> valueMap = (Map<Object, Object>) value;
             for (Map.Entry<Object, Object> valueMapEntry : valueMap.entrySet()) {
                 if (!(valueMapEntry.getKey() instanceof String)) {
+                    //noinspection StringConcatenationInsideStringBufferAppend
                     sb.append("key map "+ valueMapEntry.getKey() +" from parameter " + key + " " + CoabVarsFileDto.WHITE_LISTED_MESSAGE +
                         " " +
                         "whereas it " +

@@ -1,18 +1,23 @@
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline;
+
+import java.io.IOException;
+import java.nio.file.Path;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.nio.file.Path;
+import org.springframework.util.Assert;
 
 public class SecretsGenerator extends StructureGeneratorImpl implements SecretsReader {
 
     private static Logger logger = LoggerFactory.getLogger(SecretsGenerator.class.getName());
 
-    public SecretsGenerator(){
-    }
+    private final VarsFilesYmlFormatter varsFilesYmlFormatter;
 
-    public SecretsGenerator(String rootDeployment, String modelDeployment, String modelDeploymentShortAlias, String modelDeploymentSeparator){
+    public SecretsGenerator(String rootDeployment, String modelDeployment, String modelDeploymentShortAlias,
+        String modelDeploymentSeparator, VarsFilesYmlFormatter varsFilesYmlFormatter){
         super(rootDeployment,modelDeployment, modelDeploymentShortAlias, modelDeploymentSeparator);
+        this.varsFilesYmlFormatter = varsFilesYmlFormatter;
     }
 
     @Override
@@ -49,6 +54,15 @@ public class SecretsGenerator extends StructureGeneratorImpl implements SecretsR
         boolean exists = !StructureGeneratorHelper.isMissingResource(targetManifestFile);
         logger.debug("Manifest at path {} exists: {}", targetManifestFile, exists);
         return exists;
+    }
+
+    @Override
+    public CoabVarsFileDto getBoshDeploymentCompletionMarker(Path secretsWorkDir, String serviceInstanceId)
+        throws IOException {
+        Assert.isTrue(isBoshDeploymentAvailable(secretsWorkDir, serviceInstanceId), "completion marker can't be " +
+            "fetched when deployment manifest missing");
+        Path targetManifestFile = getTargetManifestFilePath(secretsWorkDir, serviceInstanceId);
+        return varsFilesYmlFormatter.parseFromBoshManifestYml(targetManifestFile);
     }
 
     public void remove(Path workDir, String serviceInstanceId) {

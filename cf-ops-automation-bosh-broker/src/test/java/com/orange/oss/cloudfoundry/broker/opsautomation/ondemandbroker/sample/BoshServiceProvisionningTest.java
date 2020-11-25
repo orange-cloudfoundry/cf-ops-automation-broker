@@ -15,6 +15,10 @@ import java.nio.file.Paths;
 import java.util.EnumSet;
 import java.util.Map;
 
+import javax.annotation.Nonnull;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.recording.SnapshotRecordResult;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.GitManager;
@@ -27,6 +31,9 @@ import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.osbclient
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.osbclient.OsbClientFactory;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.osbclient.ServiceInstanceBindingServiceClient;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.osbclient.ServiceInstanceServiceClient;
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.BoshDeploymentManifestDTO;
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.CoabVarsFileDto;
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.CoabVarsFileDtoBuilder;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.DeploymentConstants;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.DeploymentProperties;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.OsbBuilderHelper;
@@ -55,20 +62,23 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.web.server.LocalServerPort;
-import org.springframework.cloud.servicebroker.model.CloudFoundryContext;
 import org.springframework.cloud.servicebroker.model.binding.CreateServiceInstanceAppBindingResponse;
 import org.springframework.cloud.servicebroker.model.binding.CreateServiceInstanceBindingRequest;
 import org.springframework.cloud.servicebroker.model.catalog.Catalog;
+import org.springframework.cloud.servicebroker.model.catalog.MaintenanceInfo;
 import org.springframework.cloud.servicebroker.model.catalog.Plan;
 import org.springframework.cloud.servicebroker.model.catalog.ServiceDefinition;
 import org.springframework.cloud.servicebroker.model.instance.CreateServiceInstanceRequest;
 import org.springframework.cloud.servicebroker.model.instance.CreateServiceInstanceResponse;
 import org.springframework.cloud.servicebroker.model.instance.DeleteServiceInstanceResponse;
+import org.springframework.cloud.servicebroker.model.instance.UpdateServiceInstanceRequest;
+import org.springframework.cloud.servicebroker.model.instance.UpdateServiceInstanceResponse;
 import org.springframework.http.ResponseEntity;
 
 import static com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.GitServer.NO_OP_INITIALIZER;
 import static com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.OsbBuilderHelper.SERVICE_DEFINITION_ID;
 import static com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.OsbBuilderHelper.SERVICE_PLAN_ID;
+import static com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.OsbBuilderHelper.UPGRADED_SERVICE_PLAN_ID;
 import static com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.OsbBuilderHelper.aBindingRequest;
 import static com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.OsbBuilderHelper.aCfUserContext;
 import static com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.sample.BoshBrokerApplication.SECRETS_REPOSITORY_ALIAS_NAME;
@@ -296,8 +306,8 @@ public class BoshServiceProvisionningTest {
                     .resolve(deploymentProperties.getModelDeployment())
                     .resolve(DeploymentConstants.SECRETS);
             createDir(secretsDir);
-            createDummyFile(secretsDir.resolve(DeploymentConstants.META + DeploymentConstants.YML_EXTENSION));
-            createDummyFile(secretsDir.resolve(DeploymentConstants.SECRETS + DeploymentConstants.YML_EXTENSION));
+            createBoshManifestFile(secretsDir.resolve(DeploymentConstants.META + DeploymentConstants.YML_EXTENSION), null);
+            createBoshManifestFile(secretsDir.resolve(DeploymentConstants.SECRETS + DeploymentConstants.YML_EXTENSION), null);
             AddCommand addC = git.add().addFilepattern(".");
             addC.call();
 
@@ -313,15 +323,52 @@ public class BoshServiceProvisionningTest {
         }
     }
 
-    // White box injection of manifest: does not protect against git pooling bugs
-    public void simulateManifestGeneration(GitProcessor gitProcessor) throws IOException {
+    /**
+     * Simultate manifest generated upon successful service instance provisioning.
+     * White box injection of manifest: does not protect against git pooling bugs
+     */
+    public void simulateProvisionManifestGeneration(GitProcessor gitProcessor,
+        CreateServiceInstanceRequest createServiceInstanceRequest) throws IOException {
+        CoabVarsFileDtoBuilder coabVarsFileDtoBuilder = new CoabVarsFileDtoBuilder();
+        String deploymentName =
+            deploymentProperties.getModelDeploymentShortAlias() +
+                deploymentProperties.getModelDeploymentSeparator() +
+                createServiceInstanceRequest.getServiceInstanceId();
+        CoabVarsFileDto coabVarsFileDto =
+            coabVarsFileDtoBuilder.wrapCreateOsbIntoVarsDto(createServiceInstanceRequest, deploymentName);
+
+
+        simulateManifestGeneration(gitProcessor, coabVarsFileDto);
+    }
+
+    /**
+     * Simultate manifest generated upon successful service instance update.
+     * White box injection of manifest: does not protect against git pooling bugs
+     */
+    public void simulateUpdatingManifestGeneration(GitProcessor gitProcessor,
+        UpdateServiceInstanceRequest updateServiceInstanceRequest) throws IOException {
+
+        CoabVarsFileDtoBuilder coabVarsFileDtoBuilder = new CoabVarsFileDtoBuilder();
+        String deploymentName =
+            deploymentProperties.getModelDeploymentShortAlias() +
+                deploymentProperties.getModelDeploymentSeparator() +
+                updateServiceInstanceRequest.getServiceInstanceId();
+        CoabVarsFileDto coabVarsFileDto =
+            coabVarsFileDtoBuilder.wrapUpdateOsbIntoVarsDto(updateServiceInstanceRequest, deploymentName);
+
+        simulateManifestGeneration(gitProcessor, coabVarsFileDto);
+    }
+
+    private void simulateManifestGeneration(GitProcessor gitProcessor, CoabVarsFileDto coabVarsFileDto)
+        throws IOException {
         Context context = new Context();
         gitProcessor.preCreate(context);
 
-        Path workDirPath = (Path) context.contextKeys.get(SECRETS_REPOSITORY_ALIAS_NAME + GitProcessorContext.workDir.toString());
+        Path workDirPath = (Path) context.contextKeys
+            .get(SECRETS_REPOSITORY_ALIAS_NAME + GitProcessorContext.workDir.toString());
         Path targetManifestFilePath = secretsGenerator.getTargetManifestFilePath(workDirPath, SERVICE_INSTANCE_ID);
         createDir(targetManifestFilePath.getParent());
-        createDummyFile(targetManifestFilePath);
+        createBoshManifestFile(targetManifestFilePath, coabVarsFileDto);
 
         gitProcessor.postCreate(context);
         gitProcessor.cleanUp(context); //make sure to return to the pool
@@ -335,9 +382,12 @@ public class BoshServiceProvisionningTest {
         }
     }
 
-    public static void createDummyFile(Path path) throws IOException {
-        try (Writer writer = new FileWriter(path.toFile())) {
-            writer.write("dummy content");
+    public static void createBoshManifestFile(Path path, CoabVarsFileDto coabVarsFileDto) throws IOException {
+        BoshDeploymentManifestDTO boshDeploymentManifestDTO = new BoshDeploymentManifestDTO();
+        boshDeploymentManifestDTO.coabCompletionMarker=coabVarsFileDto;
+        try (FileWriter manifestWriter = new FileWriter(path.toFile())) {
+            ObjectMapper ymlMapper = new ObjectMapper(new YAMLFactory());
+            manifestWriter.write(ymlMapper.writeValueAsString(boshDeploymentManifestDTO));
         }
     }
 
@@ -355,11 +405,23 @@ public class BoshServiceProvisionningTest {
 
         polls_last_operation(operation, HttpStatus.SC_OK, "in progress", "");
 
-        simulateManifestGeneration(gitSecretsProcessor);
+        simulateProvisionManifestGeneration(gitSecretsProcessor, aCreateServiceInstanceRequest());
 
         polls_last_operation(operation, HttpStatus.SC_OK, "succeeded", "");
 
         create_service_binding();
+
+        operation = update_service_plan();
+        polls_last_operation(operation, HttpStatus.SC_OK, "in progress", "");
+        simulateUpdatingManifestGeneration(gitSecretsProcessor, anUpdateServiceInstanceRequest());
+        polls_last_operation(operation, HttpStatus.SC_OK, "succeeded", "");
+
+        operation = upgrade_service();
+        polls_last_operation(operation, HttpStatus.SC_OK, "in progress", "");
+        simulateUpdatingManifestGeneration(gitSecretsProcessor, anUpgradeServiceInstanceRequest());
+        polls_last_operation(operation, HttpStatus.SC_OK, "succeeded", "");
+
+
         delete_service_binding();
 
         turn_on_readonly_service_instances_mode();
@@ -423,7 +485,7 @@ public class BoshServiceProvisionningTest {
                 SERVICE_BINDING_INSTANCE_ID,
                 false,
                 "api-info",
-                osbProxy.buildOriginatingIdentityHeader(aCfUserContext()),
+                osbProxy.buildOriginatingIdentityHeader(serviceInstanceBindingRequest.getOriginatingIdentity()),
                 OsbConstants.X_Broker_API_Version_Value,
                 serviceInstanceBindingRequest);
         assertThat(bindResponse.getStatusCode()).isEqualTo(CREATED);
@@ -444,6 +506,10 @@ public class BoshServiceProvisionningTest {
                 OsbConstants.X_Broker_API_Version_Value);
     }
 
+    /**
+     * Request an async provisionning
+     * @return the last operation field
+     */
     private String create_async_service_instance_using_osb_client() {
 
         CreateServiceInstanceRequest createServiceInstanceRequest = aCreateServiceInstanceRequest();
@@ -463,18 +529,101 @@ public class BoshServiceProvisionningTest {
         return createResponse.getBody().getOperation();
     }
 
+    /**
+     * Request an async update
+     * @return the last operation field
+     */
+    private String update_service_plan() {
+
+        UpdateServiceInstanceRequest updateServiceInstanceRequest =
+            anUpdateServiceInstanceRequest();
+
+        ResponseEntity<UpdateServiceInstanceResponse> updateResponse = serviceInstanceService.updateServiceInstance(
+            SERVICE_INSTANCE_ID,
+            true,
+            "api-info",
+            osbProxy.buildOriginatingIdentityHeader(updateServiceInstanceRequest.getOriginatingIdentity()),
+            OsbConstants.X_Broker_API_Version_Value,
+            updateServiceInstanceRequest);
+        assertThat(updateResponse.getStatusCode()).isEqualTo(ACCEPTED);
+        assertThat(updateResponse.getBody()).isNotNull();
+        assertThat(updateResponse.getBody().getDashboardUrl())
+            .as("dashboard url template configured in application.properties")
+            .isEqualTo("https://grafana_" + BROKERED_SERVICE_INSTANCE_ID + ".redacted-ops-domain.com");
+        return updateResponse.getBody().getOperation();
+    }
+
+    /**
+     * Request an async update (equivalent of `cf service --upgrade`)
+     * @return the last operation field
+     */
+    private String upgrade_service() {
+
+        UpdateServiceInstanceRequest upgradeServiceInstanceRequest =
+            anUpgradeServiceInstanceRequest();
+
+        ResponseEntity<UpdateServiceInstanceResponse> updateResponse = serviceInstanceService.updateServiceInstance(
+            SERVICE_INSTANCE_ID,
+            true,
+            "api-info",
+            osbProxy.buildOriginatingIdentityHeader(upgradeServiceInstanceRequest.getOriginatingIdentity()),
+            OsbConstants.X_Broker_API_Version_Value,
+            upgradeServiceInstanceRequest);
+        assertThat(updateResponse.getStatusCode()).isEqualTo(ACCEPTED);
+        assertThat(updateResponse.getBody()).isNotNull();
+        assertThat(updateResponse.getBody().getDashboardUrl())
+            .as("dashboard url template configured in application.properties")
+            .isEqualTo("https://grafana_" + BROKERED_SERVICE_INSTANCE_ID + ".redacted-ops-domain.com");
+        return updateResponse.getBody().getOperation();
+    }
+
+    @Nonnull
+    private UpdateServiceInstanceRequest anUpdateServiceInstanceRequest() {
+        return UpdateServiceInstanceRequest.builder()
+            .serviceDefinitionId(SERVICE_DEFINITION_ID)
+            .planId(UPGRADED_SERVICE_PLAN_ID)
+            .serviceInstanceId(SERVICE_INSTANCE_ID)
+            .parameters(OsbBuilderHelper.osbCmdbCustomParam(BROKERED_SERVICE_INSTANCE_ID))
+            .context(aCfUserContext())
+            .originatingIdentity(aCfUserContext())
+            .previousValues(new UpdateServiceInstanceRequest.PreviousValues(
+                aCreateServiceInstanceRequest().getPlanId(),
+                null))
+            .build();
+    }
+
+    @Nonnull
+    private UpdateServiceInstanceRequest anUpgradeServiceInstanceRequest() {
+        return UpdateServiceInstanceRequest.builder()
+            .serviceDefinitionId(SERVICE_DEFINITION_ID)
+            .planId(UPGRADED_SERVICE_PLAN_ID)
+            .serviceInstanceId(SERVICE_INSTANCE_ID)
+            .maintenanceInfo(MaintenanceInfo.builder()
+                .version(2,0,0, "")
+                .description("Includes dashboards")
+                .build())
+            .parameters(OsbBuilderHelper.osbCmdbCustomParam(BROKERED_SERVICE_INSTANCE_ID))
+            .previousValues(new UpdateServiceInstanceRequest.PreviousValues(
+                null,
+                aCreateServiceInstanceRequest().getMaintenanceInfo()))
+            .context(aCfUserContext())
+            .originatingIdentity(aCfUserContext())
+            .build();
+    }
+
     private void assert_create_service_instance_readonly_rejected() {
 
         CreateServiceInstanceRequest createServiceInstanceRequest = aCreateServiceInstanceRequest();
         String serviceInstanceId = "aNewIdForReadOnlyRequestShouldBeRejected";
         createServiceInstanceRequest.setServiceInstanceId(serviceInstanceId);
+        //noinspection CodeBlock2Expr
         assertThatThrownBy(
 			() -> {
 				serviceInstanceService.createServiceInstance(
 					serviceInstanceId,
 					true,
 					"api-info",
-					osbProxy.buildOriginatingIdentityHeader(aCfUserContext()),
+					osbProxy.buildOriginatingIdentityHeader(createServiceInstanceRequest.getOriginatingIdentity()),
 					OsbConstants.X_Broker_API_Version_Value,
 					createServiceInstanceRequest);
 			})
@@ -525,7 +674,8 @@ public class BoshServiceProvisionningTest {
 
     private void assert_delete_service_instance_readonly_rejected() {
 
-		assertThatThrownBy(
+        //noinspection CodeBlock2Expr
+        assertThatThrownBy(
 			() -> {
 				serviceInstanceService.deleteServiceInstance(
 					SERVICE_INSTANCE_ID,
@@ -555,11 +705,12 @@ public class BoshServiceProvisionningTest {
                 .planId(SERVICE_PLAN_ID)
                 .serviceInstanceId(SERVICE_INSTANCE_ID)
                 .parameters(OsbBuilderHelper.osbCmdbCustomParam(BROKERED_SERVICE_INSTANCE_ID))
-                .context(CloudFoundryContext.builder()
-                        .organizationGuid("org_id")
-                        .spaceGuid("space_id")
-                        .build()
-                )
+                .maintenanceInfo(MaintenanceInfo.builder()
+                    .version(1,0,0, "")
+                    .description("Initial version")
+                    .build())
+                .context(aCfUserContext())
+                .originatingIdentity(aCfUserContext())
                 .build();
     }
 

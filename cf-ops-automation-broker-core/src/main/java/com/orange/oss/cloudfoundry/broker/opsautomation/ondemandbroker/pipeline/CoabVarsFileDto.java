@@ -10,6 +10,11 @@ import javax.validation.constraints.Pattern;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.apache.commons.lang.builder.EqualsBuilder;
+import org.apache.commons.lang.builder.HashCodeBuilder;
+import org.apache.commons.lang.builder.ToStringBuilder;
+
+import org.springframework.cloud.servicebroker.model.catalog.MaintenanceInfo;
 
 import static java.util.Arrays.asList;
 
@@ -91,6 +96,13 @@ public class CoabVarsFileDto {
     public final Map<String, Object> parameters = new HashMap<>();
 
     /**
+     * Maintenance_info attached to the Service Instance (at provision or update time)
+     */
+    @JsonProperty("maintenance_info")
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public MaintenanceInfo maintenanceInfo;
+
+    /**
      * For update requests,Information about the Service Instance prior to the updatefrom
      * OSB https://github.com/openservicebrokerapi/servicebroker/blob/master/spec.md#body-2
      */
@@ -115,6 +127,19 @@ public class CoabVarsFileDto {
         @JsonProperty("organization_guid")
         @Pattern(regexp = WHITE_LISTED_PATTERN, message = WHITE_LISTED_MESSAGE)
         public String organization_guid;
+
+        @Override
+        public boolean equals(Object obj) {
+            return EqualsBuilder.reflectionEquals(this, obj);
+        }
+        @Override
+        public int hashCode() {
+            return HashCodeBuilder.reflectionHashCode(this);
+        }
+        @Override
+        public String toString() {
+            return ToStringBuilder.reflectionToString(this);
+        }
     }
 
     public static class PreviousValues {
@@ -122,9 +147,41 @@ public class CoabVarsFileDto {
          * The ID of the plan prior to the update, from OSB
          * https://github.com/openservicebrokerapi/servicebroker/blob/master/spec.md#previous-values-object
          */
-        @NotEmpty
         @JsonProperty("plan_id")
+        @JsonInclude(JsonInclude.Include.NON_NULL)
         @Pattern(regexp = WHITE_LISTED_PATTERN, message = WHITE_LISTED_MESSAGE)
         public String plan_id;
+
+        @JsonProperty("maintenance_info")
+        @JsonInclude(JsonInclude.Include.NON_NULL)
+        public MaintenanceInfo maintenanceInfo;
+
+        @Override
+        public boolean equals(Object obj) {
+            return EqualsBuilder.reflectionEquals(this, obj);
+        }
+        @Override
+        public int hashCode() {
+            return HashCodeBuilder.reflectionHashCode(this);
+        }
+        @Override
+        public String toString() {
+            return ToStringBuilder.reflectionToString(this);
+        }
+
     }
+
+    @Override
+    public boolean equals(Object obj) {
+        return EqualsBuilder.reflectionEquals(this, obj);
+    }
+    @Override
+    public int hashCode() {
+        return HashCodeBuilder.reflectionHashCode(this);
+    }
+    @Override
+    public String toString() {
+        return ToStringBuilder.reflectionToString(this);
+    }
+
 }

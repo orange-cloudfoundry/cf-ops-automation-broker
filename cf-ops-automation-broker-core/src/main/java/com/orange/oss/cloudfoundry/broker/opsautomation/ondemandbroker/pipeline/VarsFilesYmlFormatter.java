@@ -15,8 +15,12 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.UserFacingRuntimeException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class VarsFilesYmlFormatter {
+
+    private static Logger logger = LoggerFactory.getLogger(VarsFilesYmlFormatter.class.getName());
 
     public static final int MAX_SERIALIZED_SIZE = 3000;
 
@@ -40,6 +44,7 @@ public class VarsFilesYmlFormatter {
         if (yml.length() > MAX_SERIALIZED_SIZE) {
             throw new UserFacingRuntimeException("Unsupported too long params or context. Size reached " + yml.length() + " while max is: " + MAX_SERIALIZED_SIZE + " chars");
         }
+        logger.debug("coab-vars.yml content: {}", yml);
         return yml;
     }
 

@@ -147,10 +147,14 @@ public class CoabVarsFileDto {
          * The ID of the plan prior to the update, from OSB
          * https://github.com/openservicebrokerapi/servicebroker/blob/master/spec.md#previous-values-object
          */
-        @NotEmpty
         @JsonProperty("plan_id")
+        @JsonInclude(JsonInclude.Include.NON_NULL)
         @Pattern(regexp = WHITE_LISTED_PATTERN, message = WHITE_LISTED_MESSAGE)
         public String plan_id;
+
+        @JsonProperty("maintenance_info")
+        @JsonInclude(JsonInclude.Include.NON_NULL)
+        public MaintenanceInfo maintenanceInfo;
 
         @Override
         public boolean equals(Object obj) {

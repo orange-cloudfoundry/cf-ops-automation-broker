@@ -74,13 +74,21 @@ public class CoabVarsFileDtoBuilder {
 
 	public CoabVarsFileDto wrapUpdateOsbIntoVarsDto(UpdateServiceInstanceRequest request, String deploymentName) {
 
-		return wrapGenericOsbIntoVarsDto(
+		CoabVarsFileDto coabVarsFileDto = wrapGenericOsbIntoVarsDto(
 			request,
 			request.getServiceInstanceId(),
 			request.getServiceDefinitionId(),
 			request.getPlanId(),
 			request.getMaintenanceInfo(),
 			deploymentName);
+		UpdateServiceInstanceRequest.PreviousValues previousValues = request.getPreviousValues();
+		if (previousValues != null) {
+			coabVarsFileDto.previous_values = new CoabVarsFileDto.PreviousValues();
+			coabVarsFileDto.previous_values.plan_id = previousValues.getPlanId();
+			coabVarsFileDto.previous_values.maintenanceInfo = previousValues.getMaintenanceInfo();
+		}
+
+		return coabVarsFileDto;
 	}
 
 }

@@ -181,4 +181,6 @@ Spring Cloud Open Service Broker | Open Service Broker API | Spring Boot | Sprin
          * [x] Add new `maintenance_info` field in CoabVarsDto
          * [x] Refine CoabVarsDtoBuilder to set it
       * [x] refine test request to include maintenance_info 
-   
+   * [ ] Refactor OsbBuilderHelper
+      * rename update into upgrade
+      * use constants for plan, service guid   

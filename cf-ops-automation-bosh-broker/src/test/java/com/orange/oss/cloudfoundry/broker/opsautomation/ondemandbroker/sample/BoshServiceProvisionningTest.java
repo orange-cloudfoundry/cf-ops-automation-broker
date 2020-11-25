@@ -586,6 +586,9 @@ public class BoshServiceProvisionningTest {
             .parameters(OsbBuilderHelper.osbCmdbCustomParam(BROKERED_SERVICE_INSTANCE_ID))
             .context(aCfUserContext())
             .originatingIdentity(aCfUserContext())
+            .previousValues(new UpdateServiceInstanceRequest.PreviousValues(
+                aCreateServiceInstanceRequest().getPlanId(),
+                null))
             .build();
     }
 
@@ -600,6 +603,9 @@ public class BoshServiceProvisionningTest {
                 .description("Includes dashboards")
                 .build())
             .parameters(OsbBuilderHelper.osbCmdbCustomParam(BROKERED_SERVICE_INSTANCE_ID))
+            .previousValues(new UpdateServiceInstanceRequest.PreviousValues(
+                null,
+                aCreateServiceInstanceRequest().getMaintenanceInfo()))
             .context(aCfUserContext())
             .originatingIdentity(aCfUserContext())
             .build();

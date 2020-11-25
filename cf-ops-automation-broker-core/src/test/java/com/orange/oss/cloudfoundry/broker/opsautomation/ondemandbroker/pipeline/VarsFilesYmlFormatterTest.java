@@ -14,7 +14,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import org.springframework.cloud.servicebroker.model.CloudFoundryContext;
-import org.springframework.cloud.servicebroker.model.catalog.MaintenanceInfo;
 import org.springframework.cloud.servicebroker.model.instance.CreateServiceInstanceRequest;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -58,11 +57,26 @@ public class VarsFilesYmlFormatterTest {
         assertDtoSerializesAndDeserializesWithoutError(coabVarsFileDtoWithoutMaintenanceInfo);
 
         CoabVarsFileDto coabVarsFileDtoWithMaintenanceInfo = aTypicalUserProvisionningRequest();
-        coabVarsFileDtoWithMaintenanceInfo.maintenanceInfo = MaintenanceInfo.builder()
-            .version(2,0,0, "")
-            .description("Includes dashboards")
-            .build();
+        coabVarsFileDtoWithMaintenanceInfo.maintenanceInfo = OsbBuilderHelper.anInitialMaintenanceInfo();
         assertDtoSerializesAndDeserializesWithoutError(coabVarsFileDtoWithMaintenanceInfo);
+    }
+
+    @Test
+    void accepts_previous_value_field_into_coab_vars() throws IOException {
+        CoabVarsFileDto coabVarsFileDtoWithoutValue = aTypicalUserProvisionningRequest();
+        assertDtoSerializesAndDeserializesWithoutError(coabVarsFileDtoWithoutValue);
+
+        CoabVarsFileDto coabVarsFileDtoWithPreviousValue = aTypicalUserProvisionningRequest();
+        coabVarsFileDtoWithPreviousValue.previous_values = new CoabVarsFileDto.PreviousValues();
+        coabVarsFileDtoWithPreviousValue.previous_values.plan_id="older_plan";
+        coabVarsFileDtoWithPreviousValue.previous_values.maintenanceInfo=OsbBuilderHelper.anInitialMaintenanceInfo();
+        assertDtoSerializesAndDeserializesWithoutError(coabVarsFileDtoWithPreviousValue);
+
+        CoabVarsFileDto coabVarsFileDtoWithPreviousValueWithNoPlan = aTypicalUserProvisionningRequest();
+        coabVarsFileDtoWithPreviousValueWithNoPlan.previous_values = new CoabVarsFileDto.PreviousValues();
+        coabVarsFileDtoWithPreviousValueWithNoPlan.previous_values.plan_id=null;
+        coabVarsFileDtoWithPreviousValueWithNoPlan.previous_values.maintenanceInfo=OsbBuilderHelper.anInitialMaintenanceInfo();
+        assertDtoSerializesAndDeserializesWithoutError(coabVarsFileDtoWithPreviousValueWithNoPlan);
     }
 
     @Test

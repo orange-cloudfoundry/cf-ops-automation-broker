@@ -162,7 +162,26 @@ public class OsbBuilderHelper {
                 .parameters(new HashMap<>())
                 .serviceInstanceId("instance_id")
                 .maintenanceInfo(anUpgradedMaintenanceInfo())
+                .previousValues(new UpdateServiceInstanceRequest.PreviousValues(
+                    null,
+                    anInitialMaintenanceInfo()))
+
                 .build();
+    }
+
+    public static UpdateServiceInstanceRequest aPlanUpdateServiceInstanceRequest() {
+        return UpdateServiceInstanceRequest.builder()
+            .serviceDefinitionId("service_id")
+            .planId(UPGRADED_SERVICE_PLAN_ID)
+            .serviceInstanceId("instance_id")
+            .maintenanceInfo( anInitialMaintenanceInfo())
+            .parameters(new HashMap<>())
+            .previousValues(new UpdateServiceInstanceRequest.PreviousValues(
+                SERVICE_PLAN_ID,
+                null))
+            .context(aCfUserContext())
+            .originatingIdentity(aCfUserContext())
+            .build();
     }
 
     public static MaintenanceInfo anInitialMaintenanceInfo() {

@@ -177,8 +177,8 @@ Spring Cloud Open Service Broker | Open Service Broker API | Spring Boot | Sprin
          * `maintenance_info` is however useful for 
             * auditing purposes
             * in the future, comply with osb 1.17 which returns `maintenance_info` in service instance fetch endpoint 
-      * [ ] Store `maintenance_info` in coab-vars.yml
-         * [ ] Add new `maintenance_info` field in CoabVarsDto
-         * [ ] Refine CoabVarsDtoBuilder to set it
-      * [ ] refine test request 
+      * [x] Store `maintenance_info` in coab-vars.yml
+         * [x] Add new `maintenance_info` field in CoabVarsDto
+         * [x] Refine CoabVarsDtoBuilder to set it
+      * [x] refine test request to include maintenance_info 
    

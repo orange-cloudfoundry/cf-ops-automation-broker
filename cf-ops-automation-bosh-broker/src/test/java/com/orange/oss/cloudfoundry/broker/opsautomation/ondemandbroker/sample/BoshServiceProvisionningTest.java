@@ -65,6 +65,7 @@ import org.springframework.boot.web.server.LocalServerPort;
 import org.springframework.cloud.servicebroker.model.binding.CreateServiceInstanceAppBindingResponse;
 import org.springframework.cloud.servicebroker.model.binding.CreateServiceInstanceBindingRequest;
 import org.springframework.cloud.servicebroker.model.catalog.Catalog;
+import org.springframework.cloud.servicebroker.model.catalog.MaintenanceInfo;
 import org.springframework.cloud.servicebroker.model.catalog.Plan;
 import org.springframework.cloud.servicebroker.model.catalog.ServiceDefinition;
 import org.springframework.cloud.servicebroker.model.instance.CreateServiceInstanceRequest;
@@ -411,12 +412,15 @@ public class BoshServiceProvisionningTest {
         create_service_binding();
 
         operation = update_service_plan();
-
         polls_last_operation(operation, HttpStatus.SC_OK, "in progress", "");
-
         simulateUpdatingManifestGeneration(gitSecretsProcessor, anUpdateServiceInstanceRequest());
-
         polls_last_operation(operation, HttpStatus.SC_OK, "succeeded", "");
+
+        operation = upgrade_service();
+        polls_last_operation(operation, HttpStatus.SC_OK, "in progress", "");
+        simulateUpdatingManifestGeneration(gitSecretsProcessor, anUpgradeServiceInstanceRequest());
+        polls_last_operation(operation, HttpStatus.SC_OK, "succeeded", "");
+
 
         delete_service_binding();
 
@@ -549,12 +553,52 @@ public class BoshServiceProvisionningTest {
         return updateResponse.getBody().getOperation();
     }
 
+    /**
+     * Request an async update (equivalent of `cf service --upgrade`)
+     * @return the last operation field
+     */
+    private String upgrade_service() {
+
+        UpdateServiceInstanceRequest upgradeServiceInstanceRequest =
+            anUpgradeServiceInstanceRequest();
+
+        ResponseEntity<UpdateServiceInstanceResponse> updateResponse = serviceInstanceService.updateServiceInstance(
+            SERVICE_INSTANCE_ID,
+            true,
+            "api-info",
+            osbProxy.buildOriginatingIdentityHeader(upgradeServiceInstanceRequest.getOriginatingIdentity()),
+            OsbConstants.X_Broker_API_Version_Value,
+            upgradeServiceInstanceRequest);
+        assertThat(updateResponse.getStatusCode()).isEqualTo(ACCEPTED);
+        assertThat(updateResponse.getBody()).isNotNull();
+        assertThat(updateResponse.getBody().getDashboardUrl())
+            .as("dashboard url template configured in application.properties")
+            .isEqualTo("https://grafana_" + BROKERED_SERVICE_INSTANCE_ID + ".redacted-ops-domain.com");
+        return updateResponse.getBody().getOperation();
+    }
+
     @Nonnull
     private UpdateServiceInstanceRequest anUpdateServiceInstanceRequest() {
         return UpdateServiceInstanceRequest.builder()
             .serviceDefinitionId(SERVICE_DEFINITION_ID)
             .planId(UPGRADED_SERVICE_PLAN_ID)
             .serviceInstanceId(SERVICE_INSTANCE_ID)
+            .parameters(OsbBuilderHelper.osbCmdbCustomParam(BROKERED_SERVICE_INSTANCE_ID))
+            .context(aCfUserContext())
+            .originatingIdentity(aCfUserContext())
+            .build();
+    }
+
+    @Nonnull
+    private UpdateServiceInstanceRequest anUpgradeServiceInstanceRequest() {
+        return UpdateServiceInstanceRequest.builder()
+            .serviceDefinitionId(SERVICE_DEFINITION_ID)
+            .planId(UPGRADED_SERVICE_PLAN_ID)
+            .serviceInstanceId(SERVICE_INSTANCE_ID)
+            .maintenanceInfo(MaintenanceInfo.builder()
+                .version(2,0,0, "")
+                .description("Includes dashboards")
+                .build())
             .parameters(OsbBuilderHelper.osbCmdbCustomParam(BROKERED_SERVICE_INSTANCE_ID))
             .context(aCfUserContext())
             .originatingIdentity(aCfUserContext())
@@ -655,6 +699,10 @@ public class BoshServiceProvisionningTest {
                 .planId(SERVICE_PLAN_ID)
                 .serviceInstanceId(SERVICE_INSTANCE_ID)
                 .parameters(OsbBuilderHelper.osbCmdbCustomParam(BROKERED_SERVICE_INSTANCE_ID))
+                .maintenanceInfo(MaintenanceInfo.builder()
+                    .version(1,0,0, "")
+                    .description("Initial version")
+                    .build())
                 .context(aCfUserContext())
                 .originatingIdentity(aCfUserContext())
                 .build();

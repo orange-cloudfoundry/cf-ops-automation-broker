@@ -184,3 +184,11 @@ Spring Cloud Open Service Broker | Open Service Broker API | Spring Boot | Sprin
    * [ ] Refactor OsbBuilderHelper
       * rename update into upgrade
       * use constants for plan, service guid   
+      
+### Plan upgrade validator impl
+
+* [x] Define properties
+* [x] Define processor and its message formatter
+* [ ] Overall test in BoshServiceProvisionningTest
+* [ ] Update reference properties
+* [ ] Update doc 

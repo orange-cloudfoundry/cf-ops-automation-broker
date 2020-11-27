@@ -30,11 +30,13 @@ public class OsbBuilderHelper {
 
     public static final String SERVICE_DEFINITION_ID = "service_definition_id";
     public static final String SERVICE_PLAN_ID = "plan_id";
+    public static final String SMALL_PLAN_ID = SERVICE_PLAN_ID;
     public static final String SERVICE_PLAN_NAME = "small_plan_name";
     public static final String SMALL_PLAN_NAME = SERVICE_PLAN_NAME;
     public static final String UPGRADED_SERVICE_PLAN_ID = "plan_id2";
-    public static final String MEDIUM_PLAN_NAME = UPGRADED_SERVICE_PLAN_ID;
+    public static final String MEDIUM_SERVICE_PLAN_ID = UPGRADED_SERVICE_PLAN_ID;
     public static final String UPGRADED_SERVICE_PLAN_NAME = "medium_plan_name";
+    public static final String MEDIUM_PLAN_NAME = UPGRADED_SERVICE_PLAN_NAME;
 
     public static final String NEXT_UPGRADEABLE_PLAN_ID = "plan_id3";
 
@@ -185,7 +187,7 @@ public class OsbBuilderHelper {
     }
 
     /**
-     * Constructs a "cf update-service -p plan2" request
+     * Constructs a "cf update-service -p plan2" request from plan 1
      */
     public static UpdateServiceInstanceRequest aPlanUpdateServiceInstanceRequest() {
         return UpdateServiceInstanceRequest.builder()
@@ -198,6 +200,25 @@ public class OsbBuilderHelper {
             .parameters(new HashMap<>())
             .previousValues(new UpdateServiceInstanceRequest.PreviousValues(
                 SERVICE_PLAN_ID,
+                null))
+            .context(aCfUserContext())
+            .originatingIdentity(aCfUserContext())
+            .build();
+    }
+    /**
+     * Constructs a "cf update-service -p plan1" request from plan 2
+     */
+    public static UpdateServiceInstanceRequest aPlanDowngradeServiceInstanceRequest() {
+        return UpdateServiceInstanceRequest.builder()
+            .serviceDefinitionId("service_id")
+            .serviceDefinition(aCatalog().getServiceDefinitions().get(0))
+            .planId(SERVICE_PLAN_ID)
+            .plan(aCatalog().getServiceDefinitions().get(0).getPlans().get(0))
+            .serviceInstanceId("instance_id")
+            .maintenanceInfo( anInitialMaintenanceInfo())
+            .parameters(new HashMap<>())
+            .previousValues(new UpdateServiceInstanceRequest.PreviousValues(
+                UPGRADED_SERVICE_PLAN_ID,
                 null))
             .context(aCfUserContext())
             .originatingIdentity(aCfUserContext())

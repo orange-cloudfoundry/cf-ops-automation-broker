@@ -30,10 +30,17 @@ public class OsbBuilderHelper {
 
     public static final String SERVICE_DEFINITION_ID = "service_definition_id";
     public static final String SERVICE_PLAN_ID = "plan_id";
-    public static final String SERVICE_PLAN_NAME = "plan_name";
+    public static final String SERVICE_PLAN_NAME = "small_plan_name";
+    public static final String SMALL_PLAN_NAME = SERVICE_PLAN_NAME;
     public static final String UPGRADED_SERVICE_PLAN_ID = "plan_id2";
+    public static final String MEDIUM_PLAN_NAME = UPGRADED_SERVICE_PLAN_ID;
+    public static final String UPGRADED_SERVICE_PLAN_NAME = "medium_plan_name";
 
-    public static final String UPGRADED_SERVICE_PLAN_NAME = "plan_name2";
+    public static final String NEXT_UPGRADEABLE_PLAN_ID = "plan_id3";
+
+    public static final String NEXT_UPGRADEABLE_PLAN_NAME = "large_plan_name";
+
+    public static final String LARGE_PLAN_NAME = NEXT_UPGRADEABLE_PLAN_NAME;
 
     @SuppressWarnings("WeakerAccess")
     public static DeleteServiceInstanceBindingRequest anUnbindRequest(String serviceInstanceId, String bindingId) {
@@ -52,7 +59,7 @@ public class OsbBuilderHelper {
     public static Catalog aCatalog() {
         Plan plan  = Plan.builder().id(SERVICE_PLAN_ID).name(SERVICE_PLAN_NAME).description("plan_description").metadata(new HashMap<>()).build();
         Plan plan2 = Plan.builder().id(UPGRADED_SERVICE_PLAN_ID).name(UPGRADED_SERVICE_PLAN_NAME).description("plan_description2").metadata(new HashMap<>()).build();
-        Plan plan3 = Plan.builder().id("plan_id3").name("plan_name3").description("plan_description3").metadata(new HashMap<>()).build();
+        Plan plan3 = Plan.builder().id(NEXT_UPGRADEABLE_PLAN_ID).name(NEXT_UPGRADEABLE_PLAN_NAME).description("plan_description3").metadata(new HashMap<>()).build();
         ServiceDefinition serviceDefinition =  ServiceDefinition.builder()
                 .id("service_id")
                 .name("service_name")

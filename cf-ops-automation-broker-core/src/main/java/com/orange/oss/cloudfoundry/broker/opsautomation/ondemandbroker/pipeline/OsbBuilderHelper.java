@@ -58,7 +58,7 @@ public class OsbBuilderHelper {
                 .name("service_name")
                 .description("service_description")
                 .bindable(true)
-                .plans(asList(plan, plan2)).build();
+                .plans(asList(plan, plan2, plan3)).build();
 
         ServiceDefinition serviceDefinition2 = ServiceDefinition.builder()
                 .id("service_id2")

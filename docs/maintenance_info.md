@@ -192,4 +192,4 @@ Spring Cloud Open Service Broker | Open Service Broker API | Spring Boot | Sprin
 * [x] Register processor in application
 * [x] Overall test in BoshServiceProvisionningTest
 * [x] Update reference properties
-* [ ] Update doc 
+* [x] Update doc 

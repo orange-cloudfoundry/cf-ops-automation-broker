@@ -30,7 +30,10 @@ public class OsbBuilderHelper {
 
     public static final String SERVICE_DEFINITION_ID = "service_definition_id";
     public static final String SERVICE_PLAN_ID = "plan_id";
-    public static final String UPGRADED_SERVICE_PLAN_ID = "upgraded_plan_id";
+    public static final String SERVICE_PLAN_NAME = "plan_name";
+    public static final String UPGRADED_SERVICE_PLAN_ID = "plan_id2";
+
+    public static final String UPGRADED_SERVICE_PLAN_NAME = "plan_name2";
 
     @SuppressWarnings("WeakerAccess")
     public static DeleteServiceInstanceBindingRequest anUnbindRequest(String serviceInstanceId, String bindingId) {
@@ -47,8 +50,8 @@ public class OsbBuilderHelper {
     }
 
     public static Catalog aCatalog() {
-        Plan plan  = Plan.builder().id(SERVICE_PLAN_ID).name("plan_name").description("plan_description").metadata(new HashMap<>()).build();
-        Plan plan2 = Plan.builder().id("plan_id2").name("plan_name2").description("plan_description2").metadata(new HashMap<>()).build();
+        Plan plan  = Plan.builder().id(SERVICE_PLAN_ID).name(SERVICE_PLAN_NAME).description("plan_description").metadata(new HashMap<>()).build();
+        Plan plan2 = Plan.builder().id(UPGRADED_SERVICE_PLAN_ID).name(UPGRADED_SERVICE_PLAN_NAME).description("plan_description2").metadata(new HashMap<>()).build();
         Plan plan3 = Plan.builder().id("plan_id3").name("plan_name3").description("plan_description3").metadata(new HashMap<>()).build();
         ServiceDefinition serviceDefinition =  ServiceDefinition.builder()
                 .id("service_id")
@@ -205,6 +208,8 @@ public class OsbBuilderHelper {
                 .planId(SERVICE_PLAN_ID)
                 .parameters(new HashMap<>())
                 .serviceInstanceId("instance_id")
+                .serviceDefinition(aCatalog().getServiceDefinitions().get(0))
+                .plan(aCatalog().getServiceDefinitions().get(0).getPlans().get(1))
                 .build();
     }
 

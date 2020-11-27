@@ -417,8 +417,10 @@ public class BoshServiceProvisionningTest {
         simulateUpdatingManifestGeneration(gitSecretsProcessor, anAcceptedPlanUpdateServiceInstanceRequest());
         polls_last_operation(operation, HttpStatus.SC_OK, "succeeded", "");
 
-   //     operation = update_service_plan(anAcceptedPlanUpdateServiceInstanceRequest());
-
+        assertThatThrownBy(() -> {update_service_plan(aRejectedPlanUpdateServiceInstanceRequest());})
+            .isInstanceOf(FeignException.class)
+            .hasMessageContaining(("422"))
+            .hasMessageContaining(("Service instance update not supported"));
 
         operation = upgrade_service();
         polls_last_operation(operation, HttpStatus.SC_OK, "in progress", "");

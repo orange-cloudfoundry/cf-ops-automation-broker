@@ -4,6 +4,7 @@ import java.time.Clock;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.PlanUpgradeValidatorProperties;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.GitManager;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.GitProcessor;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.GitProcessorContext;
@@ -20,6 +21,7 @@ import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.OsbProxySkippedDeprovisionProxy;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.PipelineCompletionTracker;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.PipelineProperties;
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.PlanUpgradeValidatorProcessor;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.ReadOnlyServiceInstanceBrokerProcessor;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.SecretsGenerator;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.TemplatesGenerator;
@@ -40,7 +42,8 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean;
 
 @SpringBootApplication
-@EnableConfigurationProperties({GitProperties.class, PipelineProperties.class, OsbProxyProperties.class})
+@EnableConfigurationProperties({GitProperties.class, PipelineProperties.class, OsbProxyProperties.class,
+    PlanUpgradeValidatorProperties.class})
 public class BoshBrokerApplication {
 
     @SuppressWarnings("WeakerAccess")
@@ -133,6 +136,11 @@ public class BoshBrokerApplication {
     public BrokerProcessor readOnlyServiceInstanceBrokerProcessor(DeploymentProperties deploymentProperties) {
         return new ReadOnlyServiceInstanceBrokerProcessor(deploymentProperties.isServiceInstanceReadOnlyMode(),
             deploymentProperties.getServiceInstanceReadOnlyMessage());
+    }
+
+    @Bean
+    public BrokerProcessor planUpdateValidatorBrokerProcessor(PlanUpgradeValidatorProperties planUpgradeValidatorProperties) {
+        return new PlanUpgradeValidatorProcessor(planUpgradeValidatorProperties);
     }
 
 
@@ -241,11 +249,15 @@ public class BoshBrokerApplication {
 
     @Bean
     public ProcessorChain processorChain(BrokerProcessor boshProcessor, BrokerProcessor secretsGitProcessor,
-        BrokerProcessor templateGitProcessor, BrokerProcessor paasTemplateContextFilter, BrokerProcessor readOnlyServiceInstanceBrokerProcessor) {
+        BrokerProcessor templateGitProcessor, BrokerProcessor paasTemplateContextFilter,
+        BrokerProcessor readOnlyServiceInstanceBrokerProcessor,
+        BrokerProcessor planUpdateValidatorBrokerProcessor) {
         List<BrokerProcessor> processors = new ArrayList<>();
 
         // reject service instance operations at first even before clone
         processors.add(readOnlyServiceInstanceBrokerProcessor);
+
+        processors.add(planUpdateValidatorBrokerProcessor);
 
         processors.add(paasTemplateContextFilter);
         // git push will trigger 1st for paas-templates and then 2nd for paas-secrets,

@@ -11,7 +11,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  * EnableConfigurationProperties
  */
 @ConfigurationProperties(prefix = "plans.upgrade")
-public class PlanUpgradeCheckerProperties {
+public class PlanUpgradeValidatorProperties {
 
     private Map<String, List<String>> supportedFromTo = new HashMap<>();
 

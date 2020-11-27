@@ -4,7 +4,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.PlanUpgradeCheckerProperties;
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.PlanUpgradeValidatorProperties;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.Context;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.DefaultBrokerProcessor;
 import com.orange.oss.ondemandbroker.ProcessorChainServiceInstanceService;
@@ -25,7 +25,7 @@ public class PlanUpgradeValidatorProcessor extends DefaultBrokerProcessor {
 
 	private final RejectedPlanUpgradeMessageFormatter rejectedPlanUpgradeMessageFormatter;
 
-	public PlanUpgradeValidatorProcessor(PlanUpgradeCheckerProperties planUpgradeCheckerProperties) {
+	public PlanUpgradeValidatorProcessor(PlanUpgradeValidatorProperties planUpgradeCheckerProperties) {
 		super();
 		supportedFromTo = planUpgradeCheckerProperties.getSupportedFromTo();
 		String rejectedMessageTemplate = planUpgradeCheckerProperties.getRejectedMessageTemplate();

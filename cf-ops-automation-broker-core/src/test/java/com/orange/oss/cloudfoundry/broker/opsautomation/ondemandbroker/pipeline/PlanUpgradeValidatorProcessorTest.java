@@ -5,7 +5,7 @@ import java.util.List;
 
 import javax.annotation.Nonnull;
 
-import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.PlanUpgradeCheckerProperties;
+import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.PlanUpgradeValidatorProperties;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.Context;
 import com.orange.oss.ondemandbroker.ProcessorChainServiceInstanceService;
 import org.junit.jupiter.api.Test;
@@ -29,7 +29,7 @@ class PlanUpgradeValidatorProcessorTest {
 	@Test
 	void accepts_supported_plan_upgrade() {
 		//Given a validator
-		PlanUpgradeCheckerProperties planUpgradeCheckerProperties = aPlanUpgradeCheckerProperties();
+		PlanUpgradeValidatorProperties planUpgradeCheckerProperties = aPlanUpgradeCheckerProperties();
 		PlanUpgradeValidatorProcessor planUpgradeValidatorProcessor = new PlanUpgradeValidatorProcessor(planUpgradeCheckerProperties);
 
 		//Given an update request
@@ -50,7 +50,7 @@ class PlanUpgradeValidatorProcessorTest {
 	@Test
 	void rejects_unsupported_plan_upgrades() {
 		//Given a validator
-		PlanUpgradeCheckerProperties planUpgradeCheckerProperties = aPlanUpgradeCheckerProperties();
+		PlanUpgradeValidatorProperties planUpgradeCheckerProperties = aPlanUpgradeCheckerProperties();
 		PlanUpgradeValidatorProcessor planUpgradeValidatorProcessor = new PlanUpgradeValidatorProcessor(planUpgradeCheckerProperties);
 
 		//Given an update request
@@ -72,7 +72,7 @@ class PlanUpgradeValidatorProcessorTest {
 	@Test
 	void rejects_any_plan_upgrades_by_default() {
 		//Given a validator
-		PlanUpgradeCheckerProperties planUpgradeCheckerProperties = new PlanUpgradeCheckerProperties();
+		PlanUpgradeValidatorProperties planUpgradeCheckerProperties = new PlanUpgradeValidatorProperties();
 		PlanUpgradeValidatorProcessor planUpgradeValidatorProcessor = new PlanUpgradeValidatorProcessor(planUpgradeCheckerProperties);
 
 		//Given an update request
@@ -92,8 +92,8 @@ class PlanUpgradeValidatorProcessorTest {
 
 
 	@Nonnull
-	private PlanUpgradeCheckerProperties aPlanUpgradeCheckerProperties() {
-		PlanUpgradeCheckerProperties planUpgradeCheckerProperties = new PlanUpgradeCheckerProperties();
+	private PlanUpgradeValidatorProperties aPlanUpgradeCheckerProperties() {
+		PlanUpgradeValidatorProperties planUpgradeCheckerProperties = new PlanUpgradeValidatorProperties();
 		HashMap<String, List<String>> supportedFromTo = aSupportedMatrix();
 		planUpgradeCheckerProperties.setSupportedFromTo(supportedFromTo);
 		planUpgradeCheckerProperties.setRejectedMessageTemplate("upgrade from ...");

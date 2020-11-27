@@ -12,7 +12,7 @@ import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.entry;
 
-class PlanUpgradeCheckerPropertiesTest {
+class PlanUpgradeValidatorPropertiesTest {
 
 	//See https://docs.spring.io/spring-boot/docs/2.1.12.RELEASE/reference/html/boot-features-developing-auto-configuration.html#boot-features-test-autoconfig
 	ConditionEvaluationReportLoggingListener conditionEvaluationReportLoggingListener = new ConditionEvaluationReportLoggingListener(
@@ -23,7 +23,7 @@ class PlanUpgradeCheckerPropertiesTest {
 		.withUserConfiguration(LoadPropertiesConfiguration.class);
 
 	@Configuration
-	@EnableConfigurationProperties(PlanUpgradeCheckerProperties.class)
+	@EnableConfigurationProperties(PlanUpgradeValidatorProperties.class)
 	public static class LoadPropertiesConfiguration {
 
 	}
@@ -35,8 +35,9 @@ class PlanUpgradeCheckerPropertiesTest {
 				"plans.upgrade.rejectedMessageTemplate=custom message {0} {1}"
 			)
 			.run((context) -> {
-				assertThat(context).hasSingleBean(PlanUpgradeCheckerProperties.class);
-				PlanUpgradeCheckerProperties planUpgradeCheckerProperties = context.getBean(PlanUpgradeCheckerProperties.class);
+				assertThat(context).hasSingleBean(PlanUpgradeValidatorProperties.class);
+				PlanUpgradeValidatorProperties planUpgradeCheckerProperties = context.getBean(
+					PlanUpgradeValidatorProperties.class);
 				assertThat(planUpgradeCheckerProperties.getRejectedMessageTemplate()).isEqualTo("custom message {0} {1}");
 			});
 	}
@@ -50,8 +51,9 @@ class PlanUpgradeCheckerPropertiesTest {
 				"plans.upgrade.supportedFromTo[medium][0]=large"
 			)
 			.run((context) -> {
-				assertThat(context).hasSingleBean(PlanUpgradeCheckerProperties.class);
-				PlanUpgradeCheckerProperties planUpgradeCheckerProperties = context.getBean(PlanUpgradeCheckerProperties.class);
+				assertThat(context).hasSingleBean(PlanUpgradeValidatorProperties.class);
+				PlanUpgradeValidatorProperties planUpgradeCheckerProperties = context.getBean(
+					PlanUpgradeValidatorProperties.class);
 				//noinspection ArraysAsListWithZeroOrOneArgument
 				assertThat(planUpgradeCheckerProperties.getSupportedFromTo())
 					.containsExactly(
@@ -65,8 +67,9 @@ class PlanUpgradeCheckerPropertiesTest {
 		this.contextRunner
 			.withPropertyValues()
 			.run((context) -> {
-				assertThat(context).hasSingleBean(PlanUpgradeCheckerProperties.class);
-				PlanUpgradeCheckerProperties planUpgradeCheckerProperties = context.getBean(PlanUpgradeCheckerProperties.class);
+				assertThat(context).hasSingleBean(PlanUpgradeValidatorProperties.class);
+				PlanUpgradeValidatorProperties planUpgradeCheckerProperties = context.getBean(
+					PlanUpgradeValidatorProperties.class);
 				assertThat(planUpgradeCheckerProperties.getSupportedFromTo()).isEmpty();
 				assertThat(planUpgradeCheckerProperties.getRejectedMessageTemplate()).isNotBlank();
 			});

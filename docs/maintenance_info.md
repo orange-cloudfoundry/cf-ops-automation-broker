@@ -189,6 +189,7 @@ Spring Cloud Open Service Broker | Open Service Broker API | Spring Boot | Sprin
 
 * [x] Define properties
 * [x] Define processor and its message formatter
-* [ ] Overall test in BoshServiceProvisionningTest
-* [ ] Update reference properties
+* [x] Register processor in application
+* [x] Overall test in BoshServiceProvisionningTest
+* [x] Update reference properties
 * [ ] Update doc 

@@ -160,7 +160,7 @@ public class OsbBuilderHelper {
 
         return CreateServiceInstanceRequest.builder()
                 .serviceDefinitionId(SERVICE_DEFINITION_ID)
-                .planId(SERVICE_PLAN_ID)
+                .planId(MEDIUM_SERVICE_PLAN_ID)
                 .parameters(parameters)
                 .serviceInstanceId("service-instance-guid")
                 .maintenanceInfo(anInitialMaintenanceInfo())
@@ -206,13 +206,13 @@ public class OsbBuilderHelper {
         return UpdateServiceInstanceRequest.builder()
             .serviceDefinitionId("service_id")
             .serviceDefinition(aCatalog().getServiceDefinitions().get(0))
-            .planId(MEDIUM_SERVICE_PLAN_ID)
-            .plan(aMediumPlan())
+            .planId(LARGE_PLAN_NAME)
+            .plan(aLargePlan())
             .serviceInstanceId("instance_id")
             .maintenanceInfo( anInitialMaintenanceInfo())
             .parameters(new HashMap<>())
             .previousValues(new UpdateServiceInstanceRequest.PreviousValues(
-                SMALL_PLAN_ID,
+                MEDIUM_SERVICE_PLAN_ID,
                 null))
             .context(aCfUserContext())
             .originatingIdentity(aCfUserContext())

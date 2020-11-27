@@ -29,10 +29,15 @@ spring:
               - document
             plans:
                 - id: plan_id # mandatory field
-                  name: default # mandatory field; defaults to default
-                  description: "This is a default ondemand plan.  All services are created equally." # mandatory field
+                  name: small_plan_name # mandatory field; BoshServiceProvisionningTest needs this to remain consistent with OsbBuilderHelper
+                  description: "This is a small plan." # mandatory field
+                - id: plan_id2 # mandatory field
+                  name: medium_plan_name # mandatory field; BoshServiceProvisionningTest needs this to remain consistent with OsbBuilderHelper
+                  description: "This is a default medium ondemand plan.  All services are created equally." # mandatory field
                   # Better if this can remain consistent with
                   maintenance_info:
                     version: 2.0.0
                     description: "Includes dashboards"
-
+                - id: plan_id3 # mandatory field
+                  name: large_plan_name # mandatory field; BoshServiceProvisionningTest needs this to remain consistent with OsbBuilderHelper
+                  description: "This is a large plan." # mandatory field

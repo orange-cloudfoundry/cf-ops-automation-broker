@@ -15,7 +15,7 @@ public class PlanUpgradeCheckerProperties {
 
     private Map<String, List<String>> supportedFromTo = new HashMap<>();
 
-    private String rejectedMessageTemplate = "plan upgrade from {0} to {1} are not supported, please prefer creating a new instance and export/import your data into it";
+    private String rejectedMessageTemplate = "plan upgrade from {0} to {1} are not supported, please prefer creating a new instance and export/import your data into it. List of supported plan upgrades from {0} is: {2}";
 
     public Map<String, List<String>> getSupportedFromTo() {
         return supportedFromTo;

@@ -16,7 +16,6 @@ import org.springframework.cloud.servicebroker.model.instance.UpdateServiceInsta
 import static com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.OsbBuilderHelper.LARGE_PLAN_NAME;
 import static com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.OsbBuilderHelper.MEDIUM_PLAN_NAME;
 import static com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.OsbBuilderHelper.MEDIUM_SERVICE_PLAN_ID;
-import static com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.OsbBuilderHelper.SMALL_PLAN_ID;
 import static com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.OsbBuilderHelper.SMALL_PLAN_NAME;
 import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -35,8 +34,8 @@ class PlanUpgradeValidatorProcessorTest {
 
 		//Given an update request
 		UpdateServiceInstanceRequest request = OsbBuilderHelper.aPlanUpdateServiceInstanceRequest();
-		assertThat(request.getPlan().getName()).isEqualTo(MEDIUM_PLAN_NAME);
-		assertThat(request.getPreviousValues().getPlanId()).isEqualTo(SMALL_PLAN_ID);
+		assertThat(request.getPlan().getName()).isEqualTo(LARGE_PLAN_NAME);
+		assertThat(request.getPreviousValues().getPlanId()).isEqualTo(MEDIUM_SERVICE_PLAN_ID);
 
 		//Given a populated context
 		Context context = new Context();

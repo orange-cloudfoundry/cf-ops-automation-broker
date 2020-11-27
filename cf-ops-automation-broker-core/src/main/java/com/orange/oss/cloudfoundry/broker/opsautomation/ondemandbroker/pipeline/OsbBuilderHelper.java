@@ -157,25 +157,35 @@ public class OsbBuilderHelper {
                 .build();
     }
 
+    /**
+     * Constructs a "cf update-service -c "{}" request
+     */
     public static UpdateServiceInstanceRequest anUpdateServiceInstanceRequest() {
         // Given an incoming delete request
         return UpdateServiceInstanceRequest.builder()
                 .serviceDefinitionId("service_id")
+                .serviceDefinition(aCatalog().getServiceDefinitions().get(0))
                 .planId(SERVICE_PLAN_ID)
+                .plan(aCatalog().getServiceDefinitions().get(0).getPlans().get(0))
                 .parameters(new HashMap<>())
                 .serviceInstanceId("instance_id")
-                .maintenanceInfo(anUpgradedMaintenanceInfo())
+                .maintenanceInfo( anInitialMaintenanceInfo())
                 .previousValues(new UpdateServiceInstanceRequest.PreviousValues(
-                    null,
+                    SERVICE_PLAN_ID,
                     anInitialMaintenanceInfo()))
 
                 .build();
     }
 
+    /**
+     * Constructs a "cf update-service -p plan2" request
+     */
     public static UpdateServiceInstanceRequest aPlanUpdateServiceInstanceRequest() {
         return UpdateServiceInstanceRequest.builder()
             .serviceDefinitionId("service_id")
+            .serviceDefinition(aCatalog().getServiceDefinitions().get(0))
             .planId(UPGRADED_SERVICE_PLAN_ID)
+            .plan(aCatalog().getServiceDefinitions().get(0).getPlans().get(1))
             .serviceInstanceId("instance_id")
             .maintenanceInfo( anInitialMaintenanceInfo())
             .parameters(new HashMap<>())
@@ -186,6 +196,27 @@ public class OsbBuilderHelper {
             .originatingIdentity(aCfUserContext())
             .build();
     }
+
+    /**
+     * Constructs a "cf update-service --upgrade" request
+     */
+    public static UpdateServiceInstanceRequest anUpgradeServiceInstanceRequest() {
+        return UpdateServiceInstanceRequest.builder()
+            .serviceDefinitionId("service_id")
+            .serviceDefinition(aCatalog().getServiceDefinitions().get(0))
+            .planId(SERVICE_PLAN_ID)
+            .plan(aCatalog().getServiceDefinitions().get(0).getPlans().get(0))
+            .parameters(new HashMap<>())
+            .serviceInstanceId("instance_id")
+            .maintenanceInfo(anUpgradedMaintenanceInfo())
+            .previousValues(new UpdateServiceInstanceRequest.PreviousValues(
+                SERVICE_PLAN_ID,
+                anInitialMaintenanceInfo()))
+            .build();
+    }
+
+
+
 
     public static MaintenanceInfo anInitialMaintenanceInfo() {
         return MaintenanceInfo.builder()
@@ -199,18 +230,6 @@ public class OsbBuilderHelper {
             .version(2, 0, 0, "")
             .description("Includes dashboards")
             .build();
-    }
-
-    public static UpdateServiceInstanceRequest anUpgradeServiceInstanceRequest() {
-        // Given an incoming delete request
-        return UpdateServiceInstanceRequest.builder()
-                .serviceDefinitionId("service_id")
-                .planId(SERVICE_PLAN_ID)
-                .parameters(new HashMap<>())
-                .serviceInstanceId("instance_id")
-                .serviceDefinition(aCatalog().getServiceDefinitions().get(0))
-                .plan(aCatalog().getServiceDefinitions().get(0).getPlans().get(1))
-                .build();
     }
 
     public static GetServiceInstanceRequest aGetServiceInstanceRequest() {

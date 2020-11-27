@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.cloud.servicebroker.model.instance.CreateServiceInstanceRequest;
 import org.springframework.cloud.servicebroker.model.instance.UpdateServiceInstanceRequest;
 
+import static com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.OsbBuilderHelper.anInitialMaintenanceInfo;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class CoabVarsFileDtoBuilderTest {
@@ -40,16 +41,15 @@ class CoabVarsFileDtoBuilderTest {
 	@Test
 	void includesPreviousValueFromUpgradeRequest() {
 		//Given an update request
-		UpdateServiceInstanceRequest request = OsbBuilderHelper.anUpdateServiceInstanceRequest();
+		UpdateServiceInstanceRequest request = OsbBuilderHelper.anUpgradeServiceInstanceRequest();
 		assertThat(request.getMaintenanceInfo()).isNotNull();
 
 		//when
 		CoabVarsFileDto coabVarsFileDto = builder.wrapUpdateOsbIntoVarsDto(request, "m_1234");
 
 		//then
-		CoabVarsFileDto.PreviousValues expected = new CoabVarsFileDto.PreviousValues();
-		expected.maintenanceInfo = OsbBuilderHelper.anInitialMaintenanceInfo();
-		assertThat(coabVarsFileDto.previous_values).isEqualTo(expected);
+		assertThat(coabVarsFileDto.previous_values).isNotNull();
+		assertThat(coabVarsFileDto.previous_values.maintenanceInfo).isEqualTo(anInitialMaintenanceInfo());
 	}
 
 	@Test

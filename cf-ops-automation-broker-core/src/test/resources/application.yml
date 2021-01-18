@@ -39,7 +39,17 @@ logging:
     org.springframework.web.client.HttpMessageConverterExtractor: debug
     org.springframework.http.converter.json.MappingJackson2HttpMessageConverter: debug
     #supposed to trigger Feign logging, but did not see it working. Seems similar to https://github.com/spring-cloud/spring-cloud-netflix/issues/1769
-    com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.osbclient.ServiceInstanceServiceClient: debug
+    com:
+      orange:
+        oss:
+          cloudfoundry:
+            broker:
+              opsautomation:
+                ondemandbroker:
+                  osbclient:
+                    ServiceInstanceServiceClient: debug
+                  pipeline:
+                    PlanUpgradeValidatorProcessor: debug
 
     #troubleshoot http security problems
     # org.springframework.security: DEBUG

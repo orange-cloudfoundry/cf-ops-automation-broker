@@ -76,6 +76,7 @@ import org.springframework.cloud.servicebroker.model.instance.UpdateServiceInsta
 import org.springframework.http.ResponseEntity;
 
 import static com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.GitServer.NO_OP_INITIALIZER;
+import static com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.OsbBuilderHelper.MEDIUM_SERVICE_PLAN_ID;
 import static com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.OsbBuilderHelper.SERVICE_DEFINITION_ID;
 import static com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.OsbBuilderHelper.SERVICE_PLAN_ID;
 import static com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.OsbBuilderHelper.UPGRADED_SERVICE_PLAN_ID;
@@ -411,10 +412,15 @@ public class BoshServiceProvisionningTest {
 
         create_service_binding();
 
-        operation = update_service_plan();
+        operation = update_service_plan(anAcceptedPlanUpdateServiceInstanceRequest());
         polls_last_operation(operation, HttpStatus.SC_OK, "in progress", "");
-        simulateUpdatingManifestGeneration(gitSecretsProcessor, anUpdateServiceInstanceRequest());
+        simulateUpdatingManifestGeneration(gitSecretsProcessor, anAcceptedPlanUpdateServiceInstanceRequest());
         polls_last_operation(operation, HttpStatus.SC_OK, "succeeded", "");
+
+        assertThatThrownBy(() -> {update_service_plan(aRejectedPlanUpdateServiceInstanceRequest());})
+            .isInstanceOf(FeignException.class)
+            .hasMessageContaining(("422"))
+            .hasMessageContaining(("Service instance update not supported"));
 
         operation = upgrade_service();
         polls_last_operation(operation, HttpStatus.SC_OK, "in progress", "");
@@ -529,15 +535,23 @@ public class BoshServiceProvisionningTest {
         return createResponse.getBody().getOperation();
     }
 
+    // Equivalent of "cf update-service -p"
+    private String update_service_plan(UpdateServiceInstanceRequest updateServiceInstanceRequest) {
+        return update_service_instance(updateServiceInstanceRequest);
+    }
+
     /**
-     * Request an async update
+     * Request an async update (equivalent of `cf service --upgrade`)
      * @return the last operation field
      */
-    private String update_service_plan() {
+    private String upgrade_service() {
+        return update_service_instance(anUpgradeServiceInstanceRequest());
+    }
 
-        UpdateServiceInstanceRequest updateServiceInstanceRequest =
-            anUpdateServiceInstanceRequest();
-
+    /**
+     * Request an async update
+     */
+    private String update_service_instance(UpdateServiceInstanceRequest updateServiceInstanceRequest) {
         ResponseEntity<UpdateServiceInstanceResponse> updateResponse = serviceInstanceService.updateServiceInstance(
             SERVICE_INSTANCE_ID,
             true,
@@ -553,35 +567,13 @@ public class BoshServiceProvisionningTest {
         return updateResponse.getBody().getOperation();
     }
 
-    /**
-     * Request an async update (equivalent of `cf service --upgrade`)
-     * @return the last operation field
-     */
-    private String upgrade_service() {
-
-        UpdateServiceInstanceRequest upgradeServiceInstanceRequest =
-            anUpgradeServiceInstanceRequest();
-
-        ResponseEntity<UpdateServiceInstanceResponse> updateResponse = serviceInstanceService.updateServiceInstance(
-            SERVICE_INSTANCE_ID,
-            true,
-            "api-info",
-            osbProxy.buildOriginatingIdentityHeader(upgradeServiceInstanceRequest.getOriginatingIdentity()),
-            OsbConstants.X_Broker_API_Version_Value,
-            upgradeServiceInstanceRequest);
-        assertThat(updateResponse.getStatusCode()).isEqualTo(ACCEPTED);
-        assertThat(updateResponse.getBody()).isNotNull();
-        assertThat(updateResponse.getBody().getDashboardUrl())
-            .as("dashboard url template configured in application.properties")
-            .isEqualTo("https://grafana_" + BROKERED_SERVICE_INSTANCE_ID + ".redacted-ops-domain.com");
-        return updateResponse.getBody().getOperation();
-    }
-
+    // Equivalent of "cf service-update -p plan"
     @Nonnull
-    private UpdateServiceInstanceRequest anUpdateServiceInstanceRequest() {
+    private UpdateServiceInstanceRequest anAcceptedPlanUpdateServiceInstanceRequest() {
         return UpdateServiceInstanceRequest.builder()
             .serviceDefinitionId(SERVICE_DEFINITION_ID)
-            .planId(UPGRADED_SERVICE_PLAN_ID)
+            .planId(MEDIUM_SERVICE_PLAN_ID)
+            .plan(OsbBuilderHelper.aMediumPlan())
             .serviceInstanceId(SERVICE_INSTANCE_ID)
             .parameters(OsbBuilderHelper.osbCmdbCustomParam(BROKERED_SERVICE_INSTANCE_ID))
             .context(aCfUserContext())
@@ -592,6 +584,24 @@ public class BoshServiceProvisionningTest {
             .build();
     }
 
+    // Equivalent of "cf service-update -p plan"
+    @Nonnull
+    private UpdateServiceInstanceRequest aRejectedPlanUpdateServiceInstanceRequest() {
+        return UpdateServiceInstanceRequest.builder()
+            .serviceDefinitionId(SERVICE_DEFINITION_ID)
+            .planId(MEDIUM_SERVICE_PLAN_ID)
+            .plan(OsbBuilderHelper.aMediumPlan())
+            .serviceInstanceId(SERVICE_INSTANCE_ID)
+            .parameters(OsbBuilderHelper.osbCmdbCustomParam(BROKERED_SERVICE_INSTANCE_ID))
+            .context(aCfUserContext())
+            .originatingIdentity(aCfUserContext())
+            .previousValues(new UpdateServiceInstanceRequest.PreviousValues(
+                OsbBuilderHelper.aLargePlan().getId(),
+                null))
+            .build();
+    }
+
+    // Equivalent of "cf service-update --upgrade"
     @Nonnull
     private UpdateServiceInstanceRequest anUpgradeServiceInstanceRequest() {
         return UpdateServiceInstanceRequest.builder()

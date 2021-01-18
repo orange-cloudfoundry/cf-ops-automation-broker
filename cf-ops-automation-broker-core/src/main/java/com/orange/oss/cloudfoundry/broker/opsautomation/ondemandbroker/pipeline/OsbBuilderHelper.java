@@ -30,7 +30,19 @@ public class OsbBuilderHelper {
 
     public static final String SERVICE_DEFINITION_ID = "service_definition_id";
     public static final String SERVICE_PLAN_ID = "plan_id";
-    public static final String UPGRADED_SERVICE_PLAN_ID = "upgraded_plan_id";
+    public static final String SMALL_PLAN_ID = SERVICE_PLAN_ID;
+    public static final String SERVICE_PLAN_NAME = "small_plan_name";
+    public static final String SMALL_PLAN_NAME = SERVICE_PLAN_NAME;
+    public static final String UPGRADED_SERVICE_PLAN_ID = "plan_id2";
+    public static final String MEDIUM_SERVICE_PLAN_ID = UPGRADED_SERVICE_PLAN_ID;
+    public static final String UPGRADED_SERVICE_PLAN_NAME = "medium_plan_name";
+    public static final String MEDIUM_PLAN_NAME = UPGRADED_SERVICE_PLAN_NAME;
+
+    public static final String NEXT_UPGRADEABLE_PLAN_ID = "plan_id3";
+
+    public static final String NEXT_UPGRADEABLE_PLAN_NAME = "large_plan_name";
+
+    public static final String LARGE_PLAN_NAME = NEXT_UPGRADEABLE_PLAN_NAME;
 
     @SuppressWarnings("WeakerAccess")
     public static DeleteServiceInstanceBindingRequest anUnbindRequest(String serviceInstanceId, String bindingId) {
@@ -47,15 +59,15 @@ public class OsbBuilderHelper {
     }
 
     public static Catalog aCatalog() {
-        Plan plan  = Plan.builder().id(SERVICE_PLAN_ID).name("plan_name").description("plan_description").metadata(new HashMap<>()).build();
-        Plan plan2 = Plan.builder().id("plan_id2").name("plan_name2").description("plan_description2").metadata(new HashMap<>()).build();
-        Plan plan3 = Plan.builder().id("plan_id3").name("plan_name3").description("plan_description3").metadata(new HashMap<>()).build();
+        Plan plan  = aSmallPlan();
+        Plan plan2 = aMediumPlan();
+        Plan plan3 = aLargePlan();
         ServiceDefinition serviceDefinition =  ServiceDefinition.builder()
                 .id("service_id")
                 .name("service_name")
                 .description("service_description")
                 .bindable(true)
-                .plans(asList(plan, plan2)).build();
+                .plans(asList(plan, plan2, plan3)).build();
 
         ServiceDefinition serviceDefinition2 = ServiceDefinition.builder()
                 .id("service_id2")
@@ -66,6 +78,19 @@ public class OsbBuilderHelper {
         return Catalog.builder().serviceDefinitions(serviceDefinition
 //                , serviceDefinition2 //not yet used
         ).build();
+    }
+
+    public static Plan aLargePlan() {
+        return Plan.builder().id(NEXT_UPGRADEABLE_PLAN_ID).name(NEXT_UPGRADEABLE_PLAN_NAME).description("plan_description3").metadata(new HashMap<>()).build();
+    }
+
+    public static Plan aSmallPlan() {
+        return Plan
+            .builder().id(SERVICE_PLAN_ID).name(SERVICE_PLAN_NAME).description("plan_description").metadata(new HashMap<>()).build();
+    }
+
+    public static Plan aMediumPlan() {
+        return Plan.builder().id(UPGRADED_SERVICE_PLAN_ID).name(UPGRADED_SERVICE_PLAN_NAME).description("plan_description2").metadata(new HashMap<>()).build();
     }
 
     public static CreateServiceInstanceBindingRequest aBindingRequest(String serviceInstanceId) {
@@ -135,7 +160,7 @@ public class OsbBuilderHelper {
 
         return CreateServiceInstanceRequest.builder()
                 .serviceDefinitionId(SERVICE_DEFINITION_ID)
-                .planId(SERVICE_PLAN_ID)
+                .planId(MEDIUM_SERVICE_PLAN_ID)
                 .parameters(parameters)
                 .serviceInstanceId("service-instance-guid")
                 .maintenanceInfo(anInitialMaintenanceInfo())
@@ -154,35 +179,85 @@ public class OsbBuilderHelper {
                 .build();
     }
 
+    /**
+     * Constructs a "cf update-service -c "{}" request
+     */
     public static UpdateServiceInstanceRequest anUpdateServiceInstanceRequest() {
         // Given an incoming delete request
         return UpdateServiceInstanceRequest.builder()
                 .serviceDefinitionId("service_id")
+                .serviceDefinition(aCatalog().getServiceDefinitions().get(0))
                 .planId(SERVICE_PLAN_ID)
+                .plan(aSmallPlan())
                 .parameters(new HashMap<>())
                 .serviceInstanceId("instance_id")
-                .maintenanceInfo(anUpgradedMaintenanceInfo())
+                .maintenanceInfo( anInitialMaintenanceInfo())
                 .previousValues(new UpdateServiceInstanceRequest.PreviousValues(
-                    null,
+                    SERVICE_PLAN_ID,
                     anInitialMaintenanceInfo()))
 
                 .build();
     }
 
+    /**
+     * Constructs a "cf update-service -p plan2" request from plan 1
+     */
     public static UpdateServiceInstanceRequest aPlanUpdateServiceInstanceRequest() {
         return UpdateServiceInstanceRequest.builder()
             .serviceDefinitionId("service_id")
-            .planId(UPGRADED_SERVICE_PLAN_ID)
+            .serviceDefinition(aCatalog().getServiceDefinitions().get(0))
+            .planId(LARGE_PLAN_NAME)
+            .plan(aLargePlan())
             .serviceInstanceId("instance_id")
             .maintenanceInfo( anInitialMaintenanceInfo())
             .parameters(new HashMap<>())
             .previousValues(new UpdateServiceInstanceRequest.PreviousValues(
-                SERVICE_PLAN_ID,
+                MEDIUM_SERVICE_PLAN_ID,
                 null))
             .context(aCfUserContext())
             .originatingIdentity(aCfUserContext())
             .build();
     }
+    /**
+     * Constructs a "cf update-service -p plan1" request from plan 2
+     */
+    public static UpdateServiceInstanceRequest aPlanDowngradeServiceInstanceRequest() {
+        return UpdateServiceInstanceRequest.builder()
+            .serviceDefinitionId("service_id")
+            .serviceDefinition(aCatalog().getServiceDefinitions().get(0))
+            .planId(SMALL_PLAN_ID)
+            .plan(aSmallPlan())
+            .serviceInstanceId("instance_id")
+            .maintenanceInfo( anInitialMaintenanceInfo())
+            .parameters(new HashMap<>())
+            .previousValues(new UpdateServiceInstanceRequest.PreviousValues(
+                MEDIUM_SERVICE_PLAN_ID,
+                null))
+            .context(aCfUserContext())
+            .originatingIdentity(aCfUserContext())
+            .build();
+    }
+
+    /**
+     * Constructs a "cf update-service --upgrade" request
+     */
+    public static UpdateServiceInstanceRequest anUpgradeServiceInstanceRequest() {
+        return UpdateServiceInstanceRequest.builder()
+            .serviceDefinitionId("service_id")
+            .serviceDefinition(aCatalog().getServiceDefinitions().get(0))
+            .planId(SERVICE_PLAN_ID)
+            .plan(aCatalog().getServiceDefinitions().get(0).getPlans().get(0))
+            .parameters(new HashMap<>())
+            .serviceInstanceId("instance_id")
+            .maintenanceInfo(anUpgradedMaintenanceInfo())
+            .previousValues(new UpdateServiceInstanceRequest.PreviousValues(
+                SERVICE_PLAN_ID,
+                anInitialMaintenanceInfo()))
+            .build();
+    }
+
+
+
 
     public static MaintenanceInfo anInitialMaintenanceInfo() {
         return MaintenanceInfo.builder()
@@ -196,16 +271,6 @@ public class OsbBuilderHelper {
             .version(2, 0, 0, "")
             .description("Includes dashboards")
             .build();
-    }
-
-    public static UpdateServiceInstanceRequest anUpgradeServiceInstanceRequest() {
-        // Given an incoming delete request
-        return UpdateServiceInstanceRequest.builder()
-                .serviceDefinitionId("service_id")
-                .planId(SERVICE_PLAN_ID)
-                .parameters(new HashMap<>())
-                .serviceInstanceId("instance_id")
-                .build();
     }
 
     public static GetServiceInstanceRequest aGetServiceInstanceRequest() {

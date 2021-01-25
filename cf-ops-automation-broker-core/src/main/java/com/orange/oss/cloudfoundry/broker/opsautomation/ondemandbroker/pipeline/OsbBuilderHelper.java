@@ -198,6 +198,22 @@ public class OsbBuilderHelper {
 
                 .build();
     }
+    /**
+     * Constructs a "cf update-service -c "{}" request
+     */
+    public static UpdateServiceInstanceRequest anUpdateServiceInstanceRequestWithoutPreviousValue() {
+        // Given an incoming delete request
+        return UpdateServiceInstanceRequest.builder()
+                .serviceDefinitionId("service_id")
+                .serviceDefinition(aCatalog().getServiceDefinitions().get(0))
+                .planId(SERVICE_PLAN_ID)
+                .plan(aSmallPlan())
+                .parameters(new HashMap<>())
+                .serviceInstanceId("instance_id")
+                .maintenanceInfo( anInitialMaintenanceInfo())
+
+                .build();
+    }
 
     /**
      * Constructs a "cf update-service -p plan2" request from plan 1

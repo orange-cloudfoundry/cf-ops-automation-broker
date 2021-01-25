@@ -25,7 +25,51 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class PlanUpgradeValidatorProcessorTest {
 
 
+	/**
+	 * a `cf update-service --upgrade` is accepted
+	 */
+	@Test
+	void accepts_any_maintenance_info_upgrade() {
+		//Given a validator
+		PlanUpgradeValidatorProperties planUpgradeCheckerProperties = aPlanUpgradeCheckerProperties();
+		PlanUpgradeValidatorProcessor planUpgradeValidatorProcessor = new PlanUpgradeValidatorProcessor(planUpgradeCheckerProperties);
 
+		//Given a noop upgrade update request
+		UpdateServiceInstanceRequest request = OsbBuilderHelper.anUpgradeServiceInstanceRequest();
+		assertThat(request.getPreviousValues().getPlanId()).isEqualTo(request.getPlan().getId());
+
+		//Given a populated context
+		Context context = new Context();
+		context.contextKeys.put(ProcessorChainServiceInstanceService.UPDATE_SERVICE_INSTANCE_REQUEST, request);
+
+		//When
+		planUpgradeValidatorProcessor.preUpdate(context);
+
+		//Then no exception is thrown
+	}
+
+	/**
+	 * e.g. a non compliant OSB client which does not provide the previous_value field
+	 */
+	@Test
+	void accepts_any_update_without_previous_value() {
+		//Given a validator
+		PlanUpgradeValidatorProperties planUpgradeCheckerProperties = aPlanUpgradeCheckerProperties();
+		PlanUpgradeValidatorProcessor planUpgradeValidatorProcessor = new PlanUpgradeValidatorProcessor(planUpgradeCheckerProperties);
+
+		//Given a noop upgrade update request
+		UpdateServiceInstanceRequest request = OsbBuilderHelper.anUpdateServiceInstanceRequestWithoutPreviousValue();
+		assertThat(request.getPreviousValues()).isNull();
+
+		//Given a populated context
+		Context context = new Context();
+		context.contextKeys.put(ProcessorChainServiceInstanceService.UPDATE_SERVICE_INSTANCE_REQUEST, request);
+
+		//When
+		planUpgradeValidatorProcessor.preUpdate(context);
+
+		//Then no exception is thrown
+	}
 	@Test
 	void accepts_supported_plan_upgrade() {
 		//Given a validator

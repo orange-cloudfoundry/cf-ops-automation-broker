@@ -420,7 +420,8 @@ public class BoshServiceProvisionningTest {
         assertThatThrownBy(() -> {update_service_plan(aRejectedPlanUpdateServiceInstanceRequest());})
             .isInstanceOf(FeignException.class)
             .hasMessageContaining(("422"))
-            .hasMessageContaining(("Service instance update not supported"));
+            .hasMessageContaining(("Service instance update not supported"))
+            .hasMessageContaining(("List of supported plan upgrades from"));
 
         operation = upgrade_service();
         polls_last_operation(operation, HttpStatus.SC_OK, "in progress", "");
@@ -614,7 +615,7 @@ public class BoshServiceProvisionningTest {
                 .build())
             .parameters(OsbBuilderHelper.osbCmdbCustomParam(BROKERED_SERVICE_INSTANCE_ID))
             .previousValues(new UpdateServiceInstanceRequest.PreviousValues(
-                null,
+                UPGRADED_SERVICE_PLAN_ID,
                 aCreateServiceInstanceRequest().getMaintenanceInfo()))
             .context(aCfUserContext())
             .originatingIdentity(aCfUserContext())

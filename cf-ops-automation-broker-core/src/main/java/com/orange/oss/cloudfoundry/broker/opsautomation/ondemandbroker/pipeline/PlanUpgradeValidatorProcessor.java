@@ -51,6 +51,11 @@ public class PlanUpgradeValidatorProcessor extends DefaultBrokerProcessor {
 			logger.debug("Receiving update request without previous plan_id, assuming params-only update");
 			return;
 		}
+		if (previousValuesPlanId.equals(toPlan.getId())) {
+			logger.debug("Receiving update request without plan change, assuming params-only update, or " +
+				"maintenance_info upgrade. Accepting the request");
+			return;
+		}
 		ServiceDefinition serviceDefinition = updateRequest.getServiceDefinition();
 		Plan fromPlan = serviceDefinition.getPlans().stream()
 			.filter((s) -> s.getId().equals(previousValuesPlanId))

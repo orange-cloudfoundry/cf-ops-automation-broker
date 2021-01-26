@@ -16,6 +16,7 @@ import com.orange.oss.ondemandbroker.ProcessorChainServiceInstanceService;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
+import org.springframework.cloud.servicebroker.exception.ServiceInstanceDoesNotExistException;
 import org.springframework.cloud.servicebroker.model.CloudFoundryContext;
 import org.springframework.cloud.servicebroker.model.binding.CreateServiceInstanceBindingRequest;
 import org.springframework.cloud.servicebroker.model.binding.CreateServiceInstanceBindingResponse;
@@ -36,6 +37,7 @@ import static com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pi
 import static com.orange.oss.ondemandbroker.ProcessorChainServiceInstanceService.OSB_PROFILE_ORGANIZATION_GUID;
 import static com.orange.oss.ondemandbroker.ProcessorChainServiceInstanceService.OSB_PROFILE_SPACE_GUID;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.eq;
@@ -135,6 +137,7 @@ public class BoshProcessorTest {
         //Given a mock behaviour
         TemplatesGenerator templatesGenerator = mock(TemplatesGenerator.class);
         SecretsGenerator secretsGenerator = mock(SecretsGenerator.class);
+        when(secretsGenerator.isEnableDeploymentFileIsPresent(any(), any())).thenReturn(true);
 
         //given a configured timeout
         PipelineCompletionTracker tracker = aCompletionTracker();
@@ -171,6 +174,42 @@ public class BoshProcessorTest {
         assertThat(customTemplateMessage).isNotNull();
         String customSecretsMessage = (String) context.contextKeys.get(SECRETS_REPOSITORY_ALIAS_NAME+GitProcessorContext.commitMessage.toString());
         assertThat(customSecretsMessage).isNotNull();
+    }
+
+    @Test
+    public void updates_fails_when_deployment_is_missing() {
+        //Given an update request
+        UpdateServiceInstanceRequest request = UpdateServiceInstanceRequest.builder()
+                .serviceDefinitionId("service_definition_id")
+                .planId("plan_id")
+                .serviceInstanceId(SERVICE_INSTANCE_ID)
+                .context(CloudFoundryContext.builder()
+                        .organizationGuid("org_id1")
+                        .spaceGuid("space_id1")
+                        .build()
+                )
+                .build();
+
+        //Given a populated context
+        Context context = new Context();
+        context.contextKeys.put(ProcessorChainServiceInstanceService.UPDATE_SERVICE_INSTANCE_REQUEST, request);
+        context.contextKeys.put(TEMPLATES_REPOSITORY_ALIAS_NAME + GitProcessorContext.workDir.toString(), aGitRepoWorkDir());
+        context.contextKeys.put(SECRETS_REPOSITORY_ALIAS_NAME + GitProcessorContext.workDir.toString(), aGitRepoWorkDir());
+
+        //Given a mock behaviour
+        TemplatesGenerator templatesGenerator = mock(TemplatesGenerator.class);
+        SecretsGenerator secretsGenerator = mock(SecretsGenerator.class);
+        when(secretsGenerator.isEnableDeploymentFileIsPresent(any(), any())).thenReturn(false);
+
+        //given a configured timeout
+        PipelineCompletionTracker tracker = aCompletionTracker();
+
+        BoshProcessor boshProcessor = new BoshProcessor(TEMPLATES_REPOSITORY_ALIAS_NAME, SECRETS_REPOSITORY_ALIAS_NAME, templatesGenerator, secretsGenerator, tracker, "Cassandra", "c", "_","https://static-dashboard.com"
+        );
+
+        //When
+        assertThatThrownBy(() -> boshProcessor.preUpdate(context))
+            .isInstanceOf(ServiceInstanceDoesNotExistException.class);
     }
 
     @Test

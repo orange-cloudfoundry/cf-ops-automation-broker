@@ -99,6 +99,38 @@ public class SecretsGeneratorTest extends StructureGeneratorImplTest{
     }
 
     @Test
+    public void check_that_enable_deployment_file_is_present() {
+        //Given
+        Structure deploymentStructure = new Structure.StructureBuilder(this.workDir)
+                .withDirectoryHierarchy(this.deploymentProperties.getRootDeployment(), this.secretsGenerator.computeDeploymentName(SERVICE_INSTANCE_ID))
+                .build();
+        this.secretsGenerator.generateEnableDeploymentFile(this.workDir, SERVICE_INSTANCE_ID);
+
+        //When
+        boolean enableDeploymentFileIsPresent = this.secretsGenerator
+            .isEnableDeploymentFileIsPresent(this.workDir, SERVICE_INSTANCE_ID);
+
+        //Then
+        assertThat("Enable-deployment should be reported as present", enableDeploymentFileIsPresent);
+    }
+
+  @Test
+    public void check_that_enable_deployment_file_is_missing() {
+        //Given
+        Structure deploymentStructure = new Structure.StructureBuilder(this.workDir)
+                .withDirectoryHierarchy(this.deploymentProperties.getRootDeployment(), this.secretsGenerator.computeDeploymentName(SERVICE_INSTANCE_ID))
+                .build();
+
+        //When
+        boolean enableDeploymentFileIsPresent = this.secretsGenerator
+            .isEnableDeploymentFileIsPresent(this.workDir, SERVICE_INSTANCE_ID);
+
+        //Then
+        assertThat("Enable-deployment should be reported as missing", ! enableDeploymentFileIsPresent);
+    }
+
+
+    @Test
     public void check_that_enable_deployment_file_is_removed() {
         //Given
         Structure deploymentStructure = new Structure.StructureBuilder(this.workDir)

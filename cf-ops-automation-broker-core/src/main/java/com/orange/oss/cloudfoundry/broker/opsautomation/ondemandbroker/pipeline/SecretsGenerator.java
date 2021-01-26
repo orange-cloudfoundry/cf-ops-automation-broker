@@ -77,6 +77,20 @@ public class SecretsGenerator extends StructureGeneratorImpl implements SecretsR
         String fileName = DeploymentConstants.ENABLE_DEPLOYMENT_FILENAME;
         StructureGeneratorHelper.generateFile(workDir,  targetPathElements, fileName, fileName, null);
     }
+    protected boolean isEnableDeploymentFileIsPresent(Path workDir, String serviceInstanceId){
+        String[] targetPathElements = new String[] {this.rootDeployment, this.computeDeploymentName(serviceInstanceId)};
+        String fileName = DeploymentConstants.ENABLE_DEPLOYMENT_FILENAME;
+        //Compute target path
+        Path targetDir = StructureGeneratorHelper.generatePath(workDir, targetPathElements);
+        Path targetFile = StructureGeneratorHelper.generatePath(targetDir, fileName);
+
+
+        boolean isMarkerPresent = !StructureGeneratorHelper.isMissingResource(targetFile);
+        if (!isMarkerPresent) {
+            logger.warn("enable-deployment.yml is missing at " + targetFile);
+        }
+        return isMarkerPresent;
+    }
 
     protected void removeEnableDeploymentFile(Path workDir, String serviceInstanceId) {
         String[] pathElements = new String[] {this.rootDeployment, this.computeDeploymentName(serviceInstanceId)};

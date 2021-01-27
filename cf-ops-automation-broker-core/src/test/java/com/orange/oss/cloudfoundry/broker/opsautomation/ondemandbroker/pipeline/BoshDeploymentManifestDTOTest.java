@@ -5,7 +5,7 @@ import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-import javax.annotation.Nonnull;
+import org.jetbrains.annotations.NotNull;
 
 import org.junit.jupiter.api.Test;
 
@@ -42,7 +42,7 @@ class BoshDeploymentManifestDTOTest {
 		assertThat(coabVarsFileDto).isNull();
 	}
 
-	@Nonnull
+	@NotNull
 	private Path getResourcePath(String classPathResource) throws URISyntaxException {
 		return Paths.get(this.getClass().getResource(
 			classPathResource).toURI());

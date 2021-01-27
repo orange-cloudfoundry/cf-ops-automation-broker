@@ -1,6 +1,6 @@
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git;
 
-import javax.annotation.Nonnull;
+import org.jetbrains.annotations.NotNull;
 
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.Context;
 import org.junit.jupiter.api.Test;
@@ -60,7 +60,7 @@ public class GitProcessorTest {
         verify(gitManager).cloneRepo(any(Context.class));
     }
 
-    @Nonnull
+    @NotNull
     private Context aContextWithoutSkipKey() {
         Context ctx = new Context();
         ctx.contextKeys.put(repoAliasName + GitProcessorContext.checkOutRemoteBranch.toString(), "develop");

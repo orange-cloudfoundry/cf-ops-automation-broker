@@ -3,7 +3,7 @@ package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline
 import java.util.HashMap;
 import java.util.List;
 
-import javax.annotation.Nonnull;
+import org.jetbrains.annotations.NotNull;
 
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.PlanUpgradeValidatorProperties;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.Context;
@@ -135,7 +135,7 @@ class PlanUpgradeValidatorProcessorTest {
 	}
 
 
-	@Nonnull
+	@NotNull
 	private PlanUpgradeValidatorProperties aPlanUpgradeCheckerProperties() {
 		PlanUpgradeValidatorProperties planUpgradeCheckerProperties = new PlanUpgradeValidatorProperties();
 		HashMap<String, List<String>> supportedFromTo = aSupportedMatrix();
@@ -145,7 +145,7 @@ class PlanUpgradeValidatorProcessorTest {
 	}
 
 	@SuppressWarnings("ArraysAsListWithZeroOrOneArgument")
-	@Nonnull
+	@NotNull
 	private HashMap<String, List<String>> aSupportedMatrix() {
 		HashMap<String, List<String>> supportedFromTo = new HashMap<>();
 		supportedFromTo.put(SMALL_PLAN_NAME, asList(MEDIUM_PLAN_NAME, LARGE_PLAN_NAME));

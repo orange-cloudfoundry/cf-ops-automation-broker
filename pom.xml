@@ -13,7 +13,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>2.3.3.RELEASE</version>
+        <version>2.4.2</version>
         <relativePath /> <!-- lookup parent from repository -->
     </parent>
 
@@ -35,6 +35,11 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <java.version>1.8</java.version>
+
+        <!-- Downgrade to supports copying symlinks during unit tests, see https://issues.apache.org/jira/browse/MRESOURCES-269
+        and https://github.com/orange-cloudfoundry/cf-ops-automation-broker/issues/358
+        -->
+        <maven-resources-plugin.version>3.1.0</maven-resources-plugin.version>
     </properties>
 
     <modules>
@@ -104,6 +109,15 @@
             <artifactId>spring-boot-configuration-processor</artifactId>
             <optional>true</optional>
         </dependency>
+
+        <!-- See https://stackoverflow.com/questions/4963300/which-notnull-java-annotation-should-i-use -->
+        <!-- and https://www.jetbrains.com/help/idea/nullable-and-notnull-annotations.html -->
+        <!-- https://mvnrepository.com/artifact/org.jetbrains/annotations -->
+        <dependency>
+            <groupId>org.jetbrains</groupId>
+            <artifactId>annotations</artifactId>
+            <version>20.1.0</version>
+        </dependency>
     </dependencies>
 
     <dependencyManagement>
@@ -111,7 +125,7 @@
             <dependency>
                 <groupId>org.springframework.cloud</groupId>
                 <artifactId>spring-cloud-dependencies</artifactId>
-                <version>Hoxton.SR8</version>
+                <version>2020.0.0</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>

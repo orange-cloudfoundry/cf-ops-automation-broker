@@ -10,7 +10,7 @@ import java.time.ZoneId;
 import java.util.Collections;
 import java.util.HashMap;
 
-import javax.annotation.Nonnull;
+import org.jetbrains.annotations.NotNull;
 
 import feign.FeignException;
 import feign.Request;
@@ -434,7 +434,7 @@ public class PipelineCompletionTrackerTest {
 
 
 
-    @Nonnull
+    @NotNull
     private CoabVarsFileDto aCoabVarsFileDto() {
         CoabVarsFileDto coabVarsFileDto = new CoabVarsFileDto();
         coabVarsFileDto.deployment_name="a-deployment-name";
@@ -442,7 +442,7 @@ public class PipelineCompletionTrackerTest {
         return coabVarsFileDto;
     }
 
-    @Nonnull
+    @NotNull
     private CoabVarsFileDto aCoabVarsFileDtoV2() {
         CoabVarsFileDto coabVarsFileDto = new CoabVarsFileDto();
         coabVarsFileDto.deployment_name="a-deployment-name";

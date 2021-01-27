@@ -35,6 +35,11 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <java.version>1.8</java.version>
+
+        <!-- Downgrade to supports copying symlinks during unit tests, see https://issues.apache.org/jira/browse/MRESOURCES-269
+        and https://github.com/orange-cloudfoundry/cf-ops-automation-broker/issues/358
+        -->
+        <maven-resources-plugin.version>3.1.0</maven-resources-plugin.version>
     </properties>
 
     <modules>

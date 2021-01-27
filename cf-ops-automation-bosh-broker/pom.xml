@@ -49,6 +49,14 @@
             <version>2.27.2</version>
             <scope>test</scope>
         </dependency>
+        <!-- See https://stackoverflow.com/questions/4963300/which-notnull-java-annotation-should-i-use -->
+        <!-- and https://www.jetbrains.com/help/idea/nullable-and-notnull-annotations.html -->
+        <!-- https://mvnrepository.com/artifact/org.jetbrains/annotations -->
+        <dependency>
+            <groupId>org.jetbrains</groupId>
+            <artifactId>annotations</artifactId>
+            <version>20.1.0</version>
+        </dependency>
 
         <!-- turn on verbose logging of requests during tests. In production, we can use the actuator endpoint or the logging route service instead
         <dependency>

@@ -15,7 +15,7 @@ import java.nio.file.Paths;
 import java.util.EnumSet;
 import java.util.Map;
 
-import javax.annotation.Nonnull;
+import org.jetbrains.annotations.NotNull;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
@@ -569,7 +569,7 @@ public class BoshServiceProvisionningTest {
     }
 
     // Equivalent of "cf service-update -p plan"
-    @Nonnull
+    @NonNull
     private UpdateServiceInstanceRequest anAcceptedPlanUpdateServiceInstanceRequest() {
         return UpdateServiceInstanceRequest.builder()
             .serviceDefinitionId(SERVICE_DEFINITION_ID)
@@ -586,7 +586,7 @@ public class BoshServiceProvisionningTest {
     }
 
     // Equivalent of "cf service-update -p plan"
-    @Nonnull
+    @NonNull
     private UpdateServiceInstanceRequest aRejectedPlanUpdateServiceInstanceRequest() {
         return UpdateServiceInstanceRequest.builder()
             .serviceDefinitionId(SERVICE_DEFINITION_ID)
@@ -603,7 +603,7 @@ public class BoshServiceProvisionningTest {
     }
 
     // Equivalent of "cf service-update --upgrade"
-    @Nonnull
+    @NonNull
     private UpdateServiceInstanceRequest anUpgradeServiceInstanceRequest() {
         return UpdateServiceInstanceRequest.builder()
             .serviceDefinitionId(SERVICE_DEFINITION_ID)

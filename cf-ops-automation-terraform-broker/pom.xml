@@ -18,7 +18,9 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <java.version>1.8</java.version>
-        <rest-assured.version>4.0.0</rest-assured.version>
+        <rest-assured.version>4.3.3</rest-assured.version>
+        <!--        required by rest assuyred, see https://stackoverflow.com/a/62950421/1484823-->
+        <groovy.version>3.0.2</groovy.version>
     </properties>
 
     <dependencies>
@@ -39,7 +41,9 @@
         </dependency>
         <dependency>
             <groupId>io.rest-assured</groupId>
-            <artifactId>rest-assured</artifactId>
+            <!-- need to use spring-mock-mvc to pull right dependencies with spring, see https://stackoverflow.com/a/61020708/1484823 -->
+            <!--            <artifactId>rest-assured</artifactId>-->
+            <artifactId>spring-mock-mvc</artifactId>
             <version>${rest-assured.version}</version>
             <scope>test</scope>
         </dependency>

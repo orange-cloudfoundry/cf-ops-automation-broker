@@ -569,7 +569,7 @@ public class BoshServiceProvisionningTest {
     }
 
     // Equivalent of "cf service-update -p plan"
-    @NonNull
+    @NotNull
     private UpdateServiceInstanceRequest anAcceptedPlanUpdateServiceInstanceRequest() {
         return UpdateServiceInstanceRequest.builder()
             .serviceDefinitionId(SERVICE_DEFINITION_ID)
@@ -586,7 +586,7 @@ public class BoshServiceProvisionningTest {
     }
 
     // Equivalent of "cf service-update -p plan"
-    @NonNull
+    @NotNull
     private UpdateServiceInstanceRequest aRejectedPlanUpdateServiceInstanceRequest() {
         return UpdateServiceInstanceRequest.builder()
             .serviceDefinitionId(SERVICE_DEFINITION_ID)
@@ -603,7 +603,7 @@ public class BoshServiceProvisionningTest {
     }
 
     // Equivalent of "cf service-update --upgrade"
-    @NonNull
+    @NotNull
     private UpdateServiceInstanceRequest anUpgradeServiceInstanceRequest() {
         return UpdateServiceInstanceRequest.builder()
             .serviceDefinitionId(SERVICE_DEFINITION_ID)

@@ -13,6 +13,7 @@ import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import org.springframework.cloud.servicebroker.exception.ServiceInstanceDoesNotExistException;
 import org.springframework.cloud.servicebroker.model.binding.CreateServiceInstanceBindingRequest;
 import org.springframework.cloud.servicebroker.model.binding.CreateServiceInstanceBindingResponse;
 import org.springframework.cloud.servicebroker.model.binding.DeleteServiceInstanceBindingRequest;
@@ -150,7 +151,15 @@ public class BoshProcessor extends DefaultBrokerProcessor {
 
         CoabVarsFileDto coabVarsFileDto = wrapUpdateOsbIntoVarsDto(updateRequest);
 
-        //Check pre-requisites and generate paas-template structure
+        //Check secret pre-requisites (i.e. that a service instance exists)
+        if (! this.secretsGenerator.isEnableDeploymentFileIsPresent(secretsWorkDir, serviceInstanceId)) {
+            logger.warn("Enable-deployment is missing while receiving a request to update instance {} Suspecting " +
+                "inconsistency from OSB client and COA deployment. Please check if manual cleanup was performed on " +
+                "coa deployments without going through CF (OSB client)", serviceInstanceId);
+            throw new ServiceInstanceDoesNotExistException(serviceInstanceId);
+        }
+
+        //Check model pre-requisites and generate paas-template structure
         this.templatesGenerator.checkPrerequisites(templatesWorkDir);
         this.templatesGenerator.generateCoabVarsFile(templatesWorkDir, serviceInstanceId, coabVarsFileDto);
 

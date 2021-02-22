@@ -215,28 +215,44 @@ public class TemplatesGeneratorTest extends StructureGeneratorImplTest{
     }
 
     @Test
-    public void check_that_symlink_towards_deployment_dependencies_file_is_generated() throws Exception {
+    public void check_that_symlink_towards_deployment_dependencies_file_are_generated() throws Exception {
         //Given repository, root deployment,model deployment and operators directory with coab-operators file
         Structure modelStructure = new Structure.StructureBuilder(this.workDir)
                 .withFile(new String[]{this.deploymentProperties.getRootDeployment(), this.deploymentProperties.getModelDeployment()},
                         DeploymentConstants.DEPLOYMENT_DEPENDENCIES_FILENAME)
+                .withFile(new String[]{this.deploymentProperties.getRootDeployment(), this.deploymentProperties.getModelDeployment()},
+                        "deployment-dependencies-80-r2-vsphere.yml")
                 .build();
         Structure deploymentStructure = new Structure.StructureBuilder(this.workDir)
                 .withDirectoryHierarchy(this.deploymentProperties.getRootDeployment(),  this.templatesGenerator.computeDeploymentName(SERVICE_INSTANCE_ID))
                 .build();
 
         //When
-        this.templatesGenerator.generateDeploymentDependenciesFileSymLink(this.workDir, SERVICE_INSTANCE_ID);
+        //this.templatesGenerator.generateDeploymentDependenciesFileSymLink(this.workDir, SERVICE_INSTANCE_ID);
+        this.templatesGenerator.generateDeploymentDependenciesFilesSymLink(this.workDir, SERVICE_INSTANCE_ID);
 
         //Then
         Path targetDeploymentDependenciesFile = StructureGeneratorHelper.generatePath(this.workDir,
                 this.deploymentProperties.getRootDeployment(),
                 this.templatesGenerator.computeDeploymentName(SERVICE_INSTANCE_ID),
                 DeploymentConstants.DEPLOYMENT_DEPENDENCIES_FILENAME);
+        Path targetDeploymentDependenciesAdditionalFile = StructureGeneratorHelper.generatePath(this.workDir,
+                this.deploymentProperties.getRootDeployment(),
+                this.templatesGenerator.computeDeploymentName(SERVICE_INSTANCE_ID),
+                "deployment-dependencies-80-r2-vsphere.yml");
+
+
         assertThat("Symbolic link towards deployment dependencies file doesn't exist", Files.exists(targetDeploymentDependenciesFile));
         assertThat("Deployment dependencies file is not a symbolic link", Files.isSymbolicLink(targetDeploymentDependenciesFile));
         assertThat(Files.readSymbolicLink(targetDeploymentDependenciesFile).toString(), is(equalTo("../" + this.deploymentProperties.getModelDeployment() +
                 File.separator + DeploymentConstants.DEPLOYMENT_DEPENDENCIES_FILENAME)));
+        assertThat("Symbolic link towards additional deployment dependencies file doesn't exist", Files.exists(targetDeploymentDependenciesAdditionalFile));
+        assertThat("Deployment dependencies file is not a symbolic link", Files.isSymbolicLink(targetDeploymentDependenciesAdditionalFile));
+        assertThat(Files.readSymbolicLink(targetDeploymentDependenciesAdditionalFile).toString(), is(equalTo("../" + this.deploymentProperties.getModelDeployment() +
+                File.separator + "deployment-dependencies-80-r2-vsphere.yml")));
+
+
+
     }
 
     @Test
@@ -342,15 +358,15 @@ public class TemplatesGeneratorTest extends StructureGeneratorImplTest{
     public void populateRealPaasTemplates() {
 
         //Given a path
-        Path workDir = Paths.get("/home/losapio/GIT/Coab/paas-templates");
+        Path workDir = Paths.get("/data/GIT/FEInt/paas-templates-private-coab");
 
         //Given and a user request
         CoabVarsFileDto coabVarsFileDto = CoabVarsFileDtoSampleHelper.aTypicalUserProvisionningRequest();
 
         //Given a template generator
         TemplatesGenerator templatesGenerator = new TemplatesGenerator("coab-depls",
-                "cf-mysql",
-                "y",
+                "01-cf-mysql-extended",
+                "t",
                 "_",
                 new VarsFilesYmlFormatter());
 

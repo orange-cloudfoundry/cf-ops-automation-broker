@@ -51,7 +51,7 @@ public class TemplatesGenerator extends StructureGeneratorImpl{
         this.generateTemplateDirectory(workDir, serviceInstanceId);
 
         //Generate deployment dependencies symlink
-        this.generateDeploymentDependenciesFileSymLink(workDir, serviceInstanceId);
+        this.generateDeploymentDependenciesFilesSymLink(workDir, serviceInstanceId);
 
         //Generate coab vars file
         this.generateCoabVarsFile(workDir, serviceInstanceId, coabVarsFileDto);
@@ -146,12 +146,17 @@ public class TemplatesGenerator extends StructureGeneratorImpl{
                 DeploymentConstants.TEMPLATE);
     }
 
-    protected void generateDeploymentDependenciesFileSymLink(Path workDir, String serviceInstanceId){
-        String[] sourcePathElements = new String[] {this.rootDeployment, this.modelDeployment};
-        String[] targetPathElements = new String[] {this.rootDeployment, this.computeDeploymentName(serviceInstanceId)};
-        String sourceFileName = DeploymentConstants.DEPLOYMENT_DEPENDENCIES_FILENAME;
-        StructureGeneratorHelper.generateSymbolicLink(workDir, sourcePathElements, targetPathElements, sourceFileName, sourceFileName);
+    protected void generateDeploymentDependenciesFilesSymLink(Path workDir, String serviceInstanceId){
+        List<String> pathList = this.searchForAllYmlFilesUnderModelDirectory(workDir);
+        for (String path: pathList) {
+            String[] sourcePathElements = new String[] {this.rootDeployment, this.modelDeployment};
+            String[] targetPathElements = new String[] {this.rootDeployment, this.computeDeploymentName(serviceInstanceId)};
+            StructureGeneratorHelper.generateSymbolicLink(workDir, sourcePathElements, targetPathElements, StructureGeneratorHelper.getFile(path), StructureGeneratorHelper.getFile(path));
+        }
     }
+
+
+
 
     public void generateCoabVarsFile(Path workDir, String serviceInstanceId, CoabVarsFileDto coabVarsFileDto){
         String[] targetPathElements = new String[] {this.rootDeployment, this.computeDeploymentName(serviceInstanceId), DeploymentConstants.TEMPLATE};
@@ -201,6 +206,11 @@ public class TemplatesGenerator extends StructureGeneratorImpl{
                 StructureGeneratorHelper.generateSymbolicLink(workDir, sourcePathElements, targetPathElements, StructureGeneratorHelper.getFile(path), targetFileName);
             }
         }
+    }
+
+    protected List<String> searchForAllYmlFilesUnderModelDirectory(Path workDir){
+        Path path = StructureGeneratorHelper.generatePath(workDir, this.rootDeployment, this.modelDeployment);
+        return StructureGeneratorHelper.listFilesPaths(path, "glob:**/*.yml");
     }
 
     protected List<String> searchForAllFiles(Path workDir){

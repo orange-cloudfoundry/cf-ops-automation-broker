@@ -22,3 +22,7 @@ nbbuild/
 dist/
 nbdist/
 .nb-gradle/
+cf-ops-automation-terraform-broker/manifest.yml
+cf-ops-automation-bosh-broker/manifest.yml
+cf-ops-automation-broker-core/src/test/resources/git-private.properties
+private-TODO.txt

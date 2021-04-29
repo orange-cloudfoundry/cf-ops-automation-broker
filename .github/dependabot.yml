@@ -1,0 +1,36 @@
+version: 2
+updates:
+- package-ecosystem: maven
+  directory: "/"
+  schedule:
+    interval: weekly
+    time: "04:00"
+  open-pull-requests-limit: 10
+  ignore:
+  - dependency-name: org.springframework.boot:spring-boot-starter-parent
+    versions:
+    - 2.4.3
+    - 2.4.4
+    - 2.4.5
+  - dependency-name: org.springframework.cloud:spring-cloud-dependencies
+    versions:
+    - 2020.0.2
+  - dependency-name: pl.project13.maven:git-commit-id-plugin
+    versions:
+    - 4.0.3
+    - 4.0.4
+  - dependency-name: io.github.openfeign:feign-okhttp
+    versions:
+    - "11.1"
+  - dependency-name: org.eclipse.jgit:org.eclipse.jgit
+    versions:
+    - 5.10.0.202012080955-r
+    - 5.11.0.202103091610-r
+  - dependency-name: nl.jqno.equalsverifier:equalsverifier
+    versions:
+    - 3.5.3
+    - 3.5.4
+    - 3.5.5
+  - dependency-name: org.immutables:value
+    versions:
+    - 2.8.9-ea-1

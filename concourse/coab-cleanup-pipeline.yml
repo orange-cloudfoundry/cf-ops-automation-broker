@@ -8,7 +8,7 @@ resource_types:
 
 resources:
 - name: hourly
-  type: time-resource
+  type: time
   source:
     start: 06:00
     stop: 22:00

@@ -137,7 +137,7 @@
             <dependency>
                 <groupId>org.eclipse.jgit</groupId>
                 <artifactId>org.eclipse.jgit</artifactId>
-                <version>4.10.0.201712302008-r</version>
+                <version>5.12.0.202106070339-r</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

@@ -405,26 +405,32 @@ public class SimpleGitManager implements GitManager {
                 logger.info(prefixLog("Failed to push with status {}"), failedStatuses);
                 logger.info(prefixLog("pull and rebasing from origin/{} ..."), getImplicitRemoteBranchToDisplay(ctx));
                 PullResult pullRebaseResult = git.pull().setRebase(true).setCredentialsProvider(cred).call();
+                String pullBaseResultToString = ToStringBuilder.reflectionToString(pullRebaseResult.getRebaseResult());
                 if (!pullRebaseResult.isSuccessful()) {
-                    logger.info(prefixLog("Failed to pull rebase: ") + pullRebaseResult);
-                    throw new RuntimeException("failed to push: remote conflict. pull rebased failed:" + pullRebaseResult);
+                    logger.error(prefixLog("Failed to pull rebase: ") + pullBaseResultToString);
+                    throw new RuntimeException("failed to push with status=" + failedStatuses
+                        + "pull rebase also failed:" + pullRebaseResult);
+                    //intentionally displays org.eclipse.jgit .transport.FetchResult@27fd0b86
+                    //to avoid leaking credentials despite RuntimeException filtering
                 }
                 logger.info(prefixLog("rebased from origin/{}"), getImplicitRemoteBranchToDisplay(ctx));
-                logger.debug(prefixLog("pull details:") + ToStringBuilder.reflectionToString(pullRebaseResult));
+                logger.debug(prefixLog("pull details:") + pullBaseResultToString);
 
                 logger.info(prefixLog("re-pushing ..."));
                 pushCommand = git.push().setCredentialsProvider(cred);
-                pushResults = pushCommand.call();
+                Iterable<PushResult> secondPushResults = pushCommand.call();
                 logger.info(prefixLog("re-pushed ..."));
-                List<RemoteRefUpdate.Status> secondPushFailures = extractFailedStatuses(pushResults);
+                List<RemoteRefUpdate.Status> secondPushFailures = extractFailedStatuses(secondPushResults);
                 if (!secondPushFailures.isEmpty()) {
-                    logger.info(prefixLog("Failed to re-push with status {}"), failedStatuses);
-                    throw new RuntimeException("failed to push: remote conflict. pull rebased failed:" + pullRebaseResult);
+                    logger.error(prefixLog("Failed to re-push with status {} extracted from {}"),
+                        secondPushFailures, prettyPrint(secondPushResults));
+                    throw new RuntimeException("failed to push: remote conflict. re-push following rebase failed " +
+                        "with: secondPushFailures=" + secondPushFailures);
                 }
             } else {
-                logger.info(prefixLog("unrecoverable push failure: {} with full details: {}"), failedStatuses,
+                logger.error(prefixLog("unrecoverable push failure: {} with full details: {}"), failedStatuses,
                     prettyPrint(pushResults));
-                throw new RuntimeException("unrecoverable push failure : " + pushResults);
+                throw new RuntimeException("unrecoverable push failure : failedStatuses=" + failedStatuses);
             }
         }
 

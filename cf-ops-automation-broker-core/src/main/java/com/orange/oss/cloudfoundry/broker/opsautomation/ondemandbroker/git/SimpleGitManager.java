@@ -409,7 +409,7 @@ public class SimpleGitManager implements GitManager {
                 if (!pullRebaseResult.isSuccessful()) {
                     logger.error(prefixLog("Failed to pull rebase: ") + pullBaseResultToString);
                     throw new RuntimeException("failed to push with status=" + failedStatuses
-                        + "pull rebase also failed:" + pullRebaseResult);
+                        + ", pull rebase also failed :" + pullRebaseResult + " (see full details in logs)");
                     //intentionally displays org.eclipse.jgit .transport.FetchResult@27fd0b86
                     //to avoid leaking credentials despite RuntimeException filtering
                 }

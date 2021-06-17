@@ -899,7 +899,7 @@ public class SimpleGitManagerTest {
             processor1.commitPushRepo(ctx1, true);
             Assert.fail("expected exception");
         } catch (RuntimeException e) {
-            assertThat(e.getMessage()).contains("conflict");
+            assertThat(e.getMessage()).contains("REJECTED_NONFASTFORWARD");
         }
     }
 

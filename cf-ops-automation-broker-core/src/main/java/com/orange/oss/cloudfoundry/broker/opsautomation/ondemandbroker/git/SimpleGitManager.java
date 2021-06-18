@@ -401,7 +401,7 @@ public class SimpleGitManager implements GitManager {
         List<RemoteRefUpdate.Status> failedStatuses = extractFailedStatuses(pushResults);
 
         if (! failedStatuses.isEmpty()) {
-            if (failedStatuses.contains(RemoteRefUpdate.Status.REJECTED_NONFASTFORWARD)) {
+            if (isPushFailuresRecoverable(failedStatuses, pushResults)) {
                 logger.info(prefixLog("Failed to push with status {}"), failedStatuses);
                 logger.info(prefixLog("pull and rebasing from origin/{} ..."), getImplicitRemoteBranchToDisplay(ctx));
                 PullResult pullRebaseResult = git.pull().setRebase(true).setCredentialsProvider(cred).call();
@@ -437,6 +437,43 @@ public class SimpleGitManager implements GitManager {
         if (logger.isDebugEnabled()) {
             logger.debug(prefixLog("push details: ") + prettyPrint(pushResults));
         }
+    }
+
+    private boolean isPushFailuresRecoverable(List<RemoteRefUpdate.Status> failedStatuses,
+        Iterable<PushResult> pushResults) {
+        if (failedStatuses.contains(RemoteRefUpdate.Status.REJECTED_NONFASTFORWARD)) {
+            //a commit was recorded at the remote since we fetched remote
+            return true;
+        }
+        if (failedStatuses.contains(RemoteRefUpdate.Status.REJECTED_OTHER_REASON)) {
+            /*
+             We need to extract RemoteRefUpdate.getMessage() deep from the list of push results
+             This was observed through logs, "pretty-printed" as:
+
+             org.eclipse.jgit.transport.PushResult@661012[remoteUpdates={refs/heads/master=RemoteRefUpdate[remoteName=refs/heads/master, REJECTED_OTHER_REASON, 6ebf3085bd7765aa4e66bfd5b
+83c73659cbf939b...4929ac06033d292b37c8b87ae03a40a6cf126ea5, fastForward, srcRef=refs/heads/master, message="failed to update ref"]},advertisedRefs={refs/heads/master=Ref[refs/heads/master=6ebf3085bd7765aa
+4e66bfd5b83c73659cbf939b], refs/tags/42.0.4=Ref[refs/tags/42.0.4=73e5add38d1deeec37bd3ddbc0f9ac7160dbfb70], refs/tags/44.0.5=Ref[refs/tags/44.0.5=7ee44ea61e67b5b386adf26059774fa33f712385], refs/tags/46.0.
+0=Ref[refs/tags/46.0.0=9a657ecd1750650b182aa052d8dcd636cd07d812], refs/tags/46.7.1=Ref[refs/tags/46.7.1=a7c695deed330370319b13aa7cc02f9e4407e2c1], refs/tags/47.0.1=Ref[refs/tags/47.0.1=e01ae72fc9b656e0dc3
+708340204170c28766b3e], refs/tags/47.0.2=Ref[refs/tags/47.0.2=254df753234b8831512b370d17ca30035d62d22a], refs/tags/47.0.3=Ref[refs/tags/47.0.3=cad6ee6340928e26693e6b1b2cfcd28fd3625736], refs/tags/48.0.2=R
+ef[refs/tags/48.0.2=19b43da31db7726540794b9f3ad247c395279322], refs/tags/51.0.0=Ref[refs/tags/51.0.0=fb2a4446860fc2831f3a13bcbbd9056a2f2dbdfe], refs/tags/51.0.1=Ref[refs/tags/51.0.1=ceec3a5230dfde1051b26e
+90088f2f02ef355d95], refs/tags/51.0.2=Ref[refs/tags/51.0.2=90f9a5123a3bd86bbc04315e3b1642ec916ad4be], refs/tags/51.0.3=Ref[refs/tags/51.0.3=926c0d2237b2ee2029320b3f058f088f277967a7], refs/tags/end-bootstr
+ap=Ref[refs/tags/end-bootstrap=0130a253292d331906c4a0115b48c5e052a6861e]},uri=https://gitlab-gitlab-k8s.redacted-domain.org/paas_templates_group/paas-templates-secrets.git,updates={refs/
+remotes/origin/master=TrackingRefUpdate[refs/heads/master -> refs/remotes/origin/master (forced) 6ebf308..4929ac0]},messageBuffer=error: cannot lock ref 'refs/heads/master': is at a5a5fd1d7547d5c2d09a45a7
+da88d1175f498388 but expected 6ebf3085bd7765aa4e66bfd5b83c73659cbf939b
+
+             Since this is hard to unit test, we simply test content of the pretty print instead
+
+             */
+
+            String pushResultsToString = prettyPrint(pushResults).toString();
+            //noinspection RedundantIfStatement
+            if (pushResultsToString.contains("cannot lock ref")) {
+                //a commit is likely currently being recorded by the remote concurrently
+                //see https://github.com/orange-cloudfoundry/paas-templates/issues/1223
+                return true;
+            }
+        }
+        return false;
     }
 
     private List<RemoteRefUpdate.Status> extractFailedStatuses(Iterable<PushResult> pushResults) {

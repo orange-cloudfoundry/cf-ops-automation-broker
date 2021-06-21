@@ -1,193 +1,275 @@
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 
 public class ProcessorChainTest {
 
 	private static Logger logger=LoggerFactory.getLogger(ProcessorChainTest.class.getName());
 
-	@Test
-	public void testInvocationChain() {
-		List<BrokerProcessor> processors= new ArrayList<>();
-		processors.add(new BrokerProcessor() {
-			
+	private ProcessorChain chain;
+
+	private final ArrayList<String> invocations = new ArrayList<>();
+	@BeforeEach
+	public void setUp() {
+		List<BrokerProcessor> defaultProcessors= new ArrayList<>();
+		defaultProcessors.add(new BrokerProcessor() {
+
 			@Override
 			public void preCreate(Context ctx) {
-				logger.info("preCreate 1");
-			}
-			
-			@Override
-			public void preBind(Context ctx) {
-				logger.info("preBind 1");
+				recordInvocation("preCreate 1");
 			}
 
 			@Override
-			public void preGetLastOperation(Context ctx) { logger.info("preGetLastCreateOperation 1"); }
+			public void preBind(Context ctx) {
+				recordInvocation("preBind 1");
+			}
+
+			@Override
+			public void preGetLastOperation(Context ctx) { recordInvocation("preGetLastCreateOperation 1"); }
 
 			@Override
 			public void postCreate(Context ctx) {
-				logger.info("post Create 1");
+				recordInvocation("post Create 1");
 			}
 
 			@Override
-			public void postGetLastOperation(Context ctx) { logger.info("preGetLastCreateOperation 1"); }
+			public void postGetLastOperation(Context ctx) { recordInvocation("preGetLastCreateOperation 1"); }
 
 			@Override
 			public void postBind(Context ctx) {
-				logger.info("post Bind 1");
+				recordInvocation("post Bind 1");
 			}
 
 			@Override
 			public void cleanUp(Context ctx) {
-				logger.info("cleanUp 1");
+				recordInvocation("cleanUp 1");
 			}
 
 			@Override
 			public void preDelete(Context ctx) {
-				logger.info("pre delete 1");
-				
+				recordInvocation("pre delete 1");
+
 			}
 
 			@Override
 			public void postDelete(Context ctx) {
-				logger.info("post delete 1");
-				
+				recordInvocation("post delete 1");
+
 			}
 
 			@Override
 			public void preUnBind(Context ctx) {
-				logger.info("post unbind 1");
-				
+				recordInvocation("pre unbind 1");
+
 			}
 
 			@Override
 			public void postUnBind(Context ctx) {
-				logger.info("post unbind 1");
-				
+				recordInvocation("post unbind 1");
+
 			}
 
 			@Override
 			public void preUpdate(Context ctx) {
-				logger.info("pre update 1");
+				recordInvocation("pre update 1");
 
 			}
 
 			@Override
 			public void postUpdate(Context ctx) {
-				logger.info("post update 1");
+				recordInvocation("post update 1");
 
 			}
 
 			@Override
 			public void preGetInstance(Context ctx) {
-				logger.info("pre getinstance 1");
+				recordInvocation("pre getinstance 1");
 			}
 
 			@Override
 			public void postGetInstance(Context ctx) {
-				logger.info("post getinstance 1");
+				recordInvocation("post getinstance 1");
 			}
 		});
-		
-		processors.add(new BrokerProcessor() {
-			
+
+		defaultProcessors.add(new BrokerProcessor() {
+
 			@Override
 			public void preCreate(Context ctx) {
-				logger.info("preCreate 2");
+				recordInvocation("preCreate 2");
 			}
 
 			@Override
-			public void preGetLastOperation(Context ctx) { logger.info("preGetLastCreateOperation 2"); }
+			public void preGetLastOperation(Context ctx) { recordInvocation("preGetLastCreateOperation 2"); }
 
 			@Override
 			public void preBind(Context ctx) {
-				logger.info("preBind 2");
+				recordInvocation("preBind 2");
 			}
 
 
 			@Override
 			public void postCreate(Context ctx) {
-				logger.info("post Create 2");
+				recordInvocation("post Create 2");
 			}
 
 			@Override
-			public void postGetLastOperation(Context ctx) { logger.info("preGetLastCreateOperation 2"); }
+			public void postGetLastOperation(Context ctx) { recordInvocation("preGetLastCreateOperation 2"); }
 
 			@Override
 			public void postBind(Context ctx) {
-				logger.info("post Bind 2");
+				recordInvocation("post Bind 2");
 			}
 
 			@Override
-			public void preGetInstance(Context ctx) { logger.info("pre getinstance 2"); }
+			public void preGetInstance(Context ctx) { recordInvocation("pre getinstance 2"); }
 
 			@Override
-			public void postGetInstance(Context ctx) { logger.info("post getinstance 2"); }
+			public void postGetInstance(Context ctx) { recordInvocation("post getinstance 2"); }
 			@Override
 			public void preDelete(Context ctx) {
-				logger.info("pre delete 2");
-				
+				recordInvocation("pre delete 2");
+
 			}
 
 			@Override
 			public void postDelete(Context ctx) {
-				logger.info("post delete 2");
-				
+				recordInvocation("post delete 2");
+
 			}
 
 			@Override
 			public void preUnBind(Context ctx) {
-				logger.info("pre unbind 2");
-				
+				recordInvocation("pre unbind 2");
+
 			}
 
 			@Override
 			public void postUnBind(Context ctx) {
-				logger.info("post unbind 2");
-				
+				recordInvocation("post unbind 2");
+
 			}
 
 			@Override
 			public void preUpdate(Context ctx) {
-				logger.info("pre update 2");
+				recordInvocation("pre update 2");
 
 			}
 
 			@Override
 			public void postUpdate(Context ctx) {
-				logger.info("pre update 2");
+				recordInvocation("post update 2");
 
 			}
 
 			@Override
 			public void cleanUp(Context ctx) {
-				logger.info("cleanUp 2");
+				recordInvocation("cleanUp 2");
 			}
 
 		});
 
-		
-		DefaultBrokerSink sink=new DefaultBrokerSink();
-		ProcessorChain chain=new ProcessorChain(processors, sink);
-		Context ctx=new Context();
-		chain.create(ctx);
 
-		Context ctx1 =new Context();
-		chain.getLastOperation(ctx1);
-		chain.bind(new Context());
-		chain.unBind(new Context());
-		chain.delete(new Context());
-	
-	
-		
-		
-		
+		DefaultBrokerSink sink=new DefaultBrokerSink();
+		chain=new ProcessorChain(defaultProcessors, sink);
 	}
-	
+
+	@Test
+	public void testDefaultProcessorsOrder() {
+		chain.create(new Context());
+
+		List<String> expectedCreateInvocations = Arrays.asList(
+			"preCreate 1",
+			"preCreate 2",
+			"post Create 2",
+			"post Create 1",
+			"cleanUp 2",
+			"cleanUp 1");
+		assertThat(invocations).isEqualTo(expectedCreateInvocations);
+		invocations.clear();
+
+		chain.getLastOperation(new Context());
+		List<String> expectedLastOperationsInvocations = Arrays.asList(
+			"preGetLastCreateOperation 1",
+			"preGetLastCreateOperation 2",
+			"preGetLastCreateOperation 2",
+			"preGetLastCreateOperation 1",
+			"cleanUp 2",
+			"cleanUp 1");
+		assertThat(invocations).isEqualTo(expectedLastOperationsInvocations);
+		invocations.clear();
+
+
+		chain.bind(new Context());
+		List<String> expectedBindInvocations = Arrays.asList(
+			"preBind 1",
+			"preBind 2",
+			"post Bind 2",
+			"post Bind 1",
+			"cleanUp 2",
+			"cleanUp 1");
+		assertThat(invocations).isEqualTo(expectedBindInvocations);
+		invocations.clear();
+
+		chain.unBind(new Context());
+		List<String> expectedUnbindInvocations = Arrays.asList(
+			"pre unbind 1",
+			"pre unbind 2",
+			"post unbind 2",
+			"post unbind 1",
+			"cleanUp 2",
+			"cleanUp 1");
+		assertThat(invocations).isEqualTo(expectedUnbindInvocations);
+		invocations.clear();
+
+		chain.update(new Context());
+		List<String> expectedUpdateInvocations = Arrays.asList(
+			"pre update 1",
+			"pre update 2",
+			"post update 2",
+			"post update 1",
+			"cleanUp 2",
+			"cleanUp 1");
+		assertThat(invocations).isEqualTo(expectedUpdateInvocations);
+		invocations.clear();
+
+		chain.getInstance(new Context());
+		List<String> expectedGetInstanceInvocations = Arrays.asList(
+			"pre getinstance 1",
+			"pre getinstance 2",
+			"post getinstance 2",
+			"post getinstance 1",
+			"cleanUp 2",
+			"cleanUp 1");
+		assertThat(invocations).isEqualTo(expectedGetInstanceInvocations);
+		invocations.clear();
+
+		chain.delete(new Context());
+		List<String> expectedDeleteInvocations = Arrays.asList(
+			"pre delete 1",
+			"pre delete 2",
+			"post delete 2",
+			"post delete 1",
+			"cleanUp 2",
+			"cleanUp 1");
+		assertThat(invocations).isEqualTo(expectedDeleteInvocations);
+		invocations.clear();
+
+	}
+
+	private void recordInvocation(String processorStep) {
+		logger.info(processorStep);
+		invocations.add(processorStep);
+	}
+
 }

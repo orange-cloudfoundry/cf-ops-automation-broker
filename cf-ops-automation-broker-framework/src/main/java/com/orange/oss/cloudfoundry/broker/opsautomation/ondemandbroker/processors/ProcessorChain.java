@@ -12,11 +12,26 @@ public class ProcessorChain {
 	private static Logger logger=LoggerFactory.getLogger(ProcessorChain.class.getName());
 	
 	private List<BrokerProcessor> defaultProcessors;
+
+	private List<BrokerProcessor> deleteProcessors;
+
 	private BrokerSink sink;
-	
-	public ProcessorChain(List<BrokerProcessor> defaultProcessors, BrokerSink sink) {
+
+	/**
+	 * @param defaultProcessors the default processor to invoke for all lifecycles
+	 * @param deleteProcessors an optional list of processor for the delete lifecycle step
+	 */
+	public ProcessorChain(List<BrokerProcessor> defaultProcessors,
+		List<BrokerProcessor> deleteProcessors,
+		BrokerSink sink) {
 		this.defaultProcessors = defaultProcessors;
+		this.deleteProcessors = deleteProcessors;
 		this.sink=sink;
+	}
+
+
+	public ProcessorChain(List<BrokerProcessor> defaultProcessors, BrokerSink sink) {
+		this(defaultProcessors, null, sink);
 	}
 
 	public void create(Context ctx) {
@@ -136,24 +151,32 @@ public class ProcessorChain {
 	}
 
 	public void delete(Context ctx) {
+		List<BrokerProcessor> processorsToInvoke;
+		if (deleteProcessors != null) {
+			processorsToInvoke = deleteProcessors;
+		} else {
+			processorsToInvoke = defaultProcessors;
+		}
+		delete(ctx, processorsToInvoke);
+	}
+
+	private void delete(Context ctx, List<BrokerProcessor> processors) {
 		try {
-			for (BrokerProcessor m: defaultProcessors) {
+			for (BrokerProcessor m: processors) {
                 m.preDelete(ctx);
             }
 			sink.delete(ctx);
 
-			for (int i = defaultProcessors.size()-1; i>=0; i--) {
-                BrokerProcessor m= defaultProcessors.get(i);
+			for (int i = processors.size()-1; i>=0; i--) {
+                BrokerProcessor m= processors.get(i);
 				m.postDelete(ctx);
             }
 		} finally {
-			for (int i = defaultProcessors.size() - 1; i >= 0; i--) {
-				BrokerProcessor m = defaultProcessors.get(i);
+			for (int i = processors.size() - 1; i >= 0; i--) {
+				BrokerProcessor m = processors.get(i);
 				m.cleanUp(ctx);
 			}
 		}
 	}
-
-
 
 }

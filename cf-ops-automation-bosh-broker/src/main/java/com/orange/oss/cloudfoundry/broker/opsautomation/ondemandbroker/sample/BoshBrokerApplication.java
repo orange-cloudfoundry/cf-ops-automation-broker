@@ -35,6 +35,7 @@ import net.jodah.failsafe.RetryPolicy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -246,31 +247,72 @@ public class BoshBrokerApplication {
                 repoAliasName);
     }
 
-
+    /**
+     * Default processors are used for all OSB operations except delete
+     */
     @Bean
-    public ProcessorChain processorChain(BrokerProcessor boshProcessor, BrokerProcessor secretsGitProcessor,
-        BrokerProcessor templateGitProcessor, BrokerProcessor paasTemplateContextFilter,
-        BrokerProcessor readOnlyServiceInstanceBrokerProcessor,
+    public List<BrokerProcessor> defaultProcessors(BrokerProcessor boshProcessor,
+        BrokerProcessor secretsGitProcessor, BrokerProcessor templateGitProcessor,
+        BrokerProcessor paasTemplateContextFilter, BrokerProcessor readOnlyServiceInstanceBrokerProcessor,
         BrokerProcessor planUpdateValidatorBrokerProcessor) {
-        List<BrokerProcessor> processors = new ArrayList<>();
+        List<BrokerProcessor> defaultProcessors = new ArrayList<>();
 
         // reject service instance operations at first even before clone
-        processors.add(readOnlyServiceInstanceBrokerProcessor);
+        defaultProcessors.add(readOnlyServiceInstanceBrokerProcessor);
 
-        processors.add(planUpdateValidatorBrokerProcessor);
+        defaultProcessors.add(planUpdateValidatorBrokerProcessor);
 
-        processors.add(paasTemplateContextFilter);
-        // git push will trigger 1st for paas-templates and then 2nd for paas-secrets,
+        //selectively perform git clones depending on OSB lifecycle step
+        defaultProcessors.add(paasTemplateContextFilter);
+        // on create/update git push will trigger 1st for paas-templates and then 2nd for paas-secrets,
         // reducing occurences of fail-fast consistency check failures
         // see related https://github.com/orange-cloudfoundry/cf-ops-automation/issues/201
-        processors.add(secretsGitProcessor);
-        processors.add(templateGitProcessor);
-        processors.add(boshProcessor);
-
-        DefaultBrokerSink sink = new DefaultBrokerSink();
-        return new ProcessorChain(processors, sink);
+        defaultProcessors.add(secretsGitProcessor);  //commit push is on post-delete executed in reverse order
+        defaultProcessors.add(templateGitProcessor);
+        defaultProcessors.add(boshProcessor);
+        return defaultProcessors;
     }
 
+    /**
+     * Delete processors are especially crafted in order to control the order of git processor:
+     * delete secrets first (to avoid locking COA in its consistency check) and them templates.
+     */
+    @Bean
+    public List<BrokerProcessor> deleteProcessors(BrokerProcessor boshProcessor,
+        BrokerProcessor secretsGitProcessor,
+        BrokerProcessor templateGitProcessor, BrokerProcessor paasTemplateContextFilter,
+        BrokerProcessor readOnlyServiceInstanceBrokerProcessor) {
+        List<BrokerProcessor> deleteProcessors = new ArrayList<>();
+
+        // reject service instance operations at first even before clone
+        deleteProcessors.add(readOnlyServiceInstanceBrokerProcessor);
+
+        //selectively perform git clones depending on OSB lifecycle step
+        deleteProcessors.add(paasTemplateContextFilter);
+        // on OSB delete, remove files & git push 1st for paas-secrets repo
+        //and then 2nd for paas-templates repo,
+        // reducing occurences of fail-fast consistency check failures
+        // see related https://github.com/orange-cloudfoundry/cf-ops-automation/issues/201
+        deleteProcessors.add(templateGitProcessor); //commit push is on post-delete executed in reverse order
+        deleteProcessors.add(secretsGitProcessor);
+        deleteProcessors.add(boshProcessor);
+        return deleteProcessors;
+    }
+
+    @Bean
+    public ProcessorChain processorChain(
+        //Not clear while qualifier is indeed required, otherwise spring does not initialize delete processors
+        @Qualifier(value="defaultProcessors") List<BrokerProcessor> defaultProcessors,
+        @Qualifier(value="deleteProcessors") List<BrokerProcessor> deleteProcessors) {
+
+        DefaultBrokerSink sink = new DefaultBrokerSink();
+        return new ProcessorChain(defaultProcessors, deleteProcessors,sink);
+    }
+
+    /**
+     * Configures keys in the Context for use by SimpleGitProcessor to control on which OSB
+     * lifecycle steps to git clone paas-templates repo
+     */
     @Bean
     public BrokerProcessor paasTemplateContextFilter(PipelineProperties pipelineProperties) {
         return new DefaultBrokerProcessor() {

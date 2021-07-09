@@ -27,21 +27,29 @@ public class CoabVarsFileDto {
      * \d 	A digit: [0-9]
      * \w 	A word character: [a-zA-Z_0-9]
      */
-    public static final String WHITE_LISTED_PATTERN = "[\\w\\d _./-]*";
-    public static final String WHITE_LISTED_MESSAGE = "must only contain a-Z, 0-9, space, _, dot, slash and - chars";
+    public static final String WHITE_LISTED_PATTERN = "[\\w\\d _.-]*";
+    public static final String WHITE_LISTED_MESSAGE = "must only contain a-Z, 0-9, space, _, dot, and - chars";
 
     /**
      * Name of the maps key (and subkeys) which should be applied relaxed patterns
-     * This is designed to support K8S service catalog annotations which contain specific chars that we ignore
+     * This is designed to support JSON Serialized fields that COA models ignore
      */
-    public static final List<String> RELAXED_KEY_NAMES= asList("brokered_service_originating_identity_username", "brokered_service_originating_identity_groups");
+    public static final List<String> RELAXED_KEY_NAMES= asList(
+        "brokered_service_api_info_location", //contain forward slashes as in api.redacted-domain.org/v2/info
+        //K8S service catalog annotations which contain JSON serialized chars that we accept
+        "brokered_service_originating_identity_username",
+        "brokered_service_originating_identity_groups",
+        //CF annotations sent as Json serialized
+        "brokered_service_context_organization_annotations",
+        "brokered_service_context_space_annotations",
+        "brokered_service_context_instance_annotations");
     /**
      * \d 	A digit: [0-9]
      * \w 	A word character: [a-zA-Z_0-9]
      */
-    public static final String RELAXED_WHITE_LISTED_PATTERN = "[\\w\\d _.,/\\-:\\[\\]\"]*";
+    public static final String RELAXED_WHITE_LISTED_PATTERN = "[\\w\\d _.,/\\-:\\[\\]\"{}]*";
     public static final String RELAXED_WHITE_LISTED_MESSAGE = "must only contain a-Z, 0-9, space, _ (underscore), . (dot), , " +
-        "(comma), : (column), left and right brackets ([]), quote (\"), slash (/) and dash (-) chars";
+        "(comma), : (column), left and right brackets ([]), braces ({}=quote (\"), slash (/) and dash (-) chars";
 
 
     /**

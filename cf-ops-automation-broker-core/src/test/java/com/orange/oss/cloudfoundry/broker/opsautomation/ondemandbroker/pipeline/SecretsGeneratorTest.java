@@ -39,7 +39,7 @@ public class SecretsGeneratorTest extends StructureGeneratorImplTest{
         this.secretsGenerator = new SecretsGenerator(this.deploymentProperties.getRootDeployment(),
                                     this.deploymentProperties.getModelDeployment(),
                 this.deploymentProperties.getModelDeploymentShortAlias(),
-                this.deploymentProperties.getModelDeploymentSeparator(), new VarsFilesYmlFormatter());
+                this.deploymentProperties.getModelDeploymentSeparator(), new VarsFilesYmlFormatter(false));
     }
 
     @Test
@@ -158,7 +158,7 @@ public class SecretsGeneratorTest extends StructureGeneratorImplTest{
         secretsGenerator = new SecretsGenerator("coab-depls",
                 "cassandravarsops",
                 "m",
-                "_", new VarsFilesYmlFormatter());
+                "_", new VarsFilesYmlFormatter(false));
 
 
         //When
@@ -174,7 +174,7 @@ public class SecretsGeneratorTest extends StructureGeneratorImplTest{
     public void check_that_coa_produced_manifest_is_parsed_into_vars_dto() throws IOException {
         //Given a DeploymentProperties for cassandra with "m" prefix (e.g. mongo)
         //Given a secrets generator
-        VarsFilesYmlFormatter varsFilesYmlFormatter = new VarsFilesYmlFormatter();
+        VarsFilesYmlFormatter varsFilesYmlFormatter = new VarsFilesYmlFormatter(false);
         secretsGenerator = new SecretsGenerator("coab-depls",
                 "cassandravarsops",
                 "m",

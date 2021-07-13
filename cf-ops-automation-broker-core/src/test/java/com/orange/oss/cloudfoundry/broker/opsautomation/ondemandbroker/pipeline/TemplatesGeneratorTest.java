@@ -37,7 +37,7 @@ public class TemplatesGeneratorTest extends StructureGeneratorImplTest{
                 this.deploymentProperties.getModelDeployment(),
                 "c",
                 "_",
-                new VarsFilesYmlFormatter());
+                new VarsFilesYmlFormatter(false));
         //Init sample deployments
         this.initReferenceModelStructures();
     }
@@ -99,7 +99,7 @@ public class TemplatesGeneratorTest extends StructureGeneratorImplTest{
                 "areferencemodel",
                 "r",
                 "_",
-                new VarsFilesYmlFormatter());
+                new VarsFilesYmlFormatter(false));
 
         //When
         templatesGenerator.checkPrerequisites(tempDir.toPath());
@@ -264,7 +264,7 @@ public class TemplatesGeneratorTest extends StructureGeneratorImplTest{
                 "areferencemodel",
                 "r",
                 "_",
-                new VarsFilesYmlFormatter());
+                new VarsFilesYmlFormatter(false));
 
         //Given a minimal deployment structure
         Structure deploymentStructure = new Structure.StructureBuilder(tempDir.toPath())
@@ -320,7 +320,7 @@ public class TemplatesGeneratorTest extends StructureGeneratorImplTest{
                 modelDeployment,
                 modelDeploymentShortAlias,
                 modelDeploymentSeparator,
-                new VarsFilesYmlFormatter());
+                new VarsFilesYmlFormatter(false));
 
         //When
         templatesGenerator.checkPrerequisites(paasTemplatePath);
@@ -368,7 +368,7 @@ public class TemplatesGeneratorTest extends StructureGeneratorImplTest{
                 "01-cf-mysql-extended",
                 "t",
                 "_",
-                new VarsFilesYmlFormatter());
+                new VarsFilesYmlFormatter(false));
 
         //When
         templatesGenerator.checkPrerequisites(workDir);

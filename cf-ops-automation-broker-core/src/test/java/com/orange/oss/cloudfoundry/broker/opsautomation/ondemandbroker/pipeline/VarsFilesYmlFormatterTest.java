@@ -2,12 +2,15 @@ package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.UserFacingRuntimeException;
 import org.apache.commons.lang.RandomStringUtils;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
@@ -21,13 +24,49 @@ import static org.assertj.core.api.Fail.fail;
 
 public class VarsFilesYmlFormatterTest {
 
-    VarsFilesYmlFormatter formatter = new VarsFilesYmlFormatter();
+    VarsFilesYmlFormatter formatter;
 
     private static Logger logger = LoggerFactory.getLogger(VarsFilesYmlFormatterTest.class.getName());
 
+    @BeforeEach
+    void setUp() {
+        formatter = new VarsFilesYmlFormatter(false);
+    }
+
     @Test
-    public void handles_whitelisted_osb_cmdb_k8s_svcat_patterns() throws IOException {
+    public void handles_default_empty_osb_context_annotations_in_osb_cmdb() throws IOException {
         //cmdbJson_k8s_profile with special characters accepted
+        assertParamJsonValueAccepted("{\n" +
+            "        \"annotations\": {\n" +
+            "          \"brokered_service_client_name\": \"osb-cmdb-backend-services-org-client-0\",\n" +
+            "          \"brokered_service_context_organization_annotations\": \"{}\",\n" +
+            "          \"brokered_service_context_spaceName\": \"smoke-tests\",\n" +
+            "          \"brokered_service_context_space_annotations\": \"{}\",\n" +
+            "          \"brokered_service_context_organizationName\": \"osb-cmdb-brokered-services-org-client-0\",\n" +
+            "          \"brokered_service_context_instance_annotations\": \"{}\",\n" +
+            "          \"brokered_service_api_info_location\": \"api.redacted-domain.org/v2/info\",\n" +
+            "          \"brokered_service_context_instanceName\": \"gberche-osb-cmdb-0\"\n" +
+            "        },\n" +
+            "        \"labels\": {\n" +
+            "          \"brokered_service_instance_guid\": \"0ff910ce-d1e8-437a-a40c-0a93cc27c9d7\",\n" +
+            "          \"brokered_service_context_organization_guid\": \"c2169b61-9360-4d67-968c-575f3a10edf5\",\n" +
+            "          \"brokered_service_originating_identity_user_id\": \"0fff310e-552c-4014-9943-d7acd9875865\",\n" +
+            "          \"brokered_service_context_space_guid\": \"1a603476-a3a1-4c32-8021-d2a7b9b7c6b4\"\n" +
+            "        }\n" +
+            "      }");
+
+        //white listed key with invalid character
+        assertParamJsonValueRejected(
+            "{\n" +
+                "  \"brokered_service_originating_identity_groups\": {\n" +
+                "    \"a-malicious-sub-key-with-variable\": \"$VARIABLE\" \n" +
+                "  }\n" +
+                "}");
+    }
+
+    @Test
+    public void handles_whitelisted_osb_cmdb_patterns() throws IOException {
+        //cmdbJson_k8s_profile with special characters accepted to support JSON encoded field
         assertParamJsonValueAccepted("{\n" +
             "  \"annotations\": {\n" +
             "    \"brokered_service_originating_identity_groups\": \"[\\\"system:serviceaccounts\\\",\\\"system:serviceaccounts:catalog\\\",\\\"system:authenticated\\\"]\",\n" +
@@ -39,6 +78,23 @@ public class VarsFilesYmlFormatterTest {
             "    \"brokered_service_originating_identity_uid\": \"d624ecee-99b0-4fd1-974f-0428bd9bc503\",\n" +
             "    \"brokered_service_context_instance_name\": \"poctv-mongodb-dedicated\",\n" +
             "    \"brokered_service_context_namespace\": \"fmt-private-mkaasq1\"\n" +
+            "  }\n" +
+            "}");
+
+        //cmdbJson_cf_profile with JSON encoded annotations accepted in relaxed fields
+        assertParamJsonValueAccepted("{\n" +
+            "  \"annotations\": {\n" +
+            "    \"brokered_service_context_organization_annotations\": \"{\\\"domain.com/org-key1\\\":\\\"org-value1\\\",\\\"orange.com/overrideable-key\\\":\\\"org-value2\\\"}\",\n" +
+            "    \"brokered_service_context_space_annotations\": \"{\\\"domain.com/space-key1\\\":\\\"space-value1\\\",\\\"orange.com/overrideable-key\\\":\\\"space-value2\\\"}\",\n" +
+            "    \"brokered_service_context_instance_annotations\": \"{\\\"domain.com/instance-key1\\\":\\\"instance-value1\\\",\\\"orange.com/overrideable-key\\\":\\\"instance-value2\\\"}\"\n" +
+            "  },\n" +
+            "  \"labels\": {\n" +
+            "    \"brokered_service_context_clusterid\": \"ed99367d-2998-46c6-b700-59187141faf9\",\n" +
+            "    \"brokered_service_instance_guid\": \"3c2def14-7073-4398-a901-bc4929b765aa\",\n" +
+            "    \"brokered_service_originating_identity_uid\": \"d624ecee-99b0-4fd1-974f-0428bd9bc503\",\n" +
+            "    \"brokered_service_context_instance_name\": \"poctv-mongodb-dedicated\",\n" +
+            "    \"brokered_service_context_namespace\": \"fmt-private-mkaasq1\",\n" +
+            "    \"brokered_service_context_orange_overrideable-key\": \"instance-value2\"" +
             "  }\n" +
             "}");
 
@@ -80,10 +136,17 @@ public class VarsFilesYmlFormatterTest {
     }
 
     @Test
+    public void accepts_invalid_patterns_when_input_validation_disabled() throws IOException {
+        //given a formatter with input validation disabled
+        formatter = new VarsFilesYmlFormatter(true);
+
+        //when invalid input is received
+        //then it is accepted
+        assertParamValueAccepted("$(a_malicious_shell_command_to_inject_in_bosh_templates)");
+    }
+
+    @Test
     public void accepts_valid_patterns() throws IOException {
-        assertParamValueAccepted("a/path");
-        assertParamValueAccepted("../../etc/password");
-        assertParamValueAccepted("api.mycf.org/v2/info");
         assertParamValueAccepted("a string with spaces");
         assertParamValueAccepted("10mb");
         assertParamValueAccepted("a deployment model cassandravarsops_aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa0");
@@ -112,15 +175,24 @@ public class VarsFilesYmlFormatterTest {
     }
     @Test
     public void rejects_invalid_patterns() throws IOException {
-        assertDeploymentNameAndParamValueRejected("`a_malicious_shell_command_to_inject_in_bosh_templates`");
-        assertDeploymentNameAndParamValueRejected("``");
-        assertDeploymentNameAndParamValueRejected("$(a_malicious_shell_command_to_inject_in_bosh_templates)");
-        assertDeploymentNameAndParamValueRejected("$()");
-        assertDeploymentNameAndParamValueRejected("(("); //credhub interpolation
-        assertDeploymentNameAndParamValueRejected("(( a/string ))");
-        assertDeploymentNameAndParamValueRejected("))");
-        assertDeploymentNameAndParamValueRejected("?"); //other unknown chars
-        assertDeploymentNameAndParamValueRejected("&"); //YML references
+        assertInputRejectedFromFieldsUsedByCoabModels("`a_malicious_shell_command_to_inject_in_bosh_templates`");
+        assertInputRejectedFromFieldsUsedByCoabModels("``");
+        assertInputRejectedFromFieldsUsedByCoabModels("$(a_malicious_shell_command_to_inject_in_bosh_templates)");
+        assertInputRejectedFromFieldsUsedByCoabModels("$()");
+        assertInputRejectedFromFieldsUsedByCoabModels("(("); //credhub interpolation
+        assertInputRejectedFromFieldsUsedByCoabModels("(( a/string ))");
+        assertInputRejectedFromFieldsUsedByCoabModels("))");
+        assertInputRejectedFromFieldsUsedByCoabModels("?"); //other unknown chars
+        assertInputRejectedFromFieldsUsedByCoabModels("&"); //YML references
+        assertInputRejectedFromFieldsUsedByCoabModels("\n"); //YML new lines
+        assertInputRejectedFromFieldsUsedByCoabModels("\r"); //YML new lines
+        //<script>alert('XSS')</script>
+        assertInputRejectedFromFieldsUsedByCoabModels("<");
+        assertInputRejectedFromFieldsUsedByCoabModels("/");
+        assertInputRejectedFromFieldsUsedByCoabModels(">");
+        assertInputRejectedFromFieldsUsedByCoabModels("'");
+        assertInputRejectedFromFieldsUsedByCoabModels("(");
+        assertInputRejectedFromFieldsUsedByCoabModels(")");
         assertTooLongContentIsRejected(
             RandomStringUtils.randomAlphabetic(VarsFilesYmlFormatter.MAX_SERIALIZED_SIZE + 1));
 
@@ -178,10 +250,15 @@ public class VarsFilesYmlFormatterTest {
         }
     }
 
-    protected void assertDeploymentNameAndParamValueRejected(String paramValue) throws JsonProcessingException {
+    protected void assertInputRejectedFromFieldsUsedByCoabModels(String paramValue) throws JsonProcessingException {
         CoabVarsFileDto coabVarsFileDto = aTypicalUserProvisionningRequest();
         coabVarsFileDto.deployment_name = paramValue;
+        Map<String, Object> osbCmdbMap = new HashMap<>();
+        osbCmdbMap.put("brokered_service_instance_guid", paramValue);
+        osbCmdbMap.put("brokered_service_context_orange_app_code", paramValue);
+        coabVarsFileDto.parameters.put("x-osb-cmdb",osbCmdbMap);
         coabVarsFileDto.parameters.put("aparam", paramValue);
+        coabVarsFileDto.parameters.put("a_nested_param", Collections.singletonMap("a_key", paramValue));
         //noinspection EmptyCatchBlock
         try {
             formatter.formatAsYml(coabVarsFileDto);
@@ -189,7 +266,10 @@ public class VarsFilesYmlFormatterTest {
             fail("expected " + paramValue + "to be rejected");
         } catch (UserFacingRuntimeException e) {
             assertThat(e.getMessage()).contains("deployment_name");
+            assertThat(e.getMessage()).contains("brokered_service_instance_guid");
+            assertThat(e.getMessage()).contains("brokered_service_context_orange_app_code");
             assertThat(e.getMessage()).contains("aparam");
+            assertThat(e.getMessage()).contains("a_key");
         }
     }
 

@@ -112,24 +112,32 @@ public class BoshBrokerApplication {
 
     @Bean
     public SecretsGenerator secretsGenerator(
-            DeploymentProperties deploymentProperties) {
+        DeploymentProperties deploymentProperties,
+        VarsFilesYmlFormatter varsFilesYmlFormatter) {
         return new SecretsGenerator(
                 deploymentProperties.getRootDeployment(),
                 deploymentProperties.getModelDeployment(),
                 deploymentProperties.getModelDeploymentShortAlias(),
                 deploymentProperties.getModelDeploymentSeparator(),
-                new VarsFilesYmlFormatter()  //externalize if needed
+            varsFilesYmlFormatter
         );
     }
 
     @Bean
-    public TemplatesGenerator templatesGenerator(DeploymentProperties deploymentProperties) {
+    public VarsFilesYmlFormatter varsFilesYmlFormatter(DeploymentProperties deploymentProperties) {
+        return new VarsFilesYmlFormatter(deploymentProperties.isCoabVarsInputValidationDisabled());
+    }
+
+    @Bean
+    public TemplatesGenerator templatesGenerator(
+        DeploymentProperties deploymentProperties,
+        VarsFilesYmlFormatter varsFilesYmlFormatter) {
         return new TemplatesGenerator(
                 deploymentProperties.getRootDeployment(),
                 deploymentProperties.getModelDeployment(),
                 deploymentProperties.getModelDeploymentShortAlias(),
                 deploymentProperties.getModelDeploymentSeparator(),
-                new VarsFilesYmlFormatter() //externalize if needed
+            varsFilesYmlFormatter
         );
     }
 

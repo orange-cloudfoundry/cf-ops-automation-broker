@@ -48,6 +48,12 @@ public class DeploymentProperties {
      */
     private boolean serviceInstanceReadOnlyMode= false;
 
+    /**
+     * Emergency support for turning off input validation when it is observed to perform false positive.
+     * Once a coab release fixes the false positive, then this flag should be turned off again.
+     */
+    private boolean coabVarsInputValidationDisabled= false;
+
     public static final String DEFAULT_READ_ONLY_MESSAGE = "Maintenance mode in progress. Service instance operations " +
         "(create-service, update-service, delete-service) are not available. Service binding operations are available" +
         " (bind-service unbind-service)";
@@ -114,6 +120,14 @@ public class DeploymentProperties {
         if (serviceInstanceReadOnlyMessage != null && ! serviceInstanceReadOnlyMessage.isEmpty()) {
             this.serviceInstanceReadOnlyMessage = serviceInstanceReadOnlyMessage;
         }
+    }
+
+    public boolean isCoabVarsInputValidationDisabled() {
+        return coabVarsInputValidationDisabled;
+    }
+
+    public void setCoabVarsInputValidationDisabled(boolean coabVarsInputValidationDisabled) {
+        this.coabVarsInputValidationDisabled = coabVarsInputValidationDisabled;
     }
 
 }

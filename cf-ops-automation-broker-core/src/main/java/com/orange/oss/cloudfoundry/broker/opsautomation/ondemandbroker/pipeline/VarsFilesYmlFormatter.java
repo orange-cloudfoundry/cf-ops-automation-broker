@@ -26,12 +26,19 @@ public class VarsFilesYmlFormatter {
 
     private final Validator validator;
 
+    /**
+     * Emergency support for turning off input validation when it is observed to perform false positive.
+     * Once a coab release fixes the false positive, then this flag should be turned off again.
+     */
+    private boolean inputValidationDisabled;
+
     private Pattern relaxedWhiteListedPattern = Pattern.compile(CoabVarsFileDto.RELAXED_WHITE_LISTED_PATTERN);
 
     private Pattern whiteListedPattern = Pattern.compile(CoabVarsFileDto.WHITE_LISTED_PATTERN);
 
 
-    public VarsFilesYmlFormatter() {
+    public VarsFilesYmlFormatter(boolean inputValidationDisabled) {
+        this.inputValidationDisabled = inputValidationDisabled;
         ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
         validator = factory.getValidator();
     }
@@ -42,10 +49,21 @@ public class VarsFilesYmlFormatter {
         validate(o);
         String yml = getMapper().writeValueAsString(o);
         if (yml.length() > MAX_SERIALIZED_SIZE) {
-            throw new UserFacingRuntimeException("Unsupported too long params or context. Size reached " + yml.length() + " while max is: " + MAX_SERIALIZED_SIZE + " chars");
+            String message = "Unsupported too long params or context. Size reached " + yml
+                .length() + " while max is: " + MAX_SERIALIZED_SIZE + " chars";
+            throwUserFacingExceptionUnlessDisabled(message);
         }
         logger.debug("coab-vars.yml content: {}", yml);
         return yml;
+    }
+
+    private void throwUserFacingExceptionUnlessDisabled(String message) {
+        if (inputValidationDisabled) {
+            logger.error("Input validation is disabled as per configuration. Skipping rejecting user input with " +
+                "message: " + message);
+        } else {
+            throw new UserFacingRuntimeException(message);
+        }
     }
 
     protected CoabVarsFileDto parseFromYml(String yaml) throws IOException {
@@ -88,7 +106,7 @@ public class VarsFilesYmlFormatter {
             validateParamsMapEntry(sb, key, entry.getValue(), whiteListedPattern, whiteListedMessage);
         }
         if (sb.length() >0) {
-            throw new UserFacingRuntimeException("Unsupported characters in input: " + sb.toString());
+            throwUserFacingExceptionUnlessDisabled("Unsupported characters in input: " + sb.toString());
         }
     }
 

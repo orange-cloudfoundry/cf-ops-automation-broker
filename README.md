@@ -65,6 +65,12 @@ This is designed to support undeletes by operators until they explicitly approve
 
 Some brokers with highly sensitive data (e.g. implementing data erasure) should prefer to not opt-in for this flag, as this could increase risk of data recovery after the service deprovision phase. 
 
+### Disable input validation as a transient workaround
+
+Coab strives to perform strict fail-fast input validation to prevent security-related injections in paas-templates.
+
+When the input validation is too restrictive and blocks legitimate use-case, it is possible to transiently disable input validation through setting the `deployment.coabVarsInputValidationDisabled` property to `true` (default is `false`)
+
 ### Troubleshooting COAB
 
 #### Spring boot debug mode

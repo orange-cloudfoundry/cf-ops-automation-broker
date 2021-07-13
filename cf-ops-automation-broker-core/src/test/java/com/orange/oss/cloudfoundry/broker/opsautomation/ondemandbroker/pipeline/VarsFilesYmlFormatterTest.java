@@ -10,6 +10,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.UserFacingRuntimeException;
 import org.apache.commons.lang.RandomStringUtils;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
@@ -23,9 +24,14 @@ import static org.assertj.core.api.Fail.fail;
 
 public class VarsFilesYmlFormatterTest {
 
-    VarsFilesYmlFormatter formatter = new VarsFilesYmlFormatter();
+    VarsFilesYmlFormatter formatter;
 
     private static Logger logger = LoggerFactory.getLogger(VarsFilesYmlFormatterTest.class.getName());
+
+    @BeforeEach
+    void setUp() {
+        formatter = new VarsFilesYmlFormatter(false);
+    }
 
     @Test
     public void handles_default_empty_osb_context_annotations_in_osb_cmdb() throws IOException {
@@ -127,6 +133,16 @@ public class VarsFilesYmlFormatterTest {
         coabVarsFileDtoWithPreviousValueWithNoPlan.previous_values.plan_id=null;
         coabVarsFileDtoWithPreviousValueWithNoPlan.previous_values.maintenanceInfo=OsbBuilderHelper.anInitialMaintenanceInfo();
         assertDtoSerializesAndDeserializesWithoutError(coabVarsFileDtoWithPreviousValueWithNoPlan);
+    }
+
+    @Test
+    public void accepts_invalid_patterns_when_input_validation_disabled() throws IOException {
+        //given a formatter with input validation disabled
+        formatter = new VarsFilesYmlFormatter(true);
+
+        //when invalid input is received
+        //then it is accepted
+        assertParamValueAccepted("$(a_malicious_shell_command_to_inject_in_bosh_templates)");
     }
 
     @Test

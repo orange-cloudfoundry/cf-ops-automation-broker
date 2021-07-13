@@ -13,7 +13,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class BoshDeploymentManifestDTOTest {
 
-	VarsFilesYmlFormatter formatter = new VarsFilesYmlFormatter();
+	VarsFilesYmlFormatter formatter = new VarsFilesYmlFormatter(false);
 
 	@Test
 	void parsesBoshManifestWithCompletionTracker() throws IOException, URISyntaxException {
@@ -34,7 +34,7 @@ class BoshDeploymentManifestDTOTest {
 		//Given a bosh manifest is ready (in src/test/resources)
 
 		//When parsing it
-		VarsFilesYmlFormatter formatter = new VarsFilesYmlFormatter();
+		VarsFilesYmlFormatter formatter = new VarsFilesYmlFormatter(false);
 		Path pathToBoshManifestFile = getResourcePath("/coab-bosh-manifests/manifest-without-completion-marker.yml");
 		CoabVarsFileDto coabVarsFileDto = formatter.parseFromBoshManifestYml(pathToBoshManifestFile);
 

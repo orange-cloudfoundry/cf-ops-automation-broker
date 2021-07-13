@@ -189,6 +189,10 @@ public class VarsFilesYmlFormatterTest {
         //<script>alert('XSS')</script>
         assertInputRejectedFromFieldsUsedByCoabModels("<");
         assertInputRejectedFromFieldsUsedByCoabModels("/");
+        assertInputRejectedFromFieldsUsedByCoabModels("a/path");
+        assertInputRejectedFromFieldsUsedByCoabModels("../../etc/password");
+        assertInputRejectedFromFieldsUsedByCoabModels("api.mycf.org/v2/info"); //this is now in json encoded fields
+        // not used by coab
         assertInputRejectedFromFieldsUsedByCoabModels(">");
         assertInputRejectedFromFieldsUsedByCoabModels("'");
         assertInputRejectedFromFieldsUsedByCoabModels("(");

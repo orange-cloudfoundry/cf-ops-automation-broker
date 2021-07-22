@@ -144,12 +144,15 @@ public class SimpleGitManager implements GitManager {
             fetchCommand.call();
             logger.info(prefixLog("resetting from " + resetRef));
             resetCommand.call();
+            //Clean the working dir from unstaged files (e.g. input validation fails
+            //OSB request before reaching GitProcessor
+            Set<String> cleanedPath = git.clean().call();
+            logger.info(prefixLog("cleaned working dir paths: " + cleanedPath));
         } catch (Exception e) {
             logger.error(prefixLog("caught ") + e + " while fetching & resetting branch: " + remoteBranch, e);
             throw new RuntimeException(e);
         }
-
-    }
+	}
 
     String getRepoWorkDirPrefix(String repoAliasName) {
         return repoAliasName.replaceAll("[^a-zA-Z0-9]", "-") + "clone-";

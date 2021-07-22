@@ -413,6 +413,32 @@ public class SimpleGitManagerTest {
     }
 
     @Test
+    public void supports_pooling_with_git_fetch_adds_reset_cleaning_unstaged_files() throws Exception {
+        //given an existing repo
+        String repoName = "paas-template.git";
+        gitServer.initRepo(repoName, this::initPaasTemplate);
+        gitManager = new SimpleGitManager("gituser", "gitsecret", GIT_BASE_URL + repoName, "committerName", "committer@address.org", null);
+        ctx.contextKeys.put(GitProcessorContext.checkOutRemoteBranch.toString(), "develop");
+
+        //and asking to clone it
+        gitManager.cloneRepo(ctx);
+        //and some files get added to the working dir but fail to be committed and pushed
+        addAFile(ctx, "hello content", "an-unstaged-file.txt", "");
+
+
+        //and the repo is asked to be recycled
+        gitManager.fetchRemoteAndResetCurrentBranch(ctx);
+
+        //then the working dir files get removed
+        Path workDir = getWorkDir(ctx, "");
+        File unstagedFile = workDir.resolve("an-unstaged-file.txt").toFile();
+        assertThat(unstagedFile).doesNotExist();
+
+        //Note: ignore debug JGit traces, apparent side effect of git repo test setup
+        //org.eclipse.jgit.lib.Repository - close() called when useCnt is already zero for Repository
+    }
+
+    @Test
     public void supports_pooling_with_git_fetch_adds_reset_and_create_new_branch() throws Exception {
         //given an existing repo
         String repoName = "paas-template.git";

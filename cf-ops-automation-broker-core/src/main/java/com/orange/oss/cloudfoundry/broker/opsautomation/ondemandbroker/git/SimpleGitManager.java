@@ -146,6 +146,7 @@ public class SimpleGitManager implements GitManager {
             resetCommand.call();
             //Clean the working dir from unstaged files (e.g. input validation fails
             //OSB request before reaching GitProcessor
+            logger.info(prefixLog("cleaning working dir..."));
             Set<String> cleanedPath = git.clean().call();
             logger.info(prefixLog("cleaned working dir paths: " + cleanedPath));
         } catch (Exception e) {

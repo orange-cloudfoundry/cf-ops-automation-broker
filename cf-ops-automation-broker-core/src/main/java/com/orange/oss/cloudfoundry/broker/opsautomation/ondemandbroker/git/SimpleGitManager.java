@@ -155,7 +155,7 @@ public class SimpleGitManager implements GitManager {
         }
 	}
 
-    String getRepoWorkDirPrefix(String repoAliasName) {
+	String getRepoWorkDirPrefix(String repoAliasName) {
         return repoAliasName.replaceAll("[^a-zA-Z0-9]", "-") + "clone-";
     }
 
@@ -486,17 +486,28 @@ da88d1175f498388 but expected 6ebf3085bd7765aa4e66bfd5b83c73659cbf939b
                 .flatMap(Collection::stream) //reduces the Iterable
                 .map(RemoteRefUpdate::getStatus)
                 .distinct()
-                .filter(status -> !RemoteRefUpdate.Status.OK.equals(status))
+                .filter(SimpleGitManager::isPushStatusAFailure)
                 .collect(Collectors.toList());
     }
 
-    private List<RemoteRefUpdate.Status> filterOutUptoDateStatus(List<RemoteRefUpdate.Status> statusList) {
-        return statusList.stream()
-                .filter(status -> !RemoteRefUpdate.Status.UP_TO_DATE.equals(status))
-                .collect(Collectors.toList());
-    }
+	private static boolean isPushStatusAFailure(RemoteRefUpdate.Status status) {
+		boolean isASuccess;
+    	switch (status) {
+    		case OK:
+			case UP_TO_DATE:
+				//when 1st git push fails with a timeout, then git push retry may end up with up-to-date status
+				//in this case, we consider it as a success
+				isASuccess = true;
+				//We don't have clear scenarios where an initial git push with an up-to-date push status should be
+                //reported as failure.
+				break;
+			default:
+				isASuccess = false;
+		}
+		return ! isASuccess;
+	}
 
-    private StringBuilder prettyPrint(Iterable<PushResult> results) {
+	private StringBuilder prettyPrint(Iterable<PushResult> results) {
         StringBuilder sb = new StringBuilder();
         for (Object result : results) {
             sb.append(ToStringBuilder.reflectionToString(result));

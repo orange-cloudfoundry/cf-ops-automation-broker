@@ -47,9 +47,10 @@ public class CoabVarsFileDto {
      * \d 	A digit: [0-9]
      * \w 	A word character: [a-zA-Z_0-9]
      */
-    public static final String RELAXED_WHITE_LISTED_PATTERN = "[\\w\\d _.,/\\-:\\[\\]\"{}]*";
+    public static final String RELAXED_WHITE_LISTED_PATTERN = "[\\w\\d _.,/\\-:\\[\\]\"{}=]*";
     public static final String RELAXED_WHITE_LISTED_MESSAGE = "must only contain a-Z, 0-9, space, _ (underscore), . (dot), , " +
-        "(comma), : (column), left and right brackets ([]), braces ({}=quote (\"), slash (/) and dash (-) chars";
+        "(comma), : (column), left and right brackets ([]), braces ({}), equal (=), quote (\"), slash (/) and dash " +
+        "(-) chars";
 
 
     /**

@@ -98,6 +98,14 @@ public class VarsFilesYmlFormatterTest {
             "  }\n" +
             "}");
 
+        //osb-cmdb v51 java.util.Map serialization format for Json Maps
+        //accepted/in relaxed fields
+        assertParamJsonValueAccepted("{\n" +
+            "  \"annotations\": {\n" +
+            "    \"brokered_service_context_organization_annotations\": \"{orange.com/orangecarto=26582}\",\n" +
+            "  }\n" +
+            "}");
+
         //white listed key with invalid character
         assertParamJsonValueRejected(
             "{\n" +

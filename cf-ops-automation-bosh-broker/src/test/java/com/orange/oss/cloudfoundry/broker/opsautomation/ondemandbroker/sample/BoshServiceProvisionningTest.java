@@ -43,7 +43,6 @@ import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.SecretsGenerator;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.tools.Copy;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.Context;
-import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.terraform.TerraformModuleHelper;
 import feign.FeignException;
 import io.restassured.RestAssured;
 import org.apache.commons.io.IOUtils;
@@ -701,14 +700,6 @@ public class BoshServiceProvisionningTest {
 			.hasMessageContaining(DeploymentProperties.DEFAULT_READ_ONLY_MESSAGE);
     }
 
-
-
-    public static File getFileFromClasspath(String tfStateFileInClasspath) {
-        String path = TerraformModuleHelper.class.getResource(tfStateFileInClasspath).getFile();
-        File tfStateFile = new File(path);
-        assertThat(tfStateFile).exists();
-        return tfStateFile;
-    }
 
     private CreateServiceInstanceRequest aCreateServiceInstanceRequest() {
         return CreateServiceInstanceRequest.builder()

@@ -6,12 +6,7 @@ On demand dedicated services through COA concourse pipeline engine
 
 ## Overview
 
-COAB is a generic service broker which enables operators to provide on-demand dedicated services from available building blocks:
-* terraform modules provisionning
-   * [cloudfoundry resources](https://github.com/mevansam/terraform-provider-cf), such as cloudfoundry applications
-   * [K8S resources](https://www.terraform.io/docs/providers/kubernetes/), e.g. through [K8S charts](https://github.com/mcuadros/terraform-provider-helm)
-   * Saas resources such as [cloudflare](https://www.terraform.io/docs/providers/cloudflare/)
-* existing bosh releases with service brokers offering shared service plans (e.g [cassandra-cf-service-boshrelease](https://github.com/orange-cloudfoundry/cassandra-cf-service-boshrelease/))
+COAB is a generic service broker which enables operators to provide on-demand dedicated services from existing bosh releases with service brokers offering shared service plans (e.g [cassandra-cf-service-boshrelease](https://github.com/orange-cloudfoundry/cassandra-cf-service-boshrelease/))
 
 COAB leverages concourse-based pipelines to deploy and operate the dedicated resources, managed by the [cf-ops-automation (COA)](https://github.com/orange-cloudfoundry/cf-ops-automation) collaboration framework.
 
@@ -55,7 +50,7 @@ Use `spring.cloud.openservicebroker.catalog` environment variable to set catalog
 
 ### Read-only mode
 
-When the service instance read-only mode is configured (see [DeploymentProperties.java](src/main/java/com/orange/oss/cloudfoundry/broker/opsautomation/ondemandbroker/pipeline/DeploymentProperties.java)), then service instance operations (create/update/delete) are rejected, while service binding operations (create/delete) are still accepted. This enables to perform maintenance on the underlying COA/git branches infrastructure while not risking corrupted COA inventory and not imposing full control plan downtime to coab users. 
+When the service instance read-only mode is configured (see [DeploymentProperties.java](cf-ops-automation-broker-core/src/main/java/com/orange/oss/cloudfoundry/broker/opsautomation/ondemandbroker/pipeline/DeploymentProperties.java)), then service instance operations (create/update/delete) are rejected, while service binding operations (create/delete) are still accepted. This enables to perform maintenance on the underlying COA/git branches infrastructure while not risking corrupted COA inventory and not imposing full control plan downtime to coab users. 
 
 ### skipDeProvision opt-in
 

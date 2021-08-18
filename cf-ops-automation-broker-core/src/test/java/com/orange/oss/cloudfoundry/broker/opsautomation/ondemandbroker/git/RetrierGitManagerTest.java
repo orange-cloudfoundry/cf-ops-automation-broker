@@ -40,7 +40,7 @@ public class RetrierGitManagerTest {
 
         //Given 2 network problems when trying to clone
         TransportException gitException = new TransportException("https://elpaaso-gitlab.mycompany.com/paas-templates.git: 502 Bad Gateway");
-        IllegalArgumentException wrappedException = new IllegalArgumentException(gitException);
+        RuntimeException wrappedException = new RuntimeException(gitException);
         //Inject delay, see https://stackoverflow.com/questions/12813881/can-i-delay-a-stubbed-method-response-with-mockito
         doAnswer( new AnswersWithDelay( 3*1000,  new ThrowsException(wrappedException))). //1st attempt consumming max retry time budget
                 doNothing(). //2nd attempt that should not happen
@@ -52,7 +52,7 @@ public class RetrierGitManagerTest {
             retrier.cloneRepo(new Context());
             //then it rethrows the exception
             Assertions.fail("expected max attempts reached to rethrow last exception, as max duration exceeded");
-        } catch (IllegalArgumentException e) {
+        } catch (RuntimeException e) {
             verify(gitManager, times(1)).cloneRepo(any());
             //success
         }
@@ -67,7 +67,7 @@ public class RetrierGitManagerTest {
 
         //Given 2 network problems when trying to clone
         TransportException gitException = new TransportException("https://elpaaso-gitlab.mycompany.com/paas-templates.git: 502 Bad Gateway");
-        IllegalArgumentException wrappedException = new IllegalArgumentException(gitException);
+        RuntimeException wrappedException = new RuntimeException(gitException);
         doThrow(wrappedException). //1st attempt
                 doThrow(wrappedException). //2nd attempt
                 doNothing().           //3rd attempt
@@ -92,7 +92,7 @@ public class RetrierGitManagerTest {
             retrier.cloneRepo(new Context());
             //then it rethrows the exception
             Assertions.fail("expected max attempts reached to rethrow last exception");
-        } catch (IllegalArgumentException e) {
+        } catch (RuntimeException e) {
             verify(gitManager, times(6)).cloneRepo(any());
             //success
         }
@@ -107,7 +107,7 @@ public class RetrierGitManagerTest {
 
         //Given 2 network problems when trying to clone
         Exception nonRecoverableException = new org.eclipse.jgit.api.errors.RefNotFoundException("Ref origin/feature-mongodb-xlarge-plan can not be resolved");
-        IllegalArgumentException wrappedException = new IllegalArgumentException(nonRecoverableException);
+        RuntimeException wrappedException = new RuntimeException(nonRecoverableException);
         doThrow(wrappedException). //1st attempt
                 doNothing(). //2nd attempt
                 doNothing().           //3rd attempt
@@ -118,7 +118,7 @@ public class RetrierGitManagerTest {
             retrier.cloneRepo(new Context());
             //then it rethrows the exception
             Assertions.fail("expected non recoverable exception to not trigger retry");
-        } catch (IllegalArgumentException e) {
+        } catch (RuntimeException e) {
             verify(gitManager, times(1)).cloneRepo(any());
             //success
         }
@@ -156,7 +156,7 @@ public class RetrierGitManagerTest {
 
         //Given 2 network problems when trying to clone
         TransportException gitException = new TransportException("https://elpaaso-gitlab.mycompany.com/paas-templates.git: 502 Bad Gateway");
-        IllegalArgumentException wrappedException = new IllegalArgumentException(gitException);
+        RuntimeException wrappedException = new RuntimeException(gitException);
         doThrow(wrappedException). //1st attempt
                 doThrow(wrappedException). //2nd attempt
                 doNothing().           //3rd attempt
@@ -181,7 +181,7 @@ public class RetrierGitManagerTest {
             retrier.fetchRemoteAndResetCurrentBranch(new Context());
             //then it rethrows the exception
             Assertions.fail("expected max attempts reached to rethrow last exception");
-        } catch (IllegalArgumentException e) {
+        } catch (RuntimeException e) {
             verify(gitManager, times(6)).fetchRemoteAndResetCurrentBranch(any());
             //success
         }
@@ -202,7 +202,7 @@ public class RetrierGitManagerTest {
 
         //Given 2 network problems when trying to push
         TransportException gitException = new TransportException("https://elpaaso-gitlab.mycompany.com/paas-templates.git: 502 Bad Gateway");
-        IllegalArgumentException wrappedException = new IllegalArgumentException(gitException);
+        RuntimeException wrappedException = new RuntimeException(gitException);
         doThrow(wrappedException). //1st attempt
                 doThrow(wrappedException). //2nd attempt
                 doNothing().           //3rd attempt
@@ -227,7 +227,7 @@ public class RetrierGitManagerTest {
             retrier.commitPushRepo(new Context(), true);
             //then it rethrows the exception
             Assertions.fail("expected max attempts reached to rethrow last exception");
-        } catch (IllegalArgumentException e) {
+        } catch (RuntimeException e) {
             //success
             verify(gitManager, times(6)).commitPushRepo(any(Context.class), eq(false));
         }

@@ -39,7 +39,7 @@
         <!-- Downgrade to supports copying symlinks during unit tests, see https://issues.apache.org/jira/browse/MRESOURCES-269
         and https://github.com/orange-cloudfoundry/cf-ops-automation-broker/issues/358
         -->
-        <maven-resources-plugin.version>3.1.0</maven-resources-plugin.version>
+        <maven-resources-plugin.version>3.2.0</maven-resources-plugin.version>
     </properties>
 
     <modules>
@@ -146,7 +146,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-release-plugin</artifactId>
-                <version>2.5.3</version>
+                <version>3.0.0-M4</version>
                 <configuration>
                     <tagNameFormat>v@{project.version}</tagNameFormat>
                 </configuration>

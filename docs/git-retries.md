@@ -1,5 +1,18 @@
+18/08/2021:
 
+Design for https://github.com/orange-cloudfoundry/cf-ops-automation-broker/issues/426
 
+Extend retries to git push REJECTED_NONFASTFORWARD failures and other recoverable git errors:
+* [ ] Move logic of diagnostic of recoverable git errors to SimpleGitManager
+  * [ ] ~~Through a single RecoverableGitException~~ 
+    * [ ] ~~Introduce a new RecoverableGitException (RuntimeException) thrown by SimpleGitManager for coverable cases~~
+    * [ ] ~~Configure RetrierGitManager to only retry on RecoverableGitException~~
+  * [ ] By having SimpleGitManager provide the RetryPolicy and lambdas passed to abortOn, abortWhen, abortIf
+  * [ ] Add a `prepareBeforePushRetry()` step to SimpleGitManager which performs the `git pull --rebase`
+     * [ ] invoke it on the onFailedAttempt(ExecutionAttemptedEvent) with the resulting `Throwable failure`  
+* [ ] Tune default RetryProperties to avoid running into the CF CC httpclient 60s default timeout 
+
+--------------------------
 Retry logic for unavailable gitlab during integration:
 - for clone, retry the whole logic if part of the clone fails
 - for push commit, need to refine the logic to be idempotent and robust to intermediate failures:

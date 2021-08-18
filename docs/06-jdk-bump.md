@@ -17,6 +17,7 @@
      * [x] invalidate ide caches 
      * [x] bump maven modules
      * [ ] recreate project from scratch in intellij
+     * Not much more from https://stackoverflow.com/questions/54137286/error-java-invalid-target-release-11-intellij-idea
      
 
 ```
@@ -38,7 +39,6 @@ Executing post-compile tasks...
 Synchronizing output directories...
 18/08/2021 13:40 - Build completed with 1 error and 0 warnings in 46 sec, 334 ms 
 ```  
-   * Not much more from https://stackoverflow.com/questions/54137286/error-java-invalid-target-release-11-intellij-idea 
 
 * [x] Bump circle ci container
 * [ ] fix failed tests
@@ -84,4 +84,5 @@ but context failed to start:
  	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
  	at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
 ```
-       
+   * [ ] Try running debugger as suggested in https://github.com/spring-projects/spring-boot/issues/8540#issuecomment-285409843
+   * [ ] Try https://dzone.com/articles/migrating-springboot-applications-to-latest-java-v

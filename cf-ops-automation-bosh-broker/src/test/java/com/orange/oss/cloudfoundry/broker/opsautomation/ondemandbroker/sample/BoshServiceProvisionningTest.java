@@ -95,7 +95,8 @@ import static org.springframework.http.HttpStatus.CREATED;
 /**
  * Will detect all components present in classpath, including BoshBrokerApplication
  */
-@SpringBootTest(webEnvironment = RANDOM_PORT, classes = {BoshBrokerApplication.class, WireMockTestConfiguration.class})
+@SpringBootTest(webEnvironment = RANDOM_PORT, classes =
+    {HermeticGitServerTestConfiguration.class, BoshBrokerApplication.class, WireMockTestConfiguration.class})
 public class BoshServiceProvisionningTest {
 
 
@@ -141,7 +142,8 @@ public class BoshServiceProvisionningTest {
     private static final String SERVICE_BINDING_INSTANCE_ID = "222";
     @LocalServerPort
     int port;
-    private GitServer gitServer;
+    @Autowired
+    GitServer gitServer;
 
     @Autowired
     OsbProxyImpl osbProxy;
@@ -234,16 +236,7 @@ public class BoshServiceProvisionningTest {
     }
 
 
-    @BeforeEach
-    public void startGitServer() throws IOException {
-        gitServer = new GitServer();
-
-        gitServer.startEphemeralReposServer(NO_OP_INITIALIZER);
-        gitServer.initRepo("paas-template.git", this::initPaasTemplate);
-        gitServer.initRepo("paas-secrets.git", this::initPaasSecret);
-    }
-
-    public void initPaasTemplate(Git git) {
+    public static void initPaasTemplate(Git git, DeploymentProperties deploymentProperties) {
         File gitWorkDir = git.getRepository().getDirectory().getParentFile();
         try {
             git.commit().setMessage("Initial empty repo setup").call();
@@ -294,7 +287,7 @@ public class BoshServiceProvisionningTest {
         }
     }
 
-    public void initPaasSecret(Git git) {
+    public static void initPaasSecret(Git git, DeploymentProperties deploymentProperties) {
         File gitWorkDir = git.getRepository().getDirectory().getParentFile();
         try {
             git.commit().setMessage("Initial empty repo setup").call();

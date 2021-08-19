@@ -1,5 +1,7 @@
 Support for https://github.com/orange-cloudfoundry/cf-ops-automation-broker/issues/421
 
+## Overview
+
 * [x] double read apache pooling doc related to min idle to understand at what time the min idle pool is refilled when consumming one: would it be synchronously at 1st take() request ? No it will be async in the idle eviction thread
    * See https://github.com/apache/commons-pool/blob/48c289d95c2374ee11e3276a8bcb93b7f99015be/src/main/java/org/apache/commons/pool2/impl/GenericKeyedObjectPool.java#L1130-L1146
      > getMinIdlePerKey():
@@ -46,6 +48,36 @@ Support for https://github.com/orange-cloudfoundry/cf-ops-automation-broker/issu
 * [ ] Update/fix tests which check that there is no git clone leaks
    *    
 * [ ] Update documentation
+
+## Details
+
+### eager pooling at start up breaks BoshServiceProvisionningTest as git server not yet started
+
+BoshServiceProvisionningTest uses SpringBootTest but prereq git server is started in   `@BeforeEach startGitServer()` and `@AfterEach stopGitServer()`
+
+GitServer initialization relies on DeploymentProperties deploymentProperties to be available. This is currently loaded/injected in the SpringContext
+
+Options:
+* turn off eager pooling in BoshServiceProvisionningTest
+* move to bean initializer
+* convert the git initialization/cleanup as spring initializer/deinitializers/configuration
+   * https://stackoverflow.com/questions/63712543/beforeall-junit-spring-boot-test-alternative-that-runs-when-application-context
+   * As a distinct @Configuration still runs too late, after failure of the Bean instanciation
+* split git initialization in multiple steps. Pb: beforeClass implies static method but configuration of git content depends on spring-loaded properties file
+   * @BeforeAll: startGitServer & configure git content
+   * @AfterAll: stopGitServer & clear git content
+
+org.junit.platform.commons.JUnitException: @BeforeAll method 'public void com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.sample.BoshServiceProvisionningTest.startGitServer() throws java.io.IOException' must be static unless the test class is annotated with @TestInstance(Lifecycle.PER_CLASS).
+
+```
+Factory method 'poolingSecretsGitManager' threw exception; nested exception is java.lang.RuntimeException: java.lang.IllegalArgumentException: org.eclipse.jgit.api.errors.TransportException: git://127.0.0.1:9418/paas-secrets.git: Connection refused (Connection refused)
+Caused by: java.lang.RuntimeException: java.lang.IllegalArgumentException: org.eclipse.jgit.api.errors.TransportException: git://127.0.0.1:9418/paas-secrets.git: Connection refused (Connection refused)
+Caused by: java.lang.IllegalArgumentException: org.eclipse.jgit.api.errors.TransportException: git://127.0.0.1:9418/paas-secrets.git: Connection refused (Connection refused)
+Caused by: org.eclipse.jgit.api.errors.TransportException: git://127.0.0.1:9418/paas-secrets.git: Connection refused (Connection refused)
+Caused by: org.eclipse.jgit.errors.TransportException: git://127.0.0.1:9418/paas-secrets.git: Connection refused (Connection refused) 
+```
+
+### classpath conflicts apache commons pool
 
 classpath conflict on commons-pool with spring-boot
 `<commons-pool2.version>2.9.0</commons-pool2.version>`

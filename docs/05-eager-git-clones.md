@@ -1,0 +1,47 @@
+Support for https://github.com/orange-cloudfoundry/cf-ops-automation-broker/issues/421
+
+* [x] double read apache pooling doc related to min idle to understand at what time the min idle pool is refilled when consumming one: would it be synchronously at 1st take() request ? No it will be async in the idle eviction thread
+   * See https://github.com/apache/commons-pool/blob/48c289d95c2374ee11e3276a8bcb93b7f99015be/src/main/java/org/apache/commons/pool2/impl/GenericKeyedObjectPool.java#L1130-L1146
+     > getMinIdlePerKey():
+     > Gets the target for the minimum number of idle objects to maintain in
+     > each of the keyed sub-pools. This setting only has an effect if it is
+     > positive and {@link #getTimeBetweenEvictionRunsMillis()} is greater than
+     > zero. If this is the case, an attempt is made to ensure that each
+     > sub-pool has the required minimum number of instances during idle object
+     > eviction runs.
+   * [x] refine test to assert this behavior 
+      * [x] synchronous behavior
+      * [ ] async behavior sleeping for eviction thread to run
+* [x] Configure [GenericKeyedObjectPool](https://github.com/apache/commons-pool/blob/48c289d95c2374ee11e3276a8bcb93b7f99015be/src/main/java/org/apache/commons/pool2/impl/GenericKeyedObjectPool.java#L89) with non zero configureable `MinIdlePerKey` property
+* [x] Initialize keys representing paas-templates and paas-secret Context keys in [preparePool](https://github.com/apache/commons-pool/blob/48c289d95c2374ee11e3276a8bcb93b7f99015be/src/main/java/org/apache/commons/pool2/impl/GenericKeyedObjectPool.java#L1461-L1475)
+    * [x] Possibly extract https://github.com/orange-cloudfoundry/cf-ops-automation-broker/blob/97b73ef7703bdfd941d771f73edb54ed113489ef/cf-ops-automation-bosh-broker/src/main/java/com/orange/oss/cloudfoundry/broker/opsautomation/ondemandbroker/sample/BoshBrokerApplication.java#L349-L352
+    * [ ] move out of constructor in spring bean initializer method ?
+* [ ] Define the right default for the `getTimeBetweenEvictionRunsMillis()` for our use cases
+  * Our goal is that incoming request 95 percentile don't perform sync clones, but rather reuse an idle pooled clone
+  * Time to fetch a clone time might be up to 1 min elapsed
+  * Concurrent OSB call rate
+     * Smoke tests:
+       * batch delete of old service instances: sync deprovisioning + async delete polling.
+       * single sync provisionning + async polling
+     * End users: single sync provisionning + async polling
+  * Time between successive OSB calls:
+     * CF CC broker polling period: 60s
+        * Per platform default https://github.com/cloudfoundry/capi-release/blob/863667d3745b45ec04c14f6b8a80bb0eec5e2ec2/jobs/cloud_controller_worker/spec#L472-L478
+          >  cc.broker_client_default_async_poll_interval_seconds:
+          >    default: 60
+          >    description: "Specifies interval on which the CC will poll a service broker for asynchronous actions"
+          >
+          >  cc.broker_client_max_async_poll_duration_minutes:
+          >    default: 10080
+          >    description: "The max duration the CC will fetch service instance state from a service broker. Default is 1 week"       
+        * Configureable per service plan max period: https://github.com/openservicebrokerapi/servicebroker/blob/master/spec.md#polling-interval-and-duration
+  * impact if period too small (0,5s) and min-idle=1 
+      * (an incoming osb call would systematically trigger a single async git clone to gitlab (like today without eager pooling))
+      * systematic concurrency between OSB triggered git operations (push/fetch) and async pool refill (clone + reset)
+      * would evict too many clones too early (max default is 8)
+  * impact if period is too large (5 mins): idle pool exhausted and OSB calls get timeout
+  * Decision to set to 1s
+* [x] Support configuration of pooling. 
+   * Per repo: templates/secrets, in a distinct PoolingProperties class to avoid too large GitProperties class 
+* [ ] Update/fix tests which check that there is no git clone leaks
+* [ ] Update documentation

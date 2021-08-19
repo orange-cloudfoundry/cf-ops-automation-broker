@@ -30,6 +30,9 @@ public class PooledGitManager implements GitManager {
     private final GenericKeyedObjectPool<GitPoolKey, Context> pool;
     private final String repoAliasName;
     private final GitManager gitManager;
+
+    private Context defaultEagerPoolingContext;
+
     private static final Logger logger = LoggerFactory.getLogger(PooledGitManager.class.getName());
 
 
@@ -38,9 +41,13 @@ public class PooledGitManager implements GitManager {
 		PoolingProperties poolingProperties) {
         this.repoAliasName = repoAliasName;
         this.gitManager = gitManager;
+        this.defaultEagerPoolingContext = defaultEagerPoolingContext;
         GenericKeyedObjectPoolConfig<Context> poolConfig = constructPoolConfig(repoAliasName, poolingProperties);
         pool = new GenericKeyedObjectPool<>(factory, poolConfig);
         pool.setTimeBetweenEvictionRunsMillis(poolingProperties.getSecondsBetweenEvictionRuns());
+    }
+
+    public void init() {
         try {
             pool.preparePool(makePoolKey(defaultEagerPoolingContext));
         }

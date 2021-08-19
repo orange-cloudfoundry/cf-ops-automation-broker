@@ -221,7 +221,7 @@ public class BoshBrokerApplication {
         return context;
     }
 
-    @Bean
+    @Bean(initMethod = "init")
     public GitManager poolingSecretsGitManager(GitManager retrierSecretsManager,
         Context secretsDefaultEagerPoolingContext, GitProperties secretsGitProperties) {
         PooledGitRepoFactory factory = new PooledGitRepoFactory(retrierSecretsManager);
@@ -229,7 +229,7 @@ public class BoshBrokerApplication {
             secretsDefaultEagerPoolingContext, secretsGitProperties.getPoolingProperties());
     }
 
-    @Bean
+    @Bean(initMethod = "init")
     public GitManager poolingTemplatesGitManager(GitManager retrierTemplatesManager,
         Context templatesDefaultEagerPoolingContext, GitProperties templateGitProperties) {
         PooledGitRepoFactory factory = new PooledGitRepoFactory(retrierTemplatesManager);

@@ -59,13 +59,16 @@ GitServer initialization relies on DeploymentProperties deploymentProperties to 
 
 Options:
 * turn off eager pooling in BoshServiceProvisionningTest
-* move to bean initializer
 * convert the git initialization/cleanup as spring initializer/deinitializers/configuration
-   * https://stackoverflow.com/questions/63712543/beforeall-junit-spring-boot-test-alternative-that-runs-when-application-context
-   * As a distinct @Configuration still runs too late, after failure of the Bean instanciation
+     * https://stackoverflow.com/questions/63712543/beforeall-junit-spring-boot-test-alternative-that-runs-when-application-context
+     * As a distinct @Configuration still runs too late, after failure of the Bean instanciation
+       * move to bean initializer, in hope that the GitServer will be instanciated before the bean initialization: not better
+       * use @Order highest precedence
+* rework git repo initialization to not rely on DeploymentProperties anymore
 * split git initialization in multiple steps. Pb: beforeClass implies static method but configuration of git content depends on spring-loaded properties file
-   * @BeforeAll: startGitServer & configure git content
-   * @AfterAll: stopGitServer & clear git content
+     * @BeforeAll: startGitServer & configure git content
+     * @AfterAll: stopGitServer & clear git content
+
 
 org.junit.platform.commons.JUnitException: @BeforeAll method 'public void com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.sample.BoshServiceProvisionningTest.startGitServer() throws java.io.IOException' must be static unless the test class is annotated with @TestInstance(Lifecycle.PER_CLASS).
 

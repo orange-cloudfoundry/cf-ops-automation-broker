@@ -44,4 +44,36 @@ Support for https://github.com/orange-cloudfoundry/cf-ops-automation-broker/issu
 * [x] Support configuration of pooling. 
    * Per repo: templates/secrets, in a distinct PoolingProperties class to avoid too large GitProperties class 
 * [ ] Update/fix tests which check that there is no git clone leaks
+   *    
 * [ ] Update documentation
+
+classpath conflict on commons-pool with spring-boot
+`<commons-pool2.version>2.9.0</commons-pool2.version>`
+https://docs.spring.io/spring-boot/docs/current/reference/html/dependency-versions.html
+org.apache.commons: commons-pool2: 2.9.0
+
+```
+***************************
+APPLICATION FAILED TO START
+***************************
+
+Description:
+
+An attempt was made to call a method that does not exist. The attempt was made from the following location:
+
+    com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.PooledGitManager.<init>(PooledGitManager.java:43)
+
+The following method did not exist:
+
+    org.apache.commons.pool2.impl.GenericKeyedObjectPool.setTimeBetweenEvictionRuns(Ljava/time/Duration;)V
+
+The method's class, org.apache.commons.pool2.impl.GenericKeyedObjectPool, is available from the following locations:
+
+    jar:file:/home/circleci/.m2/repository/org/apache/commons/commons-pool2/2.9.0/commons-pool2-2.9.0.jar!/org/apache/commons/pool2/impl/GenericKeyedObjectPool.class
+
+The class hierarchy was loaded from the following locations:
+
+    org.apache.commons.pool2.impl.GenericKeyedObjectPool: file:/home/circleci/.m2/repository/org/apache/commons/commons-pool2/2.9.0/commons-pool2-2.9.0.jar
+    org.apache.commons.pool2.impl.BaseGenericObjectPool: file:/home/circleci/.m2/repository/org/apache/commons/commons-pool2/2.9.0/commons-pool2-2.9.0.jar
+    org.apache.commons.pool2.BaseObject: file:/home/circleci/.m2/repository/org/apache/commons/commons-pool2/2.9.0/commons-pool2-2.9.0.jar 
+```

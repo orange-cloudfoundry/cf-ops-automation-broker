@@ -40,7 +40,7 @@ public class PooledGitManager implements GitManager {
         this.gitManager = gitManager;
         GenericKeyedObjectPoolConfig<Context> poolConfig = constructPoolConfig(repoAliasName, poolingProperties);
         pool = new GenericKeyedObjectPool<>(factory, poolConfig);
-        pool.setTimeBetweenEvictionRuns(Duration.ofSeconds(poolingProperties.getSecondsBetweenEvictionRuns()));
+        pool.setTimeBetweenEvictionRunsMillis(poolingProperties.getSecondsBetweenEvictionRuns());
         try {
             pool.preparePool(makePoolKey(defaultEagerPoolingContext));
         }

@@ -79,7 +79,8 @@
 		<dependency>
 			<groupId>org.apache.commons</groupId>
 			<artifactId>commons-pool2</artifactId>
-			<version>2.11.0</version>
+			<!-- provided by springboot, see https://docs.spring.io/spring-boot/docs/current/reference/html/dependency-versions.html -->
+			<version>${commons-pool2.version}</version>
 		</dependency>
 
 		<!-- Use SimpleLogger as the slf4j implementation in tests for getting debug traces from libs

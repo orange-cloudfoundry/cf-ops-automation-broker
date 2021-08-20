@@ -64,11 +64,15 @@ Options:
      * As a distinct @Configuration still runs too late, after failure of the Bean instanciation
        * [x] move to bean initializer, in hope that the GitServer will be instanciated before the bean initialization: not better
        * [x] use @Order highest precedence
-       * [ ] move eager pooling to spring application start time using a listener
-* [ ] rework git repo initialization to not rely on DeploymentProperties anymore
+       * [ ] move eager pooling to spring application start time using a listener ?
+       * this stackoverflow suggest this is hard https://stackoverflow.com/a/55007709/1484823
+     * [ ] As an ApplicationEventListener before spring beans get initialized https://docs.spring.io/spring-boot/docs/current/reference/htmlsingle/#features.spring-application.application-events-and-listeners 
+* [x] rework git repo initialization to not rely on DeploymentProperties anymore, and convert to @BeforeAll
    * currently only uses modelDeployment=mongodb (instead of `cassandravarsops` default)
-      * load a Properties object
-      * 
+      * load a Properties object and 
+      * find a way to load the DeploymentProperties using springboot
+      * [x] provide a default DeploymentProperties
+   * Still same ordering problem: by design according to https://stackoverflow.com/a/46981615/1484823 
 * split git initialization in multiple steps. Pb: beforeClass implies static method but configuration of git content depends on spring-loaded properties file
      * @BeforeAll: startGitServer & configure git content
      * @AfterAll: stopGitServer & clear git content

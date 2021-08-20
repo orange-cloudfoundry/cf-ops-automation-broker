@@ -15,10 +15,10 @@ import static com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.sa
 import static com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.sample.BoshServiceProvisionningTest.initPaasTemplate;
 
 @Configuration
-@Order(value= Ordered.HIGHEST_PRECEDENCE)
 public class HermeticGitServerTestConfiguration  {
 
 	@Bean
+	@Order(value= Ordered.HIGHEST_PRECEDENCE)
 	public GitServer gitServer(DeploymentProperties deploymentProperties) throws IOException {
 		GitServer gitServer = new GitServer();
 

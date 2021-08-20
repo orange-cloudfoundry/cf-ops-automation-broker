@@ -72,6 +72,10 @@ import org.springframework.cloud.servicebroker.model.instance.CreateServiceInsta
 import org.springframework.cloud.servicebroker.model.instance.DeleteServiceInstanceResponse;
 import org.springframework.cloud.servicebroker.model.instance.UpdateServiceInstanceRequest;
 import org.springframework.cloud.servicebroker.model.instance.UpdateServiceInstanceResponse;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 import org.springframework.http.ResponseEntity;
 
 import static com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.GitServer.NO_OP_INITIALIZER;
@@ -96,9 +100,24 @@ import static org.springframework.http.HttpStatus.CREATED;
  * Will detect all components present in classpath, including BoshBrokerApplication
  */
 @SpringBootTest(webEnvironment = RANDOM_PORT, classes =
-    {HermeticGitServerTestConfiguration.class, BoshBrokerApplication.class, WireMockTestConfiguration.class})
+    {BoshBrokerApplication.class, WireMockTestConfiguration.class})
 public class BoshServiceProvisionningTest {
 
+    @Configuration
+    class HermeticGitServerTestConfiguration  {
+
+        @Bean
+        @Order(value= Ordered.HIGHEST_PRECEDENCE)
+        public GitServer gitServer(DeploymentProperties deploymentProperties) throws IOException {
+            GitServer gitServer = new GitServer();
+
+            gitServer.startEphemeralReposServer(NO_OP_INITIALIZER);
+            gitServer.initRepo("paas-template.git", git -> initPaasTemplate(git, deploymentProperties));
+            gitServer.initRepo("paas-secrets.git", git -> initPaasSecret(git, deploymentProperties));
+
+            return gitServer;
+        }
+    };
 
 	private static final Logger logger = LoggerFactory.getLogger(BoshServiceProvisionningTest.class.getName());
     public static final String BROKERED_SERVICE_INSTANCE_ID = "brokered_service_instance_id";

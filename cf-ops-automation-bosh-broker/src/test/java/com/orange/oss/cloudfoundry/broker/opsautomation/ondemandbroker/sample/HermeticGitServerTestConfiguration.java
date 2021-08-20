@@ -2,6 +2,8 @@ package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.sample;
 
 import java.io.IOException;
 
+import javax.annotation.Priority;
+
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.GitServer;
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.DeploymentProperties;
 
@@ -18,7 +20,6 @@ import static com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.sa
 public class HermeticGitServerTestConfiguration  {
 
 	@Bean
-	@Order(value= Ordered.HIGHEST_PRECEDENCE)
 	public GitServer gitServer(DeploymentProperties deploymentProperties) throws IOException {
 		GitServer gitServer = new GitServer();
 

@@ -60,6 +60,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.web.server.LocalServerPort;
 import org.springframework.cloud.servicebroker.model.binding.CreateServiceInstanceAppBindingResponse;
 import org.springframework.cloud.servicebroker.model.binding.CreateServiceInstanceBindingRequest;
@@ -100,11 +101,26 @@ import static org.springframework.http.HttpStatus.CREATED;
  * Will detect all components present in classpath, including BoshBrokerApplication
  */
 @SpringBootTest(webEnvironment = RANDOM_PORT, classes =
-    {HermeticGitServerTestConfiguration.class, BoshBrokerApplication.class, WireMockTestConfiguration.class})
+    {BoshBrokerApplication.class, WireMockTestConfiguration.class})
 public class BoshServiceProvisionningTest {
 
 	private static final Logger logger = LoggerFactory.getLogger(BoshServiceProvisionningTest.class.getName());
     public static final String BROKERED_SERVICE_INSTANCE_ID = "brokered_service_instance_id";
+
+    @TestConfiguration
+    class HermeticGitServerTestConfiguration  {
+
+        @Bean
+        public GitServer gitServer(DeploymentProperties deploymentProperties) throws IOException {
+            GitServer gitServer = new GitServer();
+
+            gitServer.startEphemeralReposServer(NO_OP_INITIALIZER);
+            gitServer.initRepo("paas-template.git", git -> initPaasTemplate(git, deploymentProperties));
+            gitServer.initRepo("paas-secrets.git", git -> initPaasSecret(git, deploymentProperties));
+
+            return gitServer;
+        }
+    }
 
     @BeforeAll
     public static void prepare_CONFIG_YML_env_var() throws Exception {
@@ -246,9 +262,6 @@ public class BoshServiceProvisionningTest {
 
             //In develop branch
             git.checkout().setName("develop").setCreateBranch(true).call();
-
-            //root deployment
-            Path coabDepls = gitWorkDir.toPath().resolve(deploymentProperties.getRootDeployment());
 
             //Search for the sample-deployment
             Path referenceDataModel = Paths.get("../sample-deployment");

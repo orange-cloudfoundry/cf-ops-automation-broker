@@ -7,6 +7,7 @@ import org.apache.commons.pool2.impl.GenericKeyedObjectPoolConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.PreDestroy;
 import javax.management.*;
 import java.lang.management.ManagementFactory;
 import java.nio.file.Path;
@@ -44,13 +45,15 @@ public class PooledGitManager implements GitManager {
         this.defaultEagerPoolingContext = defaultEagerPoolingContext;
         GenericKeyedObjectPoolConfig<Context> poolConfig = constructPoolConfig(repoAliasName, poolingProperties);
         pool = new GenericKeyedObjectPool<>(factory, poolConfig);
-        pool.setTimeBetweenEvictionRunsMillis(poolingProperties.getSecondsBetweenEvictionRuns());
+        //first prepare the key to prefetch
         try {
             pool.preparePool(makePoolKey(defaultEagerPoolingContext));
         }
         catch (Exception e) {
             throw new RuntimeException(e);
         }
+        //then only start the eviction thread, otherwise one extra clone is created.
+        pool.setTimeBetweenEvictionRunsMillis(poolingProperties.getSecondsBetweenEvictionRuns() * 1000L);
     }
 
     private GenericKeyedObjectPoolConfig<Context> constructPoolConfig(String repoAliasName,
@@ -61,6 +64,14 @@ public class PooledGitManager implements GitManager {
         poolConfig.setTestOnBorrow(true);
         poolConfig.setMinIdlePerKey(poolingProperties.getMinIdle());
         return poolConfig;
+    }
+
+    /**
+     * Try to stop the pool evictor thread.
+     */
+    @PreDestroy
+    public void destruct() {
+        pool.close();
     }
 
     @Override

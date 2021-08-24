@@ -36,6 +36,8 @@ public class PooledGitManagerIntegrationTest {
 
         //Then the git manager gets delegated the call to clone the repo
         verify(gitManager, times(1)).cloneRepo(any(Context.class));
+
+        pooledGitManager.destruct();
     }
 
     @Test
@@ -88,11 +90,15 @@ public class PooledGitManagerIntegrationTest {
     public void eagerly_refills_the_min_idle_pool_asynchronously_when_empty() throws InterruptedException {
         //given eager pooling enabled
         PoolingProperties poolingProperties = anEagerPoolingProperties();
-        //When a 1st clone is pulled
         String repoAliasName = "";
         Context ctx1 = new Context();
+        //When the app starts
         PooledGitManager pooledGitManager = new PooledGitManager(new PooledGitRepoFactory(gitManager), repoAliasName, gitManager,
             ctx1, poolingProperties);
+        //Then the git manager eagerly creates a clone
+        verify(gitManager, times(1)).cloneRepo(any(Context.class));
+
+        //When a 1st clone is pulled
         pooledGitManager.cloneRepo(ctx1);
         //Then the git manager gets delegated the call to clone the repo
         verify(gitManager, times(1)).cloneRepo(any(Context.class));
@@ -120,6 +126,8 @@ public class PooledGitManagerIntegrationTest {
 
         //Clean up used clone
         pooledGitManager.deleteWorkingDir(ctx2);
+
+        pooledGitManager.destruct();
     }
 
     @Test

@@ -18,7 +18,7 @@ Support for https://github.com/orange-cloudfoundry/cf-ops-automation-broker/issu
 * [x] Initialize keys representing paas-templates and paas-secret Context keys in [preparePool](https://github.com/apache/commons-pool/blob/48c289d95c2374ee11e3276a8bcb93b7f99015be/src/main/java/org/apache/commons/pool2/impl/GenericKeyedObjectPool.java#L1461-L1475)
     * [x] Possibly extract https://github.com/orange-cloudfoundry/cf-ops-automation-broker/blob/97b73ef7703bdfd941d771f73edb54ed113489ef/cf-ops-automation-bosh-broker/src/main/java/com/orange/oss/cloudfoundry/broker/opsautomation/ondemandbroker/sample/BoshBrokerApplication.java#L349-L352
     * [ ] move out of constructor in spring bean initializer method ?
-* [ ] Define the right default for the `getTimeBetweenEvictionRunsMillis()` for our use cases
+* [x] Define the right default for the `getTimeBetweenEvictionRunsMillis()` for our use cases
   * Our goal is that incoming request 95 percentile don't perform sync clones, but rather reuse an idle pooled clone
   * Time to fetch a clone time might be up to 1 min elapsed
   * Concurrent OSB call rate
@@ -63,20 +63,22 @@ Options:
      * https://stackoverflow.com/questions/63712543/beforeall-junit-spring-boot-test-alternative-that-runs-when-application-context
      * As a distinct @Configuration still runs too late, after failure of the Bean instanciation
        * [x] move to bean initializer, in hope that the GitServer will be instanciated before the bean initialization: not better
-       * [x] use @Order highest precedence
-       * [ ] move eager pooling to spring application start time using a listener ?
+       * [x] use @Order highest precedence. **Not clear why this did not work**
+       * [ ] move eager pooling to spring application start time using a spring listener
        * this stackoverflow suggest this is hard https://stackoverflow.com/a/55007709/1484823
      * [ ] As an ApplicationEventListener before spring beans get initialized https://docs.spring.io/spring-boot/docs/current/reference/htmlsingle/#features.spring-application.application-events-and-listeners 
-* [x] rework git repo initialization to not rely on DeploymentProperties anymore, and convert to @BeforeAll
-   * currently only uses modelDeployment=mongodb (instead of `cassandravarsops` default)
-      * load a Properties object and 
-      * find a way to load the DeploymentProperties using springboot
-      * [x] provide a default DeploymentProperties
-   * Still same ordering problem: by design according to https://stackoverflow.com/a/46981615/1484823 
-* split git initialization in multiple steps. Pb: beforeClass implies static method but configuration of git content depends on spring-loaded properties file
-     * @BeforeAll: startGitServer & configure git content
-     * @AfterAll: stopGitServer & clear git content
-
+* [x] Move test git server initialization to @BeforeAll
+    * Pb: beforeClass implies static method but configuration of git content depends on spring-loaded properties file
+* [x] **Move git init to junit test initializer** to initialize before spring context loads
+  * See https://docs.spring.io/spring-framework/docs/current/reference/html/testing.html#spring-testing-annotation-testexecutionlisteners
+  * Hinted by https://github.com/spring-projects/spring-boot/issues/20697
+  * [x] rework git repo initialization to not rely on DeploymentProperties anymore, and convert to @BeforeAll
+      * currently only uses modelDeployment=mongodb (instead of `cassandravarsops` default)
+          * load a Properties object
+          * find a way to load the DeploymentProperties using springboot
+          * [x] **provide a default DeploymentProperties with hardcoded value**
+      * Still same ordering problem: by design according to https://stackoverflow.com/a/46981615/1484823
+  
 
 org.junit.platform.commons.JUnitException: @BeforeAll method 'public void com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.sample.BoshServiceProvisionningTest.startGitServer() throws java.io.IOException' must be static unless the test class is annotated with @TestInstance(Lifecycle.PER_CLASS).
 

@@ -49,7 +49,6 @@ import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpStatus;
 import org.eclipse.jgit.api.AddCommand;
 import org.eclipse.jgit.api.Git;
-import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -61,7 +60,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.web.server.LocalServerPort;
 import org.springframework.cloud.servicebroker.model.binding.CreateServiceInstanceAppBindingResponse;
 import org.springframework.cloud.servicebroker.model.binding.CreateServiceInstanceBindingRequest;
@@ -74,11 +72,10 @@ import org.springframework.cloud.servicebroker.model.instance.CreateServiceInsta
 import org.springframework.cloud.servicebroker.model.instance.DeleteServiceInstanceResponse;
 import org.springframework.cloud.servicebroker.model.instance.UpdateServiceInstanceRequest;
 import org.springframework.cloud.servicebroker.model.instance.UpdateServiceInstanceResponse;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.core.Ordered;
-import org.springframework.core.annotation.Order;
 import org.springframework.http.ResponseEntity;
+import org.springframework.test.context.TestContext;
+import org.springframework.test.context.TestExecutionListener;
+import org.springframework.test.context.TestExecutionListeners;
 
 import static com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.GitServer.NO_OP_INITIALIZER;
 import static com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.OsbBuilderHelper.MEDIUM_SERVICE_PLAN_ID;
@@ -101,22 +98,48 @@ import static org.springframework.http.HttpStatus.CREATED;
 /**
  * Will detect all components present in classpath, including BoshBrokerApplication
  */
-@SpringBootTest(webEnvironment = RANDOM_PORT, classes = {BoshBrokerApplication.class, WireMockTestConfiguration.class})
+@SpringBootTest(webEnvironment = RANDOM_PORT, classes =
+    {BoshBrokerApplication.class, WireMockTestConfiguration.class})
+@TestExecutionListeners(value = BoshServiceProvisionningTest.HermeticGitServerTestListener.class, mergeMode = TestExecutionListeners.MergeMode.MERGE_WITH_DEFAULTS)
 public class BoshServiceProvisionningTest {
 
 	private static final Logger logger = LoggerFactory.getLogger(BoshServiceProvisionningTest.class.getName());
     public static final String BROKERED_SERVICE_INSTANCE_ID = "brokered_service_instance_id";
 
-    @BeforeAll
-    public static void startGitServer() throws IOException {
-        DeploymentProperties defaultDeploymtForGitEagerFetching = new DeploymentProperties();
-        gitServer = new GitServer();
+    /**
+     * Git repo needs to be started before the spring context gets loaded and RetrierGitManager bean to be instanciated.
+     * More details in docs 05-eager-git-clones.md
+     */
+    public static class HermeticGitServerTestListener implements TestExecutionListener {
 
-        gitServer.startEphemeralReposServer(NO_OP_INITIALIZER);
-        gitServer.initRepo("paas-template.git", git -> initPaasTemplate(git, defaultDeploymtForGitEagerFetching));
-        gitServer.initRepo("paas-secrets.git", git -> initPaasSecret(git, defaultDeploymtForGitEagerFetching));
+        GitServer gitServer;
+
+        @Override
+        public void beforeTestClass(TestContext testContext) throws Exception {
+            DeploymentProperties deploymentProperties = new DeploymentProperties();
+            //TODO: find a better way to the deployment name consistent with application.properties
+            //- trying to access spring context from TestContext triggers the GitRetrier bean initialization which
+            // fails as git server isn't yet loaded
+            //- load the properties file from the classloader into a Properties object and extract the property needed
+            deploymentProperties.setModelDeployment("mongodb");
+            gitServer(deploymentProperties);
+        }
+
+        @Override
+        public void afterTestClass(TestContext testContext) throws Exception {
+            gitServer.stopAndCleanupReposServer();
+        }
+
+        public GitServer gitServer(DeploymentProperties deploymentProperties) throws IOException {
+            gitServer = new GitServer();
+
+            gitServer.startEphemeralReposServer(NO_OP_INITIALIZER);
+            gitServer.initRepo("paas-template.git", git -> initPaasTemplate(git, deploymentProperties));
+            gitServer.initRepo("paas-secrets.git", git -> initPaasSecret(git, deploymentProperties));
+
+            return gitServer;
+        }
     }
-
 
     @BeforeAll
     public static void prepare_CONFIG_YML_env_var() throws Exception {
@@ -157,8 +180,6 @@ public class BoshServiceProvisionningTest {
     private static final String SERVICE_BINDING_INSTANCE_ID = "222";
     @LocalServerPort
     int port;
-
-    static GitServer gitServer;
 
     @Autowired
     OsbProxyImpl osbProxy;
@@ -397,11 +418,6 @@ public class BoshServiceProvisionningTest {
     }
 
 
-    @AfterAll
-    public void stopGitServer() throws InterruptedException {
-        gitServer.stopAndCleanupReposServer();
-    }
-
     @Test
     public void supports_crud_lifecycle() throws IOException {
         exposes_catalog();
@@ -476,7 +492,7 @@ public class BoshServiceProvisionningTest {
             long created = pooledGitManager.getPoolAttribute(PooledGitManager.Metric.Created);
             assertThat(borrowed).isGreaterThanOrEqualTo(1);
             assertThat(returned).isEqualTo(borrowed);
-            assertThat(created).isEqualTo(1);
+            assertThat(created).isEqualTo(1+1); //1 as git eager pooling is enabled wiht min_idle=1
         }
     }
 

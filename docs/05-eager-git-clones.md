@@ -45,9 +45,8 @@ Support for https://github.com/orange-cloudfoundry/cf-ops-automation-broker/issu
   * Decision to set to 1s
 * [x] Support configuration of pooling. 
    * Per repo: templates/secrets, in a distinct PoolingProperties class to avoid too large GitProperties class 
-* [ ] Update/fix tests which check that there is no git clone leaks
-   *    
-* [ ] Update documentation
+* [x] Update/fix tests which check that there is no git clone leaks
+* [x] Update documentation
 
 ## Details
 
@@ -59,7 +58,7 @@ GitServer initialization relies on DeploymentProperties deploymentProperties to 
 
 Options:
 * [ ] transiently turn off eager pooling in BoshServiceProvisionningTest to get smoke tests feedback
-* [ ] convert the git initialization/cleanup as spring initializer/deinitializers/configuration
+* [x] convert the git initialization/cleanup as spring initializer/deinitializers/configuration
      * https://stackoverflow.com/questions/63712543/beforeall-junit-spring-boot-test-alternative-that-runs-when-application-context
      * As a distinct @Configuration still runs too late, after failure of the Bean instanciation
        * [x] move to bean initializer, in hope that the GitServer will be instanciated before the bean initialization: not better

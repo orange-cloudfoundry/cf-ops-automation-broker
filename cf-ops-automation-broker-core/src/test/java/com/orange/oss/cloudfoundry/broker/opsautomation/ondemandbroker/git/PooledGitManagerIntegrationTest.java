@@ -5,8 +5,6 @@ import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
-import org.mockito.internal.stubbing.answers.AnswersWithDelay;
-import org.mockito.internal.stubbing.answers.Returns;
 
 import static com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.PooledGitManager.Metric.*;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -35,7 +33,6 @@ public class PooledGitManagerIntegrationTest {
         Context ctx1 = new Context();
         PooledGitManager pooledGitManager = new PooledGitManager(new PooledGitRepoFactory(gitManager), repoAliasName, gitManager,
             ctx1, poolingProperties);
-        pooledGitManager.init();
 
         //Then the git manager gets delegated the call to clone the repo
         verify(gitManager, times(1)).cloneRepo(any(Context.class));
@@ -52,7 +49,6 @@ public class PooledGitManagerIntegrationTest {
         Context ctx1 = new Context();
         PooledGitManager pooledGitManager = new PooledGitManager(new PooledGitRepoFactory(gitManager), "", gitManager,
             ctx1, noEagerPoolingProperties);
-        pooledGitManager.init();
 
         //When the clone is asked for clean up
         pooledGitManager.deleteWorkingDir(ctx1);
@@ -67,7 +63,6 @@ public class PooledGitManagerIntegrationTest {
         Context ctx1 = new Context();
         PooledGitManager pooledGitManager = new PooledGitManager(new PooledGitRepoFactory(gitManager), repoAliasName, gitManager,
             ctx1, noEagerPoolingProperties);
-        pooledGitManager.init();
 
         pooledGitManager.cloneRepo(ctx1);
         //Then the git manager gets delegated the call to clone the repo
@@ -136,7 +131,6 @@ public class PooledGitManagerIntegrationTest {
         //and
         PooledGitManager pooledGitManager= new PooledGitManager(new PooledGitRepoFactory(gitManager), repoAlias, gitManager,
             ctx, noEagerPoolingProperties);
-        pooledGitManager.init();
 
         pooledGitManager.cloneRepo(ctx);
         ArgumentCaptor<Context> arg1 = ArgumentCaptor.forClass(Context.class);
@@ -186,7 +180,6 @@ public class PooledGitManagerIntegrationTest {
         PooledGitManager pooledGitManager = new PooledGitManager(new PooledGitRepoFactory(gitManager), "another-yet" +
             "-unused-pool", gitManager,
             new Context(), noEagerPoolingProperties);
-        pooledGitManager.init();
         //when metrics are read
         //then they show no activity
         assertThat((long) pooledGitManager.getPoolAttribute(Created)).isEqualTo(0);

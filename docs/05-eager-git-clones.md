@@ -47,6 +47,12 @@ Support for https://github.com/orange-cloudfoundry/cf-ops-automation-broker/issu
    * Per repo: templates/secrets, in a distinct PoolingProperties class to avoid too large GitProperties class 
 * [x] Update/fix tests which check that there is no git clone leaks
 * [x] Update documentation
+* [ ] Fix observed incorrect behavior: after the default DEFAULT_MIN_EVICTABLE_IDLE_TIME_MILLIS (30 mins) the pool item get destroyed
+   * set to -1 + refine logging to help debugging
+   * how to test this ?
+     * assert no destroy called in eager pooling unit test cases (however exec is shorter than the 30 mins duration before such eviction)
+     * assert no destroy called in eager pooling integration test cases (same limitation than unit test)
+   * manually validate after 30 mins the clones are not cleaned up anymore (on a long-running coab broker instance running E2E smoke tests)
 
 ## Details
 

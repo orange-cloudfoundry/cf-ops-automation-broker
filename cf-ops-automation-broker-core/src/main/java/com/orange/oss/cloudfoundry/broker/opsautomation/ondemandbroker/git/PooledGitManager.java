@@ -1,17 +1,17 @@
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git;
 
+import java.lang.management.ManagementFactory;
+import java.nio.file.Path;
+
+import javax.annotation.PreDestroy;
+import javax.management.ObjectName;
+
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.Context;
 import org.apache.commons.pool2.KeyedPooledObjectFactory;
 import org.apache.commons.pool2.impl.GenericKeyedObjectPool;
 import org.apache.commons.pool2.impl.GenericKeyedObjectPoolConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.annotation.PreDestroy;
-import javax.management.*;
-import java.lang.management.ManagementFactory;
-import java.nio.file.Path;
-import java.time.Duration;
 
 /**
  * <pre>
@@ -32,8 +32,6 @@ public class PooledGitManager implements GitManager {
     private final String repoAliasName;
     private final GitManager gitManager;
 
-    private Context defaultEagerPoolingContext;
-
     private static final Logger logger = LoggerFactory.getLogger(PooledGitManager.class.getName());
 
 
@@ -42,7 +40,6 @@ public class PooledGitManager implements GitManager {
 		PoolingProperties poolingProperties) {
         this.repoAliasName = repoAliasName;
         this.gitManager = gitManager;
-        this.defaultEagerPoolingContext = defaultEagerPoolingContext;
         GenericKeyedObjectPoolConfig<Context> poolConfig = constructPoolConfig(repoAliasName, poolingProperties);
         pool = new GenericKeyedObjectPool<>(factory, poolConfig);
         //first prepare the key to prefetch
@@ -52,6 +49,9 @@ public class PooledGitManager implements GitManager {
         catch (Exception e) {
             throw new RuntimeException(e);
         }
+        //disable git clone from being evicted after an idle period: we systematically perform `git pull --rebase`
+        // before reusing them
+        pool.setMinEvictableIdleTimeMillis(-1);
         //then only start the eviction thread, otherwise one extra clone is created.
         pool.setTimeBetweenEvictionRunsMillis(poolingProperties.getSecondsBetweenEvictionRuns() * 1000L);
     }
@@ -71,6 +71,7 @@ public class PooledGitManager implements GitManager {
      */
     @PreDestroy
     public void destruct() {
+        logger.debug("Bean pre-destroy closing the pool");
         pool.close();
     }
 

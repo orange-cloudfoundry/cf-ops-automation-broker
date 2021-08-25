@@ -124,8 +124,12 @@ public class PooledGitManagerIntegrationTest {
         //10:36:55.232 [commons-pool-evictor] INFO com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.PooledGitRepoFactory - Building new git repo with keys {}
         verify(gitManager, times(2)).cloneRepo(any(Context.class));
 
-        //Clean up used clone
+        //When asking to clean up the used second clone
         pooledGitManager.deleteWorkingDir(ctx2);
+
+        //Then the maxIdle isn't reached and no destroy should trigger (since we don't reach the
+        // DEFAULT_MAX_IDLE_PER_KEY = 8, and disable aged-based eviction)
+        verify(gitManager, never()).deleteWorkingDir(any(Context.class));
 
         pooledGitManager.destruct();
     }

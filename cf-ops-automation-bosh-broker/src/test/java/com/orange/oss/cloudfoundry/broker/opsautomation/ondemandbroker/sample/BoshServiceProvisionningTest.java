@@ -391,7 +391,7 @@ public class BoshServiceProvisionningTest {
         gitProcessor.preCreate(context);
 
         Path workDirPath = (Path) context.contextKeys
-            .get(SECRETS_REPOSITORY_ALIAS_NAME + GitProcessorContext.workDir.toString());
+            .get(SECRETS_REPOSITORY_ALIAS_NAME + GitProcessorContext.workDir);
         Path targetManifestFilePath = secretsGenerator.getTargetManifestFilePath(workDirPath, SERVICE_INSTANCE_ID);
         createDir(targetManifestFilePath.getParent());
         createBoshManifestFile(targetManifestFilePath, coabVarsFileDto);
@@ -437,7 +437,7 @@ public class BoshServiceProvisionningTest {
         simulateUpdatingManifestGeneration(gitSecretsProcessor, anAcceptedPlanUpdateServiceInstanceRequest());
         polls_last_operation(operation, HttpStatus.SC_OK, "succeeded", "");
 
-        assertThatThrownBy(() -> {update_service_plan(aRejectedPlanUpdateServiceInstanceRequest());})
+        assertThatThrownBy(() -> update_service_plan(aRejectedPlanUpdateServiceInstanceRequest()))
             .isInstanceOf(FeignException.class)
             .hasMessageContaining(("422"))
             .hasMessageContaining(("Service instance update not supported"))
@@ -490,9 +490,12 @@ public class BoshServiceProvisionningTest {
             long borrowed = pooledGitManager.getPoolAttribute(PooledGitManager.Metric.Borrowed);
             long returned = pooledGitManager.getPoolAttribute(PooledGitManager.Metric.Returned);
             long created = pooledGitManager.getPoolAttribute(PooledGitManager.Metric.Created);
+            long destroyed = pooledGitManager.getPoolAttribute(PooledGitManager.Metric.Destroyed);
             assertThat(borrowed).isGreaterThanOrEqualTo(1);
             assertThat(returned).isEqualTo(borrowed);
             assertThat(created).isEqualTo(1+1); //1 as git eager pooling is enabled wiht min_idle=1
+            assertThat(destroyed).isEqualTo(0); //we should not reach the maxIdlePerKey=8 repos.
+            // See DEFAULT_MAX_IDLE_PER_KEY = 8 in GenericKeyedObjectPoolConfig
         }
     }
 

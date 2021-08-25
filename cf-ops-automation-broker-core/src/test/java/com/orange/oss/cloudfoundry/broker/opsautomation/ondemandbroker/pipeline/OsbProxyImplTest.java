@@ -559,6 +559,25 @@ public class OsbProxyImplTest {
     }
 
     @Test
+    public void maps_gone_bind_request() {
+        //Given
+        Response errorReponse = Response.builder()
+                .status(HttpStatus.GONE.value())
+                .headers(new HashMap<>())
+                .body("{}", Charset.defaultCharset())
+                .request(aFeignRequest)
+                .build();
+        FeignException provisionException = FeignException.errorStatus("ServiceInstanceBindingServiceClient#createServiceInstanceBinding(String,String,String,String,CreateServiceInstanceBindingRequest)", errorReponse);
+
+        //when
+
+        Exception exception = assertThrows(Exception.class,
+            () -> osbProxy.mapBindResponse(null, provisionException, aCatalog()));
+        //check that the associated class is properly annotated for spring to return the corresponding status
+        assertThat(exception.getClass().getAnnotation(ResponseStatus.class).value()).isEqualTo(HttpStatus.GONE);
+    }
+
+    @Test
     public void maps_feign_client_unknown_errors_to_500_errors() {
         //Given
         Response errorReponse = Response.builder()

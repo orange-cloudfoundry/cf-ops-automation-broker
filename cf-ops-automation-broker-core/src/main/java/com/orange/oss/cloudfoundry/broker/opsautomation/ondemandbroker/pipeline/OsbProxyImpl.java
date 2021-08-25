@@ -141,7 +141,7 @@ public class OsbProxyImpl implements OsbProxy {
         try {
             delegateUnbind(mappedRequest, serviceInstanceBindingServiceClient);
         } catch (FeignException e) {
-            logger.error("inner broker bind request rejected:" + e);
+            logger.warn("inner broker bind request rejected:" + e);
             throw mapClientException(e);
         }
 
@@ -172,7 +172,7 @@ public class OsbProxyImpl implements OsbProxy {
 
     CreateServiceInstanceAppBindingResponse mapBindResponse(ResponseEntity<CreateServiceInstanceAppBindingResponse> delegatedResponse, FeignException bindException, Catalog catalog) {
         if (bindException != null) {
-            logger.error("inner broker bind request rejected:" + bindException);
+            logger.warn("inner broker bind request rejected:" + bindException);
             throw mapClientException(bindException);
         }
         CreateServiceInstanceAppBindingResponse delegatedResponseBody = delegatedResponse.getBody();
@@ -193,6 +193,8 @@ public class OsbProxyImpl implements OsbProxy {
                 return new NestedBroker400StatusException(parseReponseBody(exception).getDescription(), exception);
             case 409:
                 return new NestedBroker409StatusException(parseReponseBody(exception).getDescription(), exception);
+            case 410:
+                return new NestedBroker410StatusException(parseReponseBody(exception).getDescription(), exception);
             case 422:
                 return new NestedBroker422StatusException(parseReponseBody(exception).getDescription(), exception);
             default:
@@ -218,6 +220,13 @@ public class OsbProxyImpl implements OsbProxy {
     public static class NestedBroker409StatusException extends RuntimeException {
         @SuppressWarnings("WeakerAccess")
         public NestedBroker409StatusException(String message, Throwable cause) {
+            super(message, cause);
+        }
+    }
+    @ResponseStatus(HttpStatus.GONE)
+    public static class NestedBroker410StatusException extends RuntimeException {
+        @SuppressWarnings("WeakerAccess")
+        public NestedBroker410StatusException(String message, Throwable cause) {
             super(message, cause);
         }
     }

@@ -89,6 +89,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.hamcrest.Matchers.containsString;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 import static org.springframework.http.HttpStatus.ACCEPTED;
+import static org.springframework.http.HttpStatus.BAD_REQUEST;
 import static org.springframework.http.HttpStatus.CREATED;
 
 
@@ -139,6 +140,7 @@ public class BoshServiceProvisionningTest {
 
     private static final String SERVICE_INSTANCE_ID = "111";
     private static final String SERVICE_BINDING_INSTANCE_ID = "222";
+    private static final String ERROR_SERVICE_BINDING_INSTANCE_ID = "333";
     @LocalServerPort
     int port;
     private GitServer gitServer;
@@ -409,6 +411,7 @@ public class BoshServiceProvisionningTest {
 
         polls_last_operation(operation, HttpStatus.SC_OK, "succeeded", "");
 
+        assert_create_service_binding_error_response_are_returned();
         create_service_binding();
 
         operation = update_service_plan(anAcceptedPlanUpdateServiceInstanceRequest());
@@ -498,6 +501,32 @@ public class BoshServiceProvisionningTest {
         assertThat(bindResponse.getBody()).isNotNull();
         Map<String, Object> credentials = bindResponse.getBody().getCredentials();
         assertThat(credentials).isNotNull();
+    }
+
+    private void assert_create_service_binding_error_response_are_returned() {
+
+// Consider alternatives to wire mock recordings:
+//        wireMockRule.stubFor(get(urlEqualTo("/v2/service_instances/" + SERVICE_INSTANCE_ID + "/service_bindings/" + SERVICE_BINDING_INSTANCE_ID))
+//                .willReturn(aResponse()
+//                .withBody("")
+//                .withStatus(200)));
+
+        CreateServiceInstanceBindingRequest serviceInstanceBindingRequest = aBindingRequest(SERVICE_INSTANCE_ID);
+        serviceInstanceBindingRequest.setBindingId(ERROR_SERVICE_BINDING_INSTANCE_ID);
+
+        assertThatThrownBy(
+            () -> {
+                serviceInstanceBindingService.createServiceInstanceBinding(
+                    SERVICE_INSTANCE_ID,
+                    ERROR_SERVICE_BINDING_INSTANCE_ID,
+                    false,
+                    "api-info",
+                    osbProxy.buildOriginatingIdentityHeader(serviceInstanceBindingRequest.getOriginatingIdentity()),
+                    OsbConstants.X_Broker_API_Version_Value,
+                    serviceInstanceBindingRequest);
+            })
+            .isInstanceOf(FeignException.BadRequest.class)
+            .hasMessageContaining("inner-broker-provided-error-description");
     }
 
     private void delete_service_binding() {

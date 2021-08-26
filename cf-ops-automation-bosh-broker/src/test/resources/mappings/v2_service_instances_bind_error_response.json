@@ -1,0 +1,28 @@
+{
+  "id" : "11111111-2222-3333-4444-555555555555",
+  "name" : "v2_service_instances_111_service_bindings_333",
+  "request" : {
+    "url" : "/v2/service_instances/111/service_bindings/333?accepts_incomplete=false",
+    "method" : "PUT"
+  },
+  "response" : {
+    "status" : 400,
+    "body" : "{\"description\":\"inner-broker-provided-error-description\"}",
+    "headers" : {
+      "Cache-Control" : "no-cache, no-store, max-age=0, must-revalidate",
+      "Content-Type" : "application/json;charset=UTF-8",
+      "Date" : "Fri, 23 Mar 2018 12:53:12 GMT",
+      "Expires" : "0",
+      "Pragma" : "no-cache",
+      "Strict-Transport-Security" : "max-age=31536000 ; includeSubDomains",
+      "X-Application-Context" : "application:5000",
+      "X-Content-Type-Options" : "nosniff",
+      "X-Frame-Options" : "DENY",
+      "X-Vcap-Request-Id" : "1f16580b-87ab-48f2-6b26-98c2604a66e4",
+      "X-Xss-Protection" : "1; mode=block"
+    }
+  },
+  "uuid" : "cb2d0641-5ade-4ad6-92a7-981e9a422c83",
+  "persistent" : true,
+  "insertionIndex" : 59
+}

@@ -188,7 +188,9 @@ public class OsbProxyImpl implements OsbProxy {
     ResponseStatusException mapClientException(FeignException exception) {
         //Note: we don't pass the FeignException as cause to not leak confidential internal details such as the url
         // available in the FeignException
-        return new ResponseStatusException(exception.status(), parseReponseBody(exception).getDescription(), null);
+        ErrorMessage errorMessage = parseReponseBody(exception);
+        String description = errorMessage == null ? null: errorMessage.getDescription();
+        return new ResponseStatusException(exception.status(), description, null);
     }
 
 

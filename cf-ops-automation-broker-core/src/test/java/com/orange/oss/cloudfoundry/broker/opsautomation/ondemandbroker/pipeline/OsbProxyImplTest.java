@@ -573,7 +573,7 @@ public class OsbProxyImplTest {
         //when
         ResponseStatusException mapClientException = osbProxy.mapClientException(provisionException);
 
-        assertThat(mapClientException.getMessage()).isEqualTo("Missing required fields: keyspace param. Original status: 507");
+        assertThat(mapClientException.getReason()).isEqualTo("Missing required fields: keyspace param");
         assertThat(mapClientException.getRawStatusCode()).isEqualTo(HttpStatus.INSUFFICIENT_STORAGE.value());
     }
 
@@ -588,20 +588,23 @@ public class OsbProxyImplTest {
 
     private void assertDescriptionAndStatusMapped(HttpStatus httpStatus, String description) {
         //given
-        Response errorReponse = Response.builder()
-                .status(httpStatus.value())
-                .headers(new HashMap<>())
-                .body("{\"description\":\"" + description + "\"}", Charset.defaultCharset())
+        Response.Builder builder = Response.builder()
+            .status(httpStatus.value())
+            .headers(new HashMap<>());
+        if (description != null) {
+            builder.body("{\"description\":\"" + description + "\"}", Charset.defaultCharset());
+        }
+        Response errorResponse = builder
                 .request(aFeignRequest)
                 .build();
-        FeignException provisionException = FeignException.errorStatus("ServiceInstanceServiceClient#createServiceInstance(String,boolean,String,String,CreateServiceInstanceRequest)", errorReponse);
+        FeignException provisionException = FeignException.errorStatus("ServiceInstanceServiceClient#createServiceInstance(String,boolean,String,String,CreateServiceInstanceRequest)", errorResponse);
 
         //when
         ResponseStatusException mapClientException = osbProxy.mapClientException(provisionException);
 
         //then
-        assertThat(mapClientException.getMessage()).isEqualTo(description);
-        assertThat(mapClientException.getRawStatusCode()).isEqualTo(httpStatus);
+        assertThat(mapClientException.getReason()).isEqualTo(description);
+        assertThat(mapClientException.getStatus()).isEqualTo(httpStatus);
     }
 
     @Test

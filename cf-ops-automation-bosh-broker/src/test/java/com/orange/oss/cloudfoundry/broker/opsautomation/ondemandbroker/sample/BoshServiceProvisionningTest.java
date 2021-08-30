@@ -491,9 +491,10 @@ public class BoshServiceProvisionningTest {
             long returned = pooledGitManager.getPoolAttribute(PooledGitManager.Metric.Returned);
             long created = pooledGitManager.getPoolAttribute(PooledGitManager.Metric.Created);
             long destroyed = pooledGitManager.getPoolAttribute(PooledGitManager.Metric.Destroyed);
-            assertThat(borrowed).isGreaterThanOrEqualTo(1);
+            assertThat(borrowed).isGreaterThanOrEqualTo(1L);
             assertThat(returned).isEqualTo(borrowed);
-            assertThat(created).isEqualTo(1+1); //1 as git eager pooling is enabled wiht min_idle=1
+            assertThat(created).isBetween(1L,2L); //1 when only eager prefetching at start up triggers
+            // 2 when evictor thread runs exactly during OSB request process (we have min_idle=1)
             assertThat(destroyed).isEqualTo(0); //we should not reach the maxIdlePerKey=8 repos.
             // See DEFAULT_MAX_IDLE_PER_KEY = 8 in GenericKeyedObjectPoolConfig
         }

@@ -73,6 +73,9 @@ import org.springframework.cloud.servicebroker.model.instance.DeleteServiceInsta
 import org.springframework.cloud.servicebroker.model.instance.UpdateServiceInstanceRequest;
 import org.springframework.cloud.servicebroker.model.instance.UpdateServiceInstanceResponse;
 import org.springframework.http.ResponseEntity;
+import org.springframework.test.context.TestContext;
+import org.springframework.test.context.TestExecutionListener;
+import org.springframework.test.context.TestExecutionListeners;
 
 import static com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git.GitServer.NO_OP_INITIALIZER;
 import static com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.pipeline.OsbBuilderHelper.MEDIUM_SERVICE_PLAN_ID;
@@ -96,12 +99,48 @@ import static org.springframework.http.HttpStatus.CREATED;
 /**
  * Will detect all components present in classpath, including BoshBrokerApplication
  */
-@SpringBootTest(webEnvironment = RANDOM_PORT, classes = {BoshBrokerApplication.class, WireMockTestConfiguration.class})
+@SpringBootTest(webEnvironment = RANDOM_PORT, classes =
+    {BoshBrokerApplication.class, WireMockTestConfiguration.class})
+@TestExecutionListeners(value = BoshServiceProvisionningTest.HermeticGitServerTestListener.class, mergeMode = TestExecutionListeners.MergeMode.MERGE_WITH_DEFAULTS)
 public class BoshServiceProvisionningTest {
-
 
 	private static final Logger logger = LoggerFactory.getLogger(BoshServiceProvisionningTest.class.getName());
     public static final String BROKERED_SERVICE_INSTANCE_ID = "brokered_service_instance_id";
+
+    /**
+     * Git repo needs to be started before the spring context gets loaded and RetrierGitManager bean to be instanciated.
+     * More details in docs 05-eager-git-clones.md
+     */
+    public static class HermeticGitServerTestListener implements TestExecutionListener {
+
+        GitServer gitServer;
+
+        @Override
+        public void beforeTestClass(TestContext testContext) throws Exception {
+            DeploymentProperties deploymentProperties = new DeploymentProperties();
+            //TODO: find a better way to the deployment name consistent with application.properties
+            //- trying to access spring context from TestContext triggers the GitRetrier bean initialization which
+            // fails as git server isn't yet loaded
+            //- load the properties file from the classloader into a Properties object and extract the property needed
+            deploymentProperties.setModelDeployment("mongodb");
+            gitServer(deploymentProperties);
+        }
+
+        @Override
+        public void afterTestClass(TestContext testContext) throws Exception {
+            gitServer.stopAndCleanupReposServer();
+        }
+
+        public GitServer gitServer(DeploymentProperties deploymentProperties) throws IOException {
+            gitServer = new GitServer();
+
+            gitServer.startEphemeralReposServer(NO_OP_INITIALIZER);
+            gitServer.initRepo("paas-template.git", git -> initPaasTemplate(git, deploymentProperties));
+            gitServer.initRepo("paas-secrets.git", git -> initPaasSecret(git, deploymentProperties));
+
+            return gitServer;
+        }
+    }
 
     @BeforeAll
     public static void prepare_CONFIG_YML_env_var() throws Exception {
@@ -143,7 +182,6 @@ public class BoshServiceProvisionningTest {
     private static final String ERROR_SERVICE_BINDING_INSTANCE_ID = "333";
     @LocalServerPort
     int port;
-    private GitServer gitServer;
 
     @Autowired
     OsbProxyImpl osbProxy;
@@ -236,25 +274,13 @@ public class BoshServiceProvisionningTest {
     }
 
 
-    @BeforeEach
-    public void startGitServer() throws IOException {
-        gitServer = new GitServer();
-
-        gitServer.startEphemeralReposServer(NO_OP_INITIALIZER);
-        gitServer.initRepo("paas-template.git", this::initPaasTemplate);
-        gitServer.initRepo("paas-secrets.git", this::initPaasSecret);
-    }
-
-    public void initPaasTemplate(Git git) {
+    public static void initPaasTemplate(Git git, DeploymentProperties deploymentProperties) {
         File gitWorkDir = git.getRepository().getDirectory().getParentFile();
         try {
             git.commit().setMessage("Initial empty repo setup").call();
 
             //In develop branch
             git.checkout().setName("develop").setCreateBranch(true).call();
-
-            //root deployment
-            Path coabDepls = gitWorkDir.toPath().resolve(deploymentProperties.getRootDeployment());
 
             //Search for the sample-deployment
             Path referenceDataModel = Paths.get("../sample-deployment");
@@ -296,7 +322,7 @@ public class BoshServiceProvisionningTest {
         }
     }
 
-    public void initPaasSecret(Git git) {
+    public static void initPaasSecret(Git git, DeploymentProperties deploymentProperties) {
         File gitWorkDir = git.getRepository().getDirectory().getParentFile();
         try {
             git.commit().setMessage("Initial empty repo setup").call();
@@ -367,7 +393,7 @@ public class BoshServiceProvisionningTest {
         gitProcessor.preCreate(context);
 
         Path workDirPath = (Path) context.contextKeys
-            .get(SECRETS_REPOSITORY_ALIAS_NAME + GitProcessorContext.workDir.toString());
+            .get(SECRETS_REPOSITORY_ALIAS_NAME + GitProcessorContext.workDir);
         Path targetManifestFilePath = secretsGenerator.getTargetManifestFilePath(workDirPath, SERVICE_INSTANCE_ID);
         createDir(targetManifestFilePath.getParent());
         createBoshManifestFile(targetManifestFilePath, coabVarsFileDto);
@@ -394,11 +420,6 @@ public class BoshServiceProvisionningTest {
     }
 
 
-    @AfterEach
-    public void stopGitServer() throws InterruptedException {
-        gitServer.stopAndCleanupReposServer();
-    }
-
     @Test
     public void supports_crud_lifecycle() throws IOException {
         exposes_catalog();
@@ -419,7 +440,7 @@ public class BoshServiceProvisionningTest {
         simulateUpdatingManifestGeneration(gitSecretsProcessor, anAcceptedPlanUpdateServiceInstanceRequest());
         polls_last_operation(operation, HttpStatus.SC_OK, "succeeded", "");
 
-        assertThatThrownBy(() -> {update_service_plan(aRejectedPlanUpdateServiceInstanceRequest());})
+        assertThatThrownBy(() -> update_service_plan(aRejectedPlanUpdateServiceInstanceRequest()))
             .isInstanceOf(FeignException.class)
             .hasMessageContaining(("422"))
             .hasMessageContaining(("Service instance update not supported"))
@@ -472,9 +493,13 @@ public class BoshServiceProvisionningTest {
             long borrowed = pooledGitManager.getPoolAttribute(PooledGitManager.Metric.Borrowed);
             long returned = pooledGitManager.getPoolAttribute(PooledGitManager.Metric.Returned);
             long created = pooledGitManager.getPoolAttribute(PooledGitManager.Metric.Created);
-            assertThat(borrowed).isGreaterThanOrEqualTo(1);
+            long destroyed = pooledGitManager.getPoolAttribute(PooledGitManager.Metric.Destroyed);
+            assertThat(borrowed).isGreaterThanOrEqualTo(1L);
             assertThat(returned).isEqualTo(borrowed);
-            assertThat(created).isEqualTo(1);
+            assertThat(created).isBetween(1L,2L); //1 when only eager prefetching at start up triggers
+            // 2 when evictor thread runs exactly during OSB request process (we have min_idle=1)
+            assertThat(destroyed).isEqualTo(0); //we should not reach the maxIdlePerKey=8 repos.
+            // See DEFAULT_MAX_IDLE_PER_KEY = 8 in GenericKeyedObjectPoolConfig
         }
     }
 

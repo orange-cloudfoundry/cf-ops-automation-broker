@@ -20,6 +20,8 @@ public class GitProperties {
 	private boolean usePooling = true;
 	@NestedConfigurationProperty
 	private RetryProperties retry = new RetryProperties();
+	@NestedConfigurationProperty
+	private PoolingProperties poolingProperties = new PoolingProperties();
 
 	/**
 	 * Where submodules are replicated by default (e.g. "https://gitlab.internal.paas/"
@@ -69,5 +71,9 @@ public class GitProperties {
 
 	public RetryProperties getRetry() { return retry; }
 	public void setRetry(RetryProperties retry) { this.retry = retry; }
+
+	public PoolingProperties getPoolingProperties() {return poolingProperties;}
+	public void setPoolingProperties(PoolingProperties poolingProperties) {this.poolingProperties = poolingProperties;}
+
 }
 

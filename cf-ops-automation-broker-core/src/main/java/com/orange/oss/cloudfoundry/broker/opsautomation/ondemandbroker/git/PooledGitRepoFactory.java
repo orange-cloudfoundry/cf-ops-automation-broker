@@ -47,7 +47,9 @@ public class PooledGitRepoFactory implements KeyedPooledObjectFactory<GitPoolKey
 
     @Override
     public void destroyObject(GitPoolKey key, PooledObject<Context> p) {
-        gitManager.deleteWorkingDir(p.getObject());
+        Context context = p.getObject();
+        logger.info("Destroying pooled git repo with context keys {}", context.contextKeys);
+        gitManager.deleteWorkingDir(context);
     }
 
 

@@ -48,6 +48,12 @@ Deploy the broker as a CF app:
 
 Use `spring.cloud.openservicebroker.catalog` environment variable to set catalog config in a YAML format. See [spring-cloud-open-service-broker](https://docs.spring.io/spring-cloud-open-service-broker/docs/current/reference/html5/#_providing_a_catalog_using_properties) for a sample YML and raw properties configuration
 
+### Git clone pooling
+
+By default coab perform pooling of git clone, including eager pooling at startup (i.e. prefetching a clone), and asynchronously maintaining the min idle pool size. This is designed to avoid getting the git clone elapsed time as part of the user-facing experience and running on the OSB sync timeout (which defaults to 60s)
+
+Pooling may be disabled, through  [GitProperties.java](cf-ops-automation-broker-core/src/main/java/com/orange/oss/cloudfoundry/broker/opsautomation/ondemandbroker/git/GitProperties.java) and eager pool configured in [PoolingProperties.java](cf-ops-automation-broker-core/src/main/java/com/orange/oss/cloudfoundry/broker/opsautomation/ondemandbroker/git/PoolingProperties.java).
+
 ### Read-only mode
 
 When the service instance read-only mode is configured (see [DeploymentProperties.java](cf-ops-automation-broker-core/src/main/java/com/orange/oss/cloudfoundry/broker/opsautomation/ondemandbroker/pipeline/DeploymentProperties.java)), then service instance operations (create/update/delete) are rejected, while service binding operations (create/delete) are still accepted. This enables to perform maintenance on the underlying COA/git branches infrastructure while not risking corrupted COA inventory and not imposing full control plan downtime to coab users. 

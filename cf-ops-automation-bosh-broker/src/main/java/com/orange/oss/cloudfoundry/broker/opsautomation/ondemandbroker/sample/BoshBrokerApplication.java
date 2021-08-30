@@ -51,7 +51,7 @@ public class BoshBrokerApplication {
     static final String TEMPLATES_REPOSITORY_ALIAS_NAME = "paas-templates.";
     static final String SECRETS_REPOSITORY_ALIAS_NAME = "paas-secrets.";
 
-    private static Logger logger = LoggerFactory.getLogger(BoshBrokerApplication.class.getName());
+    private static final Logger logger = LoggerFactory.getLogger(BoshBrokerApplication.class.getName());
 
 
     public static void main(String[] args) {
@@ -201,16 +201,40 @@ public class BoshBrokerApplication {
         return new RetrierGitManager(TEMPLATES_REPOSITORY_ALIAS_NAME, simpleTemplatesGitManager, gitTemplateRetryPolicy);
     }
 
+    /**
+     * Constructs the default Context used as a pool key in {@link PooledGitManager}.
+     * For paas-secret git repo, this key is empty
+     */
     @Bean
-    public GitManager poolingSecretsGitManager(GitManager retrierSecretsManager) {
-        PooledGitRepoFactory factory = new PooledGitRepoFactory(retrierSecretsManager);
-        return new PooledGitManager(factory, SECRETS_REPOSITORY_ALIAS_NAME, retrierSecretsManager);
+    public Context secretsDefaultEagerPoolingContext() {
+        return new Context();
+    }
+
+    /**
+     * Constructs the default Context used as a pool key in {@link PooledGitManager}.
+     * For paas-templates git repo, this key includes the name of the git branches to use
+     */
+    @Bean
+    public Context templatesDefaultEagerPoolingContext(PipelineProperties pipelineProperties) {
+        Context context = new Context();
+        registerPaasTemplatesBranches(context, pipelineProperties);
+        return context;
     }
 
     @Bean
-    public GitManager poolingTemplatesGitManager(GitManager retrierTemplatesManager) {
+    public GitManager poolingSecretsGitManager(GitManager retrierSecretsManager,
+        Context secretsDefaultEagerPoolingContext, GitProperties secretsGitProperties) {
+        PooledGitRepoFactory factory = new PooledGitRepoFactory(retrierSecretsManager);
+        return new PooledGitManager(factory, SECRETS_REPOSITORY_ALIAS_NAME, retrierSecretsManager,
+            secretsDefaultEagerPoolingContext, secretsGitProperties.getPoolingProperties());
+    }
+
+    @Bean
+    public GitManager poolingTemplatesGitManager(GitManager retrierTemplatesManager,
+        Context templatesDefaultEagerPoolingContext, GitProperties templateGitProperties) {
         PooledGitRepoFactory factory = new PooledGitRepoFactory(retrierTemplatesManager);
-        return new PooledGitManager(factory, TEMPLATES_REPOSITORY_ALIAS_NAME, retrierTemplatesManager);
+        return new PooledGitManager(factory, TEMPLATES_REPOSITORY_ALIAS_NAME, retrierTemplatesManager, templatesDefaultEagerPoolingContext,
+			templateGitProperties.getPoolingProperties());
     }
 
     @Bean
@@ -327,12 +351,12 @@ public class BoshBrokerApplication {
 
             // for necessary steps, configure the right branch to fetch
             @Override
-            public void preCreate(Context ctx) { registerPaasTemplatesBranches(ctx); }
+            public void preCreate(Context ctx) { registerPaasTemplatesBranches(ctx, pipelineProperties); }
             @Override
-            public void preUpdate(Context ctx) { registerPaasTemplatesBranches(ctx); }
+            public void preUpdate(Context ctx) { registerPaasTemplatesBranches(ctx, pipelineProperties); }
             @Override
             // delete step now also cleans up paas-templates
-            public void preDelete(Context ctx) { registerPaasTemplatesBranches(ctx); }
+            public void preDelete(Context ctx) { registerPaasTemplatesBranches(ctx, pipelineProperties); }
 
             //for steps only requiring paas-secrets, don't clone paas-templates
             @Override
@@ -346,15 +370,15 @@ public class BoshBrokerApplication {
             @Override
             public void preGetInstance(Context ctx) { skipPaasTemplateGitCloneAndPush(ctx); }
 
-            private void registerPaasTemplatesBranches(Context ctx) {
-                ctx.contextKeys.put(TEMPLATES_REPOSITORY_ALIAS_NAME + GitProcessorContext.checkOutRemoteBranch.toString(), pipelineProperties.getCheckOutRemoteBranch()); //"develop"
-                ctx.contextKeys.put(TEMPLATES_REPOSITORY_ALIAS_NAME + GitProcessorContext.createBranchIfMissing.toString(), pipelineProperties.getCreateBranchIfMissing()); //"feature-coadepls-cassandra-serviceinstances"
-            }
-            private void skipPaasTemplateGitCloneAndPush(Context ctx) {
-                ctx.contextKeys.put(TEMPLATES_REPOSITORY_ALIAS_NAME + GitProcessorContext.ignoreStep.toString(), "true"); //"develop"
-            }
-
         };
+    }
+
+    private void registerPaasTemplatesBranches(Context ctx, PipelineProperties pipelineProperties) {
+        ctx.contextKeys.put(TEMPLATES_REPOSITORY_ALIAS_NAME + GitProcessorContext.checkOutRemoteBranch, pipelineProperties.getCheckOutRemoteBranch()); //"develop"
+        ctx.contextKeys.put(TEMPLATES_REPOSITORY_ALIAS_NAME + GitProcessorContext.createBranchIfMissing, pipelineProperties.getCreateBranchIfMissing()); //"feature-coadepls-cassandra-serviceinstances"
+    }
+    private void skipPaasTemplateGitCloneAndPush(Context ctx) {
+        ctx.contextKeys.put(TEMPLATES_REPOSITORY_ALIAS_NAME + GitProcessorContext.ignoreStep, "true"); //"develop"
     }
 
 

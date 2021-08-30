@@ -1,52 +1,78 @@
 package com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.git;
 
+import java.lang.management.ManagementFactory;
+import java.nio.file.Path;
+
+import javax.annotation.PreDestroy;
+import javax.management.ObjectName;
+
 import com.orange.oss.cloudfoundry.broker.opsautomation.ondemandbroker.processors.Context;
-import org.apache.commons.pool2.KeyedObjectPool;
 import org.apache.commons.pool2.KeyedPooledObjectFactory;
 import org.apache.commons.pool2.impl.GenericKeyedObjectPool;
 import org.apache.commons.pool2.impl.GenericKeyedObjectPoolConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.management.*;
-import java.lang.management.ManagementFactory;
-import java.nio.file.Path;
-
 /**
  * <pre>
  *     (Processor) Context <---> GitPoolKey <---> (SimpleGitManager) Context
  * </pre>
  *
- * Received Context gets, mapped into a local context (GitPoolKey) with only relevant keys.
+ * Receives Context gets, mapped into a local context (GitPoolKey) with only relevant keys.
  * The local context gets mapped to a SimpleGitManager-scoped Context.
  *
  * The local context gets used as a key to the pool.
  * The SimpleGitManager-scoped Context is used as the value in the pool.
- *
  */
 public class PooledGitManager implements GitManager {
 
     private static final String PRIVATE_POOLED_GIT_CONTEXT = "PrivatePooledGitContext";
     private static final String PRIVATE_LOCAL_GIT_CONTEXT = "PrivateLocalGitContext";
-    private KeyedObjectPool<GitPoolKey, Context> pool;
-    private String repoAliasName;
-    private GitManager gitManager;
+    private final GenericKeyedObjectPool<GitPoolKey, Context> pool;
+    private final String repoAliasName;
+    private final GitManager gitManager;
+
     private static final Logger logger = LoggerFactory.getLogger(PooledGitManager.class.getName());
 
 
-    public PooledGitManager(KeyedPooledObjectFactory<GitPoolKey, Context> factory, String repoAliasName, GitManager gitManager) {
+    public PooledGitManager(KeyedPooledObjectFactory<GitPoolKey, Context> factory, String repoAliasName,
+		GitManager gitManager, Context defaultEagerPoolingContext,
+		PoolingProperties poolingProperties) {
         this.repoAliasName = repoAliasName;
         this.gitManager = gitManager;
-        GenericKeyedObjectPoolConfig<Context> poolConfig = constructPoolConfig(repoAliasName);
+        GenericKeyedObjectPoolConfig<Context> poolConfig = constructPoolConfig(repoAliasName, poolingProperties);
         pool = new GenericKeyedObjectPool<>(factory, poolConfig);
+        //first prepare the key to prefetch
+        try {
+            pool.preparePool(makePoolKey(defaultEagerPoolingContext));
+        }
+        catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        //disable git clone from being evicted after an idle period: we systematically perform `git pull --rebase`
+        // before reusing them
+        pool.setMinEvictableIdleTimeMillis(-1);
+        //then only start the eviction thread, otherwise one extra clone is created.
+        pool.setTimeBetweenEvictionRunsMillis(poolingProperties.getSecondsBetweenEvictionRuns() * 1000L);
     }
 
-    private GenericKeyedObjectPoolConfig<Context> constructPoolConfig(String repoAliasName) {
+    private GenericKeyedObjectPoolConfig<Context> constructPoolConfig(String repoAliasName,
+        PoolingProperties poolingProperties) {
         GenericKeyedObjectPoolConfig<Context> poolConfig = new GenericKeyedObjectPoolConfig<>();
         poolConfig.setJmxNamePrefix(repoAliasName);
         poolConfig.setTestOnCreate(false);
         poolConfig.setTestOnBorrow(true);
+        poolConfig.setMinIdlePerKey(poolingProperties.getMinIdle());
         return poolConfig;
+    }
+
+    /**
+     * Try to stop the pool evictor thread.
+     */
+    @PreDestroy
+    public void destruct() {
+        logger.debug("Bean pre-destroy closing the pool");
+        pool.close();
     }
 
     @Override
@@ -78,7 +104,7 @@ public class PooledGitManager implements GitManager {
         GitPoolKey localContext = getLocalContext(ctx);
 
         if (localContext == null) {
-            logger.debug("Pool with alias {} and keys {} did not propertly clone, skipping cleanup", repoAliasName, ctx.contextKeys);
+            logger.debug("Pool with alias {} and keys {} did not properly clone, skipping cleanup", repoAliasName, ctx.contextKeys);
             return;
         }
         try {
@@ -104,8 +130,8 @@ public class PooledGitManager implements GitManager {
     }
 
     private void mapOutputResponse(Context ctx, Context pooledContext) {
-        Path workDir = (Path) pooledContext.contextKeys.get(repoAliasName + GitProcessorContext.workDir.toString());
-        ctx.contextKeys.put(repoAliasName + GitProcessorContext.workDir.toString(), workDir);
+        Path workDir = (Path) pooledContext.contextKeys.get(repoAliasName + GitProcessorContext.workDir);
+        ctx.contextKeys.put(repoAliasName + GitProcessorContext.workDir, workDir);
     }
 
     private void saveMappedContexts(Context ctx, Context pooledContext, GitPoolKey local) {

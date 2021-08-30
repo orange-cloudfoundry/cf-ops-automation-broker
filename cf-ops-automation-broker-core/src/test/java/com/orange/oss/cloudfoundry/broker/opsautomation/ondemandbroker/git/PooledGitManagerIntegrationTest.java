@@ -24,7 +24,7 @@ public class PooledGitManagerIntegrationTest {
     private GitManager gitManager = Mockito.mock(GitManager.class);
 
     @Test
-    public void eagerly_provisions_a_clone_at_initialization_asynchronously() throws InterruptedException {
+    public void eagerly_provisions_a_clone_at_initialization() {
         //Given an operator configured eager pooling
         PoolingProperties poolingProperties = anEagerPoolingProperties();
         String repoAliasName = repoAlias;
@@ -33,12 +33,6 @@ public class PooledGitManagerIntegrationTest {
         Context ctx1 = new Context();
         PooledGitManager pooledGitManager = new PooledGitManager(new PooledGitRepoFactory(gitManager), repoAliasName, gitManager,
             ctx1, poolingProperties);
-
-        //Then the git manager DOES NOT get delegated the call to clone the repo
-        verify(gitManager, never()).cloneRepo(any(Context.class));
-
-        //when the evictor thread executes
-        Thread.sleep(2*SECONDS_BETWEEN_EVICTION_RUNS * 1000);
 
         //Then the git manager gets delegated the call to clone the repo
         verify(gitManager, times(1)).cloneRepo(any(Context.class));

@@ -47,18 +47,37 @@ Support for https://github.com/orange-cloudfoundry/cf-ops-automation-broker/issu
    * Per repo: templates/secrets, in a distinct PoolingProperties class to avoid too large GitProperties class 
 * [x] Update/fix tests which check that there is no git clone leaks
 * [x] Update documentation
-* [ ] Fix observed incorrect behavior: after the default DEFAULT_MIN_EVICTABLE_IDLE_TIME_MILLIS (30 mins) the pool item get destroyed
+* [x] Fix observed incorrect behavior: after the default DEFAULT_MIN_EVICTABLE_IDLE_TIME_MILLIS (30 mins) the pool item get destroyed
    * set to -1 + refine logging to help debugging
    * how to test this ?
      * assert no destroy called in eager pooling unit test cases (however exec is shorter than the 30 mins duration before such eviction)
      * assert no destroy called in eager pooling integration test cases (same limitation than unit test)
    * manually validate after 30 mins the clones are not cleaned up anymore (on a long-running coab broker instance running E2E smoke tests)
-* [ ] Try to reduce risk/impact of a slow start due to slow repo prefetching (observed once at 60s, would fail at 180s)
+* [x] Try to reduce risk/impact of a slow start due to slow repo prefetching (observed once at 60s, would fail at 180s)
    * [ ] Try to configure pool to perform prefetching in evictor thread
       * [X] By configuring minIdle=0 before calling `preparePool`: the key pool isn't added
       * [ ] By scheduling the pool prefetching configuration after start up on another thread
-   * [ ] Better assess the impact of a slow start: how long would diego try to restart the app ? 
-      * [ ] Inject a 180s sleep loop at start time and observe the up time with the curl 
+   * [x] Better assess the impact of a slow start: how long would diego try to restart the app ? 200 
+      * [x] Inject a 180s sleep loop at start time and observe the up time with the curl
+         * Deploy manually with a cf push with --strategy rolling (deploying through ci requires passing build, whereas tests would be red by injected sleep)
+         * Watch the up time with the curl
+         * => confirmed rolling update is properly working without downtime 
+      * [x] Read the docs
+         * https://docs.cloudfoundry.org/devguide/deploy-apps/healthchecks.html 
+
+> When an app instance crashes, Diego immediately attempts to restart the app instance several times. After three failed restarts, 
+> Cloud Foundry waits 30 seconds before attempting another restart. The wait time doubles each restart until the ninth restart, 
+> and remains at that duration until the 200th restart. After the 200th restart, Cloud Foundry stops trying to restart the app instance
+   * [x] deep dive on zdt and why we observed it non effective on orange labs fe-int environment on coab-noop
+      * [x] verify zdt is enabled for coab in generated pipelines
+      * [x] read the docs
+      * [x] double check coab-noops traces
+```
+Coab-noop is overiding default CF_PUSH_OPTIONS=--strategy rolling with --strategy=null as this option is not supported by CF cli with multiple-apps manifests
+
+CF push options: 
+```     
+
 
 ## Details
 
@@ -132,4 +151,68 @@ The class hierarchy was loaded from the following locations:
     org.apache.commons.pool2.impl.GenericKeyedObjectPool: file:/home/circleci/.m2/repository/org/apache/commons/commons-pool2/2.9.0/commons-pool2-2.9.0.jar
     org.apache.commons.pool2.impl.BaseGenericObjectPool: file:/home/circleci/.m2/repository/org/apache/commons/commons-pool2/2.9.0/commons-pool2-2.9.0.jar
     org.apache.commons.pool2.BaseObject: file:/home/circleci/.m2/repository/org/apache/commons/commons-pool2/2.9.0/commons-pool2-2.9.0.jar 
+```
+
+
+### Failed start using timeout
+
+```
+$ cf push [...]
+Instances starting...
+Instances starting...
+Instances starting...
+Start app timeout
+
+TIP: Application must be listening on the right port. Instead of hard coding the port, use the $PORT environment variable.
+
+Use 'cf logs coa-noop-broker --recent' for more information
+FAILED
+```
+
+
+```
+2021-08-30T11:53:34.13+0200 [HEALTH/0] ERR Failed to make TCP connection to port 8080: connection refused
+2021-08-30T11:53:34.13+0200 [CELL/0] ERR Failed after 3m0.278s: readiness health check never passed.
+2021-08-30T11:53:34.13+0200 [CELL/SSHD/0] OUT Exit status 0
+2021-08-30T11:53:49.56+0200 [CELL/0] OUT Cell 1a24fee7-f041-4109-a287-2a86954735e9 stopping instance 2c54444f-b6f9-4a8b-7c9b-9748
+2021-08-30T11:53:49.56+0200 [CELL/0] OUT Cell 1a24fee7-f041-4109-a287-2a86954735e9 destroying container for instance 2c54444f-b6f9-4a8b-7c9b-9748
+2021-08-30T11:53:49.59+0200 [CELL/0] OUT Cell a56f78db-fac0-4232-a0f8-e85289f07b8e creating container for instance bc4caf2c-4238-482d-7279-e25b
+2021-08-30T11:53:49.80+0200 [CELL/0] OUT Cell 1a24fee7-f041-4109-a287-2a86954735e9 successfully destroyed container for instance 2c54444f-b6f9-4a8b-7c9b-9748
+2021-08-30T11:53:49.90+0200 [CELL/0] OUT Cell a56f78db-fac0-4232-a0f8-e85289f07b8e successfully created container for instance bc4caf2c-4238-482d-7279-e25b
+2021-08-30T11:53:50.00+0200 [CELL/0] OUT Downloading droplet...
+2021-08-30T11:53:53.64+0200 [CELL/0] OUT Downloaded droplet (89M)
+2021-08-30T11:53:53.64+0200 [CELL/0] OUT Starting health monitoring of container
+2021-08-30T11:56:54.07+0200 [HEALTH/0] ERR Failed to make TCP connection to port 8080: connection refused
+2021-08-30T11:56:54.07+0200 [CELL/0] ERR Failed after 3m0.428s: readiness health check never passed.
+2021-08-30T11:56:54.07+0200 [CELL/SSHD/0] OUT Exit status 0
+2021-08-30T11:57:09.53+0200 [CELL/0] OUT Cell a56f78db-fac0-4232-a0f8-e85289f07b8e stopping instance bc4caf2c-4238-482d-7279-e25b
+2021-08-30T11:57:09.53+0200 [CELL/0] OUT Cell a56f78db-fac0-4232-a0f8-e85289f07b8e destroying container for instance bc4caf2c-4238-482d-7279-e25b
+2021-08-30T11:57:09.57+0200 [CELL/0] OUT Cell 1a24fee7-f041-4109-a287-2a86954735e9 creating container for instance 506135e0-027d-4df0-7115-2e6e
+2021-08-30T11:57:09.81+0200 [CELL/0] OUT Cell 1a24fee7-f041-4109-a287-2a86954735e9 successfully created container for instance 506135e0-027d-4df0-7115-2e6e
+2021-08-30T11:57:09.85+0200 [CELL/0] OUT Cell a56f78db-fac0-4232-a0f8-e85289f07b8e successfully destroyed container for instance bc4caf2c-4238-482d-7279-e25b
+2021-08-30T11:57:10.03+0200 [CELL/0] OUT Downloading droplet...
+2021-08-30T11:57:10.32+0200 [CELL/0] OUT Downloaded droplet
+2021-08-30T11:57:10.32+0200 [CELL/0] OUT Starting health monitoring of container
+2021-08-30T12:00:10.50+0200 [HEALTH/0] ERR Failed to make TCP connection to port 8080: connection refused
+2021-08-30T12:00:10.50+0200 [CELL/0] ERR Failed after 3m0.179s: readiness health check never passed.
+2021-08-30T12:00:10.51+0200 [CELL/SSHD/0] OUT Exit status 0
+2021-08-30T12:00:26.01+0200 [CELL/0] OUT Cell 1a24fee7-f041-4109-a287-2a86954735e9 stopping instance 506135e0-027d-4df0-7115-2e6e
+2021-08-30T12:00:26.01+0200 [CELL/0] OUT Cell 1a24fee7-f041-4109-a287-2a86954735e9 destroying container for instance 506135e0-027d-4df0-7115-2e6e
+2021-08-30T12:00:26.26+0200 [CELL/0] OUT Cell 1a24fee7-f041-4109-a287-2a86954735e9 successfully destroyed container for instance 506135e0-027d-4df0-7115-2e6e
+2021-08-30T12:00:56.53+0200 [CELL/0] OUT Cell 1a24fee7-f041-4109-a287-2a86954735e9 creating container for instance b1294f29-eef6-4417-4971-3cc9
+2021-08-30T12:00:56.78+0200 [CELL/0] OUT Cell 1a24fee7-f041-4109-a287-2a86954735e9 successfully created container for instance b1294f29-eef6-4417-4971-3cc9
+2021-08-30T12:00:57.17+0200 [CELL/0] OUT Downloading droplet...
+2021-08-30T12:00:57.45+0200 [CELL/0] OUT Downloaded droplet
+2021-08-30T12:00:57.45+0200 [CELL/0] OUT Starting health monitoring of container
+2021-08-30T12:03:57.64+0200 [HEALTH/0] ERR Failed to make TCP connection to port 8080: connection refused
+2021-08-30T12:03:57.64+0200 [CELL/0] ERR Failed after 3m0.182s: readiness health check never passed.
+2021-08-30T12:03:57.64+0200 [CELL/SSHD/0] OUT Exit status 0
+2021-08-30T12:04:13.05+0200 [CELL/0] OUT Cell 1a24fee7-f041-4109-a287-2a86954735e9 stopping instance b1294f29-eef6-4417-4971-3cc9
+2021-08-30T12:04:13.05+0200 [CELL/0] OUT Cell 1a24fee7-f041-4109-a287-2a86954735e9 destroying container for instance b1294f29-eef6-4417-4971-3cc9
+2021-08-30T12:04:13.31+0200 [CELL/0] OUT Cell 1a24fee7-f041-4109-a287-2a86954735e9 successfully destroyed container for instance b1294f29-eef6-4417-4971-3cc9
+2021-08-30T12:05:26.81+0200 [CELL/0] OUT Cell 1a24fee7-f041-4109-a287-2a86954735e9 creating container for instance b4f69f42-9b7a-4f9f-6e03-6538
+2021-08-30T12:05:27.06+0200 [CELL/0] OUT Cell 1a24fee7-f041-4109-a287-2a86954735e9 successfully created container for instance b4f69f42-9b7a-4f9f-6e03-6538
+2021-08-30T12:05:27.30+0200 [CELL/0] OUT Downloading droplet...
+2021-08-30T12:05:27.59+0200 [CELL/0] OUT Downloaded droplet
+2021-08-30T12:05:27.59+0200 [CELL/0] OUT Starting health monitoring of container
 ```

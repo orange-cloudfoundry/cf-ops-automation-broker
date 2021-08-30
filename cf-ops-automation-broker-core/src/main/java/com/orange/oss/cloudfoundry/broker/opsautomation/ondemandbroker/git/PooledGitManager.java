@@ -42,9 +42,13 @@ public class PooledGitManager implements GitManager {
         this.gitManager = gitManager;
         GenericKeyedObjectPoolConfig<Context> poolConfig = constructPoolConfig(repoAliasName, poolingProperties);
         pool = new GenericKeyedObjectPool<>(factory, poolConfig);
+
         //first prepare the key to prefetch
         try {
+            pool.setMinIdlePerKey(0); //temporary disable min idle to avoid synchronous prefetching
             pool.preparePool(makePoolKey(defaultEagerPoolingContext));
+            pool.setMinIdlePerKey(poolingProperties.getMinIdle()); //restore expected min idle to get applied
+            // asynchronously once the evictor threads gets started
         }
         catch (Exception e) {
             throw new RuntimeException(e);

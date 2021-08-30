@@ -53,6 +53,12 @@ Support for https://github.com/orange-cloudfoundry/cf-ops-automation-broker/issu
      * assert no destroy called in eager pooling unit test cases (however exec is shorter than the 30 mins duration before such eviction)
      * assert no destroy called in eager pooling integration test cases (same limitation than unit test)
    * manually validate after 30 mins the clones are not cleaned up anymore (on a long-running coab broker instance running E2E smoke tests)
+* [ ] Try to reduce risk/impact of a slow start due to slow repo prefetching (observed once at 60s, would fail at 180s)
+   * [ ] Try to configure pool to perform prefetching in evictor thread
+      * [X] By configuring minIdle=0 before calling `preparePool`: the key pool isn't added
+      * [ ] By scheduling the pool prefetching configuration after start up on another thread
+   * [ ] Better assess the impact of a slow start: how long would diego try to restart the app ? 
+      * [ ] Inject a 180s sleep loop at start time and observe the up time with the curl 
 
 ## Details
 

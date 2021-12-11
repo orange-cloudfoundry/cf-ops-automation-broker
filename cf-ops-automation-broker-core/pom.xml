@@ -21,7 +21,7 @@
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 		<java.version>1.8</java.version>
 		<orangeSpringCloudServiceBrokerVersion>a13e8c6fb811f0c8bd4c4916edff6405db3cdfd0</orangeSpringCloudServiceBrokerVersion>
-		<upstreamSpringCloudServiceBrokerVersion>3.3.1</upstreamSpringCloudServiceBrokerVersion>
+		<upstreamSpringCloudServiceBrokerVersion>3.3.2</upstreamSpringCloudServiceBrokerVersion>
 	</properties>
 
 	<dependencies>

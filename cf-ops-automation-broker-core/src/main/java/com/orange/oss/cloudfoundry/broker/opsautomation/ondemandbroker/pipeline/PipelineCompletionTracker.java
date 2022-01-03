@@ -81,6 +81,15 @@ public class PipelineCompletionTracker {
 
     GetLastServiceOperationResponse getDeploymentExecStatus(Path secretsWorkDir, String serviceInstanceId, String jsonPipelineOperationState, GetLastServiceOperationRequest pollingRequest) {
         PipelineOperationState pipelineOperationState = this.parseFromJson(jsonPipelineOperationState);
+        if (pipelineOperationState == null) {
+            logger.info("receiving /v2/service_instances/:instance_id/last_operation endpoint call without operation " +
+                "field, assuming coab issue #467 and returning GONE");
+            return GetLastServiceOperationResponse.builder()
+                .operationState(OperationState.SUCCEEDED)
+                .description("Unexpected null operation field, assuming issue #467")
+                .deleteOperation(true)
+                .build();
+        }
 
         //Check if target manifest file is present, i.e. if nested broker bosh deployment completed successfully
         boolean isTargetManifestFilePresent = secretsReader.isBoshDeploymentAvailable(secretsWorkDir, serviceInstanceId);

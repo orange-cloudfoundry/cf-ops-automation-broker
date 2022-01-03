@@ -114,6 +114,21 @@ public class PipelineCompletionTrackerTest {
     }
 
     @Test
+    public void returns_gone_state_if_last_operation_state_is_null() {
+        //Given a missing operation state in the getLastOperation
+        String jsonPipelineOperationState = createNullOperationState();
+
+        //When
+        GetLastServiceOperationResponse response = tracker.getDeploymentExecStatus(workDir, SERVICE_INSTANCE_ID, jsonPipelineOperationState, pollingRequest);
+
+        //Then
+        assertThat(response.getState()).isEqualTo(OperationState.SUCCEEDED);
+        assertThat(response.isDeleteOperation()).isTrue();
+        assertThat(response.getDescription()).startsWith("Unexpected null operation field");
+        verify(osbProxy, never()).delegateProvision(any(), any(), any());
+    }
+
+    @Test
     public void returns_succeeded_state_during_provision_if_manifest_is_present_regardless_of_elapsed_time()
         throws IOException {
         //Given an existing manifest file
@@ -470,6 +485,10 @@ public class PipelineCompletionTrackerTest {
         //when
         PipelineCompletionTracker tracker = new PipelineCompletionTracker(Clock.systemUTC(), 1200L, mock(OsbProxy.class), Mockito.mock(SecretsReader.class));
         return tracker.formatAsJson(pipelineOperationState);
+    }
+
+    private String createNullOperationState() {
+        return tracker.formatAsJson(null);
     }
 
     @Test

@@ -10,9 +10,9 @@ Releasing is made using [maven release plugin](http://maven.apache.org/maven-rel
  
  ```shell
  
- $ mvn release:prepare --batch-mode -Dtag={your git tag} -DreleaseVersion={release version to be set} -DdevelopmentVersion={next snapshot version to be set}
+ $ mvn release:prepare --batch-mode -Dtag={your git tag} -DreleaseVersion={release version to be set} -DdevelopmentVersion={next snapshot version to be set} -DskipTests -Darguments=-DskipTests
  
- # ex : mvn release:prepare --batch-mode -Dtag=v0.21.0 -DreleaseVersion=0.21.0 -DdevelopmentVersion=0.22.0-SNAPSHOT
+ # ex : mvn release:prepare --batch-mode -Dtag=v1.11.0 -DreleaseVersion=1.11.0 -DdevelopmentVersion=1.12.0-SNAPSHOT -DskipTests -Darguments=-DskipTests
  
  ```
  

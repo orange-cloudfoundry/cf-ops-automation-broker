@@ -59,7 +59,7 @@
         <dependency>
             <groupId>org.jetbrains</groupId>
             <artifactId>annotations</artifactId>
-            <version>22.0.0</version>
+            <version>24.0.0</version>
         </dependency>
 
         <!-- turn on verbose logging of requests during tests. In production, we can use the actuator endpoint or the logging route service instead

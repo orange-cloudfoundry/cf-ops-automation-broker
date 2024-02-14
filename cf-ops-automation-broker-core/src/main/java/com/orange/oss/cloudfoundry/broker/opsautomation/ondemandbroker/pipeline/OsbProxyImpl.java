@@ -154,6 +154,7 @@ public class OsbProxyImpl implements OsbProxy {
         OperationState operationState;
         String description = null;
         if (provisionException != null) {
+            //FIXME: extract some info from feignException to address https://github.com/orange-cloudfoundry/cf-ops-automation-broker/issues/558
             throw mapClientException(provisionException);
         } else {
             if (delegatedResponse.getStatusCode() == HttpStatus.CREATED) {
